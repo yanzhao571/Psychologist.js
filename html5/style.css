@@ -1,0 +1,61 @@
+*, *:before, *:after {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    font-family: sans-serif;
+}
+
+html, body, canvas, #menu{
+    position: absolute;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+
+#menu
+{
+    bottom:0;
+}
+
+html, body
+{
+    height: 100%;
+    background-color:#000000;
+}
+
+canvas
+{
+    display: inline-block;
+    height: 100%;
+    width: 40%;
+}
+
+canvas#rightEye
+{
+    left: 50%;
+}
+
+canvas#leftEye
+{
+    right: 50%;
+}
+
+a.button {
+    text-align: center;
+    display: inline-block;
+    padding: 1em;
+    text-decoration: none;
+    cursor: pointer;
+    border: solid 1px #ccc;
+    border-radius: 5px;
+    background-color:#bbb;
+}
+    
+a.button:hover {
+    background-color: #ccc;
+}
+    
+a.button:active {
+    background-color: #ddd;
+}

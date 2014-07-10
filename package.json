@@ -1,0 +1,25 @@
+{
+    "name": "VR",
+    "version": "0.0.1",
+    "license": "MIT License",
+    "readme": "./README.txt",
+    "dependencies": {
+        "mime": "latest"
+    },
+
+    "description": "HTML 5 VR system for phones and cardboard viewers.",
+    "keywords": ["virtual reality"],
+
+    "homepage": "http://www.seanmcbeth.com/vr",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/capnmidnight/VR"
+    },
+    "bugs": "https://github.com/capnmidnight/VR/issues",
+    "author": "Sean T. McBeth <sean.mcbeth+VR@gmail.com> (http://www.seanmcbeth.com)",
+
+    "main": "./server.js",
+    "scripts": {
+        "start": "node server",
+    }
+}

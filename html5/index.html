@@ -1,0 +1,34 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
+    <title>VR</title>
+    <link type="text/css" rel="stylesheet" href="style.css">
+</head>
+<body>
+    <form name="form">
+        <div style="display:none">
+            <video id="vid" autoplay="autoplay"></video>
+            <canvas id="frame1"></canvas>
+            <canvas id="frame2"></canvas>
+        </div>
+        <canvas id="leftEye"></canvas>
+        <canvas id="rightEye"></canvas>
+        <section id="menu">
+            <a class="button" id="startButton" href="javascript:toggleFullScreen()">fullscreen</a>
+        </section>
+    </form>
+    <script id="setup">
+        var curAppVersion = 5;
+        var s = document.createElement("script");
+        s.async = 1;
+        s.addEventListener("load", function () {
+            include("psychologist.js", "fullscreen.js", "app.js");
+        }, false);
+        s.src = "include.js?v" + curAppVersion;
+        document.body.appendChild(s);
+    </script>
+</body>
+</html>
+com

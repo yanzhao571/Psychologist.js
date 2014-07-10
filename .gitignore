@@ -1,0 +1,8 @@
+node_modules/
+obj/
+bin/
+cur/
+*.suo
+*.bat
+*.sh
+commands.txt
