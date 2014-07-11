@@ -1,4 +1,5 @@
-﻿function setupSpeech(){
+﻿function setupSpeech(func){
+    var command = "";
     var recognition = new webkitSpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
@@ -27,14 +28,7 @@
             return i >= event.resultIndex;
         }).join(" ").trim().toLowerCase();
 
-        switch(command){
-            case "look":
-                state = "look";
-                break;
-            case "done":
-                state = "none";
-                break;
-        }
+        func(command);
 
         commandTimeout = setTimeout(function(){
             command = "";

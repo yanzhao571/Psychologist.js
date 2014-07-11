@@ -1,4 +1,4 @@
-var streaming = false, command = "", commandTimeout, state = "none", CANV_WIDTH = Math.floor(1920 * 0.4), CANV_HEIGHT = 1080, gl, gr, g1, g2, orient = "", zeroVector = {x:0,y:0,z:0}, gamma = 0, beta = 0, alpha = 0, upDirection, upC, vid, leftEye, rightEye, frame1, frame2;
+var command = "", commandTimeout, state = "none", CANV_WIDTH = Math.floor(1920 * 0.4), CANV_HEIGHT = 1080, gl, gr, g1, g2, orient = "", zeroVector = {x:0,y:0,z:0}, gamma = 0, beta = 0, alpha = 0, upDirection, upC, vid, leftEye, rightEye, frame1, frame2;
 
 
 function pageLoad() {
@@ -9,9 +9,21 @@ function pageLoad() {
         rightEye = new Surface("rightEye");
         frame1 = new Surface("frame1");
         frame2 = new Surface("frame2");
-
-        setupSpeech();
+        
         setupVideo(vid);
+
+        setupSpeech(function(cmd){
+            command = cmd;
+            switch(cmd){
+                case "look":
+                    state = "look";
+                    break;
+                case "done":
+                    state = "none";
+                    break;
+            }
+        });
+
         setupOrientation(function(g,b,a){
             gamma = g;
             beta = b;
@@ -25,17 +37,15 @@ function pageLoad() {
 }
 
 function cmd_look(){
-    if(streaming){
-        try{
-            var cx = (frame1.width - vid.videoWidth) / 2,
-                cy = (frame1.height - vid.videoHeight) / 2;
+    try{
+        var cx = (frame1.width - vid.videoWidth) / 2,
+            cy = (frame1.height - vid.videoHeight) / 2;
 
-            frame2.drawImage(frame1, 0, 0);
-            frame1.drawImage(vid, cx, cy);
-        }
-        catch(exp){
-            console.error("While drawing", exp);
-        }
+        frame2.drawImage(frame1, 0, 0);
+        frame1.drawImage(vid, cx, cy);
+    }
+    catch(exp){
+        console.error("While drawing", exp);
     }
     leftEye.drawImage(frame1, 0, 0);
     rightEye.drawImage(frame2, 0, 0);

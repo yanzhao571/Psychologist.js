@@ -1,5 +1,6 @@
-﻿var sources = [];
-function setupVideo(vid){
+﻿function setupVideo(vid){
+    var streaming = false;
+
     function getUserMediaFallthrough(vidOpt, err){
         navigator.getUserMedia({video: vidOpt}, function (stream) {
             vid.src = window.URL.createObjectURL(stream);
@@ -9,7 +10,7 @@ function setupVideo(vid){
     function connect(source) {
         try {
             if (streaming) {
-                if (!!window.stream) {
+                if (window.stream) {
                     window.stream.stop();
                 }
                 vid.src = null;
