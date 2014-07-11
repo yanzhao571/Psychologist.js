@@ -31,9 +31,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="html5\app.js" />
+    <Compile Include="html5\camera.js" />
     <Compile Include="html5\fullscreen.js" />
     <Compile Include="html5\include.js" />
+    <Compile Include="html5\motion.js" />
     <Compile Include="html5\psychologist.js" />
+    <Compile Include="html5\speech.js" />
     <Compile Include="minify.js" />
     <Compile Include="server.js" />
     <Compile Include="src\controllers.js" />
