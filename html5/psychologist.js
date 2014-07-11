@@ -383,4 +383,11 @@ MediaStreamTrack.getVideoTracks =
     })
     || function(success) {
         return success([]);
-    };
+};
+
+Math.sign = Math.sign || function(val){
+    if(val < 0){
+        return -1;
+    }
+    return 1;
+}
