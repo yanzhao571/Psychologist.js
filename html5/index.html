@@ -10,8 +10,6 @@
     <form name="form">
         <div style="display:none">
             <video id="vid" autoplay="autoplay"></video>
-            <canvas id="frame1"></canvas>
-            <canvas id="frame2"></canvas>
         </div>
         <canvas id="leftEye"></canvas>
         <canvas id="rightEye"></canvas>
@@ -24,7 +22,7 @@
         var s = document.createElement("script");
         s.async = 1;
         s.addEventListener("load", function () {
-            include("psychologist.js", "fullscreen.js", "speech.js", "camera.js", "motion.js", "app.js");
+            include("psychologist.js", "fullscreen.js", "surface.js", "speech.js", "camera.js", "motion.js", "app.js");
         }, false);
         s.src = "include.js?v" + curAppVersion;
         document.body.appendChild(s);
