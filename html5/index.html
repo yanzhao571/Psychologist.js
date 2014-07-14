@@ -16,13 +16,28 @@
         <section id="menu">
             <a class="button" id="startButton" href="javascript:toggleFullScreen();screen.lockOrientation('portrait-primary');">fullscreen</a>
         </section>
+        <script type="x-shader/x-fragment" id="fragmentShader">
+            void main(void) {
+                gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+            }
+        </script>
+        <script type="x-shader/x-vertex" id="vertexShader">
+            attribute vec3 aVertexPosition;
+
+            uniform mat4 uMVMatrix;
+            uniform mat4 uPMatrix;
+
+            void main(void) {
+                gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+            }
+        </script>
     </form>
     <script id="setup">
         var curAppVersion = 6;
         var s = document.createElement("script");
         s.async = 1;
         s.addEventListener("load", function () {
-            include("psychologist.js", "fullscreen.js", "surface.js", "speech.js", "camera.js", "motion.js", "app.js");
+            include("sylvester.js", "glUtils.js", "psychologist.js", "fullscreen.js", "surface.js", "speech.js", "camera.js", "motion.js", "scene.js", "app.js");
         }, false);
         s.src = "include.js?v" + curAppVersion;
         document.body.appendChild(s);
