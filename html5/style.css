@@ -1,49 +1,56 @@
-*, *:before, *:after {
+*, *:before, *:after
+{
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
     font-family: sans-serif;
 }
 
-html, body, div, #menu{
+body
+{
+    background-color: #000;
+}
+
+html, body, canvas, #menu
+{
     position: absolute;
     padding: 0;
     margin: 0;
     border: 0;
-}
-
-html, body, div, #menu{
     width: 100%;
+    left: 0;
 }
 
-html, div, body
+html, body, canvas
 {
     height: 100%;
-    background-color:#000000;
-    left: 0;
     top: 0;
 }
 
 #menu
 {
-    bottom:0;
+    bottom: 0;
 }
 
-a.button {
-    text-align: center;
+a.button
+{
+    background-color: #123197;
+    border-radius: 7px;
+    color: #fff;
+    cursor: pointer;
     display: inline-block;
     padding: 1em;
+    min-width: 12em;
+    text-align: center;
     text-decoration: none;
-    cursor: pointer;
-    border: solid 1px #ccc;
-    border-radius: 5px;
-    background-color:#bbb;
 }
-    
-a.button:hover {
-    background-color: #ccc;
-}
-    
-a.button:active {
-    background-color: #ddd;
-}
+
+    a.button:hover
+    {
+        background-color: #3555bd;
+    }
+
+    a.button:active
+    {
+        background-color: #1b2c63;
+    }
