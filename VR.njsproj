@@ -31,15 +31,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="html5\app.js" />
-    <Compile Include="html5\camera.js" />
     <Compile Include="html5\fullscreen.js" />
     <Compile Include="html5\include.js" />
     <Compile Include="html5\motion.js" />
     <Compile Include="html5\psychologist.js" />
-    <Compile Include="html5\scene.js" />
     <Compile Include="html5\speech.js" />
-    <Compile Include="html5\surface.js" />
-    <Compile Include="html5\sylvester.js" />
+    <Compile Include="html5\StereoEffect.js" />
+    <Compile Include="html5\three.min.js" />
     <Compile Include="minify.js" />
     <Compile Include="server.js" />
     <Compile Include="src\controllers.js" />
@@ -49,6 +47,12 @@
     <Compile Include="src\webServer.js" />
     <Content Include="commands.txt" />
     <Content Include="html5\index.html" />
+    <Content Include="html5\nx.jpg" />
+    <Content Include="html5\ny.jpg" />
+    <Content Include="html5\nz.jpg" />
+    <Content Include="html5\px.jpg" />
+    <Content Include="html5\py.jpg" />
+    <Content Include="html5\pz.jpg" />
     <Content Include="html5\style.css" />
     <Content Include="package.json" />
     <Content Include="push.bat" />

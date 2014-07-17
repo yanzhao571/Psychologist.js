@@ -5,20 +5,18 @@
     font-family: sans-serif;
 }
 
-html, body, canvas, video, #menu{
+html, body, div, #menu{
     position: absolute;
-    width: 100%;
     padding: 0;
     margin: 0;
     border: 0;
 }
 
-#menu
-{
-    bottom:0;
+html, body, div, #menu{
+    width: 100%;
 }
 
-html, body
+html, div, body
 {
     height: 100%;
     background-color:#000000;
@@ -26,21 +24,9 @@ html, body
     top: 0;
 }
 
-canvas, video
+#menu
 {
-    display: inline-block;
-    height: 100%;
-    width: 42%;
-}
-
-.leftEye
-{
-    right: 50%;
-}
-
-.rightEye
-{
-    left: 50%;
+    bottom:0;
 }
 
 a.button {

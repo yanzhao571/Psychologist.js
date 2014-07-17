@@ -72,7 +72,6 @@ function fmt(template) {
     var args = arguments;
     return template.replace(regex, function (m, pad, index, _, precision) {
         index = parseInt(index, 10);
-        console.log(args, index, args[index]);
         if (0 <= index && index < args.length) {
             var val = args[index];
             if (val != undefined) {
@@ -94,12 +93,7 @@ function fmt(template) {
 }
 
 var px = fmt.bind(this, "$1px");
-var pct = function(v){
-    console.log(v);
-    v = fmt("$1%", v);
-    console.log(v);
-    return v;
-}
+var pct = fmt.bind(this, "$1%");
 var ems = fmt.bind(this, "$1em");
 
 

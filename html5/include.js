@@ -1,24 +1,15 @@
 ﻿function getScript(src, success, fail) {
-    if(!this.history){
-          this.history = {};
+    if(!/http(s):/.test(src)){
+        src = src + "?v" + curAppVersion;
     }
-    var history = this.history;
-    if(!history[src]){
-        if(!/http(s):/.test(src)){
-            src = src + "?v" + curAppVersion;
-        }
-        var s = document.createElement("script");
-        s.type = "text/javascript";
-        s.async = true;
-        s.addEventListener("error", fail);
-        s.addEventListener("abort", fail);
-        s.addEventListener("load", function(){
-            history[src] = true;
-            success();
-        });
-        document.head.appendChild(s);
-        s["src"] = src;
-    }
+    var s = document.createElement("script");
+    s.type = "text/javascript";
+    s.async = true;
+    s.addEventListener("error", fail);
+    s.addEventListener("abort", fail);
+    s.addEventListener("load", success);
+    document.head.appendChild(s);
+    s.src = src;
 }
 
 var include = (function () {
@@ -50,7 +41,6 @@ var include = (function () {
         Gs.left = v + "%";
         if (c > 0 && c == g) {
             document.body.removeChild(G);
-            pageLoad();
         }
     }
 
@@ -64,22 +54,26 @@ var include = (function () {
         }
     }
 
-    function loadLibs(libs) {
+    function loadLibs(done, libs) {
         var thunk = function (m, l) {
             set(1, m);
-            loadLibs(l);
+            loadLibs(done, l);
         };
         if (libs.length > 0) {
             var m = libs.shift();
             var t = thunk.bind(this, m, libs);
             getScript(m, t, t);
         }
+        else{
+            window[done]();
+        }
     }
 
     function include() {
-        var libs = Array.prototype.slice.call(arguments);
+        var done = arguments[0];
+        var libs = Array.prototype.slice.call(arguments, 1);
         libs.forEach(set.bind(this, 0));
-        tryAppend(loadLibs.bind(this, libs));
+        tryAppend(loadLibs.bind(this, done, libs));
     }
 
     return include;

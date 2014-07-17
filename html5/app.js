@@ -1,101 +1,102 @@
-var command = "", 
-    commandTimeout = 0,
-    state = "look",
-    CANV_WIDTH = Math.floor(1920 * 0.4),
-    CANV_HEIGHT = 1080,
-    ASPECT_RATIO = CANV_HEIGHT / CANV_WIDTH,
-    orient = "", 
-    zeroVector = {x:0,y:0,z:0}, 
-    gamma = 0, 
+var gamma = 0, 
     beta = 0, 
     alpha = 0, 
-    upDirection, 
-    upC, 
-    leftVid,
-    rightVid, 
-    leftEye, 
-    rightEye,
-    overlay,
-    vidSize = 84;
+    overlay;
+
+var container;
+
+var camera, scene, renderer, effect;
+
+var mesh, lightMesh, geometry;
+var spheres = [];
+
+var directionalLight, pointLight;
+
+var mouseX = 0, mouseY = 0;
 
 function pageLoad() {
-    leftVid = document.getElementById("leftVid");
-    rightVid = document.getElementById("rightVid");
+	container = document.getElementById("front");
 
-    leftEye = new Surface("leftEye", true);
-    rightEye = new Surface("rightEye");
-        
-    setupVideo(leftVid);//, rightVid);
-    
-    if(false) setupSpeech(function(cmd){
-        command = cmd;
-        switch(cmd){
-            case "look":
-                state = "look";
-                break;
-            case "stop":
-                state = "none";
-                break;
-            case "bigger":
-                vidSize += 0.5;
-                resetVideoSize();
-                break;
-            case "smaller":
-                if(vidSize > 0.5){
-                    vidSize -= 0.5;
-                    resetVideoSize();
-                }
-                break;
-        }
+	camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 100000 );
+	camera.position.z = 3200;
+
+	scene = new THREE.Scene();
+
+	var geometry = new THREE.SphereGeometry( 100, 32, 16 );
+
+	var urls = [
+		'px.jpg', 'nx.jpg',
+		'py.jpg', 'ny.jpg',
+		'pz.jpg', 'nz.jpg'
+	];
+
+	var textureCube = THREE.ImageUtils.loadTextureCube( urls, new THREE.CubeRefractionMapping() );
+	var material = new THREE.MeshBasicMaterial( { color: 0xffffff, envMap: textureCube, refractionRatio: 0.95 } );
+
+	for ( var i = 0; i < 500; i ++ ) {
+		var mesh = new THREE.Mesh( geometry, material );
+		mesh.position.x = Math.random() * 10000 - 5000;
+		mesh.position.y = Math.random() * 10000 - 5000;
+		mesh.position.z = Math.random() * 10000 - 5000;
+		mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 3 + 1;
+		scene.add( mesh );
+
+		spheres.push( mesh );
+	}
+
+	// Skybox
+
+	var shader = THREE.ShaderLib[ "cube" ];
+	shader.uniforms[ "tCube" ].value = textureCube;
+
+	var material = new THREE.ShaderMaterial({
+		fragmentShader: shader.fragmentShader,
+		vertexShader: shader.vertexShader,
+		uniforms: shader.uniforms,
+		side: THREE.BackSide
+	}),
+
+	mesh = new THREE.Mesh( new THREE.BoxGeometry( 100000, 100000, 100000 ), material );
+	scene.add( mesh );
+
+	renderer = new THREE.WebGLRenderer();
+	container.appendChild(renderer.domElement);
+
+	effect = new THREE.StereoEffect( renderer );
+	effect.separation = 10;
+	effect.setSize(window.innerWidth, window.innerHeight);
+
+    setupOrientation(function(g,b,a){
+        gamma = g;//+90;
+        beta = b;
+        alpha = a;
     });
 
-    //setupOrientation(function(g,b,a){
-    //    gamma = g;
-    //    beta = b;
-    //    alpha = a;
-    //    orient = fmt("g: $1.0 b: $2.0 a: $3.0", g, b, a);
-    //});
-
-    //setupScene(leftEye, "fragmentShader", "vertexShader");
-
-    window.requestAnimationFrame(draw);
+    window.addEventListener("resize", resize, false);
+    window.requestAnimationFrame(animate);
 }
 
-function resetVideoSize(){
-    vid.style.width 
-        = vid.style.height 
-        = pct(vidSize);
-    vid.style.left 
-        = vid.style.top
-        = pct(0.5 * (100 - vidSize));
+function resize(){
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+
+	effect.setSize( window.innerWidth, window.innerHeight );
 }
 
-function cmd_look(){
-    leftEye.canv.style.display = "none";
-    rightEye.canv.style.display = "none";
-    leftVid.style.display = "block";
-    rightVid.style.display = "block";
-}
+function animate() {
+	requestAnimationFrame( animate );
+	var timer = 0.0001 * Date.now();
+	camera.setRotationFromEuler(new THREE.Euler(
+        gamma * Math.PI / 180, 
+        alpha * Math.PI / 180, 
+        beta * Math.PI / 180, 
+        "YXZ"));
 
-function cmd_none(){
-    leftEye.canv.style.display = "block";
-    rightEye.canv.style.display = "block";
-    leftVid.style.display = "none";
-    rightVid.style.display = "none";
-}
+	for (var i = 0, il = spheres.length; i < il; i++) {
+		var sphere = spheres[ i ];
+		sphere.position.x = 5000 * Math.cos( timer + i );
+		sphere.position.y = 5000 * Math.sin( timer + i * 1.1 );
+	}
 
-function draw(){ 
-    //leftEye.clear();
-    //rightEye.clear();
-    var cmd = "cmd_" + state;
-    if(window[cmd]){
-        window[cmd]();
-    }
-    //var msg = fmt("state: $1\ncommand: $2\n$3", state, command, orient);
-    //var y = CANV_HEIGHT / 2 - 100;
-    //leftEye.drawTextBox(msg, y, 25, "#ffffff");
-    //rightEye.drawTextBox(msg, y, 25, "#ffffff");
-    //drawScene(leftEye);
-    //rightEye.drawImage(leftEye);
-    window.requestAnimationFrame(draw);
+	effect.render(scene, camera );
 }
