@@ -67,7 +67,7 @@ function pageLoad() {
 	effect.setSize(window.innerWidth, window.innerHeight);
 
     setupOrientation(function(g,b,a){
-        gamma = g;//+90;
+        gamma = g;;
         beta = b;
         alpha = a;
     });
@@ -84,19 +84,18 @@ function resize(){
 }
 
 function animate() {
-	requestAnimationFrame( animate );
+	requestAnimationFrame(animate);
 	var timer = 0.0001 * Date.now();
-	camera.setRotationFromEuler(new THREE.Euler(
-        gamma * Math.PI / 180, 
-        alpha * Math.PI / 180, 
-        beta * Math.PI / 180, 
-        "YXZ"));
-
 	for (var i = 0, il = spheres.length; i < il; i++) {
 		var sphere = spheres[ i ];
 		sphere.position.x = 5000 * Math.cos( timer + i );
 		sphere.position.y = 5000 * Math.sin( timer + i * 1.1 );
 	}
-
+    
+	camera.setRotationFromEuler(new THREE.Euler(
+        gamma * Math.PI / 180, 
+        alpha * Math.PI / 180, 
+        beta * Math.PI / 180, 
+        "YXZ"));
 	effect.render(scene, camera );
 }
