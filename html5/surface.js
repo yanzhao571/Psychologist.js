@@ -14,7 +14,7 @@ function Surface(id, is3D, w, h){
     this.is3d = is3D;
 
     if(this.is3d){
-        this.gl = this.canv.getContext("webgl") || this.back.getContext("experimental-webgl");
+        this.gl = this.canv.getContext("webgl") || this.canv.getContext("experimental-webgl");
         this.gl.clearColor(0, 0, 0, 1);
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.depthFunc(this.gl.LEQUAL);

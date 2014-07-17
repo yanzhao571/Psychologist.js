@@ -69,10 +69,12 @@ function fmt(template) {
     // - (optional) then a period (.) literally
     // -            then one or more zero digit (0) characters
     var regex = /\$(0*)(\d+)(\.(0+))?/g;
+    var args = arguments;
     return template.replace(regex, function (m, pad, index, _, precision) {
         index = parseInt(index, 10);
-        if (0 <= index && index < arguments.length) {
-            var val = arguments[index];
+        console.log(args, index, args[index]);
+        if (0 <= index && index < args.length) {
+            var val = args[index];
             if (val != undefined) {
                 val = val.toString();
                 var regex2;
@@ -92,7 +94,12 @@ function fmt(template) {
 }
 
 var px = fmt.bind(this, "$1px");
-var pct = fmt.bind(this, "$1%");
+var pct = function(v){
+    console.log(v);
+    v = fmt("$1%", v);
+    console.log(v);
+    return v;
+}
 var ems = fmt.bind(this, "$1em");
 
 

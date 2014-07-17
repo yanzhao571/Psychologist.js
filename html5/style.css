@@ -5,7 +5,7 @@
     font-family: sans-serif;
 }
 
-html, body, canvas, #menu{
+html, body, canvas, video, #menu{
     position: absolute;
     width: 100%;
     padding: 0;
@@ -22,23 +22,25 @@ html, body
 {
     height: 100%;
     background-color:#000000;
+    left: 0;
+    top: 0;
 }
 
-canvas
+canvas, video
 {
     display: inline-block;
     height: 100%;
-    width: 40%;
+    width: 42%;
 }
 
-canvas#rightEye
-{
-    left: 50%;
-}
-
-canvas#leftEye
+.leftEye
 {
     right: 50%;
+}
+
+.rightEye
+{
+    left: 50%;
 }
 
 a.button {

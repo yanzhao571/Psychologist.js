@@ -1,9 +1,12 @@
-﻿function setupVideo(vid){
+﻿function setupVideo(){
     var streaming = false;
-
+    var args = arguments;
     function getUserMediaFallthrough(vidOpt, err){
         navigator.getUserMedia({video: vidOpt}, function (stream) {
-            vid.src = window.URL.createObjectURL(stream);
+            var stream = window.URL.createObjectURL(stream);
+            Array.prototype.forEach.call(args, function(vid){
+                vid.src = stream;
+            });
         }, err);
     }
 
@@ -21,13 +24,19 @@
             console.error("While stopping", err);
         }
 
-        getUserMediaFallthrough({optional: [{ sourceId: source }]}, function(err){
+        getUserMediaFallthrough({
+            optional: [{ sourceId: source }],
+            mandatory: {
+                minWidth: CANV_WIDTH * 2,
+                minHeight: CANV_HEIGHT
+            }
+        }, function(err){
             console.error("While connecting", err);
             getUserMediaFallthrough(true, console.error.bind(window, "Final connect attempt"));
         });
     }
 
-    vid.addEventListener("canplay", function (ev) {
+    args[0].addEventListener("canplay", function (ev) {
         if (!streaming) {
             streaming = true;
         }

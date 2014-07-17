@@ -8,11 +8,10 @@
 </head>
 <body>
     <form name="form">
-        <div style="display:none">
-            <video id="vid" autoplay="autoplay"></video>
-        </div>
-        <canvas id="leftEye"></canvas>
-        <canvas id="rightEye"></canvas>
+        <video id="leftVid" class="leftEye" autoplay="autoplay"></video>
+        <video id="rightVid" class="rightEye" autoplay="autoplay"></video>
+        <canvas id="leftEye" class="leftEye" style="display:none;"></canvas>
+        <canvas id="rightEye" class="rightEye" style="display:none;"></canvas>
         <section id="menu">
             <a class="button" id="startButton" href="javascript:toggleFullScreen();screen.lockOrientation('portrait-primary');">fullscreen</a>
         </section>
