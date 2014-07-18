@@ -11,19 +11,21 @@
     function tryModesFirstThen(source, err, i){
         i = i || 0;
         if(modes && i < modes.length){
+            var mode = modes[i];
             var opt = {
                 optional: [{ sourceId: source }]
             };
-            if(modes[i] != "default"){
+            if(mode != "default"){
                 opt.mandatory = {
-                    minWidth: modes[i].w,
-                    minHeight: modes[i].h
+                    minWidth: mode.w,
+                    minHeight: mode.h
                 };
+                mode = fmt("[w:$1, h:$2]", mode.w, mode.h);
             }
             getUserMediaFallthrough(opt, function(){
-                console.log(fmt("Connected to camera at mode $1.", modes[i]));
+                console.log(fmt("Connected to camera at mode $1.", mode));
             }, function(err){
-                console.error(fmt("Failed to connect at mode $1. Reason: $2", modes[i], err));
+                console.error(fmt("Failed to connect at mode $1. Reason: $2", mode, err));
                 tryModesFirstThen(source, err, i+1);
             });
         }

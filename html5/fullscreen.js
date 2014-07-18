@@ -16,6 +16,8 @@ if (!document.documentElement.requestFullscreen){
     }
 }
 
+screen.lockOrientation = screen.lockOrientation || screen.mozLockOrientation || screen.msLockOrientation || function(){};
+
 function toggleFullScreen(){
     if (document.documentElement.requestFullscreen){
         if (!(document.fullscreenElement
@@ -23,6 +25,7 @@ function toggleFullScreen(){
             || document.webkitFullscreenElement
             || document.msFullscreenElement)){  // current working methods
             document.documentElement.requestFullscreen();
+            lockOrientation("landscape-primary");
         }
         else{
             document.exitFullscreen();

@@ -20,7 +20,9 @@ function animate() {
     gfx.fillStyle = "#111";
     gfx.fillRect(overlay.width / 2 - 2, 0, 4, overlay.height);
 
-    map.needsUpdate = true;
+    if(map){
+        map.needsUpdate = true;
+    }
 
     setCamera(dt);
     effect.render(scene, camera);
@@ -51,28 +53,6 @@ function pageLoad() {
         }
     });
 
-    video = document.createElement("video");
-    video.autoplay = true;
-    video.loop = true;
-
-    var modes = isMobile 
-        ? ["default"]
-        : [{w:1920, h:1080}, {w:1280, h:720}];
-
-    setupVideo(modes, video, function(){
-	    video.width	= video.videoWidth;
-	    video.height = video.videoHeight;
-
-    map = new THREE.Texture(video);//THREE.ImageUtils.loadTexture("nx.jpg");map.needsUpdate = true;
-    var material2 = new THREE.SpriteMaterial({
-        map: map,
-        color: 0xffffff, 
-        fog: true
-    });
-    var sprite = new THREE.Sprite(material2);
-    sprite.position.x = -2;
-    sprite.scale.set(4, 4 * video.height / video.width, 1);
-
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.y = 1;
     camera.position.z = 10;
@@ -81,7 +61,7 @@ function pageLoad() {
     overlay.parentElement.insertBefore(renderer.domElement, overlay);
 
     effect = new THREE.StereoEffect(renderer);
-    effect.separation = 1;
+    effect.separation = isMobile ? 1 : -1;
 
     window.addEventListener("resize", function () {
         setSize(window.innerWidth, window.innerHeight);
@@ -109,14 +89,37 @@ function pageLoad() {
     scene.add(light2);
     scene.add(cube);
     scene.add(line);
-    scene.add(sprite);
+    
+    
+
+    video = document.createElement("video");
+    video.autoplay = true;
+    video.loop = true;
+
+    var modes = isMobile 
+        ? ["default"]
+        : [{w:1920, h:1080}, {w:1280, h:720}];
+
+    setupVideo(modes, video, function(){
+	    video.width	= video.videoWidth;
+	    video.height = video.videoHeight;
+        map = new THREE.Texture(video);
+        var material2 = new THREE.SpriteMaterial({
+            map: map,
+            color: 0xffffff, 
+            fog: true
+        });
+        var sprite = new THREE.Sprite(material2);
+        sprite.position.x = -2;
+        sprite.scale.set(4, 4 * video.height / video.width, 1);
+        scene.add(sprite);
 
     
-    setSize(window.innerWidth, window.innerHeight);
-    clock.start();
-    window.requestAnimationFrame(animate);
-    
+        setSize(window.innerWidth, window.innerHeight);
+        clock.start();    
     });
+    
+    window.requestAnimationFrame(animate);
 }
 
 function setCamera(dt) {
