@@ -1,7 +1,7 @@
 var dg = 0, gamma = 0, tg = 0,
     db = 0, beta = 0, tb = 0,
     da = 0, alpha = 0, ta = 0,
-    overlay, gfx, vid, vidGfx,
+    overlay, gfx, video,
     camera, scene, effect, renderer, cube, map,
     clock, firstTime = !isMobile;
 
@@ -17,8 +17,9 @@ function animate() {
     gfx.font = "20px Arial";
     gfx.fillStyle = "#c00000";
     gfx.fillText(txt, 10, 20);
+    gfx.fillStyle = "#111";
+    gfx.fillRect(overlay.width / 2 - 2, 0, 4, overlay.height);
 
-    vidGfx.drawImage(vid, 0, 0);
     map.needsUpdate = true;
 
     setCamera(dt);
@@ -35,6 +36,7 @@ function setSize(w, h) {
 }
 
 function pageLoad() {
+    scene = new THREE.Scene();
     clock = new THREE.Clock();
     overlay = document.getElementById("overlay");
     gfx = overlay.getContext("2d");
@@ -49,14 +51,27 @@ function pageLoad() {
         }
     });
 
-    vid = document.createElement("video");
-    vid.autoplay = true;
-    var vidCanv = document.createElement("canvas");
-    vidGfx = vidCanv.getContext("2d");
+    video = document.createElement("video");
+    video.autoplay = true;
+    video.loop = true;
 
-    setupVideo([{w:1920,h:1080},{w:1280, h:720}], vid, function(){
-        vidCanv.width = vid.videoWidth;
-        vidCanv.height = vid.videoHeight;
+    var modes = isMobile 
+        ? ["default"]
+        : [{w:1920, h:1080}, {w:1280, h:720}];
+
+    setupVideo(modes, video, function(){
+	    video.width	= video.videoWidth;
+	    video.height = video.videoHeight;
+
+    map = new THREE.Texture(video);//THREE.ImageUtils.loadTexture("nx.jpg");map.needsUpdate = true;
+    var material2 = new THREE.SpriteMaterial({
+        map: map,
+        color: 0xffffff, 
+        fog: true
+    });
+    var sprite = new THREE.Sprite(material2);
+    sprite.position.x = -2;
+    sprite.scale.set(4, 4 * video.height / video.width, 1);
 
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.y = 1;
@@ -76,34 +91,25 @@ function pageLoad() {
     var material = new THREE.MeshLambertMaterial({color: 0x70ff70, ambient: 0xffffff, opacity:0.75, transparent: true });
     cube = new THREE.Mesh(geometry, material);
 
-    map = new THREE.Texture(vidCanv);//THREE.ImageUtils.loadTexture("nx.jpg");
-    map.needsUpdate = true;
-    var material2 = new THREE.SpriteMaterial({
-        map: map, 
-        color: 0xffffff, 
-        fog: true
-    });
-    var sprite = new THREE.Sprite(material2);
-    sprite.position.x = - 2;
-    sprite.scale.set(4, 4 * vid.videoHeight / vid.videoWidth, 1);
-
     var light = new THREE.DirectionalLight(0xffffff, 0.95);
     var light2 = new THREE.AmbientLight(0x101010);
     light.position.set(1, 1, 0);
 
     var material3 = new THREE.LineBasicMaterial({color: 0xff0000});
     var geometry3 = new THREE.Geometry();
-    for(var a = 0; a < 2 * Math.PI; a += Math.PI / 180){
-        geometry3.vertices.push(new THREE.Vector3(Math.cos(a), a, Math.sin(a)));
+    for(var i = 0; i < 360; ++i){
+        var a = i * Math.PI / 180;
+        var c = Math.cos(a);
+        var s = Math.sin(a);
+        geometry3.vertices.push(new THREE.Vector3(s, a, c));
     }
     var line = new THREE.Line(geometry3, material3);
 
-    scene = new THREE.Scene();
     scene.add(light);
     scene.add(light2);
     scene.add(cube);
-    scene.add(sprite);
     scene.add(line);
+    scene.add(sprite);
 
     
     setSize(window.innerWidth, window.innerHeight);

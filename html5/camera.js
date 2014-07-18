@@ -10,19 +10,20 @@
 
     function tryModesFirstThen(source, err, i){
         i = i || 0;
-        if(i < modes.length){
-            var w = modes[i].w;
-            var h = modes[i].h;
-            getUserMediaFallthrough({
-                optional: [{ sourceId: source }],
-                mandatory: {
-                    minWidth: w,
-                    minHeight: h
-                }
-            }, function(){
-                console.log(fmt("Connected to camera at [w:$1, h:$2].", w, h));
+        if(modes && i < modes.length){
+            var opt = {
+                optional: [{ sourceId: source }]
+            };
+            if(modes[i] != "default"){
+                opt.mandatory = {
+                    minWidth: modes[i].w,
+                    minHeight: modes[i].h
+                };
+            }
+            getUserMediaFallthrough(opt, function(){
+                console.log(fmt("Connected to camera at mode $1.", modes[i]));
             }, function(err){
-                console.error(fmt("Failed to connect at [w:$1, h:$2]. Reason: $3", w, h, err));
+                console.error(fmt("Failed to connect at mode $1. Reason: $2", modes[i], err));
                 tryModesFirstThen(source, err, i+1);
             });
         }
@@ -47,7 +48,7 @@
         }
 
         tryModesFirstThen(source, function(err){
-            console.error("While connecting", err);
+            console.error("Couldn't connect at requested resolutions. Reason: ", err);
             getUserMediaFallthrough(true,
                 console.log.bind(console, "Connected to camera at default resolution"),
                 console.error.bind(console, "Final connect attempt"));
@@ -68,6 +69,6 @@
 
         //the last one is most likely to be the back camera of the phone
         //TODO: setup this up to be configurable.
-        connect(infos[infos.length - 1].id);
+        connect(infos && infos.length > 0 && infos[infos.length - 1].id);
     });
 }
