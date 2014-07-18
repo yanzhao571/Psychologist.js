@@ -54,10 +54,9 @@ function pageLoad() {
     var vidCanv = document.createElement("canvas");
     vidGfx = vidCanv.getContext("2d");
 
-    setupVideo(640, 480, vid, function(){
+    setupVideo([{w:1920,h:1080},{w:1280, h:720}], vid, function(){
         vidCanv.width = vid.videoWidth;
         vidCanv.height = vid.videoHeight;
-    });
 
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.y = 1;
@@ -86,7 +85,7 @@ function pageLoad() {
     });
     var sprite = new THREE.Sprite(material2);
     sprite.position.x = - 2;
-    sprite.scale.set(4, 4, 1);
+    sprite.scale.set(4, 4 * vid.videoHeight / vid.videoWidth, 1);
 
     var light = new THREE.DirectionalLight(0xffffff, 0.95);
     var light2 = new THREE.AmbientLight(0x101010);
@@ -110,6 +109,8 @@ function pageLoad() {
     setSize(window.innerWidth, window.innerHeight);
     clock.start();
     window.requestAnimationFrame(animate);
+    
+    });
 }
 
 function setCamera(dt) {

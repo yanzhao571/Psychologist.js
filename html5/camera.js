@@ -1,11 +1,36 @@
-﻿function setupVideo(width, height, vid, onPlay){
+﻿function setupVideo(modes, vid, onPlay){
     var streaming = false;
-    function getUserMediaFallthrough(vidOpt, err){
+    function getUserMediaFallthrough(vidOpt, success, err){
         navigator.getUserMedia({video: vidOpt}, function (stream) {
             var stream = window.URL.createObjectURL(stream);
             vid.src = stream;
+            success();
         }, err);
+    };
+
+    function tryModesFirstThen(source, err, i){
+        i = i || 0;
+        if(i < modes.length){
+            var w = modes[i].w;
+            var h = modes[i].h;
+            getUserMediaFallthrough({
+                optional: [{ sourceId: source }],
+                mandatory: {
+                    minWidth: w,
+                    minHeight: h
+                }
+            }, function(){
+                console.log(fmt("Connected to camera at [w:$1, h:$2].", w, h));
+            }, function(err){
+                console.error(fmt("Failed to connect at [w:$1, h:$2]. Reason: $3", w, h, err));
+                tryModesFirstThen(source, err, i+1);
+            });
+        }
+        else{
+            err();
+        }
     }
+
 
     function connect(source) {
         try {
@@ -21,15 +46,11 @@
             console.error("While stopping", err);
         }
 
-        getUserMediaFallthrough({
-            optional: [{ sourceId: source }],
-            mandatory: {
-                minWidth: width,
-                minHeight: height
-            }
-        }, function(err){
+        tryModesFirstThen(source, function(err){
             console.error("While connecting", err);
-            getUserMediaFallthrough(true, console.error.bind(window, "Final connect attempt"));
+            getUserMediaFallthrough(true,
+                console.log.bind(console, "Connected to camera at default resolution"),
+                console.error.bind(console, "Final connect attempt"));
         });
     }
 
