@@ -40,9 +40,11 @@ a.button
     cursor: pointer;
     display: inline-block;
     padding: 1em;
-    min-width: 12em;
+    padding-left: 2em;
+    padding-right: 2em;
     text-align: center;
     text-decoration: none;
+    margin:0.5em;
 }
 
     a.button:hover
