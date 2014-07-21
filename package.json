@@ -10,7 +10,7 @@
     "description": "HTML 5 VR system for phones and cardboard viewers.",
     "keywords": ["virtual reality"],
 
-    "homepage": "http://www.seanmcbeth.com/vr",
+    "homepage": "http://www.justwritedammit.com/vr1",
     "repository": {
         "type": "git",
         "url": "https://github.com/capnmidnight/VR"
@@ -20,6 +20,6 @@
 
     "main": "./server.js",
     "scripts": {
-        "start": "node server",
+        "start": "node server"
     }
 }

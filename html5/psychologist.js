@@ -96,36 +96,9 @@ var px = fmt.bind(this, "$1px");
 var pct = fmt.bind(this, "$1%");
 var ems = fmt.bind(this, "$1em");
 
-
-String.prototype.sanitize = function () {
-    return this.replace(/(<|>|&| |\n)/g, function (match, capture) {
-        switch (capture) {
-            case "<": return "&lt;";
-            case ">": return "&gt;";
-            case "&": return "&amp;";
-            case " ": return "&nbsp;";
-            case "\n": return "<br>";
-        }
-    });
-};
-
-Element.prototype.fire = function (event) {
-    if (document.createEventObject) {
-        // dispatch for IE
-        var evt = document.createEventObject();
-        return this.fireEvent('on' + event, evt)
-    }
-    else {
-        // dispatch for firefox + others
-        var evt = document.createEvent("HTMLEvents");
-        evt.initEvent(event, true, true); // event type,bubbling,cancelable
-        return !this.dispatchEvent(evt);
-    }
-};
-
 function add(a, b) { return a + b; }
 
-Array.prototype.group = function(getKey, getValue) {
+function group(arr, getKey, getValue) {
     var groups = [];
     // we don't want to modify the original array.
     var clone = this.concat();
@@ -157,17 +130,17 @@ Array.prototype.group = function(getKey, getValue) {
     return groups;
 };
 
-Array.prototype.agg = function (get, red) {
+function agg(arr, get, red) {
     if (typeof (get) != "function") {
         get = (function (key, obj) {
             return obj[key];
         }).bind(window, get);
     }
-    return this.map(get).reduce(red);
+    return arr.map(get).reduce(red);
 };
 
-Array.prototype.sum = function (get) {
-    return this.agg(get, add);
+function sum (arr, get) {
+    return agg(arr, get, add);
 };
 
 function getText(url, success, fail){
@@ -198,7 +171,6 @@ function makeURL(url, queryMap) {
 
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia || navigator.oGetUserMedia;
 
-
 MediaStreamTrack.getVideoTracks =
     (window["MediaStream"] && MediaStream.getVideoTracks && (function (getter, success) {
         success(getter());
@@ -214,9 +186,18 @@ MediaStreamTrack.getVideoTracks =
         return success([]);
 };
 
-Math.sign = Math.sign || function(val){
-    if(val < 0){
-        return -1;
-    }
-    return 1;
+function saveFile(filename, type, bin64){
+    var href = fmt("data:$1;filename=$2;base64,$3", type, filename, bin64);
+    saveAs(filename, href);
+}
+
+function saveAs(filename, href){
+    var link = document.createElement("a");
+    link.download = filename;
+    link.href = href;
+    link.innerHTML = "save";
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }

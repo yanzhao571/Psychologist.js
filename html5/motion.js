@@ -32,38 +32,41 @@
     });
 }
 
+function calibrateToSensors(){
+    calibrated = true;
+}
+
 function setupOrientation(orient, move) {
 
     var ZERO_VECTOR = { x: 0, y: 0, z: 0 },
-        upDirection = null,
-        RAD_PER_DEG = Math.PI / 180,
-        gamma = new Angle(), beta = new Angle(), alpha = new Angle(),
-        tiltDirection, accel;
+        beta = new Angle(), gamma = new Angle(), alpha = new Angle(),
+        oriented = false, moved = false, calibrated = false;
 
     window.addEventListener("deviceorientation", function (event) {
-        tiltDirection = Math.sign(event.gamma) * upDirection;
-
-        gamma.degrees = tiltDirection * 90 - upDirection * event.gamma;
-        beta.degrees = upDirection * tiltDirection * event.beta + (3 - tiltDirection) * 90;
-        alpha.degrees = event.alpha - 90 * (2 + upDirection + tiltDirection);
+        if(!calibrated){
+            oriented = true;
+            if(moved){
+                calibrateToSensors();
+            }
+        }
+        gamma.degrees = event.gamma;
+        beta.degrees = event.beta;
+        alpha.degrees = event.alpha;
         if(orient){
             orient(gamma.radians, beta.radians, alpha.radians);
         }
     }, false);
 
     window.addEventListener("devicemotion", function (event) {
+        if(!calibrated){
+            moved = true;
+            if(oriented){
+                calibrateToSensors();
+            }
+        }
         accel = event.accelerationIncludingGravity || ZERO_VECTOR;
-        upDirection = Math.sign(accel.x);
         if(move){
             move(accel.x, accel.y, accel.z);
-        }
-    }, false);
-
-    window.addEventListener("mousemove", function(event){
-        gamma.degrees = 180 * (1.5 - event.clientY / window.innerHeight);
-        alpha.degrees = -180 * (1.5 + 2 * event.clientX / window.innerWidth);
-        if(orient){
-            orient(gamma.radians, Math.PI / 2, alpha.radians);
         }
     }, false);
 }

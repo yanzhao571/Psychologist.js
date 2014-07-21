@@ -3,21 +3,23 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
-    <title>VR</title>
+    <title>StereoHelperCam</title>
     <link type="text/css" rel="stylesheet" href="style.css">
 </head>
 <body>
+    <video id="camera" autoplay></video>
     <canvas id="overlay"></canvas>
+    <img src="reticle.png" id="reticle" />
     <section id="menu">
-        <a class="button" id="fullscreeButton" onclick="toggleFullScreen();">F</a>
-        <a class="button" id="calibrateButton" onclick="calibrate();">C</a>
+        <a class="button" id="shootButton" onclick="shoot();" style="float:left;">S</a>
+        <a class="button" id="fullscreeButton" onclick="toggleFullScreen();" style="float:right;">F</a>
     </section>
     <script id="setup">
         var curAppVersion = 8;
         var s = document.createElement("script");
         s.async = 1;
         s.addEventListener("load", function () {
-            include("pageLoad", "three.min.js", "StereoEffect.min.js", "psychologist.js", "fullscreen.js", "camera.js", "speech.js", "motion.js", "app.js")
+            include("pageLoad", "psychologist.js", "fullscreen.js", "camera.js", "motion.js", "stereohelpercam.js")
         }, false);
         s.src = "include.js?v" + curAppVersion;
         document.body.appendChild(s);

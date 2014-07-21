@@ -1,9 +1,10 @@
-var dg = 0, gamma = 0, tg = 0,
-    db = 0, beta = 0, tb = 0,
-    da = 0, alpha = 0, ta = 0,
+var dg = 0, gamma = 0,
+    db = 0, beta = 0,
+    da = 0, alpha = 0,
     overlay, gfx, video,
     camera, scene, effect, renderer, cube, map,
-    clock, firstTime = !isMobile;
+    ax, ay, az, down = new THREE.Vector3(), left = new THREE.Vector3(), forward = new THREE.Vector3(), look = new THREE.Vector3(),
+    clock;
 
 function animate() {
     var dt = clock.getDelta();
@@ -13,10 +14,14 @@ function animate() {
     cube.rotation.z += 0.5 * dt;
 
     gfx.clearRect(0, 0, overlay.width, overlay.height);
-    var txt = fmt("g: $1.00, a: $2.00, b: $3.00, fps: $4.0", gamma, alpha, beta, 1/dt);
     gfx.font = "20px Arial";
     gfx.fillStyle = "#c00000";
-    gfx.fillText(txt, 10, 20);
+    gfx.fillText(fmt("b: $1.00, g: $2.00, a: $3.00", beta, gamma, alpha), 10, 20);
+    gfx.fillText(fmt("fps: $1.00", 1/dt), 10, 45);
+    gfx.fillText(fmt("x: $1.00, y: $2.00, z: $3.00", ax, ay, az), 10, 70);
+    gfx.fillText(fmt("lx: $1.00, ly: $2.00, lz: $3.00", left.x, left.y, left.z), 10, 95);
+    gfx.fillText(fmt("fx: $1.00, fy: $2.00, fz: $3.00", forward.x, forward.y, forward.z), 10, 120);
+    gfx.fillText(fmt("vx: $1.00, vy: $2.00, vz: $3.00", look.x, look.y, look.z), 10, 145);
     gfx.fillStyle = "#111";
     gfx.fillRect(overlay.width / 2 - 2, 0, 4, overlay.height);
 
@@ -44,13 +49,24 @@ function pageLoad() {
     gfx = overlay.getContext("2d");
 
     setupOrientation(function (g, b, a){
-        gamma = g;
         beta = b;
+        gamma = g;
         alpha = a;
-        if (firstTime) {
-            calibrate();
-            firstTime = false;
-        }
+        look.x = Math.cos(g) * Math.cos(a);
+        look.y = Math.sin(g) * Math.cos(a);
+        look.z = Math.sin(a);
+    }, function(x, y, z){
+        ax = x;
+        ay = y;
+        az = z;
+        down.x = x;
+        down.y = y;
+        down.z = z;
+        left.x = y;
+        left.y = -x;
+        left.z = z;
+        forward.crossVectors(down, left);
+        forward.normalize();
     });
 
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -98,9 +114,9 @@ function pageLoad() {
 
     var modes = isMobile 
         ? ["default"]
-        : [{w:1920, h:1080}, {w:1280, h:720}];
+        : [{w:640, h:480}, {w:1920, h:1080}, {w:1280, h:720}];
 
-    setupVideo(modes, video, function(){
+    if(false) setupVideo(modes, video, function(){
 	    video.width	= video.videoWidth;
 	    video.height = video.videoHeight;
         map = new THREE.Texture(video);
@@ -112,18 +128,16 @@ function pageLoad() {
         var sprite = new THREE.Sprite(material2);
         sprite.position.x = -2;
         sprite.scale.set(4, 4 * video.height / video.width, 1);
-        scene.add(sprite);
-
-    
-        setSize(window.innerWidth, window.innerHeight);
-        clock.start();    
+        scene.add(sprite);    
     });
     
+    clock.start();
+    setSize(window.innerWidth, window.innerHeight);
     window.requestAnimationFrame(animate);
 }
 
 function setCamera(dt) {
-    camera.setRotationFromEuler(new THREE.Euler(gamma + dg, alpha + da, beta + db, "YXZ")); 
+    camera.setRotationFromEuler(new THREE.Euler(alpha + da, gamma + dg, beta + db, "YXZ")); 
 }
 
 function calibrate() {

@@ -38,6 +38,7 @@
     <Compile Include="html5\psychologist.js" />
     <Compile Include="html5\speech.js" />
     <Compile Include="html5\StereoEffect.min.js" />
+    <Compile Include="html5\stereohelpercam.js" />
     <Compile Include="html5\three.min.js" />
     <Compile Include="minify.js" />
     <Compile Include="server.js" />
@@ -46,11 +47,11 @@
     <Compile Include="src\minifier.js" />
     <Compile Include="src\options.js" />
     <Compile Include="src\webServer.js" />
-    <Content Include="commands.txt" />
     <Content Include="html5\index.html" />
+    <Content Include="html5\reticle.png" />
+    <Content Include="html5\stereohelpercam.html" />
     <Content Include="html5\style.css" />
     <Content Include="package.json" />
-    <Content Include="push.bat" />
     <Content Include="README.md" />
     <Content Include="src\README.md" />
   </ItemGroup>

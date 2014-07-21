@@ -25,7 +25,7 @@ function toggleFullScreen(){
             || document.webkitFullscreenElement
             || document.msFullscreenElement)){  // current working methods
             document.documentElement.requestFullscreen();
-            lockOrientation("landscape-primary");
+            screen.lockOrientation("landscape-primary");
         }
         else{
             document.exitFullscreen();

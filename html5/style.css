@@ -11,7 +11,7 @@ body
     background-color: #000;
 }
 
-html, body, canvas, #menu
+html, body, canvas, video, img, #menu
 {
     position: absolute;
     padding: 0;
@@ -21,7 +21,7 @@ html, body, canvas, #menu
     left: 0;
 }
 
-html, body, canvas
+html, body, canvas, img, video
 {
     height: 100%;
     top: 0;
