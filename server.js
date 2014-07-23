@@ -25,7 +25,7 @@ if(options.m == "true"){
 
 var app = http.createServer(webServer(srcDir));
 var port = 8080;
-var startPage = "stereohelpercam.html";
+var startPage = "motion.html";
 app.listen(port);
 if(options.m != "true" && startProc){
     var template = "http://localhost/$2"

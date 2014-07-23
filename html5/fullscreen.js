@@ -18,6 +18,13 @@ if (!document.documentElement.requestFullscreen){
 
 screen.lockOrientation = screen.lockOrientation || screen.mozLockOrientation || screen.msLockOrientation || function(){};
 
+function isFullscreenMode(){
+    return document.isFullscreen
+    || document.mozIsFullScreen
+    || document.webkitIsFullscreen
+    || document.msIsFullscreen;
+}
+
 function toggleFullScreen(){
     if (document.documentElement.requestFullscreen){
         if (!(document.fullscreenElement
@@ -25,7 +32,12 @@ function toggleFullScreen(){
             || document.webkitFullscreenElement
             || document.msFullscreenElement)){  // current working methods
             document.documentElement.requestFullscreen();
-            screen.lockOrientation("landscape-primary");
+            var interval = setInterval(function(){
+                if(isFullscreenMode()){
+                    clearInterval(interval);
+                    screen.lockOrientation("landscape-primary");
+                }
+            });
         }
         else{
             document.exitFullscreen();

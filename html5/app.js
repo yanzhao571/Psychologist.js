@@ -1,9 +1,9 @@
-var dg = 0, gamma = 0,
-    db = 0, beta = 0,
-    da = 0, alpha = 0,
+var dg = 0, pitch = 0,
+    db = 0, roll = 0,
+    da = 0, heading = 0,
     overlay, gfx, video,
     camera, scene, effect, renderer, cube, map,
-    ax, ay, az, down = new THREE.Vector3(), left = new THREE.Vector3(), forward = new THREE.Vector3(), look = new THREE.Vector3(),
+    ax, ay, az,
     clock;
 
 function animate() {
@@ -16,12 +16,9 @@ function animate() {
     gfx.clearRect(0, 0, overlay.width, overlay.height);
     gfx.font = "20px Arial";
     gfx.fillStyle = "#c00000";
-    gfx.fillText(fmt("b: $1.00, g: $2.00, a: $3.00", beta, gamma, alpha), 10, 20);
+    gfx.fillText(fmt("b: $1.00, g: $2.00, a: $3.00", roll, pitch, heading), 10, 20);
     gfx.fillText(fmt("fps: $1.00", 1/dt), 10, 45);
     gfx.fillText(fmt("x: $1.00, y: $2.00, z: $3.00", ax, ay, az), 10, 70);
-    gfx.fillText(fmt("lx: $1.00, ly: $2.00, lz: $3.00", left.x, left.y, left.z), 10, 95);
-    gfx.fillText(fmt("fx: $1.00, fy: $2.00, fz: $3.00", forward.x, forward.y, forward.z), 10, 120);
-    gfx.fillText(fmt("vx: $1.00, vy: $2.00, vz: $3.00", look.x, look.y, look.z), 10, 145);
     gfx.fillStyle = "#111";
     gfx.fillRect(overlay.width / 2 - 2, 0, 4, overlay.height);
 
@@ -49,24 +46,13 @@ function pageLoad() {
     gfx = overlay.getContext("2d");
 
     setupOrientation(function (g, b, a){
-        beta = b;
-        gamma = g;
-        alpha = a;
-        look.x = Math.cos(g) * Math.cos(a);
-        look.y = Math.sin(g) * Math.cos(a);
-        look.z = Math.sin(a);
+        roll = b;
+        pitch = g;
+        heading = a;
     }, function(x, y, z){
         ax = x;
         ay = y;
         az = z;
-        down.x = x;
-        down.y = y;
-        down.z = z;
-        left.x = y;
-        left.y = -x;
-        left.z = z;
-        forward.crossVectors(down, left);
-        forward.normalize();
     });
 
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -137,11 +123,11 @@ function pageLoad() {
 }
 
 function setCamera(dt) {
-    camera.setRotationFromEuler(new THREE.Euler(alpha + da, gamma + dg, beta + db, "YXZ")); 
+    camera.setRotationFromEuler(new THREE.Euler(pitch + dg, heading + da, roll + db)); 
 }
 
 function calibrate() {
-    dg = -gamma;
-    db = -beta;
-    da = -alpha;
+    dg = -pitch;
+    db = -roll;
+    da = -heading;
 }

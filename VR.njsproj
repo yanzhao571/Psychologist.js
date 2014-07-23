@@ -39,6 +39,8 @@
     <Compile Include="html5\speech.js" />
     <Compile Include="html5\StereoEffect.min.js" />
     <Compile Include="html5\stereohelpercam.js" />
+    <Compile Include="html5\testing.js" />
+    <Compile Include="html5\tests.js" />
     <Compile Include="html5\three.min.js" />
     <Compile Include="minify.js" />
     <Compile Include="server.js" />
@@ -48,6 +50,7 @@
     <Compile Include="src\options.js" />
     <Compile Include="src\webServer.js" />
     <Content Include="html5\index.html" />
+    <Content Include="html5\motion.html" />
     <Content Include="html5\reticle.png" />
     <Content Include="html5\stereohelpercam.html" />
     <Content Include="html5\style.css" />
@@ -57,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="html5\" />
+    <Folder Include="html5\fonts\" />
     <Folder Include="src\" />
     <Folder Include="src\controllers\" />
   </ItemGroup>
