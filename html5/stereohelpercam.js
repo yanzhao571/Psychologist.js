@@ -3,7 +3,8 @@
     goFullscreen = function(){},
     toggleMenu = function(){},
     changeMode = function(){},
-    showSource = function(){};
+    showSource = function(){},
+    toggleReticle = function(){};
 
 function pageLoad(){
     var camera = document.createElement("video"),
@@ -19,6 +20,7 @@ function pageLoad(){
         rotation = 0,
         pitch = 0,
         dPitch = 0,
+        showReticle = localStorage.getItem("reticle") == "true",
         modes = ["anaglyph", "stereoscope", "crosseye"],
         modeIndex = localStorage.getItem("mode"),
         n = 0,
@@ -98,7 +100,7 @@ function pageLoad(){
         camera.width = overlay.width = camera.videoWidth;
         camera.height = overlay.height = camera.videoHeight;
         frameIndex = 0;
-        reticle.style.display = (modes[modeIndex] == "anaglyph" ? "none" : "block");
+        reticle.style.display = (showReticle && modes[modeIndex] != "anaglyph") ? "block" : "none";
         gfx.clearRect(0,0, overlay.width, overlay.height);
         changeModeButton.innerHTML = modes[modeIndex];
         fullScreenButton.innerHTML = isFullScreenMode() ? "windowed" : "fullscreen";
@@ -150,6 +152,12 @@ function pageLoad(){
         reset();
     }
 
+    toggleReticle = function (){
+        showReticle = !showReticle;
+        reticle.style.display = (showReticle && modes[modeIndex] != "anaglyph") ? "block" : "none";
+        localStorage.setItem("reticle", showReticle);
+    }
+
     var videoModes = isMobile 
         ? [{w:640, h:480}, "default"]
         : [{w:1920, h:1080}, {w:1280, h:720}, {w:1024, h:768}, {w:640, h:480}, "default"];
@@ -167,7 +175,7 @@ function pageLoad(){
             case "stereo": setMode("stereoscope"); break
             case "cross eyed": case "cross eye": case "crosseyed": case "crosseye": setMode("crosseye"); break
             case "green": case "green red": case "red red": case "green green": case "red": case "red green": case "anaglyph": setMode("anaglyph"); break
-            case "target": reticle.style.display = (reticle.style.display == "none") ? "block" : "none"; break;
+            case "target": toggleReticle(); break;
         }
     });
     animate();
