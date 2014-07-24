@@ -167,6 +167,7 @@ function pageLoad(){
             case "stereo": setMode("stereoscope"); break
             case "cross eyed": case "cross eye": case "crosseyed": case "crosseye": setMode("crosseye"); break
             case "green": case "green red": case "red red": case "green green": case "red": case "red green": case "anaglyph": setMode("anaglyph"); break
+            case "target": reticle.style.display = (reticle.style.display == "none") ? "block" : "none"; break;
         }
     });
     animate();
