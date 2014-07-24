@@ -53,9 +53,9 @@ function setupOrientation(callback) {
                 isLandscape: isLandscape,
                 isPortrait: isPortrait,
                 isUpsideDown: isUpsideDown,
-                pitch: sigfig(gamma.degrees, 2), 
-                roll: sigfig(beta.degrees, 2), 
-                heading: sigfig(alpha.degrees, 2),
+                pitch: gamma.radians, 
+                roll: beta.radians, 
+                heading: alpha.radians,
                 sensorGamma: orientation.gamma, 
                 sensorBeta: orientation.beta, 
                 sensorAlpha: orientation.alpha,
@@ -74,22 +74,18 @@ function setupOrientation(callback) {
         
         isBelowHorizon = isUpsideDown ? (orientation.gamma < 0) : (orientation.gamma > 0);
 
-        if(isUpsideDown){
-            sg = -1;
-        }
-        else{
-            sg = 1;
-        }
         if(isBelowHorizon){
             db = 0;
             dg = -90;
             if(isUpsideDown){
                 da = 90;
                 sb = 1;
+                sg = -1;
             }
             else{
                 da = -90;
                 sb = -1;
+                sg = 1;
             }
         }
         else{
@@ -98,10 +94,12 @@ function setupOrientation(callback) {
             if(isUpsideDown){
                 da = -90;
                 sb = -1;
+                sg = -1;
             }
             else{
                 da = 90;
                 sb = 1;
+                sg = 1;
             }
         }
         alpha.degrees = sa * orientation.alpha + da;

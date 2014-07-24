@@ -13,8 +13,6 @@ function pageLoad(){
         size = 0,
         ready = false, 
         rotation = 0,
-        firstGamma = 0,
-        deltaGamma = 0,
         swap = localStorage.getItem("swap") == "true",
         n = 0,
         options = document.getElementById("options"),
@@ -42,12 +40,8 @@ function pageLoad(){
         localStorage.setItem("swap", swap);
     };
 
-    setupOrientation(function(gamma, beta, alpha){
-        rotation = beta;
-        if(frame == 0){
-            firstGamma = gamma;
-        }
-        deltaGamma = gamma - firstGamma;
+    setupOrientation(function(evt){
+        rotation = evt.roll;
     });
     
     shoot = function(){
@@ -68,7 +62,7 @@ function pageLoad(){
     reset = function(){
         frame = 0;
         reticle.style.display = "block";
-        gfx.clearRect(0,0, overlay.width, overlay.height + Math.sin(deltaGamma) * 10);
+        gfx.clearRect(0,0, overlay.width, overlay.height);
         fxs[0].clearRect(0,0, frames[0].width, frames[0].height);
         fxs[1].clearRect(0,0, frames[1].width, frames[1].height);
     };
