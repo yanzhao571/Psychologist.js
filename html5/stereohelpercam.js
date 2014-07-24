@@ -14,20 +14,22 @@ function pageLoad(){
         fullScreenButton = document.getElementById("fullScreenButton"),
         optionsButton = document.getElementById("optionsButton"),
         captureButton = document.getElementById("captureButton"),
+        controls = document.getElementById("controls"),
+        options = document.getElementById("options"),
         gfx = overlay.getContext("2d"),
         frameIndex = 0,
         size = 0,
         rotation = 0,
         pitch = 0,
         dPitch = 0,
-        showReticle = localStorage.getItem("reticle") == "true",
+        showReticle = localStorage.getItem("reticle") != "false",
         modes = ["anaglyph", "stereoscope", "crosseye"],
         modeIndex = localStorage.getItem("mode"),
         n = 0,
-        options = document.getElementById("options"),
         stdButtonHeight = document.querySelector("a").clientHeight + 8,
         numMenuItems = document.querySelectorAll("#options>li>a").length,
         menuVisible = false,
+        buttonsVisible = localStorage.getItem("buttons") != "false",
         frames = [document.createElement("canvas"), document.createElement("canvas"), document.createElement("canvas")],
         fxs = frames.map(function(f){return f.getContext("2d");});
 
@@ -41,6 +43,12 @@ function pageLoad(){
     function setMenu(){
         optionsButton.innerHTML = menuVisible ? "[-] options" : "[+] options";
         options.style.height = px((menuVisible ? numMenuItems : 1) * stdButtonHeight);
+    }
+
+    function toggleButtons(){
+        buttonsVisible = !buttonsVisible;
+        localStorage.setItem("buttons", buttonsVisible);
+        controls.style.display = options.style.display = buttonsVisible ? "block" : "none";
     }
 
     setMenu();
@@ -101,6 +109,7 @@ function pageLoad(){
         camera.height = overlay.height = camera.videoHeight;
         frameIndex = 0;
         reticle.style.display = (showReticle && modes[modeIndex] != "anaglyph") ? "block" : "none";
+        controls.style.display = options.style.display = buttonsVisible ? "block" : "none";
         gfx.clearRect(0,0, overlay.width, overlay.height);
         changeModeButton.innerHTML = modes[modeIndex];
         fullScreenButton.innerHTML = isFullScreenMode() ? "windowed" : "fullscreen";
@@ -176,6 +185,8 @@ function pageLoad(){
             case "cross eyed": case "cross eye": case "crosseyed": case "crosseye": setMode("crosseye"); break
             case "green": case "green red": case "red red": case "green green": case "red": case "red green": case "anaglyph": setMode("anaglyph"); break
             case "target": toggleReticle(); break;
+            case "hide button": case "hide buttons": if(buttonsVisible) { toggleButtons(); } break;
+            case "show button": case "show buttons": if(!buttonsVisible) { toggleButtons(); } break;
         }
     });
     animate();
