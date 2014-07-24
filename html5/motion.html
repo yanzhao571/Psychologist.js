@@ -6,31 +6,29 @@
     <title>Motion testing</title>
 </head>
 <body>
-    <ul>
-        <li>browser: <span id="b"></span></li>
-        <li>
-            acceleration: <ul>
-                <li>g: <span id="g"></span></li>
-                <li>x: <span id="ax"></span></li>
-                <li>y: <span id="ay"></span></li>
-                <li>z: <span id="az"></span></li>
-            </ul>
-        </li>
-        <li>
-            orientation: <ul>
-                <li>name: <span id="o"></span></li>
-                <li>roll: <span id="og"></span></li>
-                <li>pitch: <span id="ob"></span></li>
-                <li>heading: <span id="oa"></span></li>
-            </ul>
-        </li>
+    <ul id="output" style="list-style:none;margin:0;padding:0;">
     </ul>
-    <script id="setup">
+    <script>
+
+        function motionTester() {
+            var d = findEverything();
+            with (d) {
+                setupOrientation(function (evt) {
+                    output.innerHTML = "";
+                    for (var key in evt) {
+                        if (evt.hasOwnProperty(key)) {
+                            output.innerHTML += fmt("<li>$1: $2</li>", key, evt[key]);
+                        }
+                    }
+                });
+            }
+        }
+
         var curAppVersion = 8;
         var s = document.createElement("script");
         s.async = 1;
         s.addEventListener("load", function () {
-            include("motionTester", "psychologist.js", "motion.js");//, "testing.js", "tests.js");
+            include("motionTester", "psychologist.js", "motion.js", "testing.js", "tests.js");
         }, false);
         s.src = "include.js?v" + curAppVersion;
         document.body.appendChild(s);
