@@ -12,12 +12,12 @@ function pageLoad(){
         changeModeButton = document.getElementById("changeModeButton"),
         fullScreenButton = document.getElementById("fullScreenButton"),
         optionsButton = document.getElementById("optionsButton"),
+        shootButton = document.getElementById("shootButton"),
         gfx = overlay.getContext("2d"),
         frameIndex = 0,
         size = 0,
-        ready = false, 
         rotation = 0,
-        modes = ["stereo", "stereo-cross", "anaglyph"],
+        modes = ["anaglyph", "stereoscope", "crosseye"],
         modeIndex = localStorage.getItem("mode"),
         n = 0,
         options = document.getElementById("options"),
@@ -64,17 +64,21 @@ function pageLoad(){
     });
     
     shoot = function(){
-        if(ready){
-            if(frameIndex < 2){
-                ++frameIndex;
-                if(frameIndex == 2){
-                    reticle.style.display = "none";
-                }
+        if(frameIndex < 2){
+            ++frameIndex;
+            if(frameIndex == 2){
+                reticle.style.display = "none";
+                shootButton.innerHTML = "save";
             }
-            else if(frameIndex == 2){
-                saveAs("image.png", overlay.toDataURL());
-                reset();
-            }
+        }
+        else if(frameIndex == 2){
+            var data = overlay.toDataURL();
+
+            overlay.toBlob(function(blob) {
+		        saveAs(blob, "image.jpg");
+            }, "image/jpg");
+
+            reset();
         }
     };
     
@@ -92,6 +96,7 @@ function pageLoad(){
         gfx.clearRect(0,0, overlay.width, overlay.height);
         changeModeButton.innerHTML = modes[modeIndex];
         fullScreenButton.innerHTML = isFullScreenMode() ? "windowed" : "fullscreen";
+        shootButton.innerHTML = "shoot";
     };
 
     function animate(){
@@ -104,28 +109,26 @@ function pageLoad(){
                 fxs[i].translate(-0.5 * size, -0.5 * camera.height);
                 fxs[i].drawImage(camera, (camera.width - size) * 0.5, 0, size, camera.height, 
                                          0, 0, size, camera.height);
+
                 fxs[i].restore();
             }
 
             switch(modes[modeIndex]){
-                case "stereo":
+                case "stereoscope":
                     gfx.drawImage(frames[i], i * size, 0);
                 break;
-                case "stereo-cross":
+                case "crosseye":
                     gfx.drawImage(frames[i], (1-i) * size, 0);
                 break;
                 case "anaglyph":
                     var img = fxs[i].getImageData(0, 0, frames[i].width, frames[i].height);
-                    for(var y = 0; y < img.height; ++y){
-                        for(var x = 0; x < img.width; ++x){
-                            var n = (y*img.width + x) * 4;
-                            if(i == 0){
-                                img.data[n + 1] = 0;
-                                img.data[n + 2] = 0;
-                            }
-                            else{
-                                img.data[n] = 0;
-                            }
+                    for(var n = 0, l = img.data.length; n < l; n+=4){
+                        if(i == 0){
+                            img.data[n + 1] = 0;
+                            img.data[n + 2] = 0;
+                        }
+                        else{
+                            img.data[n] = 0;
                         }
                     }
                     fxs[i].putImageData(img, 0, 0);
@@ -135,10 +138,10 @@ function pageLoad(){
             }
         }
     }
-
-    setupVideo([{w:1920, h:1080}, {w:1280, h:720}, "default"], camera, function(){
-        reset();
-        ready = true;
-        animate();
-    });
+    var videoModes = isMobile 
+        ? [{w:640, h:480}, "default"]
+        : [{w:1920, h:1080}, {w:1280, h:720}, {w:1024, h:768}, {w:640, h:480}, "default"];
+    videoModes.push("default");
+    setupVideo(videoModes, camera, reset);
+    animate();
 }

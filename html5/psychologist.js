@@ -190,22 +190,6 @@ MediaStreamTrack.getVideoTracks =
         return success([]);
 };
 
-function saveFile(filename, type, bin64){
-    var href = fmt("data:$1;filename=$2;base64,$3", type, filename, bin64);
-    saveAs(filename, href);
-}
-
-function saveAs(filename, href){
-    var link = document.createElement("a");
-    link.download = filename;
-    link.href = href;
-    link.innerHTML = "save";
-    link.style.display = "none";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
 function findEverything(){
     return Array.prototype.filter.call(document.querySelectorAll("*"), function(elem){
         return elem.hasOwnProperty("id") && elem.id.length > 0;

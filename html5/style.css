@@ -22,7 +22,7 @@ html, body, canvas, video, img, ul, li
     border: 0;
 }
 
-html, body, canvas, video, img, ul, #shootButton, #options
+html, body, canvas, video, img, ul, #controls, #options
 {
     position: absolute;
 }
@@ -39,13 +39,13 @@ html, body, canvas, img, video
     top: 0;
 }
 
-#shootButton
+#controls
 {
     left: 0;
     bottom: 0;
 }
 
-    #shootButton > li
+    #controls > li
     {
         display: inline-block;
     }
