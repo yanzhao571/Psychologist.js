@@ -10,7 +10,7 @@
     <canvas id="overlay"></canvas>
     <img src="reticle.png" id="reticle" />
     <ul id="controls">
-        <li><a class="button" onclick="shoot();" id="shootButton">shoot</a></li>
+        <li><a class="button" onclick="capture();" id="captureButton">capture</a></li>
         <li><a class="button" onclick="reset();">reset</a></li>
     </ul>
     <ul id="options">
@@ -19,11 +19,11 @@
         <li><a class="button" onclick="changeMode();" id="changeModeButton">[mode]</a></li>
     </ul>
     <script id="setup">
-        var curAppVersion = 13;
+        var curAppVersion = 14;
         var s = document.createElement("script");
         s.async = 1;
         s.addEventListener("load", function () {
-            include("pageLoad", "Blob.min.js", "canvas-toBlob.min.js", "FileSaver.min.js", "psychologist.js", "fullscreen.js", "camera.js", "motion.js", "stereohelpercam.js");
+            include("pageLoad", "Blob.min.js", "canvas-toBlob.min.js", "FileSaver.min.js", "psychologist.js", "fullscreen.js", "camera.js", "motion.js", "speech.js", "stereohelpercam.js");
         }, false);
         s.src = "include.js?v" + curAppVersion;
         document.body.appendChild(s);

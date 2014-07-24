@@ -1,4 +1,4 @@
-﻿var shoot = function(){},
+﻿var capture = function(){},
     reset = function(){},
     goFullscreen = function(){},
     toggleMenu = function(){},
@@ -12,7 +12,7 @@ function pageLoad(){
         changeModeButton = document.getElementById("changeModeButton"),
         fullScreenButton = document.getElementById("fullScreenButton"),
         optionsButton = document.getElementById("optionsButton"),
-        shootButton = document.getElementById("shootButton"),
+        captureButton = document.getElementById("captureButton"),
         gfx = overlay.getContext("2d"),
         frameIndex = 0,
         size = 0,
@@ -69,12 +69,12 @@ function pageLoad(){
         dPitch = evt.pitch - pitch;
     });
     
-    shoot = function(){
+    capture = function(){
         if(frameIndex < 2){
             ++frameIndex;
             if(frameIndex == 2){
                 reticle.style.display = "none";
-                shootButton.innerHTML = "save";
+                captureButton.innerHTML = "save";
             }
         }
         else if(frameIndex == 2){
@@ -102,7 +102,7 @@ function pageLoad(){
         gfx.clearRect(0,0, overlay.width, overlay.height);
         changeModeButton.innerHTML = modes[modeIndex];
         fullScreenButton.innerHTML = isFullScreenMode() ? "windowed" : "fullscreen";
-        shootButton.innerHTML = "shoot";
+        captureButton.innerHTML = "capture";
     };
 
     function animate(){
@@ -144,10 +144,30 @@ function pageLoad(){
             }
         }
     }
+
+    function setMode(mode){
+        modeIndex = modes.indexOf(mode);
+        reset();
+    }
+
     var videoModes = isMobile 
         ? [{w:640, h:480}, "default"]
         : [{w:1920, h:1080}, {w:1280, h:720}, {w:1024, h:768}, {w:640, h:480}, "default"];
     videoModes.push("default");
     setupVideo(videoModes, camera, reset);
+    setupSpeech(function(command){
+        console.log(command);
+        switch(command){
+            case "capture": case "save": case "safe": case "save picture": case "shoot": case "snap": case "take": case "take picture": capture(); break;
+            case "reset": reset(); break;
+            case "menu": case "options": toggleMenu(); break;
+            case "open menu": case "open options": if(!menuVisible){ toggleMenu(); } break;
+            case "close menu": case "close options": if(menuVisible){ toggleMenu(); } break;
+            case "change mode": changeMode(); break;
+            case "stereo": setMode("stereoscope"); break
+            case "cross eyed": case "cross eye": case "crosseyed": case "crosseye": setMode("crosseye"); break
+            case "green": case "green red": case "red red": case "green green": case "red": case "red green": case "anaglyph": setMode("anaglyph"); break
+        }
+    });
     animate();
 }

@@ -1,6 +1,7 @@
 ﻿function setupSpeech(func){
-    var command = "";
-    var recognition = new webkitSpeechRecognition();
+    var command = "",
+        recognition = new webkitSpeechRecognition(),
+        commandTimeout;
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = "en-US";
@@ -22,13 +23,16 @@
         if(commandTimeout){
             clearTimeout(commandTimeout);
         }
-        command = Array.prototype.map.call(event.results, function(evt){
-            return evt[0].transcript;
+        var newCommand = Array.prototype.map.call(event.results, function(evt){
+            return evt[0].transcript.trim();
         }).filter(function(e,i){
             return i >= event.resultIndex;
         }).join(" ").trim().toLowerCase();
 
-        func(command);
+        if(newCommand != command){
+            func(newCommand);
+            command = newCommand;
+        }
 
         commandTimeout = setTimeout(function(){
             command = "";
