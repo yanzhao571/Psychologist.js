@@ -7,28 +7,26 @@
     <link type="text/css" rel="stylesheet" href="style.css">
 </head>
 <body>
-    <video id="camera" autoplay></video>
     <canvas id="overlay"></canvas>
     <img src="reticle.png" id="reticle" />
     <ul id="shootButton">
-        <li><a class="button" onclick="shoot();">Shoot</a></li>
-        <li><a class="button" onclick="reset();">Reset</a></li>
+        <li><a class="button" onclick="shoot();">shoot</a></li>
+        <li><a class="button" onclick="reset();">reset</a></li>
     </ul>
     <ul id="options">
-        <li><a class="button" onclick="toggleMenu();">?</a></li>
-        <li><a class="button" onclick="toggleFullScreen();"><i class="fa fa-arrows-alt">F</i></a></li>
-        <li><a class="button" onclick="swapFrames();"><i class="fa fa-arrows-h">S</i></a></li>
+        <li><a class="button" onclick="toggleMenu();" id="optionsButton">[options]</a></li>
+        <li><a class="button" onclick="goFullscreen();" id="fullScreenButton">[fullscreen]</a></li>
+        <li><a class="button" onclick="changeMode();" id="changeModeButton">[mode]</a></li>
     </ul>
     <script id="setup">
         var curAppVersion = 8;
         var s = document.createElement("script");
         s.async = 1;
         s.addEventListener("load", function () {
-            include("pageLoad", "psychologist.js", "fullscreen.js", "camera.js", "motion.js", "stereohelpercam.js");//, "testing.js", "tests.js");
+            include("pageLoad", "psychologist.js", "fullscreen.js", "camera.js", "motion.js", "stereohelpercam.js");//, "tests.js");
         }, false);
         s.src = "include.js?v" + curAppVersion;
         document.body.appendChild(s);
     </script>
-<!--    <link type="text/css" rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css">-->
 </body>
 </html>

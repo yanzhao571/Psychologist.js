@@ -1,28 +1,41 @@
 ﻿var shoot = function(){},
     reset = function(){},
+    goFullscreen = function(){},
     toggleMenu = function(){},
-    swapFrames = function(){},
+    changeMode = function(){},
     showSource = function(){};
 
 function pageLoad(){
-    var camera = document.getElementById("camera"),
+    var camera = document.createElement("video"),
         overlay = document.getElementById("overlay"),
         reticle = document.getElementById("reticle"),
+        changeModeButton = document.getElementById("changeModeButton"),
+        fullScreenButton = document.getElementById("fullScreenButton"),
+        optionsButton = document.getElementById("optionsButton"),
         gfx = overlay.getContext("2d"),
-        frame = 0,
+        frameIndex = 0,
         size = 0,
         ready = false, 
         rotation = 0,
-        swap = localStorage.getItem("swap") == "true",
+        modes = ["stereo", "stereo-cross", "anaglyph"],
+        modeIndex = localStorage.getItem("mode"),
         n = 0,
         options = document.getElementById("options"),
         stdButtonHeight = document.querySelector("a").clientHeight + 8,
         numMenuItems = document.querySelectorAll("#options>li>a").length,
         menuVisible = false,
-        frames = [document.createElement("canvas"), document.createElement("canvas")],
+        frames = [document.createElement("canvas"), document.createElement("canvas"), document.createElement("canvas")],
         fxs = frames.map(function(f){return f.getContext("2d");});
 
+    if(/^\d+$/.test(modeIndex)){
+        modeIndex = parseInt(modeIndex, 10);
+    }
+    else{
+        modeIndex = 0;
+    }
+
     function setMenu(){
+        optionsButton.innerHTML = menuVisible ? "[-] options" : "[+] options";
         options.style.height = px((menuVisible ? numMenuItems : 1) * stdButtonHeight);
     }
 
@@ -35,9 +48,15 @@ function pageLoad(){
         setMenu();
     };
 
-    swapFrames = function(){
-        swap = !swap;
-        localStorage.setItem("swap", swap);
+    goFullscreen = function(){
+        toggleFullScreen();
+        reset();
+    };
+
+    changeMode = function(btn){
+        modeIndex = (modeIndex + 1) % modes.length;
+        localStorage.setItem("mode", modeIndex);
+        reset();
     };
 
     setupOrientation(function(evt){
@@ -46,13 +65,13 @@ function pageLoad(){
     
     shoot = function(){
         if(ready){
-            if(frame < 2){
-                ++frame;
-                if(frame == 2){
+            if(frameIndex < 2){
+                ++frameIndex;
+                if(frameIndex == 2){
                     reticle.style.display = "none";
                 }
             }
-            else if(frame == 2){
+            else if(frameIndex == 2){
                 saveAs("image.png", overlay.toDataURL());
                 reset();
             }
@@ -60,36 +79,65 @@ function pageLoad(){
     };
     
     reset = function(){
-        frame = 0;
-        reticle.style.display = "block";
+        size = camera.videoWidth * (modes[modeIndex] == "anaglyph" ? 1 : 0.5);
+        frames.forEach(function(f, i){
+            f.width = size;
+            f.height = camera.videoHeight;
+            fxs[i].clearRect(0, 0, f.width, f.height);
+        });
+        camera.width = overlay.width = camera.videoWidth;
+        camera.height = overlay.height = camera.videoHeight;
+        frameIndex = 0;
+        reticle.style.display = (modes[modeIndex] == "anaglyph" ? "none" : "block");
         gfx.clearRect(0,0, overlay.width, overlay.height);
-        fxs[0].clearRect(0,0, frames[0].width, frames[0].height);
-        fxs[1].clearRect(0,0, frames[1].width, frames[1].height);
+        changeModeButton.innerHTML = modes[modeIndex];
+        fullScreenButton.innerHTML = isFullScreenMode() ? "windowed" : "fullscreen";
     };
-
-    reset();
 
     function animate(){
         requestAnimationFrame(animate);
         for(var i = 0; i < 2; ++i){
-            if(i >= frame){                
+            if(i >= frameIndex){                
                 fxs[i].save();
                 fxs[i].translate(0.5 * size, 0.5 * camera.height);
                 fxs[i].rotate(rotation);
                 fxs[i].translate(-0.5 * size, -0.5 * camera.height);
-                fxs[i].drawImage(camera, size * 0.5, 0, size, camera.height, 0, 0, size, camera.height);
+                fxs[i].drawImage(camera, (camera.width - size) * 0.5, 0, size, camera.height, 
+                                         0, 0, size, camera.height);
                 fxs[i].restore();
             }
-            n = swap ? 1 - i: i;
-            gfx.drawImage(frames[n], i * size, 0);
+
+            switch(modes[modeIndex]){
+                case "stereo":
+                    gfx.drawImage(frames[i], i * size, 0);
+                break;
+                case "stereo-cross":
+                    gfx.drawImage(frames[i], (1-i) * size, 0);
+                break;
+                case "anaglyph":
+                    var img = fxs[i].getImageData(0, 0, frames[i].width, frames[i].height);
+                    for(var y = 0; y < img.height; ++y){
+                        for(var x = 0; x < img.width; ++x){
+                            var n = (y*img.width + x) * 4;
+                            if(i == 0){
+                                img.data[n + 1] = 0;
+                                img.data[n + 2] = 0;
+                            }
+                            else{
+                                img.data[n] = 0;
+                            }
+                        }
+                    }
+                    fxs[i].putImageData(img, 0, 0);
+                    gfx.globalCompositeOperation = (i == 0) ? "source-over" : "lighter";
+                    gfx.drawImage(frames[i], 0, 0);
+                break;
+            }
         }
     }
 
-    setupVideo([{w:1280, h:720}, {w:1920, h:1080}, "default"], camera, function(){
-        size = camera.videoWidth * 0.5;
-        frames[0].width = frames[1].width = size;
-        camera.width = overlay.width = camera.videoWidth;
-        camera.height = overlay.height = frames[0].height = frames[1].height = camera.videoHeight;
+    setupVideo([{w:1920, h:1080}, {w:1280, h:720}, "default"], camera, function(){
+        reset();
         ready = true;
         animate();
     });

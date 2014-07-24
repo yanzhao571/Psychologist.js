@@ -18,29 +18,26 @@ if (!document.documentElement.requestFullscreen){
 
 screen.lockOrientation = screen.lockOrientation || screen.mozLockOrientation || screen.msLockOrientation || function(){};
 
-function isFullscreenMode(){
-    return document.isFullscreen
-    || document.mozIsFullScreen
-    || document.webkitIsFullscreen
-    || document.msIsFullscreen;
+function isFullScreenMode(){
+    return (document.fullscreenElement
+            || document.mozFullScreenElement
+            || document.webkitFullscreenElement
+            || document.msFullscreenElement);
 }
 
 function toggleFullScreen(){
     if (document.documentElement.requestFullscreen){
-        if (!(document.fullscreenElement
-            || document.mozFullScreenElement
-            || document.webkitFullscreenElement
-            || document.msFullscreenElement)){  // current working methods
+        if(isFullScreenMode()){
+            document.exitFullscreen();
+        }
+        else{
             document.documentElement.requestFullscreen();
             var interval = setInterval(function(){
-                if(isFullscreenMode()){
+                if(isFullScreenMode()){
                     clearInterval(interval);
                     screen.lockOrientation("landscape-primary");
                 }
-            });
-        }
-        else{
-            document.exitFullscreen();
+            }, 1000);
         }
     }
 }

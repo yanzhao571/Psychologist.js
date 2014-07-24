@@ -2,14 +2,18 @@
     if(!/http(s):/.test(src)){
         src = src + "?v" + curAppVersion;
     }
-    var s = document.createElement("script");
-    s.type = "text/javascript";
-    s.async = true;
-    s.addEventListener("error", fail);
-    s.addEventListener("abort", fail);
-    s.addEventListener("load", success);
-    document.head.appendChild(s);
-    s.src = src;
+    // make sure the script hasn't already been loaded into the page
+    var s = document.querySelector("script[src='"+src+"']");
+    if(!s){
+        s = document.createElement("script");
+        s.type = "text/javascript";
+        s.async = true;
+        s.addEventListener("error", fail);
+        s.addEventListener("abort", fail);
+        s.addEventListener("load", success);
+        document.head.appendChild(s);
+        s.src = src;
+    }
 }
 
 var include = (function () {

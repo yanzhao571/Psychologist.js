@@ -74,4 +74,6 @@
     }
 };
 
-consoleTest(Angle);
+getScript("testing.js", function(){
+    consoleTest(Angle);
+});

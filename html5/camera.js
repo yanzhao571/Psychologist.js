@@ -1,5 +1,6 @@
 ﻿function setupVideo(modes, vid, onPlay){
     var streaming = false;
+    vid.autoplay = 1;
     function getUserMediaFallthrough(vidOpt, success, err){
         navigator.getUserMedia({video: vidOpt}, function (stream) {
             var stream = window.URL.createObjectURL(stream);

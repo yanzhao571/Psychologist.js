@@ -52,7 +52,7 @@
     <Content Include="html5\index.html" />
     <Content Include="html5\motion.html" />
     <Content Include="html5\reticle.png" />
-    <Content Include="html5\stereohelpercam.html" />
+    <Content Include="html5\cam3d.html" />
     <Content Include="html5\style.css" />
     <Content Include="package.json" />
     <Content Include="README.md" />

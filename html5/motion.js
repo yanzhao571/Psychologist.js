@@ -39,7 +39,7 @@ function calibrateToSensors(){
 }
 
 function setupOrientation(callback) {
-    var ZERO_VECTOR = { x: 9.80665, y: 0, z: 0 }, ZERO_EULER = {gamma: 0, alpha: 0, beta: 0},
+    var ZERO_VECTOR = { x: -9.80665, y: 0, z: 0 }, ZERO_EULER = {gamma: 90, alpha: 270, beta: 0},
         acceleration = ZERO_VECTOR, rotation = ZERO_EULER, orientation = ZERO_EULER,
         beta = new Angle(0), gamma = new Angle(0), alpha = new Angle(0),
         isBelowHorizon, isLandscape, isPortrait, isUpsideDown, orientationName,
@@ -70,8 +70,7 @@ function setupOrientation(callback) {
     }
 
     function checkOrientation(event) {        
-        orientation = event || ZERO_EULER;
-        
+        orientation = (!!event && event.alpha !== null && event) || ZERO_EULER;
         isBelowHorizon = isUpsideDown ? (orientation.gamma < 0) : (orientation.gamma > 0);
 
         if(isBelowHorizon){
