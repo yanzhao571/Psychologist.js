@@ -17,6 +17,8 @@ function pageLoad(){
         frameIndex = 0,
         size = 0,
         rotation = 0,
+        pitch = 0,
+        dPitch = 0,
         modes = ["anaglyph", "stereoscope", "crosseye"],
         modeIndex = localStorage.getItem("mode"),
         n = 0,
@@ -61,6 +63,10 @@ function pageLoad(){
 
     setupOrientation(function(evt){
         rotation = evt.roll;
+        if(frameIndex == 0){
+            pitch = evt.pitch;
+        }
+        dPitch = evt.pitch - pitch;
     });
     
     shoot = function(){
@@ -104,7 +110,7 @@ function pageLoad(){
         for(var i = 0; i < 2; ++i){
             if(i >= frameIndex){                
                 fxs[i].save();
-                fxs[i].translate(0.5 * size, 0.5 * camera.height);
+                fxs[i].translate(0.5 * size, 0.5 * camera.height - Math.sin(dPitch) * camera.height);
                 fxs[i].rotate(rotation);
                 fxs[i].translate(-0.5 * size, -0.5 * camera.height);
                 fxs[i].drawImage(camera, (camera.width - size) * 0.5, 0, size, camera.height, 
