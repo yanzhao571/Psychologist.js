@@ -91,7 +91,8 @@ function pageLoad(){
             var data = overlay.toDataURL();
 
             overlay.toBlob(function(blob) {
-		        saveAs(blob, "image.jpg");
+                var date = new Date().toLocaleString().replace(/\//g, "-");
+		        saveAs(blob, fmt("$1-$2.jpg", modes[modeIndex], date));
             }, "image/jpg");
 
             reset();
