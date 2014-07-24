@@ -42,20 +42,17 @@ function setupOrientation(callback) {
     var ZERO_VECTOR = { x: 9.80665, y: 0, z: 0 }, ZERO_EULER = {gamma: 0, alpha: 0, beta: 0},
         acceleration = ZERO_VECTOR, rotation = ZERO_EULER, orientation = ZERO_EULER,
         beta = new Angle(0), gamma = new Angle(0), alpha = new Angle(0),
-        belowHorizon, landscape, portrait, upsideDown, orientationName,
-        omx, omy, omz, osx, osy, osz, da, db, dg, sb, sg;
+        isBelowHorizon, isLandscape, isPortrait, isUpsideDown, orientationName,
+        omx, omy, omz, osx, osy, osz, da, db, dg, sa = -1, sb, sg;
 
     function onChange(){
-        landscape = orientationName && orientationName.indexOf("landscape") == 0;
-        portrait = orientationName && orientationName.indexOf("portrait") == 0;
-        upsideDown = orientationName && orientationName.indexOf("secondary") > 0;
         if(callback){
             callback({
                 orientation: orientationName,
-                isBelowHorizon: belowHorizon,
-                isLandscape: landscape,
-                isPortrait: portrait,
-                isUpsideDown: upsideDown,
+                isBelowHorizon: isBelowHorizon,
+                isLandscape: isLandscape,
+                isPortrait: isPortrait,
+                isUpsideDown: isUpsideDown,
                 pitch: sigfig(gamma.degrees, 2), 
                 roll: sigfig(beta.degrees, 2), 
                 heading: sigfig(alpha.degrees, 2),
@@ -75,40 +72,39 @@ function setupOrientation(callback) {
     function checkOrientation(event) {        
         orientation = event || ZERO_EULER;
         
-        belowHorizon = portrait
-            ? (upsideDown ? (orientation.beta >= 90) : (orientation.beta < 90))
-            : (upsideDown ? (orientation.gamma < 0) : (orientation.gamma > 0))
-        if(upsideDown){
+        isBelowHorizon = isUpsideDown ? (orientation.gamma < 0) : (orientation.gamma > 0);
+
+        if(isUpsideDown){
             sg = -1;
-            if(belowHorizon){
-                da = -90;
-                sb = 1;
-            }
-            else{
-                da = 90;
-                sb = -1;
-            }
         }
         else{
             sg = 1;
-            if(belowHorizon){
+        }
+        if(isBelowHorizon){
+            db = 0;
+            dg = -90;
+            if(isUpsideDown){
                 da = 90;
-                sb = -1;
+                sb = 1;
             }
             else{
                 da = -90;
-                sb = 1;
+                sb = -1;
             }
-        }
-        if(belowHorizon){
-            db = 0;
-            dg = -90;
         }
         else{
             db = 180;
-            dg = 90;
+            dg = 90;            
+            if(isUpsideDown){
+                da = -90;
+                sb = -1;
+            }
+            else{
+                da = 90;
+                sb = 1;
+            }
         }
-        alpha.degrees = orientation.alpha + da;
+        alpha.degrees = sa * orientation.alpha + da;
         beta.degrees = sb * orientation.beta + db;
         gamma.degrees = sg * orientation.gamma + dg;
         onChange();
@@ -131,8 +127,12 @@ function setupOrientation(callback) {
             orientationName = "landscape-" + (osx == 1 ? "secondary" : "primary");
         }
         else if(omy > omz && omy > omx && (omy > 4.5 || orientationName == null)){
-            orientationName = "portrait-" + (osy == 1 ? "primary" : "secondary");
+            orientationName = "oortrait-" + (osy == 1 ? "primary" : "secondary");
         }
+
+        isLandscape = orientationName && orientationName.indexOf("landscape") == 0;
+        isPortrait = orientationName && orientationName.indexOf("portrait") == 0;
+        isUpsideDown = orientationName && orientationName.indexOf("secondary") > 0;
 
         onChange();
     }
