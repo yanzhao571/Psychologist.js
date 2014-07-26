@@ -1,7 +1,4 @@
 ﻿function getScript(src, success, fail) {
-    if(!/http(s):/.test(src)){
-        src = src + "?v" + curAppVersion;
-    }
     // make sure the script hasn't already been loaded into the page
     var s = document.querySelector("script[src='"+src+"']");
     if(!s){
@@ -69,13 +66,17 @@ var include = (function () {
             getScript(m, t, t);
         }
         else{
-            window[done]();
+            done();
         }
     }
 
     function include() {
-        var done = arguments[0];
-        var libs = Array.prototype.slice.call(arguments, 1);
+        var version = arguments[0],
+            done = arguments[1],
+            libs = Array.prototype.slice.call(arguments, 2)
+            .map(function(src){
+                return /http(s):/.test(src) ? src : src + "?v" + version;
+            });
         libs.forEach(set.bind(this, 0));
         tryAppend(loadLibs.bind(this, done, libs));
     }

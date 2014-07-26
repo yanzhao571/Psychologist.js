@@ -23,7 +23,7 @@
         if(commandTimeout){
             clearTimeout(commandTimeout);
         }
-        var newCommand = Array.prototype.map.call(event.results, function(evt){
+        var newCommand = arr(event.results).map(function(evt){
             return evt[0].transcript.trim();
         }).filter(function(e,i){
             return i >= event.resultIndex;

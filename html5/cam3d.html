@@ -24,7 +24,22 @@
         var s = document.createElement("script");
         s.async = 1;
         s.addEventListener("load", function () {
-            include("pageLoad", "Blob.min.js", "canvas-toBlob.min.js", "FileSaver.min.js", "psychologist.js", "fullscreen.js", "camera.js", "motion.js", "speech.js", "stereohelpercam.js");
+            include(curAppVersion,
+                function () { pageLoad(); },
+                //WebGL
+                "three.min.js",
+                "StereoEffect.min.js",
+                "OculusRiftEffect.min.js",
+                //Files
+                "Blob.min.js",
+                "canvas-toBlob.min.js",
+                "FileSaver.min.js",
+                //Framework
+                "psychologist.js",
+                "camera.js",
+                "motion.js",
+                "speech.js",
+                "stereohelpercam.js");
         }, false);
         s.src = "include.js?v" + curAppVersion;
         document.body.appendChild(s);
