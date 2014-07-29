@@ -7,7 +7,7 @@
     <link type="text/css" rel="stylesheet" href="style.css">
 </head>
 <body>
-    <canvas id="overlay"></canvas>
+    <canvas id="picture"></canvas>
     <img src="reticle.png" id="reticle" />
     <ul id="controls">
         <li><a class="button" onclick="capture();" id="captureButton">capture</a></li>
@@ -15,9 +15,10 @@
     </ul>
     <ul id="options">
         <li><a class="button" onclick="toggleMenu();" id="optionsButton">[options]</a></li>
-        <li><a class="button" onclick="goFullscreen();" id="fullScreenButton">[fullscreen]</a></li>
         <li><a class="button" onclick="changeMode();" id="changeModeButton">[mode]</a></li>
-        <li><a class="button" onclick="toggleReticle();">reticle</a></li>
+        <li><a class="button" onclick="toggleReticle();" id="reticleButton">[reticle]</a></li>
+        <li><a class="button" onclick="toggleSpeech();" id="speechButton">[speech]</a></li>
+        <li><a class="button" onclick="goFullscreen();" id="fullScreenButton">[fullscreen]</a></li>
     </ul>
     <script id="setup">
         var curAppVersion = 18;

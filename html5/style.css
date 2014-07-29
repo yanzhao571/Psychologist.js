@@ -22,21 +22,32 @@ html, body, canvas, video, img, ul, li
     border: 0;
 }
 
-html, body, canvas, video, img, ul, #controls, #options
+html, body, canvas, video, img, ul
 {
     position: absolute;
+}
+
+#controls, #options
+{
+    position: fixed;
+    -webkit-transition-property: all;
+    -webkit-transition-duration: 0.25s;
+    -webkit-transition-timing-function: ease-in-out;
+    transition-property: all;
+    transition-duration: 0.25s;
+    transition-timing-function: ease-in-out;
 }
 
 html, body, canvas, video, img
 {
     width: 100%;
     left: 0;
+    top: 0;
 }
 
-html, body, canvas, img, video
+html, body /*, canvas, video, img*/
 {
     height: 100%;
-    top: 0;
 }
 
 #controls
@@ -55,12 +66,6 @@ html, body, canvas, img, video
     right: 0;
     bottom: 0;
     overflow: hidden;
-    -webkit-transition-property: all;
-    -webkit-transition-duration: 0.25s;
-    -webkit-transition-timing-function: ease-in-out;
-    transition-property: all;
-    transition-duration: 0.25s;
-    transition-timing-function: ease-in-out;
 }
 
 a.button
