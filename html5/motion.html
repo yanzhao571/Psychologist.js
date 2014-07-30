@@ -14,12 +14,13 @@
             var d = findEverything();
             with (d) {
                 setupOrientation(function (evt) {
-                    output.innerHTML = "";
+                    var val = "";
                     for (var key in evt) {
                         if (evt.hasOwnProperty(key)) {
-                            output.innerHTML += fmt("<li>$1: $2</li>", key, evt[key]);
+                            val += fmt("<li>$1: $2</li>", key, evt[key]);
                         }
                     }
+                    output.innerHTML = val;
                 });
             }
         }
@@ -28,7 +29,11 @@
         var s = document.createElement("script");
         s.async = 1;
         s.addEventListener("load", function () {
-            include("motionTester", "psychologist.js", "motion.js", "tests.js");
+            include(curAppVersion,
+            function () { motionTester(); },
+            "psychologist.js",
+            "motion.js",
+            "tests.js");
         }, false);
         s.src = "include.js?v" + curAppVersion;
         document.body.appendChild(s);
