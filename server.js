@@ -7,7 +7,8 @@
     proc = require("child_process").spawn,
     options = require("./src/options"),
     minify = require("./src/minifier"),
-    path = require("path");
+    path = require("path"),
+    startPage = "motion.html";
 
 options.parse(process.argv);
 
@@ -24,8 +25,7 @@ if(options.m == "true"){
 }
 
 var app = http.createServer(webServer(srcDir));
-var port = 8080;
-var startPage = "cam3d.html";
+var port = 8080;;
 app.listen(port);
 if(options.m != "true" && startProc){
     var template = "http://localhost/$2"
