@@ -124,7 +124,7 @@ function setupOrientation(callback) {
             orientationName = "landscape-" + (osx == 1 ? "secondary" : "primary");
         }
         else if(omy > omz && omy > omx && (omy > 4.5 || orientationName == null)){
-            orientationName = "oortrait-" + (osy == 1 ? "primary" : "secondary");
+            orientationName = "portrait-" + (osy == 1 ? "primary" : "secondary");
         }
 
         isLandscape = orientationName && orientationName.indexOf("landscape") == 0;
