@@ -46,45 +46,48 @@ function Corrector(isChrome){
     signAlpha = -1;
 
     function calculate(){
-        omx = Math.abs(acceleration.x);
-        omy = Math.abs(acceleration.y);
-        omz = Math.abs(acceleration.z);
+        if(acceleration && orientation){
+            omx = Math.abs(acceleration.x);
+            omy = Math.abs(acceleration.y);
+            omz = Math.abs(acceleration.z);
 
-        osx = (omx > 0) ? acceleration.x / omx : 1;
-        osy = (omy > 0) ? acceleration.y / omy : 1;
-        osz = (omz > 0) ? acceleration.z / omz : 1;
+            osx = (omx > 0) ? acceleration.x / omx : 1;
+            osy = (omy > 0) ? acceleration.y / omy : 1;
+            osz = (omz > 0) ? acceleration.z / omz : 1;
 
-        isAboveHorizon = osz == 1;
-        isClockwise = osy == (isPrimary ? -1 : 1);
+            isAboveHorizon = osz == 1;
 
-        if(omx > omy && omx > omz && (omx > 4.5 || orientationName == null)){
-            isLandscape = true;
-            isPrimary = osx == -1;
+            if(omx > omy && omx > omz && omx > 4.5){
+                isLandscape = true;
+                isPrimary = osx == -1;
+            }
+            else if(omy > omz && omy > omx && omy > 4.5){
+                isLandscape = false;
+                isPrimary = osy == 1;
+            }
+
+            isClockwise = osy == (isPrimary ? -1 : 1);
+
+            deltaAlpha = (isChrome && (isAboveHorizon ^ !isPrimary) || !isChrome && isPrimary) ? 270 : 90;
+
+            heading = signAlpha * orientation.alpha + deltaAlpha;
+            pitch = signGammaPitch * orientation.gamma + deltaGammaPitch + signBetaPitch * orientation.beta + deltaBetaPitch;
+            roll = signGammaRoll * orientation.gamma + deltaGammaRoll + signBetaRoll * orientation.beta + deltaBetaRoll;
         }
-        else if(omy > omz && omy > omx && (omy > 4.5 || orientationName == null)){
-            isLandscape = false;
-            isPrimary = osy == 1;
-        }
-
-        deltaAlpha = (isChrome && (isAboveHorizon ^ isPrimary) || !isChrome && isPrimary) ? 270 : 90;
-
-        heading = signAlpha * orientation.alpha + deltaAlpha;
-        pitch = signGammPitch * orientation.gamma + deltaGammaPitch + signBetaPitch * orientation.beta + deltaBetaPitch;
-        roll = signGammRoll * orientation.gamma + deltaGammaRoll + signBetaRoll * orientation.beta + deltaBetaRoll;
     }
 
-    this._defineSetter__("acceleration", function(v){
+    this.__defineSetter__("acceleration", function(v){
         acceleration = v;
         calculate();
     });
 
-    this._defineSetter__("orientation", function(v){
+    this.__defineSetter__("orientation", function(v){
         orientation = v;
         calculate();
     });
 
     this.__defineGetter__("heading", function(){
-        return alpha;
+        return heading;
     });
 
     this.__defineGetter__("pitch", function(){

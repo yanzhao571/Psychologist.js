@@ -17,7 +17,13 @@
         if(!errored){
             throw new Error("Excpected an error but there was none");
         }
-    }
+    },
+
+    isNotNull: function(obj){
+        if(obj == null){
+            throw new Error("object was null");
+        }
+    }        
 }
 
 function test(func, printer){
@@ -46,7 +52,7 @@ function test(func, printer){
                 catch(exp){
                     ++results.failed;
                     var end = Date.now();
-                    results.failure[key] = {dt: (end - start), msg: exp.message};
+                    results.failure[key] = {dt: (end - start), msg: exp.message, stack: exp.stack || false};
                 }
             }
         }
@@ -82,7 +88,11 @@ function consoleTest(func){
             console.log("\Failures:");
             for(var key in result.failure){
                 if(result.failure.hasOwnProperty(key)){
-                    console.log(fmt("\t\t$1 FAILED after $2ms: $3", key, result.failure[key].dt, result.failure[key].msg));
+                    var val = result.failure[key];
+                    console.log(fmt("\t\t$1 FAILED after $2ms: $3", key, val.dt, val.msg));
+                    if(val.stack && val.stack.indexOf("at Object.Assert") == -1){
+                        console.log(fmt("\t\t$1", val.stack));
+                    }
                 }
             }
         }

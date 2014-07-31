@@ -45,14 +45,13 @@ function pageLoad() {
     overlay = document.getElementById("overlay");
     gfx = overlay.getContext("2d");
 
-    setupOrientation(function (g, b, a){
-        roll = b;
-        pitch = g;
-        heading = a;
-    }, function(x, y, z){
-        ax = x;
-        ay = y;
-        az = z;
+    setupOrientation(function (evt){
+        roll = evt.roll;
+        pitch = evt.pitch;
+        heading = evt.heading;
+        ax = evt.accelerationX;
+        ay = evt.accelerationY;
+        az = evt.accelerationZ;
     });
 
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -62,8 +61,8 @@ function pageLoad() {
     renderer = new THREE.WebGLRenderer();
     overlay.parentElement.insertBefore(renderer.domElement, overlay);
 
-    effect = new THREE.StereoEffect(renderer);
-    effect.separation = isMobile ? 1 : -1;
+    effect = new THREE.OculusRiftEffect(renderer);
+    //effect.separation = isMobile ? 1 : -1;
 
     window.addEventListener("resize", function () {
         setSize(window.innerWidth, window.innerHeight);
