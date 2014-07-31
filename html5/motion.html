@@ -15,11 +15,11 @@
             with (d) {
                 setupOrientation(function (evt) {
                     var val = "";
-                    for (var key in evt) {
+                    ["sensorAlpha", "sensorGamma", "sensorBeta", "accelerationX", "accelerationY", "accelerationZ"].forEach(function (key) {
                         if (evt.hasOwnProperty(key)) {
-                            val += fmt("<li>$1: $2</li>", key, evt[key]);
+                            val += fmt("<li>$1: $2.0</li>", key, evt[key]);
                         }
-                    }
+                    });
                     output.innerHTML = val;
                 });
             }
