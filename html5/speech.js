@@ -45,6 +45,7 @@
             if(newCommand != command){
                 command = newCommand;
                 var candidates = commands.filter(function(cmd){ return cmd && cmd.keywords && cmd.keywords.indexOf && cmd.keywords.indexOf(command) > -1;});
+                console.log(candidates);
                 if(candidates.length == 0){
                     console.log(fmt("Unknown command: $1", command));
                 }

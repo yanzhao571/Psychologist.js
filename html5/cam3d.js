@@ -1,23 +1,15 @@
-﻿var capture = function(){},
-    reset = function(){},
-    goFullscreen = function(){},
-    toggleMenu = function(){},
-    changeMode = function(){},
-    showSource = function(){},
-    toggleSpeech = function(){},
-    toggleReticle = function(){};
-
-function pageLoad(){
+﻿function pageLoad(){
     var picture = document.getElementById("picture"),
         reticle = document.getElementById("reticle"),
         controls = document.getElementById("controls"),
         options = document.getElementById("options"),
         captureButton = document.getElementById("captureButton"),
-        changeModeButton = document.getElementById("changeModeButton"),
-        fullScreenButton = document.getElementById("fullScreenButton"),
+        resetButton = document.getElementById("resetButton"),
         optionsButton = document.getElementById("optionsButton"),
+        changeModeButton = document.getElementById("changeModeButton"),
         reticleButton = document.getElementById("reticleButton"),
         speechButton = document.getElementById("speechButton"),
+        fullScreenButton = document.getElementById("fullScreenButton"),
         stdButtonHeight = document.querySelector("a").clientHeight + 8,
         numMenuItems = document.querySelectorAll("#options>li>a").length,
         camera = document.createElement("video"),
@@ -39,6 +31,7 @@ function pageLoad(){
         showReticle = localStorage.getItem("reticle") != "false",
         useSpeech = localStorage.getItem("speech") == "true";
 
+
     if(/^\d+$/.test(modeIndex)){
         modeIndex = parseInt(modeIndex, 10);
     }
@@ -59,7 +52,7 @@ function pageLoad(){
         }
     }
 
-    toggleMenu = function(){
+    function toggleMenu(){
         menuVisible = !menuVisible;
         setMenu();
     };
@@ -116,7 +109,7 @@ function pageLoad(){
     setButtons();
 
     ///////////// reticle
-    toggleReticle = function (){
+    function toggleReticle (){
         if(modes[modeIndex] != "anaglyph"){
             showReticle = !showReticle;
             localStorage.setItem("reticle", showReticle);
@@ -132,10 +125,19 @@ function pageLoad(){
     }
 
     setReticle();
+
+    /////////////// window size
+    
+
+    function setSize(){
+        picture.style.height = reticle.style.height = px(picture.clientWidth * camera.videoHeight / camera.videoWidth);
+    }
+
+    window.addEventListener("resize", setSize, false);
     
     
     ////////////// speech
-    toggleSpeech = function(){
+    function toggleSpeech(){
         useSpeech = !useSpeech;
         localStorage.setItem("speech", useSpeech);
         setSpeech();
@@ -154,51 +156,8 @@ function pageLoad(){
         }
     }
 
-    speech = new Speech([{
-        keywords: ["capture", "save", "safe", "save picture", "shoot", "snap", "take", "take picture"],
-        command: capture
-    },{
-        keywords: ["reset"],
-        command: reset
-    },{
-        keywords: ["menu", "options"], 
-        command: toggleMenu
-    },{
-        keywords: ["show menu", "show options", "show option", "open menu", "open options", "open option"], 
-        command:  showMenu
-    },{
-        keywords: ["hide menu", "hide options", "hide option", "close menu", "close options", "close option"], 
-        command:  hideMenu
-    },{
-        keywords: ["target"], 
-        command: toggleReticle
-    },{
-        keywords: ["change mode"], 
-        command: changeMode
-    },{
-        keywords: ["stereo"], 
-        command: setMode.bind(window, "stereoscope")
-    },{
-        keywords: ["cross eyed", "cross eye", "crosseyed", "crosseye"], 
-        command: setMode.bind(window, "crosseye")
-    },{
-        keywords: ["green", "green red", "red red", "green green", "red", "red green", "anaglyph"], 
-        command: setMode.bind(window, "anaglyph")
-    }]);
-
-    setSpeech();
-
-    /////////////// window size
-    
-
-    function setSize(){
-        picture.style.height = reticle.style.height = px(picture.clientWidth * camera.videoHeight / camera.videoWidth);
-    }
-
-    window.addEventListener("resize", setSize, false);
-
     /////////////// drawing
-    changeMode = function(btn){
+    function changeMode(){
         modeIndex = (modeIndex + 1) % modes.length;
         localStorage.setItem("mode", modeIndex);
         reset();
@@ -209,7 +168,7 @@ function pageLoad(){
         reset();
     }    
     
-    capture = function(){
+    function capture(){
         if(frameIndex < 2){
             ++frameIndex;
             if(frameIndex == 2){
@@ -273,7 +232,7 @@ function pageLoad(){
 
     /////////////// the rest
 
-    goFullscreen = function(){
+    function goFullscreen(){
         toggleFullScreen();
         reset();
     };
@@ -286,7 +245,7 @@ function pageLoad(){
         dPitch = evt.pitch - pitch;
     });
     
-    reset = function(){
+    function reset(){
         size = camera.videoWidth * (modes[modeIndex] == "anaglyph" ? 1 : 0.5);
         frames.forEach(function(f, i){
             f.width = size;
@@ -309,4 +268,46 @@ function pageLoad(){
         : [{w:1920, h:1080}, {w:1280, h:720}, {w:1024, h:768}, {w:640, h:480}, "default"];
     videoModes.push("default");
     setupVideo(videoModes, camera, reset);
+
+    captureButton.addEventListener("click", capture, false);
+    resetButton.addEventListener("click", reset, false);
+    optionsButton.addEventListener("click", toggleMenu, false);
+    changeModeButton.addEventListener("click", changeMode, false);
+    reticleButton.addEventListener("click", toggleReticle, false);
+    speechButton.addEventListener("click", toggleSpeech, false);
+    fullScreenButton.addEventListener("click", goFullscreen, false);
+
+    speech = new Speech([{
+        keywords: ["capture", "save", "safe", "save picture", "shoot", "shit", "snap", "take", "take picture"],
+        command: capture
+    },{
+        keywords: ["reset"],
+        command: reset
+    },{
+        keywords: ["menu", "options"], 
+        command: toggleMenu
+    },{
+        keywords: ["show menu", "show options", "show option", "open menu", "open options", "open option"], 
+        command:  showMenu
+    },{
+        keywords: ["hide menu", "hide options", "hide option", "close menu", "close options", "close option"], 
+        command:  hideMenu
+    },{
+        keywords: ["target"], 
+        command: toggleReticle
+    },{
+        keywords: ["change mode"], 
+        command: changeMode
+    },{
+        keywords: ["stereo"], 
+        command: setMode.bind(window, "stereoscope")
+    },{
+        keywords: ["cross eyed", "cross eye", "crosseyed", "crosseye"], 
+        command: setMode.bind(window, "crosseye")
+    },{
+        keywords: ["green", "green red", "red red", "green green", "red", "red green", "anaglyph"], 
+        command: setMode.bind(window, "anaglyph")
+    }]);
+
+    setSpeech();
 }

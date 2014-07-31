@@ -10,18 +10,18 @@
     <canvas id="picture"></canvas>
     <img src="reticle.png" id="reticle" />
     <ul id="controls">
-        <li><a class="button" onclick="capture();" id="captureButton">capture</a></li>
-        <li><a class="button" onclick="reset();">reset</a></li>
+        <li><a class="button" id="captureButton">capture</a></li>
+        <li><a class="button" id="resetButton">reset</a></li>
     </ul>
     <ul id="options">
-        <li><a class="button" onclick="toggleMenu();" id="optionsButton">[options]</a></li>
-        <li><a class="button" onclick="changeMode();" id="changeModeButton">[mode]</a></li>
-        <li><a class="button" onclick="toggleReticle();" id="reticleButton">[reticle]</a></li>
-        <li><a class="button" onclick="toggleSpeech();" id="speechButton">[speech]</a></li>
-        <li><a class="button" onclick="goFullscreen();" id="fullScreenButton">[fullscreen]</a></li>
+        <li><a class="button" id="optionsButton">[options]</a></li>
+        <li><a class="button" id="changeModeButton">[mode]</a></li>
+        <li><a class="button" id="reticleButton">[reticle]</a></li>
+        <li><a class="button" id="speechButton">[speech]</a></li>
+        <li><a class="button" id="fullScreenButton">[fullscreen]</a></li>
     </ul>
     <script id="setup">
-        var curAppVersion = 18;
+        var curAppVersion = 19;
         var s = document.createElement("script");
         s.async = 1;
         s.addEventListener("load", function () {
