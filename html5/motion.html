@@ -16,11 +16,16 @@
                 Orientation.addEventListener("deviceorientation", function (evt) {
                     var val = "";
                     ["heading", "pitch", "roll",
-                     "sensorAlpha", "sensorGamma", "sensorBeta",
-                     "accelerationX", "accelerationY", "accelerationZ"].forEach(function (key) {
-                        if (evt.hasOwnProperty(key)) {
-                            val += fmt("<li>$1: $2.000</li>", key, evt[key]);
-                        }
+                     "original.orientation.alpha", "original.orientation.gamma", "original.orientation.beta",
+                     "original.acceleration.x", "original.acceleration.y", "original.acceleration.z"].forEach(function (key) {
+                         var obj = evt;
+                         var parts = key.split(".");
+                         parts.forEach(function(p){
+                             if (obj.hasOwnProperty(p)) {
+                                 obj = obj[p];
+                             }
+                         });
+                        val += fmt("<li>$1: $2.000</li>", key, obj);
                     });
                     output.innerHTML = val;
                 }, false);

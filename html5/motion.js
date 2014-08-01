@@ -254,12 +254,18 @@ var Orientation = {
                 heading: heading.radians,
                 pitch: pitch.radians,
                 roll: roll.radians,
-                sensorAlpha: corrector.orientation.alpha,
-                sensorGamma: corrector.orientation.gamma,
-                sensorBeta: corrector.orientation.beta,
-                accelerationX: corrector.acceleration.x,
-                accelerationY: corrector.acceleration.y,
-                accelerationZ: corrector.acceleration.z
+                original: {
+                    orientation: {
+                        alpha: corrector.orientation.alpha,
+                        gamma: corrector.orientation.gamma,
+                        beta: corrector.orientation.beta
+                    },
+                    acceleration: {
+                        x: corrector.acceleration.x,
+                        y: corrector.acceleration.y,
+                        z: corrector.acceleration.z
+                    }
+                }
             });
         }
 
