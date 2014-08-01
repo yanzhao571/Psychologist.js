@@ -15,9 +15,11 @@
             with (d) {
                 setupOrientation(function (evt) {
                     var val = "";
-                    ["sensorAlpha", "sensorGamma", "sensorBeta", "accelerationX", "accelerationY", "accelerationZ"].forEach(function (key) {
+                    ["heading", "pitch", "roll",
+                     "sensorAlpha", "sensorGamma", "sensorBeta",
+                     "accelerationX", "accelerationY", "accelerationZ"].forEach(function (key) {
                         if (evt.hasOwnProperty(key)) {
-                            val += fmt("<li>$1: $2.0</li>", key, evt[key]);
+                            val += fmt("<li>$1: $2.000</li>", key, evt[key]);
                         }
                     });
                     output.innerHTML = val;

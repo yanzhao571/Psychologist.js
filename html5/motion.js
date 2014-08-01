@@ -23,17 +23,9 @@ function Angle(v){
         value = newValue + delta;
     });
 
-    this.__defineGetter__("degrees", function(){
-        return value;
-    });
-
-    this.__defineGetter__("radians", function(){
-        return this.degrees * Math.PI / 180;
-    });
-
-    this.__defineSetter__("radians", function(val){
-        this.degrees = val * 180 / Math.PI;
-    });
+    this.__defineGetter__("degrees", function(){ return value; });
+    this.__defineGetter__("radians", function(){ return this.degrees * Math.PI / 180; });
+    this.__defineSetter__("radians", function(val){ this.degrees = val * 180 / Math.PI; });
 }
 
 function Corrector(isChrome){
@@ -61,8 +53,6 @@ function Corrector(isChrome){
             osy = (omy > 0) ? acceleration.y / omy : 1;
             osz = (omz > 0) ? acceleration.z / omz : 1;
 
-            isAboveHorizon = osz == 1;
-
             if(omx > omy && omx > omz && omx > 4.5){
                 isLandscape = true;
                 isPrimary = osx == -1;
@@ -72,6 +62,7 @@ function Corrector(isChrome){
                 isPrimary = osy == 1;
             }
 
+            isAboveHorizon = isChrome ?  (isPrimary ? orientation.gamma > 0 : orientation.gamma < 0): osz == 1;
             isClockwise = osy == (isPrimary ? -1 : 1);
 
             deltaAlpha = (isChrome && (isAboveHorizon ^ !isPrimary) || !isChrome && isPrimary) ? 270 : 90;
@@ -118,7 +109,9 @@ function Corrector(isChrome){
 
             heading = wrap(signAlpha * orientation.alpha + deltaAlpha);
             pitch = wrap(signGamma * orientation.gamma + deltaGamma) - 360;
+            if(pitch < -180){ pitch += 360; }
             roll = wrap(signBeta * orientation.beta + deltaBeta);
+            if(roll > 180){ roll -= 360; }
         }
     }
 
@@ -131,120 +124,53 @@ function Corrector(isChrome){
         orientation = v;
         calculate();
     });
-
-    this.__defineGetter__("heading", function(){
-        return heading;
-    });
-
-    this.__defineGetter__("pitch", function(){
-        return pitch;
-    });
-
-    this.__defineGetter__("roll", function(){
-        return roll;
-    });
-};
-
-Corrector.prototype.setAcceleration = function(v){
-    this.acceleration = v;
-};
-
-Corrector.prototype.setOrientation = function(v){
-    this.orientation = v;
+    
+    this.__defineGetter__("acceleration", function(){ return acceleration || ZERO_VECTOR; });
+    this.__defineGetter__("orientation", function(){ return orientation || ZERO_EULER; });
+    this.__defineGetter__("heading", function(){ return heading; });
+    this.__defineGetter__("pitch", function(){ return pitch; });
+    this.__defineGetter__("roll", function(){ return roll; });
 };
 
 function setupOrientation(callback) {
-    var acceleration = ZERO_VECTOR, rotation = ZERO_EULER, orientation = ZERO_EULER,
-        beta = new Angle(0), gamma = new Angle(0), alpha = new Angle(0),
-        isAboveHorizon, isLandscape, isPortrait, isPrimary, isSecondary, orientationName,
-        omx, omy, omz, osx, osy, osz, da, db, dg, sa = -1, sb, sg;
+    if(typeof(callback) != "function"){
+        throw new Error("A function must be provided as a callback parameter. Callback parameter was: " + callback);
+    }
+    var corrector = new Corrector(isChrome), 
+        heading = new Angle(0), 
+        pitch = new Angle(0), 
+        roll = new Angle(0);
 
     function onChange(){
-        if(callback){
-            callback({
-                orientation: orientationName,
-                pitch: gamma.radians,
-                roll: beta.radians,
-                heading: alpha.radians,
-                sensorGamma: orientation.gamma,
-                sensorBeta: orientation.beta,
-                sensorAlpha: orientation.alpha,
-                accelerationX: acceleration.x,
-                accelerationY: acceleration.y,
-                accelerationZ: acceleration.z,
-                rotationGamma: rotation.gamma,
-                rotationBeta: rotation.beta,
-                rotationAlpha: rotation.alpha
-            });
-        }
+        heading.degrees = corrector.heading;
+        pitch.degrees = corrector.pitch;
+        roll.degrees = corrector.roll;
+        callback({
+            heading: heading.radians,
+            pitch: pitch.radians,
+            roll: roll.radians,
+            sensorAlpha: corrector.orientation.alpha,
+            sensorGamma: corrector.orientation.gamma,
+            sensorBeta: corrector.orientation.beta,
+            accelerationX: corrector.acceleration.x,
+            accelerationY: corrector.acceleration.y,
+            accelerationZ: corrector.acceleration.z
+        });
     }
 
     function checkOrientation(event) {
-        orientation = (!!event && event.alpha !== null && event) || ZERO_EULER;
-        isAboveHorizon = acceleration.z < 0;
-
-        da = (isChrome && (isAboveHorizon ^ isPrimary)
-          || isFirefox && isPrimary) ? 270 : 90;
-
-        if(!isAboveHorizon){
-            db = 0;
-            dg = -90;
-            if(isSecondary){
-                sb = 1;
-                sg = -1;
-            }
-            else{
-                sb = -1;
-                sg = 1;
-            }
-        }
-        else{
-            db = 180;
-            dg = 90;
-            if(isSecondary){
-                sb = -1;
-                sg = -1;
-            }
-            else{
-                sb = 1;
-                sg = 1;
-            }
-        }
-        alpha.degrees = sa * orientation.alpha + da;
-        beta.degrees = sb * orientation.beta + db;
-        gamma.degrees = sg * orientation.gamma + dg;
+        corrector.orientation = (!!event && event.alpha !== null && event) || ZERO_EULER;
         onChange();
     }
-    window.addEventListener("deviceorientation", checkOrientation, false);
 
     function checkMotion(event) {
-        acceleration = (event && (event.accelerationIncludingGravity || event.acceleration)) || ZERO_VECTOR;
-        rotation = (event && event.rotationRate) || ZERO_EULER;
-
-        omx = Math.abs(acceleration.x);
-        omy = Math.abs(acceleration.y);
-        omz = Math.abs(acceleration.z);
-
-        osx = acceleration.x / omx;
-        osy = acceleration.y / omy;
-        osz = acceleration.z / omz;
-
-        if(omx > omy && omx > omz && (omx > 4.5 || orientationName == null)){
-            orientationName = "landscape-" + (osx == 1 ? "secondary" : "primary");
-        }
-        else if(omy > omz && omy > omx && (omy > 4.5 || orientationName == null)){
-            orientationName = "portrait-" + (osy == 1 ? "primary" : "secondary");
-        }
-
-        isLandscape = orientationName && orientationName.indexOf("landscape") == 0;
-        isPortrait = orientationName && orientationName.indexOf("portrait") == 0;
-        isPrimary = orientationName && orientationName.indexOf("primary") > 0;
-        isSecondary = orientationName && orientationName.indexOf("secondary") > 0;
-
+        corrector.acceleration = (!!event && (event.accelerationIncludingGravity || event.acceleration)) || ZERO_VECTOR;
         onChange();
     }
-    window.addEventListener("devicemotion", checkMotion, false);
 
     checkMotion();
     checkOrientation();
+
+    window.addEventListener("deviceorientation", checkOrientation, false);
+    window.addEventListener("devicemotion", checkMotion, false);
 }
