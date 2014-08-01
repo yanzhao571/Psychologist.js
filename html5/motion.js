@@ -6,7 +6,7 @@ function Angle(v){
     }
 
     var value = v, delta = 0, d1, d2, d3;
-   
+
     this.__defineSetter__("degrees", function(newValue){
         do{
             d1 = newValue + delta - value;
@@ -22,28 +22,34 @@ function Angle(v){
         } while(d1 > d2 || d1 > d3);
         value = newValue + delta;
     });
-   
+
     this.__defineGetter__("degrees", function(){
         return value;
     });
-   
+
     this.__defineGetter__("radians", function(){
         return this.degrees * Math.PI / 180;
     });
-   
+
     this.__defineSetter__("radians", function(val){
         this.degrees = val * 180 / Math.PI;
     });
 }
 
 function Corrector(isChrome){
-    var acceleration, orientation, 
-        deltaAlpha, signAlpha, heading, 
-        deltaGammaPitch, deltaBetaPitch, signGammaPitch, signBetaPitch, pitch,
-        deltaGammaRoll, deltaBetaRoll, signGammaRoll, signBetaRoll, roll,
+    var acceleration, orientation,
+        deltaAlpha, signAlpha, heading,
+        deltaGamma, signGamma, pitch,
+        deltaBeta, signBeta, roll,
         omx, omy, omz, osx, osy, osz, isLandscape, isPrimary, isAboveHorizon, isClockwise;
 
     signAlpha = -1;
+
+    function wrap(v){
+        while(v < 0){ v +=360; }
+        while(v >= 360){ v -= 360;}
+        return v;
+    }
 
     function calculate(){
         if(acceleration && orientation){
@@ -69,10 +75,50 @@ function Corrector(isChrome){
             isClockwise = osy == (isPrimary ? -1 : 1);
 
             deltaAlpha = (isChrome && (isAboveHorizon ^ !isPrimary) || !isChrome && isPrimary) ? 270 : 90;
+            if(isPrimary){
+                if(isAboveHorizon){
+                    signGamma = 1;
+                    deltaGamma = -90;
+                    signBeta = -1;
+                    deltaBeta = 0;
+                }
+                else{
+                    if(isChrome){
+                        signGamma = 1;
+                        deltaGamma = 90;
+                    }
+                    else{
+                        signGamma = -1;
+                        deltaGamma = 90;
+                    }
+                    signBeta = 1;
+                    deltaBeta = 180;
+                }
+            }
+            else{
+                if(isAboveHorizon){
+                    signGamma = -1;
+                    deltaGamma = -90;
+                    signBeta = 1;
+                    deltaBeta = 0;
+                }
+                else{
+                    if(isChrome){
+                        signGamma = -1;
+                        deltaGamma = 90;
+                    }
+                    else{
+                        signGamma = 1;
+                        deltaGamma = 90;
+                    }
+                    signBeta = -1;
+                    deltaBeta = 180;
+                }
+            }
 
-            heading = signAlpha * orientation.alpha + deltaAlpha;
-            pitch = signGammaPitch * orientation.gamma + deltaGammaPitch + signBetaPitch * orientation.beta + deltaBetaPitch;
-            roll = signGammaRoll * orientation.gamma + deltaGammaRoll + signBetaRoll * orientation.beta + deltaBetaRoll;
+            heading = wrap(signAlpha * orientation.alpha + deltaAlpha);
+            pitch = wrap(signGamma * orientation.gamma + deltaGamma) - 360;
+            roll = wrap(signBeta * orientation.beta + deltaBeta);
         }
     }
 
@@ -117,11 +163,11 @@ function setupOrientation(callback) {
         if(callback){
             callback({
                 orientation: orientationName,
-                pitch: gamma.radians, 
-                roll: beta.radians, 
+                pitch: gamma.radians,
+                roll: beta.radians,
                 heading: alpha.radians,
-                sensorGamma: orientation.gamma, 
-                sensorBeta: orientation.beta, 
+                sensorGamma: orientation.gamma,
+                sensorBeta: orientation.beta,
                 sensorAlpha: orientation.alpha,
                 accelerationX: acceleration.x,
                 accelerationY: acceleration.y,
@@ -133,11 +179,11 @@ function setupOrientation(callback) {
         }
     }
 
-    function checkOrientation(event) {        
+    function checkOrientation(event) {
         orientation = (!!event && event.alpha !== null && event) || ZERO_EULER;
         isAboveHorizon = acceleration.z < 0;
 
-        da = (isChrome && (isAboveHorizon ^ isPrimary) 
+        da = (isChrome && (isAboveHorizon ^ isPrimary)
           || isFirefox && isPrimary) ? 270 : 90;
 
         if(!isAboveHorizon){
@@ -154,7 +200,7 @@ function setupOrientation(callback) {
         }
         else{
             db = 180;
-            dg = 90;            
+            dg = 90;
             if(isSecondary){
                 sb = -1;
                 sg = -1;
@@ -170,7 +216,7 @@ function setupOrientation(callback) {
         onChange();
     }
     window.addEventListener("deviceorientation", checkOrientation, false);
-    
+
     function checkMotion(event) {
         acceleration = (event && (event.accelerationIncludingGravity || event.acceleration)) || ZERO_VECTOR;
         rotation = (event && event.rotationRate) || ZERO_EULER;

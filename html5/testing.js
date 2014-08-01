@@ -1,6 +1,12 @@
 ﻿var Assert = {
+    ALPHA: 0.0000000000001,
     areEqual: function(expected, actual, msg){
-        if(expected != actual){
+        if(expected != actual
+            && (typeof(expected) != "number"
+                || typeof(actual) != "number"
+                || Math.abs(actual - expected)
+            || (Number.isNaN(expected)
+                ^ Number.isNaN(actual))) > Assert.ALPHA){
             throw new Error(fmt("$3(expected value) $1 != $2 (actual value)", expected, actual, msg ? "[" + msg + "]" : ""));
         }
     },
@@ -23,7 +29,7 @@
         if(obj == null){
             throw new Error("object was null");
         }
-    }        
+    }
 }
 
 function test(func, printer){
@@ -73,7 +79,7 @@ function consoleTest(func){
                 : "x";
         }
         console.log(fmt("Test results for $1: [$2] $3 succeeded, $4 failed", name, beam, result.succeeded, result.failed));
-        
+
         console.log("Details:");
         if(result.succeeded > 0){
             console.log("\tSuccesses:");
@@ -83,7 +89,7 @@ function consoleTest(func){
                 }
             }
         }
-        
+
         if(result.failed > 0){
             console.log("\Failures:");
             for(var key in result.failure){
