@@ -38,7 +38,7 @@ var LandscapeMotion = {
     // Set this value to "true" if you are using Google Chrome. 
     // Set it to "false" if you are using Firefox.
     // Behavior of other browsers hasn't been tested.
-    BROWSER_IS_GOOGLE_CHROME: isChrome || false,
+    BROWSER_IS_GOOGLE_CHROME: !!window.chrome && !window.opera && navigator.userAgent.indexOf(' OPR/') < 0,
     
 
     /*
