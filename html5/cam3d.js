@@ -237,7 +237,7 @@
         reset();
     };
 
-    setupOrientation(function(evt){
+    Orientation.addEventListener("deviceorientation", function(evt){
         rotation = evt.roll;
         if(frameIndex == 0){
             pitch = evt.pitch;
