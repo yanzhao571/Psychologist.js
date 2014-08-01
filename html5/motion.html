@@ -13,7 +13,7 @@
         function motionTester() {
             var d = findEverything();
             with (d) {
-                setupOrientation(function (evt) {
+                Orientation.addEventListener("motion", function (evt) {
                     var val = "";
                     ["heading", "pitch", "roll",
                      "sensorAlpha", "sensorGamma", "sensorBeta",
@@ -23,7 +23,7 @@
                         }
                     });
                     output.innerHTML = val;
-                });
+                }, false);
             }
         }
 

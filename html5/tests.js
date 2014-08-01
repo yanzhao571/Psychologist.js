@@ -1,4 +1,6 @@
-﻿Angle.tests = {
+﻿var Angle = Orientation.Angle;
+var Corrector = Orientation.Corrector;
+Angle.tests = {
     zero: function(){
         var a = new Angle(0);
         Assert.areEqual(0, a.degrees);
