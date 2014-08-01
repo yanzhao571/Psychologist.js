@@ -1,18 +1,88 @@
-﻿var Orientation = {
+﻿/*
+https://www.github.com/capnmidnight/VR
+Copyright (c) 2014 Sean T. McBeth
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, 
+are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this 
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice, this 
+  list of conditions and the following disclaimer in the documentation and/or 
+  other materials provided with the distribution.
+
+* Neither the name of Sean T. McBeth nor the names of its contributors
+  may be used to endorse or promote products derived from this software without 
+  specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
+OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+var Orientation = {
     // A few default values to let the code
     // run in a static view on a sensorless device.
     ZERO_VECTOR: { x: -9.80665, y: 0, z: 0 }, 
-    ZERO_EULER: {gamma: 90, alpha: 0, beta: 0},
+    ZERO_EULER: {gamma: 90, alpha: 270, beta: 0},
 
+    // Set this value to "true" if you are using Google Chrome. 
+    // Set it to "false" if you are using Firefox.
+    BROWSER_IS_GOOGLE_CHROME: isChrome || false,
+    
+
+    /*
+        Class: Angle
+        
+            The Angle class smooths out the jump from 360 to 0 degrees. It keeps track
+            of the previous state of angle values and keeps the change between angle values
+            to a maximum magnitude of 180 degrees, plus or minus. This allows for smoother
+            opperation as rotating past 360 degrees will not reset to 0, but continue to 361
+            degrees and beyond, while rotating behind 0 degrees will not reset to 360 but continue
+            to -1 and below.
+
+            It also automatically performs degree-to-radian and radian-to-degree conversions.
+
+        Constructor: new Orientation.Angle(initialAngleInDegrees);
+
+            The initialAngleInDegrees value must be supplied. It specifies the initial context
+            of the angle. Zero is not always the correct value. Choose a values that is as close
+            as you can guess will be your initial sensor readings.
+    
+            This is particularly important for the 180 degrees, +- 10 degrees or so. If you expect
+            values to run back and forth over 180 degrees, then initialAngleInDegrees should be
+            set to 180. Otherwise, if your initial value is anything slightly larger than 180,
+            the correction will rotate the angle into negative degrees, e.g.:
+                initialAngleInDegrees = 0
+                first reading = 185
+                updated degrees value = -175
+
+        Properties:
+            degrees: get/set the current value of the angle in degrees.
+            radians: get/set the current value of the angle in radians.
+
+    */
     Angle: function(v){
         if(typeof(v) !== "number"){
             throw new Error("Angle must be initialized with a number. Initial value was: "+ v);
         }
 
-        var value = v, delta = 0, d1, d2, d3;
+        var value = v, delta = 0, d1, d2, d3, DEG2RAD = Math.PI / 180, RAD2DEG = 180 / Math.PI;
 
         this.__defineSetter__("degrees", function(newValue){
             do{
+                // figure out if it is adding the raw value, or whole
+                // rotations of the value, that results in a smaller
+                // magnitude of change.
                 d1 = newValue + delta - value;
                 d2 = Math.abs(d1 + 360);
                 d3 = Math.abs(d1 - 360);
@@ -28,10 +98,25 @@
         });
 
         this.__defineGetter__("degrees", function(){ return value; });
-        this.__defineGetter__("radians", function(){ return this.degrees * Math.PI / 180; });
-        this.__defineSetter__("radians", function(val){ this.degrees = val * 180 / Math.PI; });
+        this.__defineGetter__("radians", function(){ return this.degrees * DEG2RAD; });
+        this.__defineSetter__("radians", function(val){ this.degrees = val * RAD2DEG; });
     },
 
+    /*
+        Class: Corrector
+        
+            The Corrector class observes orientation and gravitational acceleration values
+            and determines a corrected set of orientation values that reset the orientation
+            origin to 0 degrees north, 0 degrees above the horizon, with 0 degrees of tilt
+            in the landscape orientation. This is useful for head-mounted displays (HMD).
+
+        Constructor: new Orientation.Corrector([browserIsGoogleChrome]);
+
+        Properties:
+            degrees: get/set the current value of the angle in degrees.
+            radians: get/set the current value of the angle in radians.
+
+    */
     Corrector: function(isChrome){
         var acceleration, orientation,
             deltaAlpha, signAlpha, heading,
@@ -135,14 +220,28 @@
         this.__defineGetter__("roll", function(){ return roll; });
     },
 
+    /*
+        Add an event listener for motion/orientation events. 
+    
+        Parameters:
+            type: There is only one type of event, called "deviceorientation". Any other value for type will result 
+                in an error. It is included to maintain interface compatability with the regular DOM event handler
+                syntax, and the standard device orientation events.
+            
+            callback: the function to call when an event occures
+
+            [bubbles]: set to true if the events should be captured in the bubbling phase. Defaults to false. The 
+                non-default behavior is rarely needed, but it is included for completeness.
+    */
     addEventListener: function(type, callback, bubbles) {
-        if(type != "motion"){
-            throw new Error("The only event type that is supported is \"motion\". Type parameter was: " + type);
+        if(type != "deviceorientation"){
+            throw new Error("The only event type that is supported is \"deviceorientation\". Type parameter was: " + type);
         }
         if(typeof(callback) != "function"){
             throw new Error("A function must be provided as a callback parameter. Callback parameter was: " + callback);
         }
-        var corrector = new this.Corrector(isChrome), 
+
+        var corrector = new this.Corrector(Orientation.BROWSER_IS_GOOGLE_CHROME), 
             heading = new this.Angle(0), 
             pitch = new this.Angle(0), 
             roll = new this.Angle(0);
@@ -170,7 +269,16 @@
         }
 
         function checkMotion(event) {
-            corrector.acceleration = (!!event && (event.accelerationIncludingGravity || event.acceleration)) || Orientation.ZERO_VECTOR;
+            if(event && event.accelerationIncludingGravity && event.accelerationIncludingGravity.x){
+                corrector.acceleration = event.accelerationIncludingGravity;
+            }
+            else if(event && event.acceleration && event.acceleration.x){
+                corrector.acceleration = event.acceleration;
+            }
+            else{
+                corrector.acceleration = Orientation.ZERO_VECTOR;
+            }
+
             onChange();
         }
 

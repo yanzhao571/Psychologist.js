@@ -13,7 +13,7 @@
         function motionTester() {
             var d = findEverything();
             with (d) {
-                Orientation.addEventListener("motion", function (evt) {
+                Orientation.addEventListener("deviceorientation", function (evt) {
                     var val = "";
                     ["heading", "pitch", "roll",
                      "sensorAlpha", "sensorGamma", "sensorBeta",
