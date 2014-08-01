@@ -45,7 +45,7 @@ function pageLoad() {
     overlay = document.getElementById("overlay");
     gfx = overlay.getContext("2d");
 
-    Orientation.addEventListener("deviceorientation", function (evt){
+    LandscapeMotion.addEventListener("deviceorientation", function (evt){
         roll = evt.roll;
         pitch = evt.pitch;
         heading = evt.heading;

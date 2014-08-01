@@ -1,5 +1,5 @@
-﻿var Angle = Orientation.Angle;
-var Corrector = Orientation.Corrector;
+﻿var Angle = LandscapeMotion.Angle;
+var Corrector = LandscapeMotion.Corrector;
 Angle.tests = {
     zero: function(){
         var a = new Angle(0);

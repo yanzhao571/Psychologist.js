@@ -13,7 +13,7 @@
         function motionTester() {
             var d = findEverything();
             with (d) {
-                Orientation.addEventListener("deviceorientation", function (evt) {
+                LandscapeMotion.addEventListener("deviceorientation", function (evt) {
                     var val = "";
                     ["heading", "pitch", "roll",
                      "original.orientation.alpha", "original.orientation.gamma", "original.orientation.beta",
@@ -39,7 +39,7 @@
             include(curAppVersion,
             function () { motionTester(); },
             "psychologist.js",
-            "motion.js",
+            "LandscapeMotion.js",
             "tests.js");
         }, false);
         s.src = "include.js?v" + curAppVersion;

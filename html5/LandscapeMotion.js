@@ -29,7 +29,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-var Orientation = {
+var LandscapeMotion = {
     // A few default values to let the code
     // run in a static view on a sensorless device.
     ZERO_VECTOR: { x: -9.80665, y: 0, z: 0 }, 
@@ -37,6 +37,7 @@ var Orientation = {
 
     // Set this value to "true" if you are using Google Chrome. 
     // Set it to "false" if you are using Firefox.
+    // Behavior of other browsers hasn't been tested.
     BROWSER_IS_GOOGLE_CHROME: isChrome || false,
     
 
@@ -52,7 +53,7 @@ var Orientation = {
 
             It also automatically performs degree-to-radian and radian-to-degree conversions.
 
-        Constructor: new Orientation.Angle(initialAngleInDegrees);
+        Constructor: new LandscapeMotion.Angle(initialAngleInDegrees);
 
             The initialAngleInDegrees value must be supplied. It specifies the initial context
             of the angle. Zero is not always the correct value. Choose a values that is as close
@@ -110,7 +111,7 @@ var Orientation = {
             origin to 0 degrees north, 0 degrees above the horizon, with 0 degrees of tilt
             in the landscape orientation. This is useful for head-mounted displays (HMD).
 
-        Constructor: new Orientation.Corrector([browserIsGoogleChrome]);
+        Constructor: new LandscapeMotion.Corrector([browserIsGoogleChrome]);
 
         Properties:
             degrees: get/set the current value of the angle in degrees.
@@ -213,8 +214,8 @@ var Orientation = {
             calculate();
         });
     
-        this.__defineGetter__("acceleration", function(){ return acceleration || Orientation.ZERO_VECTOR; });
-        this.__defineGetter__("orientation", function(){ return orientation || Orientation.ZERO_EULER; });
+        this.__defineGetter__("acceleration", function(){ return acceleration || LandscapeMotion.ZERO_VECTOR; });
+        this.__defineGetter__("orientation", function(){ return orientation || LandscapeMotion.ZERO_EULER; });
         this.__defineGetter__("heading", function(){ return heading; });
         this.__defineGetter__("pitch", function(){ return pitch; });
         this.__defineGetter__("roll", function(){ return roll; });
@@ -241,7 +242,7 @@ var Orientation = {
             throw new Error("A function must be provided as a callback parameter. Callback parameter was: " + callback);
         }
 
-        var corrector = new this.Corrector(Orientation.BROWSER_IS_GOOGLE_CHROME), 
+        var corrector = new this.Corrector(LandscapeMotion.BROWSER_IS_GOOGLE_CHROME), 
             heading = new this.Angle(0), 
             pitch = new this.Angle(0), 
             roll = new this.Angle(0);
@@ -270,7 +271,7 @@ var Orientation = {
         }
 
         function checkOrientation(event) {
-            corrector.orientation = (!!event && event.alpha !== null && event) || Orientation.ZERO_EULER;
+            corrector.orientation = (!!event && event.alpha !== null && event) || LandscapeMotion.ZERO_EULER;
             onChange();
         }
 
@@ -282,7 +283,7 @@ var Orientation = {
                 corrector.acceleration = event.acceleration;
             }
             else{
-                corrector.acceleration = Orientation.ZERO_VECTOR;
+                corrector.acceleration = LandscapeMotion.ZERO_VECTOR;
             }
 
             onChange();
