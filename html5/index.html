@@ -8,10 +8,9 @@
 </head>
 <body>
     <canvas id="overlay"></canvas>
-    <section id="menu">
-        <a class="button" id="fullscreeButton" onclick="toggleFullScreen();">F</a>
-        <a class="button" id="calibrateButton" onclick="calibrate();">C</a>
-    </section>
+    <ul id="options">
+        <li><a class="button" id="fullScreenButton">fullscreen</a></li>
+    </ul>
     <script id="setup">
         var curAppVersion = 8;
         var s = document.createElement("script");
@@ -19,7 +18,7 @@
         s.addEventListener("load", function () {
             include(curAppVersion, function () {
                 pageLoad();
-            }, "three.min.js", "OculusRiftEffect.min.js", "StereoEffect.min.js", "psychologist.js", "camera.js", "speech.js", "LandscapeMotion.js", "index.js")
+            }, "three.min.js", "OculusRiftEffect.min.js", "AnaglyphEffect.min.js", "StereoEffect.min.js", "psychologist.js", "camera.js", "speech.js", "LandscapeMotion.js", "index.js")
         }, false);
         s.src = "include.js?v" + curAppVersion;
         document.body.appendChild(s);

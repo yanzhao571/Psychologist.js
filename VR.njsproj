@@ -30,6 +30,7 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="html5\AnaglyphEffect.min.js" />
     <Compile Include="html5\index.js" />
     <Compile Include="html5\Blob.min.js" />
     <Compile Include="html5\camera.js" />

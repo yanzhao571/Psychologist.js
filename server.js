@@ -8,7 +8,7 @@
     options = require("./src/options"),
     minify = require("./src/minifier"),
     path = require("path"),
-    startPage = "motion.html";
+    startPage = "index.html";
 
 options.parse(process.argv);
 
