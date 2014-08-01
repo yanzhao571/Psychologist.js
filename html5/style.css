@@ -76,13 +76,12 @@ a.button
     cursor: pointer;
     display: inline-block;
     padding: 1em;
-    padding-left: 2em;
-    padding-right: 2em;
     text-align: center;
     text-decoration: none;
-    margin: 0.5em;
-    margin-top: 0;
-    min-width: 2em;
+    padding: 2em;
+    border-width: 10px;
+    border-style: solid;
+    border-color: #123197;
 }
 
     a.button:hover

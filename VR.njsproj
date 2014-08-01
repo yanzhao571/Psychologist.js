@@ -53,6 +53,7 @@
     <Compile Include="src\minifier.js" />
     <Compile Include="src\options.js" />
     <Compile Include="src\webServer.js" />
+    <Content Include="html5\icons\fs.png" />
     <Content Include="html5\index.html" />
     <Content Include="html5\motion.html" />
     <Content Include="html5\reticle.png" />
@@ -64,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="html5\" />
+    <Folder Include="html5\icons\" />
     <Folder Include="src\" />
     <Folder Include="src\controllers\" />
   </ItemGroup>
