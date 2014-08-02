@@ -277,7 +277,7 @@
     speechButton.addEventListener("click", toggleSpeech, false);
     fullScreenButton.addEventListener("click", goFullscreen, false);
 
-    speech = new Speech([{
+    speech = new SpeechCommandInterface([{
         keywords: ["capture", "save", "safe", "save picture", "shoot", "shit", "snap", "take", "take picture"],
         command: capture
     },{
