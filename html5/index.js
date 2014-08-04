@@ -88,9 +88,9 @@ function pageLoad() {
     window.addEventListener("mouseup", showButtons, false);
 
     LandscapeMotion.addEventListener("deviceorientation", function (evt){
-        roll = evt.roll;
-        pitch = evt.pitch;
-        heading = evt.heading;
+        roll = (roll + evt.roll) / 2;
+        pitch = (pitch + evt.pitch) / 2;
+        heading = (heading + evt.heading) / 2;
     });
 
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -104,7 +104,6 @@ function pageLoad() {
     setupPointerLock(overlay, function(evt){
         dmx = evt.webkitMovementX || evt.mozMovementX || 0;
         dmy = evt.webkitMovementY || evt.mozMovementY || 0;
-        console.log(dmx, dmy);
         heading += dmx * 2 * Math.PI / window.innerWidth;
         pitch += dmy *  Math.PI / window.innerHeight;
     });
@@ -119,7 +118,7 @@ function pageLoad() {
 		interpupillaryDistance: 0.064,
 		lensSeparationDistance: 0.064,
 		eyeToScreenDistance: 0.051,
-		distortionK : [1.0, 0.22, 0.24, 0.0],
+		distortionK : [1.0, 0.22, 0.08, -0.03],
 		chromaAbParameter: [ 0.996, -0.004, 1.014, 0.0]
 	}});
     //effect.separation = isMobile ? 1 : -1;

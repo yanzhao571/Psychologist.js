@@ -13,9 +13,12 @@
             || document.mozPointerLockElement === canvas;
     }
 
-    canvas.addEventListener("click", function(){
+    window.addEventListener("click", function(){
         if(!isPointerLocked()){
             canvas.requestPointerLock();
+        }
+        else{
+            document.exitPointerLock();
         }
     }, false);
 
@@ -25,10 +28,10 @@
 
     function onLockChange() {
         if(isPointerLocked()) {
-            canvas.addEventListener("mousemove", onMouseMove, false);
+            window.addEventListener("mousemove", onMouseMove, false);
         }
         else {
-            canvas.removeEventListener("mousemove", onMouseMove, false);
+            window.removeEventListener("mousemove", onMouseMove, false);
         }
     }
 }

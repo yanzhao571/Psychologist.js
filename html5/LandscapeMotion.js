@@ -79,7 +79,7 @@ var LandscapeMotion = {
 
         var value = v, delta = 0, d1, d2, d3, DEG2RAD = Math.PI / 180, RAD2DEG = 180 / Math.PI;
 
-        this.__defineSetter__("degrees", function(newValue){
+        this.setDegrees = function(newValue){
             do{
                 // figure out if it is adding the raw value, or whole
                 // rotations of the value, that results in a smaller
@@ -96,11 +96,11 @@ var LandscapeMotion = {
                 }
             } while(d1 > d2 || d1 > d3);
             value = newValue + delta;
-        });
+        };
 
-        this.__defineGetter__("degrees", function(){ return value; });
-        this.__defineGetter__("radians", function(){ return this.degrees * DEG2RAD; });
-        this.__defineSetter__("radians", function(val){ this.degrees = val * RAD2DEG; });
+        this.getDegrees = function(){ return value; };
+        this.getRadians = function(){ return this.getDegrees() * DEG2RAD; };
+        this.setRadians = function(val){ this.setDegrees(val * RAD2DEG); };
     },
 
     /*
@@ -124,7 +124,7 @@ var LandscapeMotion = {
             deltaGamma, signGamma, pitch,
             deltaBeta, signBeta, roll,
             omx, omy, omz, osx, osy, osz, 
-            isLandscape, isPrimary, isAboveHorizon;
+            isPrimary, isAboveHorizon;
 
         signAlpha = -1;
 
@@ -145,11 +145,9 @@ var LandscapeMotion = {
                 osz = (omz > 0) ? acceleration.z / omz : 1;
 
                 if(omx > omy && omx > omz && omx > 4.5){
-                    isLandscape = true;
                     isPrimary = osx == -1;
                 }
                 else if(omy > omz && omy > omx && omy > 4.5){
-                    isLandscape = false;
                     isPrimary = osy == 1;
                 }
 
@@ -204,21 +202,21 @@ var LandscapeMotion = {
             }
         }
 
-        this.__defineSetter__("acceleration", function(v){
+        this.setAcceleration = function(v){
             acceleration = v;
             calculate();
-        });
+        };
 
-        this.__defineSetter__("orientation", function(v){
+        this.setOrientation = function(v){
             orientation = v;
             calculate();
-        });
+        };
     
-        this.__defineGetter__("acceleration", function(){ return acceleration || LandscapeMotion.ZERO_VECTOR; });
-        this.__defineGetter__("orientation", function(){ return orientation || LandscapeMotion.ZERO_EULER; });
-        this.__defineGetter__("heading", function(){ return heading; });
-        this.__defineGetter__("pitch", function(){ return pitch; });
-        this.__defineGetter__("roll", function(){ return roll; });
+        this.getAcceleration = function(){ return acceleration; };
+        this.getOrientation = function(){ return orientation; };
+        this.getHeading = function(){ return heading; };
+        this.getPitch = function(){ return pitch; };
+        this.getRoll = function(){ return roll; };
     },
 
     /*
@@ -245,45 +243,42 @@ var LandscapeMotion = {
         var corrector = new this.Corrector(LandscapeMotion.BROWSER_IS_GOOGLE_CHROME), 
             heading = new this.Angle(0), 
             pitch = new this.Angle(0), 
-            roll = new this.Angle(0);
+            roll = new this.Angle(0),
+            o, a;
 
         function onChange(){
-            heading.degrees = corrector.heading;
-            pitch.degrees = corrector.pitch;
-            roll.degrees = corrector.roll;
-            callback({
-                heading: heading.radians,
-                pitch: pitch.radians,
-                roll: roll.radians,
-                original: {
-                    orientation: {
-                        alpha: corrector.orientation.alpha,
-                        gamma: corrector.orientation.gamma,
-                        beta: corrector.orientation.beta
-                    },
-                    acceleration: {
-                        x: corrector.acceleration.x,
-                        y: corrector.acceleration.y,
-                        z: corrector.acceleration.z
+            o = corrector.getOrientation();
+            a = corrector.getAcceleration();
+            if(o && a){
+                heading.setDegrees(corrector.getHeading());
+                pitch.setDegrees(corrector.getPitch());
+                roll.setDegrees(corrector.getRoll());
+                callback({
+                    heading: heading.getRadians(),
+                    pitch: pitch.getRadians(),
+                    roll: roll.getRadians(),
+                    original: {
+                        orientation: o,
+                        acceleration: a
                     }
-                }
-            });
+                });
+            }
         }
 
         function checkOrientation(event) {
-            corrector.orientation = (!!event && event.alpha !== null && event) || LandscapeMotion.ZERO_EULER;
+            corrector.setOrientation((!!event && event.alpha !== null && event) || LandscapeMotion.ZERO_EULER);
             onChange();
         }
 
         function checkMotion(event) {
             if(event && event.accelerationIncludingGravity && event.accelerationIncludingGravity.x){
-                corrector.acceleration = event.accelerationIncludingGravity;
+                corrector.setAcceleration(event.accelerationIncludingGravity);
             }
             else if(event && event.acceleration && event.acceleration.x){
-                corrector.acceleration = event.acceleration;
+                corrector.setAcceleration(event.acceleration);
             }
             else{
-                corrector.acceleration = LandscapeMotion.ZERO_VECTOR;
+                corrector.setAcceleration(LandscapeMotion.ZERO_VECTOR);
             }
 
             onChange();
