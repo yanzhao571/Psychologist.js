@@ -3,7 +3,7 @@ var dg = 0, pitch = 0,
     da = 0, heading = 0,
     overlay, gfx, video,
     camera, scene, effect, renderer, cube, map,
-    ax, ay, az,
+    ax, ay, az, dmx, dmy,
     clock;
 
 function animate() {
@@ -23,7 +23,7 @@ function animate() {
     gfx.clearRect(0, 0, overlay.width, overlay.height);
     gfx.font = "20px Arial";
     gfx.fillStyle = "#c00000";
-    gfx.fillText(fmt("fps: $1.00", 1/dt), 10, 20);
+    gfx.fillText(fmt("fps: $1.00, h: $2.00, p: $3.00", 1/dt, heading, pitch), 10, 20);
     gfx.fillStyle = "#111";
     gfx.fillRect(overlay.width / 2 - 2, 0, 4, overlay.height);
 }
@@ -100,6 +100,14 @@ function pageLoad() {
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(0xafbfff);
     overlay.parentElement.insertBefore(renderer.domElement, overlay);
+
+    setupPointerLock(overlay, function(evt){
+        dmx = evt.webkitMovementX || evt.mozMovementX || 0;
+        dmy = evt.webkitMovementY || evt.mozMovementY || 0;
+        console.log(dmx, dmy);
+        heading += dmx * 2 * Math.PI / window.innerWidth;
+        pitch += dmy *  Math.PI / window.innerHeight;
+    });
 
     effect = new THREE.OculusRiftEffect(renderer, {HMD: {
 		hResolution: screen.availWidth,

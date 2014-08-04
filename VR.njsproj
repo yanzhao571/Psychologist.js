@@ -39,6 +39,7 @@
     <Compile Include="html5\include.js" />
     <Compile Include="html5\LandscapeMotion.js" />
     <Compile Include="html5\OculusRiftEffect.min.js" />
+    <Compile Include="html5\PointerLock.js" />
     <Compile Include="html5\psychologist.js" />
     <Compile Include="html5\SpeechCommandInterface.js" />
     <Compile Include="html5\StereoEffect.min.js" />
