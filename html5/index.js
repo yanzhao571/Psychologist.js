@@ -102,10 +102,10 @@ function pageLoad() {
     overlay.parentElement.insertBefore(renderer.domElement, overlay);
 
     effect = new THREE.OculusRiftEffect(renderer, {HMD: {
-		hResolution: isMobile ? screen.availHeight : screen.availWidth,
-		vResolution: isMobile ? screen.availWidth : screen.availHeight,
-        renderTargetW: isMobile ? window.innerWidth : 960,
-        renderTargetH: isMobile ? window.innerHeight : 1080,
+		hResolution: screen.availWidth,
+		vResolution: screen.availHeight,
+        renderTargetW: isMobile ? 960 : screen.availWidth,
+        renderTargetH: isMobile ? 1080 : screen.availHeight,
 		hScreenSize: 0.126,
 		vScreenSize: 0.075,
 		interpupillaryDistance: 0.064,
