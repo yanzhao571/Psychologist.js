@@ -111,8 +111,6 @@ function pageLoad() {
     effect = new THREE.OculusRiftEffect(renderer, {HMD: {
 		hResolution: screen.availWidth,
 		vResolution: screen.availHeight,
-        renderTargetW: isMobile ? 960 : screen.availWidth,
-        renderTargetH: isMobile ? 1080 : screen.availHeight,
 		hScreenSize: 0.126,
 		vScreenSize: 0.075,
 		interpupillaryDistance: 0.064,
