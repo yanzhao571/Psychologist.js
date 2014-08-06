@@ -3,7 +3,8 @@ var dg = 0, pitch = 0,
     da = 0, heading = 0,
     overlay, gfx, video,
     camera, scene, effect, renderer, cube, map,
-    ax, ay, az, dmx, dmy,
+    ax, ay, az, dmx, dmy, keyboard, fps, speed = 5, 
+    cx = 0, cy = 0, cz = 10, vcx = 0, vcy = 0, vcz = 0,
     clock;
 
 function animate() {
@@ -13,17 +14,47 @@ function animate() {
     cube.rotation.y += 0.3 * dt;
     cube.rotation.z += 0.5 * dt;
 
-    if(map){
-        map.needsUpdate = true;
+    fps = 1/dt;
+    
+    setCamera();
+
+    if(keyboard.isDown("forward")){
+        cx += Math.sin(heading) * dt * speed;
+        cz -= Math.cos(heading) * dt * speed;
+    }
+    else if(keyboard.isDown("back")){
+        cx -= Math.sin(heading) * dt * speed;
+        cz += Math.cos(heading) * dt * speed;
     }
 
-    setCamera(dt);
+    if(keyboard.isDown("right")){
+        cz += Math.sin(heading) * dt * speed;
+        cx += Math.cos(heading) * dt * speed;
+    }
+    else if(keyboard.isDown("left")){
+        cz -= Math.sin(heading) * dt * speed;
+        cx -= Math.cos(heading) * dt * speed;
+    }
+
+    cy += vcy * dt;
+    vcy -= 9.8 * dt;
+    
+    if(cy <= 0){
+        vcy = 0;
+        cy = 0;
+    }
+    
+
+    draw();
+}
+
+function draw(){
     effect.render(scene, camera);
 
     gfx.clearRect(0, 0, overlay.width, overlay.height);
     gfx.font = "20px Arial";
     gfx.fillStyle = "#c00000";
-    gfx.fillText(fmt("fps: $1.00, h: $2.00, p: $3.00", 1/dt, heading, pitch), 10, 20);
+    gfx.fillText(fmt("fps: $1.00, h: $2.00, p: $3.00", fps, heading, pitch), 10, 20);
     gfx.fillStyle = "#111";
     gfx.fillRect(overlay.width / 2 - 2, 0, 4, overlay.height);
 }
@@ -84,18 +115,45 @@ function pageLoad() {
         }
     }
 
+    function jump(){
+        if(cy == 0){
+            vcy = 4;
+        }
+    }
+
+    function fire(){
+    }
+
+    function reload(){
+        if(isFullScreenMode()){
+            document.location = document.location.href;
+        }
+        else{
+            toggleFullScreen();
+            overlay.requestPointerLock();   
+        }
+    }
+
+    keyboard = new KeyboardCommandInterface([
+        {name: "left", keycodes: [65, 37]},
+        {name: "forward", keycodes: [87, 38]},
+        {name: "right", keycodes: [68, 39]},
+        {name: "back", keycodes: [83, 40]},
+        {name: "jump", keycodes: [32], commandDown: jump, dt: 250},
+        {name: "fire", keycodes: [17], commandDown: fire, dt: 125},
+        {name: "reload", keycodes: [70], commandDown: reload, dt: 125},
+    ]);
+
     window.addEventListener("mousemove", showButtons, false);
     window.addEventListener("mouseup", showButtons, false);
 
-    LandscapeMotion.addEventListener("deviceorientation", function (evt){
-        roll = (roll + evt.roll) / 2;
-        pitch = (pitch + evt.pitch) / 2;
-        heading = (heading + evt.heading) / 2;
-    });
+    camera = new THREE.PerspectiveCamera(53.13, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.y = 1;
-    camera.position.z = 10;
+    LandscapeMotion.addEventListener("deviceorientation", function (evt){
+        roll = evt.roll;
+        pitch = evt.pitch * 4;
+        heading = evt.heading * 4;
+    });
 
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(0xafbfff);
@@ -116,17 +174,16 @@ function pageLoad() {
 		interpupillaryDistance: 0.064,
 		lensSeparationDistance: 0.064,
 		eyeToScreenDistance: 0.051,
-		distortionK : [1.0, 0.22, 0.08, -0.03],
+		distortionK : [1, 0.22, 0.06, 0.0],
 		chromaAbParameter: [ 0.996, -0.004, 1.014, 0.0]
 	}});
-    //effect.separation = isMobile ? 1 : -1;
 
     window.addEventListener("resize", function () {
         setSize(window.innerWidth, window.innerHeight);
     }, false);
 
     var geometry = new THREE.BoxGeometry(1, 1, 1);
-    var material = new THREE.MeshLambertMaterial({color: 0x70ff70, ambient: 0xffffff, opacity:0.75, transparent: true });
+    var material = new THREE.MeshLambertMaterial({color: 0x70ff70, ambient: 0xffffff, opacity:1, transparent: false });
 
     var light = new THREE.DirectionalLight(0xffffff, 0.95);
     var light2 = new THREE.AmbientLight(0x101010);
@@ -146,7 +203,7 @@ function pageLoad() {
     scene.add(light2);
     scene.add(line);
 
-    for(var i = 0; i < 10; ++i){
+    for(var i = 0; i < 11; ++i){
         var c = new THREE.Mesh(geometry, material);
         c.position.x = i - 5;
         c.position.y = i - 5;
@@ -176,38 +233,19 @@ function pageLoad() {
         }
     }
     
-    
-
-    video = document.createElement("video");
-    video.autoplay = true;
-    video.loop = true;
-
-    var modes = isMobile 
-        ? ["default"]
-        : [{w:640, h:480}, {w:1920, h:1080}, {w:1280, h:720}];
-
-    if(false) setupVideo(modes, video, function(){
-	    video.width	= video.videoWidth;
-	    video.height = video.videoHeight;
-        map = new THREE.Texture(video);
-        var material2 = new THREE.SpriteMaterial({
-            map: map,
-            color: 0xffffff, 
-            fog: true
-        });
-        var sprite = new THREE.Sprite(material2);
-        sprite.position.x = -2;
-        sprite.scale.set(4, 4 * video.height / video.width, 1);
-        scene.add(sprite);    
-    });
-    
     clock.start();
     setSize(window.innerWidth, window.innerHeight);
     window.requestAnimationFrame(animate);
 }
 
 function setCamera(dt) {
-    camera.setRotationFromEuler(new THREE.Euler(pitch + dg, -(heading + da), -(roll + db))); 
+    camera.position.x = 0;
+    camera.position.y = 0;
+    camera.position.z = 0;
+    camera.setRotationFromEuler(new THREE.Euler(pitch + dg, -(heading + da), -(roll + db), "YZX"));
+    camera.position.x = cx;
+    camera.position.y = cy;
+    camera.position.z = cz;
 }
 
 function calibrate() {

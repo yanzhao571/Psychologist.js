@@ -37,6 +37,7 @@
     <Compile Include="html5\canvas-toBlob.min.js" />
     <Compile Include="html5\FileSaver.min.js" />
     <Compile Include="html5\include.js" />
+    <Compile Include="html5\KeyboardCommandInterface.js" />
     <Compile Include="html5\LandscapeMotion.js" />
     <Compile Include="html5\OculusRiftEffect.min.js" />
     <Compile Include="html5\PointerLock.js" />
@@ -55,6 +56,7 @@
     <Compile Include="src\options.js" />
     <Compile Include="src\webServer.js" />
     <Content Include="html5\icons\fs.png" />
+    <Content Include="html5\kbtest.html" />
     <Content Include="html5\index.html" />
     <Content Include="html5\motion.html" />
     <Content Include="html5\reticle.png" />

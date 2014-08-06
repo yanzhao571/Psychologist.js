@@ -38,37 +38,39 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         API requires a network connection, as the processing is done on an external
         server.
 
-    Constructor: new SpeechCommandIinterface(commands);
+    Constructor: new SpeechCommandInterface(commands);
 
-        The commands parameter specifies a collaction of keywords tied to callbacks
+        The `commands` parameter specifies a collection of keywords tied to callbacks
         that will be called when one of the keywords are heard. Each callback can
         be associated with multiple keywords, to be able to increase the accuracy
         of matches by combining words and phrases that sound similar.
 
         Each command entry is a simple object following the pattern:
+        
         {
-            keywords: phraseList,
-            command: callbackFunction
+            "keywords": ["phrase no. 1", "phrase no. 2", ...],
+            "command": <callbackFunction>
         }
 
-        The phraseList property is an array of strings. If the heard command matches 
-            any of the keywords in the list, the associated callbackFunction will be
-            executed.
+        The `keywords` property is an array of strings for which SpeechCommandInterface will
+            listen. If any of the words or phrases in the array matches matches the heard
+            command, the associated callbackFunction will be executed.
         
-        The command property is a callback function that takes no parameters.
+        The `command` property is the callback function that will be executed. It takes no
+            parameters.
 
     Properties:
-        available: returns true if the speech recognition API initialized successfully,
+        `available`: returns true if the speech recognition API initialized successfully,
             false if there was an error.
 
-        errorMessage (optional): if available has returned false, errorMessage returns
+        `errorMessage` (optional): if available has returned false, errorMessage returns
             the original Error object that occured during the failure.
 
     Methods:
         start(): starts the command unrecognition, unless it's not available, in which
             case it prints a message to the console error log.
 
-        stop(): uhm... like start, but it's called stop.
+        stop(): uhm... it's like start, but it's called stop.
 
 */
 function SpeechCommandInterface(commands){
@@ -118,7 +120,6 @@ function SpeechCommandInterface(commands){
             if(newCommand != command){
                 command = newCommand;
                 var candidates = commands.filter(function(cmd){ return cmd && cmd.keywords && cmd.keywords.indexOf && cmd.keywords.indexOf(command) > -1;});
-                console.log(candidates);
                 if(candidates.length == 0){
                     console.log(fmt("Unknown command: $1", command));
                 }
