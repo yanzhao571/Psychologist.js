@@ -38,7 +38,7 @@ html, body, canvas, video, img, ul
     transition-timing-function: ease-in-out;
 }
 
-html, body, canvas, video, img
+html, body, canvas, video, .overlay
 {
     width: 100%;
     left: 0;
@@ -75,10 +75,8 @@ a.button
     color: #fff;
     cursor: pointer;
     display: inline-block;
-    padding: 1em;
     text-align: center;
     text-decoration: none;
-    padding: 2em;
     border-width: 10px;
     border-style: solid;
     border-color: #123197;

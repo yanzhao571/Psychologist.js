@@ -4,11 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
     <title>StereoHelperCam</title>
-    <link type="text/css" rel="stylesheet" href="style.css">
+    <link type="text/css" rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <canvas id="picture"></canvas>
-    <img src="reticle.png" id="reticle" />
+    <img src="img/reticle.png" class="overlay" id="reticle" />
     <ul id="controls">
         <li><a class="button" id="captureButton">capture</a></li>
         <li><a class="button" id="resetButton">reset</a></li>
@@ -28,21 +28,20 @@
             include(curAppVersion,
                 function () { pageLoad(); },
                 //WebGL
-                "three.min.js",
-                "StereoEffect.min.js",
-                "OculusRiftEffect.min.js",
+                "js/lib/three/three.min.js",
+                "js/lib/three/OculusRiftEffect.min.js",
                 //Files
-                "Blob.min.js",
-                "canvas-toBlob.min.js",
-                "FileSaver.min.js",
+                "js/lib/Blob.min.js",
+                "js/lib/canvas-toBlob.min.js",
+                "js/lib/FileSaver.min.js",
                 //Framework
-                "psychologist.js",
-                "camera.js",
-                "LandscapeMotion.js",
-                "SpeechCommandInterface.js",
-                "cam3d.js");
+                "js/psychologist.js",
+                "js/camera.js",
+                "js/LandscapeMotion.js",
+                "js/SpeechCommandInterface.js",
+                "js/cam3d.js");
         }, false);
-        s.src = "include.js?v" + curAppVersion;
+        s.src = "js/include.js?v" + curAppVersion;
         document.body.appendChild(s);
     </script>
 </body>

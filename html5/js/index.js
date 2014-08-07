@@ -1,62 +1,58 @@
-var dg = 0, pitch = 0,
-    db = 0, roll = 0,
-    da = 0, heading = 0,
+var pitch = 0,
+    roll = 0,
+    heading = 0,
     overlay, gfx, video,
     camera, scene, effect, renderer, cube, map,
-    ax, ay, az, dmx, dmy, keyboard, fps, speed = 5, 
-    cx = 0, cy = 0, cz = 10, vcx = 0, vcy = 0, vcz = 0,
+    ax, ay, az, dmx, dmy, keyboard, fps, speed = 5,
+    dt, disp, vcx = 0, vcy = 0, vcz = 0,
     clock;
 
 function animate() {
-    var dt = clock.getDelta();
+    dt = clock.getDelta();
     window.requestAnimationFrame(animate);
     cube.rotation.x += 0.2 * dt;
     cube.rotation.y += 0.3 * dt;
     cube.rotation.z += 0.5 * dt;
 
-    fps = 1/dt;
-    
-    setCamera();
-
-    if(keyboard.isDown("forward")){
-        cx += Math.sin(heading) * dt * speed;
-        cz -= Math.cos(heading) * dt * speed;
-    }
-    else if(keyboard.isDown("back")){
-        cx -= Math.sin(heading) * dt * speed;
-        cz += Math.cos(heading) * dt * speed;
-    }
-
-    if(keyboard.isDown("right")){
-        cz += Math.sin(heading) * dt * speed;
-        cx += Math.cos(heading) * dt * speed;
-    }
-    else if(keyboard.isDown("left")){
-        cz -= Math.sin(heading) * dt * speed;
-        cx -= Math.cos(heading) * dt * speed;
-    }
-
-    cy += vcy * dt;
-    vcy -= 9.8 * dt;
-    
-    if(cy <= 0){
-        vcy = 0;
-        cy = 0;
-    }
-    
-
+    fps = 1/dt;    
+    setCamera(dt);
     draw();
 }
 
-function draw(){
-    effect.render(scene, camera);
 
+function setCamera(dt) {
+    camera.updateProjectionMatrix();
+    camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
+    disp = speed * dt;
+    if(keyboard.isDown("forward")){
+        camera.translateZ(-disp);
+    }
+    else if(keyboard.isDown("back")){
+        camera.translateZ(disp);
+    }
+
+    if(keyboard.isDown("right")){
+        camera.translateX(disp);
+    }
+    else if(keyboard.isDown("left")){
+        camera.translateX(-disp);
+    }
+}
+
+function draw(){
     gfx.clearRect(0, 0, overlay.width, overlay.height);
     gfx.font = "20px Arial";
     gfx.fillStyle = "#c00000";
     gfx.fillText(fmt("fps: $1.00, h: $2.00, p: $3.00", fps, heading, pitch), 10, 20);
-    gfx.fillStyle = "#111";
-    gfx.fillRect(overlay.width / 2 - 2, 0, 4, overlay.height);
+
+    if(effect){
+        effect.render(scene, camera);
+        gfx.fillStyle = "#111";
+        gfx.fillRect(overlay.width / 2 - 2, 0, 4, overlay.height);
+    }
+    else{
+        renderer.render(scene, camera);
+    }
 }
 
 function setSize(w, h) {
@@ -64,7 +60,12 @@ function setSize(w, h) {
     overlay.height = h;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    effect.setSize(window.innerWidth, window.innerHeight);
+    if(effect){
+        effect.setSize(window.innerWidth, window.innerHeight);
+    }
+    else{
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
 }
 
 function pageLoad() {
@@ -134,6 +135,42 @@ function pageLoad() {
         }
     }
 
+    window.addEventListener("mousemove", showButtons, false);
+    window.addEventListener("mouseup", showButtons, false);
+
+    camera = new THREE.PerspectiveCamera(53.13, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+    renderer = new THREE.WebGLRenderer();
+    renderer.setClearColor(0xafbfff);
+
+    if(isMobile){
+        effect = new THREE.OculusRiftEffect(renderer, {HMD: {
+		    hResolution: screen.availWidth,
+		    vResolution: screen.availHeight,
+		    hScreenSize: 0.126,
+		    vScreenSize: 0.075,
+		    interpupillaryDistance: 0.064,
+		    lensSeparationDistance: 0.064,
+		    eyeToScreenDistance: 0.051,
+		    distortionK : [1, 0.22, 0.06, 0.0],
+		    chromaAbParameter: [ 0.996, -0.004, 1.014, 0.0]
+	    }});
+
+        LandscapeMotion.addEventListener("deviceorientation", function (evt){
+            roll = -evt.roll;
+            pitch = evt.pitch;
+            heading = -evt.heading;
+        });
+    }
+    else{
+        setupPointerLock(overlay, function(evt){
+            dmx = evt.webkitMovementX || evt.mozMovementX || 0;
+            dmy = evt.webkitMovementY || evt.mozMovementY || 0;
+            heading -= dmx * 2 * Math.PI / window.innerWidth;
+            pitch -= dmy *  Math.PI / window.innerHeight;
+        });
+    }
+
     keyboard = new KeyboardCommandInterface([
         {name: "left", keycodes: [65, 37]},
         {name: "forward", keycodes: [87, 38]},
@@ -143,40 +180,7 @@ function pageLoad() {
         {name: "fire", keycodes: [17], commandDown: fire, dt: 125},
         {name: "reload", keycodes: [70], commandDown: reload, dt: 125},
     ]);
-
-    window.addEventListener("mousemove", showButtons, false);
-    window.addEventListener("mouseup", showButtons, false);
-
-    camera = new THREE.PerspectiveCamera(53.13, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-    LandscapeMotion.addEventListener("deviceorientation", function (evt){
-        roll = evt.roll;
-        pitch = evt.pitch * 4;
-        heading = evt.heading * 4;
-    });
-
-    renderer = new THREE.WebGLRenderer();
-    renderer.setClearColor(0xafbfff);
     overlay.parentElement.insertBefore(renderer.domElement, overlay);
-
-    setupPointerLock(overlay, function(evt){
-        dmx = evt.webkitMovementX || evt.mozMovementX || 0;
-        dmy = evt.webkitMovementY || evt.mozMovementY || 0;
-        heading += dmx * 2 * Math.PI / window.innerWidth;
-        pitch += dmy *  Math.PI / window.innerHeight;
-    });
-
-    effect = new THREE.OculusRiftEffect(renderer, {HMD: {
-		hResolution: screen.availWidth,
-		vResolution: screen.availHeight,
-		hScreenSize: 0.126,
-		vScreenSize: 0.075,
-		interpupillaryDistance: 0.064,
-		lensSeparationDistance: 0.064,
-		eyeToScreenDistance: 0.051,
-		distortionK : [1, 0.22, 0.06, 0.0],
-		chromaAbParameter: [ 0.996, -0.004, 1.014, 0.0]
-	}});
 
     window.addEventListener("resize", function () {
         setSize(window.innerWidth, window.innerHeight);
@@ -236,20 +240,4 @@ function pageLoad() {
     clock.start();
     setSize(window.innerWidth, window.innerHeight);
     window.requestAnimationFrame(animate);
-}
-
-function setCamera(dt) {
-    camera.position.x = 0;
-    camera.position.y = 0;
-    camera.position.z = 0;
-    camera.setRotationFromEuler(new THREE.Euler(pitch + dg, -(heading + da), -(roll + db), "YZX"));
-    camera.position.x = cx;
-    camera.position.y = cy;
-    camera.position.z = cz;
-}
-
-function calibrate() {
-    dg = -pitch;
-    db = -roll;
-    da = -heading;
 }

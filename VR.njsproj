@@ -30,24 +30,25 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="html5\AnaglyphEffect.min.js" />
-    <Compile Include="html5\index.js" />
-    <Compile Include="html5\Blob.min.js" />
-    <Compile Include="html5\camera.js" />
-    <Compile Include="html5\canvas-toBlob.min.js" />
-    <Compile Include="html5\FileSaver.min.js" />
-    <Compile Include="html5\include.js" />
-    <Compile Include="html5\KeyboardCommandInterface.js" />
-    <Compile Include="html5\LandscapeMotion.js" />
-    <Compile Include="html5\OculusRiftEffect.min.js" />
-    <Compile Include="html5\PointerLock.js" />
-    <Compile Include="html5\psychologist.js" />
-    <Compile Include="html5\SpeechCommandInterface.js" />
-    <Compile Include="html5\StereoEffect.min.js" />
-    <Compile Include="html5\cam3d.js" />
-    <Compile Include="html5\testing.js" />
-    <Compile Include="html5\tests.js" />
-    <Compile Include="html5\three.min.js" />
+    <Compile Include="html5\js\index.js" />
+    <Compile Include="html5\js\camera.js" />
+    <Compile Include="html5\js\include.js" />
+    <Compile Include="html5\js\KeyboardCommandInterface.js" />
+    <Compile Include="html5\js\LandscapeMotion.js" />
+    <Compile Include="html5\js\lib\Blob.min.js" />
+    <Compile Include="html5\js\lib\canvas-toBlob.min.js" />
+    <Compile Include="html5\js\lib\FileSaver.min.js" />
+    <Compile Include="html5\js\lib\three\AnaglyphEffect.min.js" />
+    <Compile Include="html5\js\lib\three\DeviceOrientationControls.min.js" />
+    <Compile Include="html5\js\lib\three\OculusRiftEffect.min.js" />
+    <Compile Include="html5\js\lib\three\StereoEffect.min.js" />
+    <Compile Include="html5\js\PointerLock.js" />
+    <Compile Include="html5\js\psychologist.js" />
+    <Compile Include="html5\js\SpeechCommandInterface.js" />
+    <Compile Include="html5\js\cam3d.js" />
+    <Compile Include="html5\test\testing.js" />
+    <Compile Include="html5\test\LandscapeMotion.js" />
+    <Compile Include="html5\js\lib\three\three.min.js" />
     <Compile Include="minify.js" />
     <Compile Include="server.js" />
     <Compile Include="src\controllers.js" />
@@ -55,20 +56,26 @@
     <Compile Include="src\minifier.js" />
     <Compile Include="src\options.js" />
     <Compile Include="src\webServer.js" />
-    <Content Include="html5\icons\fs.png" />
+    <Content Include="html5\ico\fs.png" />
     <Content Include="html5\kbtest.html" />
     <Content Include="html5\index.html" />
     <Content Include="html5\motion.html" />
-    <Content Include="html5\reticle.png" />
+    <Content Include="html5\img\reticle.png" />
     <Content Include="html5\cam3d.html" />
-    <Content Include="html5\style.css" />
+    <Content Include="html5\css\style.css" />
     <Content Include="package.json" />
     <Content Include="README.md" />
     <Content Include="src\README.md" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="html5\" />
-    <Folder Include="html5\icons\" />
+    <Folder Include="html5\ico\" />
+    <Folder Include="html5\js\lib\" />
+    <Folder Include="html5\js\" />
+    <Folder Include="html5\js\lib\three\" />
+    <Folder Include="html5\css\" />
+    <Folder Include="html5\img\" />
+    <Folder Include="html5\test\" />
     <Folder Include="src\" />
     <Folder Include="src\controllers\" />
   </ItemGroup>

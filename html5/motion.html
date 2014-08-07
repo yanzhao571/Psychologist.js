@@ -38,9 +38,9 @@
         s.addEventListener("load", function () {
             include(curAppVersion,
             function () { motionTester(); },
-            "psychologist.js",
-            "LandscapeMotion.js",
-            "tests.js");
+            "js/psychologist.js",
+            "js/LandscapeMotion.js",
+            "test/LandscapeMotion.js");
         }, false);
         s.src = "include.js?v" + curAppVersion;
         document.body.appendChild(s);
