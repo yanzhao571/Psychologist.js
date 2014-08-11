@@ -8,12 +8,16 @@
     options = require("./src/options"),
     minify = require("./src/minifier"),
     path = require("path"),
-    startPage = "index.html";
+    srcDir = "html5",
+    startPage = "index.html",
+    startProc, app, port, template;
 
 options.parse(process.argv);
 
-var srcDir = "html5";
-var startProc = (os.platform() == "win32") ? "explorer" : null;
+startProc = {
+    linux: "xdg-open",
+    win32: "explorer"
+}[os.platform()];
 
 if(options.m == "true"){
     minify(
@@ -24,11 +28,11 @@ if(options.m == "true"){
     srcDir = "obj";
 }
 
-var app = http.createServer(webServer(srcDir));
-var port = 8080;;
+app = http.createServer(webServer(srcDir));
+port = 8080;
 app.listen(port);
 if(options.m != "true" && startProc){
-    var template = "http://localhost/$2"
+    template = "http://localhost/$2";
     if(port != 80){
         template = "http://localhost:$1/$2";
     }
