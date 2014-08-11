@@ -59,6 +59,10 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         The `command` property is the callback function that will be executed. It takes no
             parameters.
 
+        The optional `stopAfterEnd` parameter is a boolean indicating whether or not the
+            command listening should restart automatically after the browser  automatically
+            ends it from the user not speaking any commands. It defaults to false.
+
     Properties:
         `available`: returns true if the speech recognition API initialized successfully,
             false if there was an error.
@@ -73,12 +77,12 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         stop(): uhm... it's like start, but it's called stop.
 
 */
-function SpeechCommandInterface(commands){
+function SpeechCommandInterface(commands, stopAfterEnd){
     try{
         var command = "",
             commandTimeout,
             running = false,
-            restart = true,
+            restart = !stopAfterEnd,
             recognition = new webkitSpeechRecognition();
 
         recognition.continuous = true;

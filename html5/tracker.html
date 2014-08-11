@@ -1,0 +1,28 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
+    <title>PointTrack</title>
+    <link type="text/css" rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <canvas id="picture"></canvas>
+    <div id="ball" style="width:50px;height:50px;position:absolute;border-radius:25px;background-color:#f00"></div>
+    <script id="setup">
+        var curAppVersion = 1;
+        var s = document.createElement("script");
+        s.async = 1;
+        s.addEventListener("load", function () {
+            include(curAppVersion,
+                function () { pageLoad(); },
+                "js/psychologist.js",
+                "js/camera.js",
+                "js/KeyboardCommandInterface.js",
+                "js/tracker.js");
+        }, false);
+        s.src = "js/include.js?v" + curAppVersion;
+        document.body.appendChild(s);
+    </script>
+</body>
+</html>

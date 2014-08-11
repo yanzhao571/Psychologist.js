@@ -30,6 +30,7 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="html5\js\tracker.js" />
     <Compile Include="html5\js\index.js" />
     <Compile Include="html5\js\camera.js" />
     <Compile Include="html5\js\include.js" />
@@ -57,7 +58,7 @@
     <Compile Include="src\options.js" />
     <Compile Include="src\webServer.js" />
     <Content Include="html5\ico\fs.png" />
-    <Content Include="html5\kbtest.html" />
+    <Content Include="html5\tracker.html" />
     <Content Include="html5\index.html" />
     <Content Include="html5\motion.html" />
     <Content Include="html5\img\reticle.png" />

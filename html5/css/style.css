@@ -45,7 +45,7 @@ html, body, canvas, video, .overlay
     top: 0;
 }
 
-html, body /*, canvas, video, img*/
+html, body
 {
     height: 100%;
 }
