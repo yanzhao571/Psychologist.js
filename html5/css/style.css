@@ -4,7 +4,7 @@ body
     background-color: #000;
 }
 
-ul
+ul#options
 {
     list-style: none;
 }
@@ -15,14 +15,14 @@ ul
     padding: 0;
 }
 
-html, body, canvas, video, img, ul, li
+html, body, canvas, video, img, ul#options, #options>li
 {
     padding: 0;
     margin: 0;
     border: 0;
 }
 
-html, body, canvas, video, img, ul
+html, body, canvas, video, img, ul#options
 {
     position: absolute;
 }

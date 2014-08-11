@@ -3,6 +3,7 @@
         picture = document.getElementById("picture"),
         camera = document.createElement("video"),
         gfx = picture.getContext("2d"),
+        instructions = document.getElementById('instructions'),
         keyboard,
         img, weight, n, i, c, dn, 
         power = 63, threshold = 0.35,
@@ -13,6 +14,11 @@
         bx = 0, by = 0,
         bleft = 0, btop = 0, lastX, lastY, dx, dy;
 
+    if(instructions){
+        instructions.style.display = "none";
+    }
+
+    ball.style.display = "block";
 
     function changeParameters(dp, dt){
         power += dp;
