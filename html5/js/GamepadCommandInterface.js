@@ -146,18 +146,27 @@ function GamepadCommandInterface(commands, gamepads){
         listeners = {
             gamepadconnected: [],
             gamepaddisconnected: []
-        };
+        },
+        translations = [
+        { 
+            test: /ouya/i,
+            buttons: [0, 2, 3, 1, 4, 5, 14, 15, -1, 7, -1, 6, 11, 9, 8, 10],
+            axes: [0, 1, 3, 2],
+            values: function(v){ return (-v / 65535) - 1; }
+        }];
 
     function checkPad(pad){
         var n = Date.now();
         if(gamepads.indexOf(pad.id) > -1){
-            var padState = state[pad.id];
+            var padState = state[pad.id],
+                trans = translations.filter(function(t){ return t.test.test(pad.id);});
             commands.forEach(function(cmd){
                 var buttonPressed = false,
                     axisValue = 0.0,
                     fireAgain = cmd.dt && (n - cmd.lt) > cmd.dt;
 
                 Array.prototype.forEach.call(pad.buttons, function(btn, i){
+                    i = trans.reduce(function(a, b){return b.buttons[a]; }, i);
                     if(cmd.buttons.indexOf(i) > -1){
                         buttonPressed |= btn.pressed;
                         if(Math.abs(axisValue) < Math.abs(btn.value)){
@@ -172,6 +181,8 @@ function GamepadCommandInterface(commands, gamepads){
                 });
 
                 Array.prototype.forEach.call(pad.axes, function(axis, i){
+                    i = trans.reduce(function(a, b){return b.axes[a]; }, i);
+                    axis = trans.reduce(function(a, b){return b.values(a); }, axis);
                     if(cmd.axes.indexOf(i) > -1 && Math.abs(axisValue) < Math.abs(axis)){
                         axisValue = axis;
                     }
@@ -344,7 +355,7 @@ function GamepadCommandInterface(commands, gamepads){
     });
 
     try{
-//        this.update();
+        this.update();
         available = true;
     }
     catch(err){
