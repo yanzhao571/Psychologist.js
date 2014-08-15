@@ -3,18 +3,22 @@ var pitch = 0,
     heading = 0,
     overlay, gfx, video,
     camera, scene, effect, renderer, cube, map,
-    ax, ay, az, dmx, dmy, keyboard, fps, speed = 5,
-    dt, disp, vcx = 0, vcy = 0, vcz = 0,
+    ax, ay, az, dmx, dmy, keyboard, gamepad, gpid, fps, speed = 5,
+    dt, disp, vcy = 0,
     clock;
 
 function animate() {
+    requestAnimationFrame(animate);
     dt = clock.getDelta();
-    window.requestAnimationFrame(animate);
+    gamepad.update();
     cube.rotation.x += 0.2 * dt;
     cube.rotation.y += 0.3 * dt;
     cube.rotation.z += 0.5 * dt;
-
-    fps = 1/dt;    
+    vcy -= dt * speed;
+    if(camera.position.y <= 0 && vcy < 0){
+        vcy = 0;
+    }
+    fps = 1/dt;
     setCamera(dt);
     draw();
 }
@@ -22,13 +26,18 @@ function animate() {
 
 function setCamera(dt) {
     camera.updateProjectionMatrix();
-    camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
     disp = speed * dt;
+
+    camera.translateY(disp * vcy);
+
     if(keyboard.isDown("forward")){
         camera.translateZ(-disp);
     }
     else if(keyboard.isDown("back")){
         camera.translateZ(disp);
+    }
+    else if(gpid){
+        camera.translateZ(disp * gamepad.getValue(gpid, "drive"));
     }
 
     if(keyboard.isDown("right")){
@@ -37,6 +46,15 @@ function setCamera(dt) {
     else if(keyboard.isDown("left")){
         camera.translateX(-disp);
     }
+    else if(gpid){
+        camera.translateX(disp * gamepad.getValue(gpid, "strafe"));
+    }
+
+    
+    heading -= 2 * gamepad.getValue(gpid, "yaw") * dt;
+    pitch += 2 * gamepad.getValue(gpid, "pitch") * dt;
+
+    camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
 }
 
 function draw(){
@@ -117,7 +135,7 @@ function pageLoad() {
     }
 
     function jump(){
-        if(cy == 0){
+        if(camera.position.y <= 0){
             vcy = 4;
         }
     }
@@ -180,6 +198,26 @@ function pageLoad() {
         {name: "fire", keycodes: [17], commandDown: fire, dt: 125},
         {name: "reload", keycodes: [70], commandDown: reload, dt: 125},
     ]);
+
+    gamepad = new GamepadCommandInterface([
+        {name: "strafe", axes: [0], deadzone: 0.1},
+        {name: "drive", axes: [1], deadzone: 0.1},
+        {name: "yaw", axes: [2], deadzone: 0.1},
+        {name: "pitch", axes: [3], deadzone: 0.1},
+        {name: "rollRight", buttons: [4], commandDown: function(){ roll = 0.25; }, commandUp: function(){roll = 0;}},
+        {name: "rollLeft", buttons: [5], commandDown: function(){ roll = -0.25; }, commandUp: function(){roll = 0;}},
+        {name: "jump", buttons: [0], commandDown: jump, dt: 250},
+        {name: "fire", buttons: [1], commandDown: fire, dt: 125},
+    ]);
+
+    gamepad.addEventListener("gamepadconnected", function(id){
+        console.log(id);
+        if(!gpid && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))){
+            gpid = id;
+            gamepad.addGamepad(id);
+        }
+    }, false);
+
     overlay.parentElement.insertBefore(renderer.domElement, overlay);
 
     window.addEventListener("resize", function () {
