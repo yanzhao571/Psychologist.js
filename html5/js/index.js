@@ -50,10 +50,10 @@ function setCamera(dt) {
         camera.translateX(disp * gamepad.getValue(gpid, "strafe"));
     }
 
-    
-    heading -= 2 * gamepad.getValue(gpid, "yaw") * dt;
-    pitch += 2 * gamepad.getValue(gpid, "pitch") * dt;
-
+    if(gpid){
+        heading -= 2 * gamepad.getValue(gpid, "yaw") * dt;
+        pitch += 2 * gamepad.getValue(gpid, "pitch") * dt;
+    }
     camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
 }
 
