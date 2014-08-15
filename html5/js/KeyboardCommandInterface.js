@@ -39,7 +39,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
     Constructor: new KeyboardCommandInterface(commands, domElement?);
 
         The `commands` parameter specifies a collection of keycodes tied to callbacks
-        that will be called when one of the keywords are heard. Each callback can
+        that will be called when one of the keys are depressed. Each callback can
         be associated with multiple keycodes, to be able to provide multiple options
         for the same command.
 
@@ -76,10 +76,10 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
     Methods:
-        `isDown()`: returns true of the selected command name is activated. Returns false if
+        `isDown(name)`: returns true of the specified command name is activated. Returns false if
             none of the associated keys are currently being depressed.
 
-        `isUp()`: returns the boolean negation of `isDown()`.
+        `isUp(name)`: returns the boolean negation of `isDown()`.
 
 */
 function KeyboardCommandInterface(commands, domElement){
@@ -102,7 +102,7 @@ function KeyboardCommandInterface(commands, domElement){
                 }
             }
         }
-    }    
+    }
 
     this.isDown = function(name){
         return state[name];
@@ -110,7 +110,10 @@ function KeyboardCommandInterface(commands, domElement){
 
     this.isUp = function(name){
         return !state[name];
-    };    
+    };
+    
+    // clone the arrays, so the consumer can't add elements to it in their own code.
+    commands = commands.slice();
     
     commands.forEach(function(c){
         state[c.name] = false;

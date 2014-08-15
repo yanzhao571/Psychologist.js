@@ -63,28 +63,78 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
             command listening should restart automatically after the browser  automatically
             ends it from the user not speaking any commands. It defaults to false.
 
-    Properties:
-        `available`: returns true if the speech recognition API initialized successfully,
-            false if there was an error.
-
-        `errorMessage` (optional): if available has returned false, errorMessage returns
-            the original Error object that occured during the failure.
-
     Methods:
-        start(): starts the command unrecognition, unless it's not available, in which
-            case it prints a message to the console error log.
+        `start()`: starts the command unrecognition, unless it's not available, in which
+            case it prints a message to the console error log. Returns true if the running 
+            state changed. Returns false otherwise.
 
-        stop(): uhm... it's like start, but it's called stop.
+        `stop()`: uhm... it's like start, but it's called stop.
+
+        `isAvailable()`: returns true if the setup process was successful.
+
+        `getErrorMessage()`: returns the Error object that occured when setup failed, or 
+            null if setup was successful.
 
 */
 function SpeechCommandInterface(commands, stopAfterEnd){
-    try{
-        var command = "",
-            commandTimeout,
-            running = false,
-            restart = !stopAfterEnd,
-            recognition = new webkitSpeechRecognition();
+    var command = "",
+        commandTimeout,
+        running = false,
+        restart = !stopAfterEnd,
+        recognition = null,
+        available = null,
+        errorMessage = null;
 
+    function warn(){
+        var msg = fmt("Failed to initialize speech engine. Reason: $1", err.message);
+        console.error(msg);
+        return false;
+    }
+
+    this.start = function(){
+        if(!avialable){
+            return warn();
+        }
+        else if(!running){
+            restart = !stopAfterEnd;
+            recognition.start();
+            return true;
+        }
+        return false;
+    };
+
+    this.stop = function(){
+        if(!available){
+            return warn();
+        }
+        if(running){
+            restart = false;
+            recognition.stop();
+            return true;
+        }
+        return false;
+    };
+
+    this.isAvailable = function(){ 
+        return available;
+    };
+
+    this.getErrorMessage = function(){
+        return errorMessage;
+    };
+
+    // clone the arrays, so the consumer can't add elements to it in their own code.
+    commands = commands.slice();
+                
+    try{
+        if(window.SpeechRecognition){
+            // just in case this ever gets standardized
+            recognition = new SpeechRecognition(); 
+        }
+        else{
+            // purposefully don't check the existance so it errors out and setup fails.
+            recognition = new webkitSpeechRecognition(); 
+        }
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = "en-US";
@@ -125,7 +175,7 @@ function SpeechCommandInterface(commands, stopAfterEnd){
                 command = newCommand;
                 var candidates = commands.filter(function(cmd){ return cmd && cmd.keywords && cmd.keywords.indexOf && cmd.keywords.indexOf(command) > -1;});
                 if(candidates.length == 0){
-                    console.log(fmt("Unknown command: $1", command));
+                    console.log("Unknown command: " + command);
                 }
                 else{
                     candidates[0].command();
@@ -138,28 +188,10 @@ function SpeechCommandInterface(commands, stopAfterEnd){
             }, 2000);
         }, true);
 
-        this.start = function(){
-            if(!running){
-                restart = true;
-                recognition.start();
-            }
-        };
-
-        this.stop = function(){
-            if(running){
-                restart = false;
-                recognition.stop();
-            }
-        };
-        this.available = true;
+        available = true;
     }
     catch(err){
-        this.available = false;
-        this.errorMessage = err;
-        this.start = this.stop = function(){
-            var msg = fmt("Failed to initialize speech engine. Reason: $1", err.message);
-            console.error(msg);
-            return msg;
-        };
+        errorMessage = err;
+        available = false;
     }
 }

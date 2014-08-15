@@ -145,7 +145,7 @@
 
     function setSpeech(){
         speechButton.innerHTML =
-            speech.available 
+            speech.isAvailable()
                 ? (useSpeech ? "disable speech" : "enable speech")
                 : "speech unavailable";
         if(useSpeech){

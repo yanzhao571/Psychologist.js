@@ -30,6 +30,7 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="html5\js\GamepadCommandInterface.js" />
     <Compile Include="html5\js\tracker.js" />
     <Compile Include="html5\js\index.js" />
     <Compile Include="html5\js\camera.js" />
@@ -57,7 +58,8 @@
     <Compile Include="src\minifier.js" />
     <Compile Include="src\options.js" />
     <Compile Include="src\webServer.js" />
-    <Content Include="html5\controller.html" />
+    <Content Include="html5\gamepadGood.html" />
+    <Content Include="html5\gamepadBad.html" />
     <Content Include="html5\ico\fs.png" />
     <Content Include="html5\tracker.html" />
     <Content Include="html5\index.html" />
