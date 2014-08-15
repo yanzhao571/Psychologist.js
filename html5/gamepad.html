@@ -14,7 +14,9 @@
             var output = document.getElementById("output"),
                 frame = 0,
                 pads = new GamepadCommandInterface([
-                    { name: "horizontal", axes: [0], buttons: [-6, 7] },
+                    { name: "roll", axes: [0] },
+                    { name: "pitch", axes: [1] },
+                    { name: "throttle", buttons: [-6, 7] },
                     { name: "jump", buttons: [0, 1, 2, 3], commandDown: jump },
                     { name: "fire", buttons: [5], commandDown: fire, dt: 250 }
                 ]);

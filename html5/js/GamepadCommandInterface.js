@@ -314,7 +314,7 @@ function GamepadCommandInterface(commands, gamepads){
     // clone the arrays, so the consumer can't add elements to it in their own code.
     commands = commands.slice();
     if(gamepads){
-        gamepads = gamepadIDs.slice();
+        gamepads = gamepads.slice();
     }
     else{
         gamepads = [];
