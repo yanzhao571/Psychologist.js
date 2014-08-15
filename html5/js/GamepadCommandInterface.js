@@ -177,6 +177,9 @@ function GamepadCommandInterface(commands, gamepads){
                     }
                 });
 
+                if(cmd.deadzone && Math.abs(axisValue) < cmd.deadzone){
+                    axisValue = 0;
+                }
                 padState[cmd.name].value = axisValue;
 
                 if(cmd.commandDown && buttonPressed && (!padState[cmd.name].pressed || fireAgain)){
@@ -288,7 +291,6 @@ function GamepadCommandInterface(commands, gamepads){
 
         currentPads = pads.map(function(pad){
             if(connectedGamepads.indexOf(pad.id) == -1){
-                onConnected(pad.id);
                 state[pad.id] = {};
                 commands.forEach(function(cmd){
                     state[pad.id][cmd.name] = {
