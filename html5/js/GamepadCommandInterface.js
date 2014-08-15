@@ -299,6 +299,7 @@ function GamepadCommandInterface(commands, gamepads){
                     };
                 });
                 connectedGamepads.push(pad.id);
+                onConnected(pad.id);
             }
             checkPad(pad);
             return pad.id;
@@ -343,7 +344,7 @@ function GamepadCommandInterface(commands, gamepads){
     });
 
     try{
-        this.update();
+//        this.update();
         available = true;
     }
     catch(err){
