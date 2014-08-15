@@ -14,11 +14,26 @@
             var output = document.getElementById("output"),
                 frame = 0,
                 pads = new GamepadCommandInterface([
-                    { name: "roll", axes: [0] },
-                    { name: "pitch", axes: [1] },
-                    { name: "throttle", buttons: [-6, 7] },
-                    { name: "jump", buttons: [0, 1, 2, 3], commandDown: jump },
-                    { name: "fire", buttons: [5], commandDown: fire, dt: 250 }
+                    { name: "a", buttons: [0] },
+                    { name: "b", buttons: [1] },
+                    { name: "x", buttons: [2] },
+                    { name: "y", buttons: [3] },
+                    { name: "lb", buttons: [4] },
+                    { name: "rb", buttons: [5] },
+                    { name: "lt", buttons: [6] },
+                    { name: "rt", buttons: [7] },
+                    { name: "select", buttons: [8] },
+                    { name: "start", buttons: [9] },
+                    { name: "ls", buttons: [10] },
+                    { name: "rs", buttons: [11] },
+                    { name: "du", buttons: [12] },
+                    { name: "dd", buttons: [13] },
+                    { name: "dl", buttons: [14] },
+                    { name: "dr", buttons: [15] },
+                    { name: "lhoriz", axes: [0] },
+                    { name: "lvert", axes: [1] },
+                    { name: "rhoriz", axes: [2] },
+                    { name: "rvert", axes: [3] }
                 ]);
 
             function jump(id) {
@@ -30,16 +45,25 @@
             }
 
             pads.addEventListener("gamepadconnected", function (id) {
-                pads.addGamepad(id);
-                console.log("connected");
+                if (confirm(id)) {
+                    pads.addGamepad(id);
+                    console.log("connected", id);
+                }
             });
             pads.addEventListener("gamepaddisconnected", console.log.bind(console, "disconnected"));
+
+            var buttons = ["a", "b", "x", "y", "lb", "rb", "lt", "rt", "dl", "dd", "dr", "du", "select", "start", "ls", "rs"];
+            var axis = ["lvert", "lhoriz", "rvert", "rhoriz"];
 
             function loop(dt) {
                 requestAnimationFrame(loop);
                 pads.update();
-                output.innerHTML = pads.getConnectedGamepads().map(function (id) {
-                    return "<p>" + id + ": horiz (" + pads.getValue(id, "horizontal") + ")</p>";
+                output.innerHTML = pads.getGamepads().map(function (id) {
+                    return "<p>" + id + ": <ul><li>"
+                        + buttons.map(function(b){ return b + ": " + pads.isDown(id, b) + " -> " + pads.getValue(id, b); }).join("</li><li>")
+                        + "</li><li>"
+                        + axis.map(function(a){ return a + " -> " + pads.getValue(id, a); }).join("</li><li>")
+                        + "</li></ul></p>";
                 }).join("");
             }
 
