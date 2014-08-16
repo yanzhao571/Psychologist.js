@@ -161,7 +161,7 @@ function pageLoad() {
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(0xafbfff);
 
-    if (isMobile && confirm("use stereo rendering?")) {
+    if (confirm("use stereo rendering?")) {
         effect = new THREE.OculusRiftEffect(renderer, {
             HMD: {
                 hResolution: screen.availWidth,
