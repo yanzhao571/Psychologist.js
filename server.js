@@ -9,7 +9,7 @@
     minify = require("./src/minifier"),
     path = require("path"),
     srcDir = "html5",
-    startPage = "gamepad.html",
+    startPage = "index.html",
     startProc, app, port, template;
 
 options.parse(process.argv);

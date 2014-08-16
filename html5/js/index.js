@@ -15,10 +15,10 @@ function animate() {
     cube.rotation.y += 0.3 * dt;
     cube.rotation.z += 0.5 * dt;
     vcy -= dt * speed;
-    if(camera.position.y <= 0 && vcy < 0){
+    if (camera.position.y <= 0 && vcy < 0) {
         vcy = 0;
     }
-    fps = 1/dt;
+    fps = 1 / dt;
     setCamera(dt);
     draw();
 }
@@ -30,45 +30,43 @@ function setCamera(dt) {
 
     camera.translateY(disp * vcy);
 
-    if(keyboard.isDown("forward")){
+    if (keyboard.isDown("forward")) {
         camera.translateZ(-disp);
     }
-    else if(keyboard.isDown("back")){
+    else if (keyboard.isDown("back")) {
         camera.translateZ(disp);
     }
-    else if(gpid){
+    else if (gpid) {
         camera.translateZ(disp * gamepad.getValue(gpid, "drive"));
     }
 
-    if(keyboard.isDown("right")){
+    if (keyboard.isDown("right")) {
         camera.translateX(disp);
     }
-    else if(keyboard.isDown("left")){
+    else if (keyboard.isDown("left")) {
         camera.translateX(-disp);
     }
-    else if(gpid){
+    else if (gpid) {
         camera.translateX(disp * gamepad.getValue(gpid, "strafe"));
     }
 
-    if(gpid){
+    if (gpid) {
         heading -= 2 * gamepad.getValue(gpid, "yaw") * dt;
         pitch += 2 * gamepad.getValue(gpid, "pitch") * dt;
     }
     camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
 }
 
-function draw(){
+function draw() {
     gfx.clearRect(0, 0, overlay.width, overlay.height);
     gfx.font = "20px Arial";
     gfx.fillStyle = "#c00000";
     gfx.fillText(fmt("fps: $1.00, h: $2.00, p: $3.00", fps, heading, pitch), 10, 20);
 
-    if(effect){
+    if (effect) {
         effect.render(scene, camera);
-        gfx.fillStyle = "#111";
-        gfx.fillRect(overlay.width / 2 - 2, 0, 4, overlay.height);
     }
-    else{
+    else {
         renderer.render(scene, camera);
     }
 }
@@ -78,10 +76,13 @@ function setSize(w, h) {
     overlay.height = h;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    if(effect){
+    if (effect) {
         effect.setSize(window.innerWidth, window.innerHeight);
     }
-    else{
+    else if (effect) {
+        effect.setSize(window.innerWidth, window.innerHeight);
+    }
+    else {
         renderer.setSize(window.innerWidth, window.innerHeight);
     }
 }
@@ -93,63 +94,62 @@ function pageLoad() {
     gfx = overlay.getContext("2d");
     var fullScreenButton = document.getElementById("fullScreenButton"),
         options = document.getElementById("options"),
-        buttonsTimeout = null, 
+        buttonsTimeout = null,
         buttonsVisible = true;;
     fullScreenButton.addEventListener("click", toggleFullScreen, false);
 
-    function hideButtonsLater(){
-        if(buttonsTimeout != null){
+    function hideButtonsLater() {
+        if (buttonsTimeout != null) {
             clearTimeout(buttonsTimeout);
         }
         buttonsTimeout = setTimeout(hideButtons, 3000);
     }
     hideButtonsLater();
 
-    function setButtons(){
+    function setButtons() {
         options.style.opacity = buttonsVisible ? 1 : 0;
-        if(buttonsVisible){
+        if (buttonsVisible) {
             hideButtonsLater();
         }
     }
 
-    function toggleButtons(){
+    function toggleButtons() {
         buttonsVisible = !buttonsVisible;
         setButtons();
     }
 
-    function showButtons(evt){
-        if(evt){
+    function showButtons(evt) {
+        if (evt) {
             evt.preventDefault();
         }
-        if(!buttonsVisible){
+        if (!buttonsVisible) {
             toggleButtons();
         }
         hideButtonsLater();
     }
 
-    function hideButtons(){
-        console.log("hide buttons", buttonsVisible);
-        if(buttonsVisible){
+    function hideButtons() {
+        if (buttonsVisible) {
             toggleButtons();
         }
     }
 
-    function jump(){
-        if(camera.position.y <= 0){
+    function jump() {
+        if (camera.position.y <= 0) {
             vcy = 4;
         }
     }
 
-    function fire(){
+    function fire() {
     }
 
-    function reload(){
-        if(isFullScreenMode()){
+    function reload() {
+        if (isFullScreenMode()) {
             document.location = document.location.href;
         }
-        else{
+        else {
             toggleFullScreen();
-            overlay.requestPointerLock();   
+            overlay.requestPointerLock();
         }
     }
 
@@ -161,58 +161,63 @@ function pageLoad() {
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(0xafbfff);
 
-    if(isMobile){
-        effect = new THREE.OculusRiftEffect(renderer, {HMD: {
-		    hResolution: screen.availWidth,
-		    vResolution: screen.availHeight,
-		    hScreenSize: 0.126,
-		    vScreenSize: 0.075,
-		    interpupillaryDistance: 0.064,
-		    lensSeparationDistance: 0.064,
-		    eyeToScreenDistance: 0.051,
-		    distortionK : [1, 0.22, 0.06, 0.0],
-		    chromaAbParameter: [ 0.996, -0.004, 1.014, 0.0]
-	    }});
+    if (isMobile && confirm("use stereo rendering?")) {
+        effect = new THREE.OculusRiftEffect(renderer, {
+            HMD: {
+                hResolution: screen.availWidth,
+                vResolution: screen.availHeight,
+                hScreenSize: 0.126,
+                vScreenSize: 0.075,
+                interpupillaryDistance: 0.064,
+                lensSeparationDistance: 0.064,
+                eyeToScreenDistance: 0.051,
+                distortionK: [1, 0.22, 0.06, 0.0],
+                chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
+            }
+        });
 
-        LandscapeMotion.addEventListener("deviceorientation", function (evt){
+        LandscapeMotion.addEventListener("deviceorientation", function (evt) {
             roll = -evt.roll;
             pitch = evt.pitch;
             heading = -evt.heading;
         });
     }
-    else{
-        setupPointerLock(overlay, function(evt){
+    else {
+        if (confirm("use red/cyan anaglyph rendering?")) {
+            effect = new THREE.AnaglyphEffect(renderer, 50, window.innerWidth, window.innerHeight);
+        }
+        setupPointerLock(overlay, function (evt) {
             dmx = evt.webkitMovementX || evt.mozMovementX || 0;
             dmy = evt.webkitMovementY || evt.mozMovementY || 0;
             heading -= dmx * 2 * Math.PI / window.innerWidth;
-            pitch -= dmy *  Math.PI / window.innerHeight;
+            pitch -= dmy * Math.PI / window.innerHeight;
         });
     }
 
     keyboard = new KeyboardCommandInterface([
-        {name: "left", keycodes: [65, 37]},
-        {name: "forward", keycodes: [87, 38]},
-        {name: "right", keycodes: [68, 39]},
-        {name: "back", keycodes: [83, 40]},
-        {name: "jump", keycodes: [32], commandDown: jump, dt: 250},
-        {name: "fire", keycodes: [17], commandDown: fire, dt: 125},
-        {name: "reload", keycodes: [70], commandDown: reload, dt: 125},
+        { name: "left", keycodes: [65, 37] },
+        { name: "forward", keycodes: [87, 38] },
+        { name: "right", keycodes: [68, 39] },
+        { name: "back", keycodes: [83, 40] },
+        { name: "jump", keycodes: [32], commandDown: jump, dt: 250 },
+        { name: "fire", keycodes: [17], commandDown: fire, dt: 125 },
+        { name: "reload", keycodes: [70], commandDown: reload, dt: 125 },
     ]);
 
     gamepad = new GamepadCommandInterface([
-        {name: "strafe", axes: [0], deadzone: 0.1},
-        {name: "drive", axes: [1], deadzone: 0.1},
-        {name: "yaw", axes: [2], deadzone: 0.1},
-        {name: "pitch", axes: [3], deadzone: 0.1},
-        {name: "rollRight", buttons: [4], commandDown: function(){ roll = 0.25; }, commandUp: function(){roll = 0;}},
-        {name: "rollLeft", buttons: [5], commandDown: function(){ roll = -0.25; }, commandUp: function(){roll = 0;}},
-        {name: "jump", buttons: [0], commandDown: jump, dt: 250},
-        {name: "fire", buttons: [1], commandDown: fire, dt: 125},
+        { name: "strafe", axes: [0], deadzone: 0.1 },
+        { name: "drive", axes: [1], deadzone: 0.1 },
+        { name: "yaw", axes: [2], deadzone: 0.1 },
+        { name: "pitch", axes: [3], deadzone: 0.1 },
+        { name: "rollRight", buttons: [4], commandDown: function () { roll = 0.25; }, commandUp: function () { roll = 0; } },
+        { name: "rollLeft", buttons: [5], commandDown: function () { roll = -0.25; }, commandUp: function () { roll = 0; } },
+        { name: "jump", buttons: [0], commandDown: jump, dt: 250 },
+        { name: "fire", buttons: [1], commandDown: fire, dt: 125 },
     ]);
 
-    gamepad.addEventListener("gamepadconnected", function(id){
+    gamepad.addEventListener("gamepadconnected", function (id) {
         console.log(id);
-        if(!gpid && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))){
+        if (!gpid && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))) {
             gpid = id;
             gamepad.addGamepad(id);
         }
@@ -225,15 +230,15 @@ function pageLoad() {
     }, false);
 
     var geometry = new THREE.BoxGeometry(1, 1, 1);
-    var material = new THREE.MeshLambertMaterial({color: 0x70ff70, ambient: 0xffffff, opacity:1, transparent: false });
+    var material = new THREE.MeshLambertMaterial({ color: 0x70ff70, ambient: 0xffffff, opacity: 1, transparent: false });
 
     var light = new THREE.DirectionalLight(0xffffff, 0.95);
     var light2 = new THREE.AmbientLight(0x101010);
     light.position.set(1, 1, 0);
 
-    var material3 = new THREE.LineBasicMaterial({color: 0xff0000});
+    var material3 = new THREE.LineBasicMaterial({ color: 0xff0000 });
     var geometry3 = new THREE.Geometry();
-    for(var i = 0; i < 360; ++i){
+    for (var i = 0; i < 360; ++i) {
         var a = i * Math.PI / 180;
         var c = Math.cos(a);
         var s = Math.sin(a);
@@ -245,36 +250,36 @@ function pageLoad() {
     scene.add(light2);
     scene.add(line);
 
-    for(var i = 0; i < 11; ++i){
+    for (var i = 0; i < 11; ++i) {
         var c = new THREE.Mesh(geometry, material);
         c.position.x = i - 5;
         c.position.y = i - 5;
         c.position.z = i - 5;
         scene.add(c);
-        if(i != 5){
+        if (i != 5) {
             c = new THREE.Mesh(geometry, material);
             c.position.x = 5 - i;
             c.position.y = i - 5;
             c.position.z = i - 5;
             scene.add(c);
-            
+
             c = new THREE.Mesh(geometry, material);
             c.position.x = i - 5;
             c.position.y = 5 - i;
             c.position.z = i - 5;
             scene.add(c);
-            
+
             c = new THREE.Mesh(geometry, material);
             c.position.x = i - 5;
             c.position.y = i - 5;
             c.position.z = 5 - i;
             scene.add(c);
         }
-        else{
+        else {
             cube = c;
         }
     }
-    
+
     clock.start();
     setSize(window.innerWidth, window.innerHeight);
     window.requestAnimationFrame(animate);

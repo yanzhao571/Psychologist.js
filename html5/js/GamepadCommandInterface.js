@@ -139,6 +139,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 function GamepadCommandInterface(commands, gamepads){
+    console.warn("At this time (August 16th, 2014), Gamepad API is extremely unreliable. No two browsers implement it in the same way, and various similar-looking controllers present vastly different behavior. Some attempt has been made within this library to normalize this behavior, but most of the defects are intractable. Browser vendors will have to get their acts together before Gamepad API is viable for serious projects. Please treat this library as a proof of concept for now, and a place holder until Gamepad API is implemented correctly.");
     var state = {},
         available = null,
         errorMessage = null,

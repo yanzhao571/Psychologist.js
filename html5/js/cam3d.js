@@ -97,7 +97,6 @@
     }
 
     function hideButtons(){
-        console.log("hide buttons", buttonsVisible);
         if(buttonsVisible){
             toggleButtons();
         }
