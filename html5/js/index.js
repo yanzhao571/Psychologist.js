@@ -175,24 +175,22 @@ function pageLoad() {
                 chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
             }
         });
+    }
+    else if (confirm("use red/cyan anaglyph rendering?")) {
+        effect = new THREE.AnaglyphEffect(renderer, 50, window.innerWidth, window.innerHeight);
+    }
 
-        LandscapeMotion.addEventListener("deviceorientation", function (evt) {
-            roll = -evt.roll;
-            pitch = evt.pitch;
-            heading = -evt.heading;
-        });
-    }
-    else {
-        if (confirm("use red/cyan anaglyph rendering?")) {
-            effect = new THREE.AnaglyphEffect(renderer, 50, window.innerWidth, window.innerHeight);
-        }
-        setupPointerLock(overlay, function (evt) {
-            dmx = evt.webkitMovementX || evt.mozMovementX || 0;
-            dmy = evt.webkitMovementY || evt.mozMovementY || 0;
-            heading -= dmx * 2 * Math.PI / window.innerWidth;
-            pitch -= dmy * Math.PI / window.innerHeight;
-        });
-    }
+    LandscapeMotion.addEventListener("deviceorientation", function (evt) {
+        roll = -evt.roll;
+        pitch = evt.pitch;
+        heading = -evt.heading;
+    });
+    setupPointerLock(overlay, function (evt) {
+        dmx = evt.webkitMovementX || evt.mozMovementX || 0;
+        dmy = evt.webkitMovementY || evt.mozMovementY || 0;
+        heading -= dmx * 2 * Math.PI / window.innerWidth;
+        pitch -= dmy * Math.PI / window.innerHeight;
+    });
 
     keyboard = new KeyboardCommandInterface([
         { name: "left", keycodes: [65, 37] },
