@@ -185,21 +185,22 @@ function pageLoad() {
         pitch = evt.pitch;
         heading = -evt.heading;
     });
+
     setupPointerLock(overlay, function (evt) {
-        dmx = evt.webkitMovementX || evt.mozMovementX || 0;
-        dmy = evt.webkitMovementY || evt.mozMovementY || 0;
+        dmx = evt.webkitMovementX || evt.mozMovementX || evt.movementX || 0;
+        dmy = evt.webkitMovementY || evt.mozMovementY || evt.movementY || 0;
         heading -= dmx * 2 * Math.PI / window.innerWidth;
         pitch -= dmy * Math.PI / window.innerHeight;
     });
 
     keyboard = new KeyboardCommandInterface([
-        { name: "left", keycodes: [65, 37] },
-        { name: "forward", keycodes: [87, 38] },
-        { name: "right", keycodes: [68, 39] },
-        { name: "back", keycodes: [83, 40] },
-        { name: "jump", keycodes: [32], commandDown: jump, dt: 250 },
-        { name: "fire", keycodes: [17], commandDown: fire, dt: 125 },
-        { name: "reload", keycodes: [70], commandDown: reload, dt: 125 },
+        { name: "left", buttons: [65, 37] },
+        { name: "forward", buttons: [87, 38] },
+        { name: "right", buttons: [68, 39] },
+        { name: "back", buttons: [83, 40] },
+        { name: "jump", buttons: [32], commandDown: jump, dt: 250 },
+        { name: "fire", buttons: [17], commandDown: fire, dt: 125 },
+        { name: "reload", buttons: [70], commandDown: reload, dt: 125 },
     ]);
 
     gamepad = new GamepadCommandInterface([

@@ -47,7 +47,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         
         {
             "name": "unique identifier", // e.g. "UP"
-            "keycodes": [code1, code2, ..., code3], // e.g. [87, 38] for "W" and "Up Arrow"
+            "buttons": [code1, code2, ..., code3], // e.g. [87, 38] for "W" and "Up Arrow"
             "dt": <number>, //in milliseconds
             "commandDown" (optional): <callbackFunction>,
             "commandUp" (optional): <callbackFunction>
@@ -56,9 +56,10 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         The `name` property is a unique identifier that can be used for checking the `isDown()`
             and `isUp()` methods later.
 
-        The `keycodes` property is an array of numbers for which KeyboardCommandInterface will
+        The `buttons` property is an array of numbers for which KeyboardCommandInterface will
             listen. If any of the numbers in the array matches matches the current keyCode, 
-            the associated callbackFunction will be executed.
+            the associated callbackFunction will be executed. It is named "buttons" instead of
+            "keycodes" to mirror the other interface libraries being developed.
 
         The `dt` property specifies the number of milliseconds to allow to lapse between calls
             to `commandDown` while the key is depressed. If `dt` is not specified, then only
@@ -86,7 +87,7 @@ function KeyboardCommandInterface(commands, domElement){
     var state = {};
 
     function execute(stateChange, commandName, event){
-        var candidates = commands.filter(function(cmd){ return cmd && cmd.keycodes && cmd.keycodes.indexOf && cmd.keycodes.indexOf(event.keyCode) > -1;});
+        var candidates = commands.filter(function(cmd){ return cmd && cmd.buttons && cmd.buttons.indexOf && cmd.buttons.indexOf(event.keyCode) > -1;});
         if(candidates.length == 0){
             console.log(fmt("Unknown command: $1", event.keyCode));
         }

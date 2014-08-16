@@ -33,10 +33,10 @@
     
     // use WASD or arrow keys to change contrast and threshold parameters
     keyboard = new KeyboardCommandInterface([
-        {name: "up", keycodes: [87, 38], commandDown: changeParameters.bind(window, 1, 0), dt: 125},
-        {name: "down", keycodes: [83, 40], commandDown: changeParameters.bind(window, -1, 0), dt: 125},
-        {name: "left", keycodes: [65, 37], commandDown: changeParameters.bind(window, 0, -0.05), dt: 125},
-        {name: "right", keycodes: [68, 39], commandDown: changeParameters.bind(window, 0, 0.05), dt: 125}
+        {name: "up", buttons: [87, 38], commandDown: changeParameters.bind(window, 1, 0), dt: 125},
+        {name: "down", buttons: [83, 40], commandDown: changeParameters.bind(window, -1, 0), dt: 125},
+        {name: "left", buttons: [65, 37], commandDown: changeParameters.bind(window, 0, -0.05), dt: 125},
+        {name: "right", buttons: [68, 39], commandDown: changeParameters.bind(window, 0, 0.05), dt: 125}
     ]);
 
     picture.addEventListener("touchstart", function(event){
