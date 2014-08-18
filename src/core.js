@@ -25,8 +25,8 @@
 
     exports.fmt = function(template) {
         var args = Array.prototype.slice.call(arguments, 1);
-        var regex = /\$(0*)(\d+)(\.(0+))?/g;
-        return template.replace(regex, function (m, pad, index, _, precision) {
+        var regex = /\$(0*)(\d+)(?:\.(0+))?/g;
+        return template.replace(regex, function (m, pad, index, precision) {
             index = parseInt(index, 10) - 1;
             if (0 <= index && index < args.length) {
                 var val = args[index];

@@ -171,32 +171,30 @@ function GamepadCommandInterface(commands, gamepads){
                     axisValue = 0.0,
                     fireAgain = cmd.dt && (n - cmd.lt) > cmd.dt;
 
-                Array.prototype.forEach.call(pad.buttons, function(btn, i){
+                cmd.buttons.forEach(function(i){
+                    var sign = i < 0 ? -1 : 1;
+                    i = Math.abs(i);
                     i = trans.reduce(function(a, b){return b.buttons && b.buttons[a] || a; }, i);
-                    if(cmd.buttons.indexOf(i) > -1){
-                        buttonPressed |= btn.pressed;
-                        if(Math.abs(axisValue) < Math.abs(btn.value)){
-                            axisValue = btn.value;
-                        }
-                    }
-                    else if(cmd.buttons.indexOf(-i) > -1){
-                        if(Math.abs(axisValue) < Math.abs(btn.value)){
-                            axisValue = -btn.value;
-                        }
+                    var value = pad.buttons[i].value;
+                    if(Math.abs(axisValue) < Math.abs(value)){
+                        axisValue = sign * value;
                     }
                 });
 
-                Array.prototype.forEach.call(pad.axes, function(axis, i){
+                cmd.axes.forEach(function(i){
+                    var sign = i < 0 ? -1 : 1;
+                    i = Math.abs(i);
                     i = trans.reduce(function(a, b){return b.axes && b.axes[a] || a; }, i);
-                    axis = trans.reduce(function(a, b){return b.values && b.values(a) || a; }, axis);
-                    if(cmd.axes.indexOf(i) > -1 && Math.abs(axisValue) < Math.abs(axis)){
-                        axisValue = axis;
+                    var value = trans.reduce(function(a, b){return b.values && b.values(a) || a; }, pad.axes[i]);
+                    if(Math.abs(axisValue) < Math.abs(value)){
+                        axisValue = sign * value;
                     }
                 });
 
                 if(cmd.deadzone && Math.abs(axisValue) < cmd.deadzone){
                     axisValue = 0;
                 }
+
                 padState[cmd.name].value = axisValue;
 
                 if(cmd.commandDown && buttonPressed && (!padState[cmd.name].pressed || fireAgain)){

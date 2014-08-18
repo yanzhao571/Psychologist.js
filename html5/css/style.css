@@ -15,6 +15,14 @@ ul#options
     padding: 0;
 }
 
+#instructions
+{
+    position: absolute;
+    padding: 2em;
+    color: #2e2e2e;
+    background-color: #ffffff;
+}
+
 html, body, canvas, video, img, ul#options, #options>li
 {
     padding: 0;

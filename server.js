@@ -9,7 +9,7 @@
     minify = require("./src/minifier"),
     path = require("path"),
     srcDir = "html5",
-    startPage = "index.html",
+    startPage = "",
     startProc, app, port, template;
 
 options.parse(process.argv);
@@ -32,9 +32,9 @@ app = http.createServer(webServer(srcDir));
 port = 8080;
 app.listen(port);
 if(options.m != "true" && startProc){
-    template = "http://localhost/$2";
+    template = "http://localhost/";
     if(port != 80){
-        template = "http://localhost:$1/$2";
+        template = "http://localhost:$1/";
     }
-    proc(startProc, [core.fmt(template, port, startPage)]);
+    proc(startProc, [core.fmt(template, port) + startPage]);
 }

@@ -1,6 +1,6 @@
 ﻿var fs = require("fs");
 
-module.exports = []
+module.exports = [];
 fs.readdir("./src/controllers", function(err, files){
     if(!err){
         files.forEach(function(file){

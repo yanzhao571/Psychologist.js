@@ -2,72 +2,57 @@ var fs = require("fs"),
     mime = require("mime"),
     core = require("./core.js"),
     routes = require("./controllers.js"),
-    filePattern = /([^?]+)(\?([^?]+))?/;;
+    filePattern = /([^?]+)(\?([^?]+))?/;
 
-function sendStaticFile(res, url, path){
-    fs.readFile(path, function (err, data){
-        if (err){
-            serverError(res, url);
+function serverError(res, code) {
+    var rest = Array.prototype.slice.call(arguments, 2),
+        msg = rest.length == 0 ? "" : core.fmt(" -> [$1]", rest.join("], ["));
+    res.writeHead(500);
+    console.log("Error", rest);
+    res.end("Error" + msg);
+}
+
+function matchController(res, url, method) {
+    var found = false;
+    for (var i = 0; i < routes.length && !found; ++i) {
+        var matches = url.match(routes[i].pattern);
+        if (matches) {
+            found = true;
+            matches.shift();
+            routes[i].handler.call(this, method, matches, function (mimeType, data) {
+                res.writeHead(200, { "Content-Type": mimeType });
+                res.end(data);
+            }, serverError.bind(this, res, 500, core.fmt("Server error [$1]", url)));
         }
-        else{
+    }
+    return found;
+}
+
+function sendStaticFile(res, url, path) {
+    fs.readFile(path, function (err, data) {
+        if (err) {
+            serverError(res, 403, core.fmt("Permission denied [$1]", url));
+        }
+        else {
             res.writeHead(200, { "Content-Type": mime.lookup(path) });
             res.end(data);
         }
     });
 }
 
-module.exports = function(dirName){
-    return function(req, res){
-        if (req.method === "GET" && req.url[0] === "/"){
-            if (req.url.length == 1){
-                req.url += "index.html";
-            }
-
+module.exports = function (dirName) {
+    return function (req, res) {
+        if (!matchController(res, req.url, req.method) && req.method == "GET") {
             var path = dirName + req.url,
-                parts = path.match(filePattern),
-                file = parts[1],
-                queryString = parts[3];
-
-            fs.exists(file, function(yes){
-                if(yes){
+                file = path.match(filePattern)[1];
+            fs.exists(file, function (yes) {
+                if (yes) {
                     sendStaticFile(res, req.url, file);
                 }
-                else{
-                    matchController(res, path)
+                else {
+                    serverError(res, 404, core.fmt("File not found [$1]", path));
                 }
             });
         }
-        else{
-            serverError(res);
-        }
     }
 };
-
-function serverError(res, path){
-    if (path){
-        res.writeHead(404);
-        res.end("error loading " + path.substring(1));
-    }
-    else{
-        res.writeHead(500);
-        res.end("error");
-    }
-}
-
-function matchController(res, path){
-    var found = false;
-    for(var i = 0; i < routes.length; ++i){
-        var matches = path.match(routes[i].pattern);
-        if(matches){
-            found = true;
-            matches.shift();
-            routes[i].handler.call(this, matches, function(mimeType, data){
-                res.writeHead(200, {"Content-Type": mimeType});
-                res.end(data);
-            }, serverError.bind(this, res, path));
-        }
-    }
-    if(!found){
-        serverError(res, path);
-    }
-}
