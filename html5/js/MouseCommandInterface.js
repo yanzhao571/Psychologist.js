@@ -108,22 +108,22 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 function MouseCommandInterface(commands, DOMelement){
-    var state = {
+    var mouseState = {
             0:false, 1: false, 2: false,
             x: 0, y: 0, z: 0,
             dx: 0, dy: 0, dz: 0,
             lx: 0, ly: 0, lz: 0,
             alt: false, ctrl: false, meta: false, shift: false
         },
+        commandState = {},
         AXES = ["x", "y", "z", "dx", "dy", "dz", "lx", "ly", "lz"],
-        META = ["alt", "ctrl", "meta", "shift"],
-        isLocked = false,
+        META = ["ctrl", "shift", "alt", "meta"],
         listeners = {
             pointerlockchanged: []
         };
 
     this.isDown = function(name){
-        return state[name] && state[name].pressed;
+        return commandState[name] && commandState[name].pressed;
     };
 
     this.isUp = function(name){
@@ -131,22 +131,22 @@ function MouseCommandInterface(commands, DOMelement){
     };
 
     this.getValue = function(name){
-        return state[name] && state[name].value;
+        return commandState[name] && commandState[name].value;
     };
     
     this.addEventListener = function(event, handler, bubbles){
         if(event == "pointerlockchange"){
-            document.addEventListener('pointerlockchange', handler, bubbles);
-            document.addEventListener('mozpointerlockchange', handler, bubbles);
-            document.addEventListener('webkitpointerlockchange', handler, bubbles);
+            if(document.exitPointerLock){ document.addEventListener('pointerlockchange', handler, bubbles); }
+            else if(document.mozExitPointerLock){ document.addEventListener('mozpointerlockchange', handler, bubbles); }
+            else if(document.webkitExitPointerLock){ document.addEventListener('webkitpointerlockchange', handler, bubbles); }
         }
     };
 
     this.removeEventListener = function(event, handler, bubbles){
         if(event == "pointerlockchange"){
-            document.removeEventListener('pointerlockchange', handler, bubbles);
-            document.removeEventListener('mozpointerlockchange', handler, bubbles);
-            document.removeEventListener('webkitpointerlockchange', handler, bubbles);
+            if(document.exitPointerLock){ document.removeEventListener('pointerlockchange', handler, bubbles); }
+            else if(document.mozExitPointerLock){ document.removeEventListener('mozpointerlockchange', handler, bubbles); }
+            else if(document.webkitExitPointerLock){ document.removeEventListener('webkitpointerlockchange', handler, bubbles); }
         }
     };
 
@@ -154,7 +154,11 @@ function MouseCommandInterface(commands, DOMelement){
         || DOMelement.webkitRequestPointerLock
         || DOMelement.mozRequestPointerLock;
 
-    this.requestPointerLock = DOMelement.requestPointerLock.bind(DOMelement);
+    this.requestPointerLock = function(){
+        if(!this.isPointerLocked()){
+            DOMelement.requestPointerLock();
+        }
+    }
 
     document.exitPointerLock = document.exitPointerLock
         || document.webkitExitPointerLock
@@ -162,42 +166,44 @@ function MouseCommandInterface(commands, DOMelement){
 
     this.exitPointerLock = document.exitPointerLock.bind(document);
 
-    this.isPointerLocked = function(){
+    function isLocked(){
         return document.pointerLockElement === DOMelement
             || document.webkitPointerLockElement === DOMelement
             || document.mozPointerLockElement === DOMelement;
     };
 
+    this.isPointerLocked = isLocked;
+
     this.update = function(){
         var t = Date.now();
         commands.forEach(function(cmd){
-            var wasPressed = state[cmd.name].pressed,
+            var wasPressed = commandState[cmd.name].pressed,
                 fireAgain = (t - cmd.lt) >= cmd.dt;
-            state[cmd.name].value = 0;
-            state[cmd.name].pressed = cmd.buttons.map(function(i){
+            commandState[cmd.name].value = 0;
+            commandState[cmd.name].pressed = cmd.buttons.map(function(i){
                 var sign = i < 0 ? true : false;
                 i = Math.abs(i);
-                return state[i-1] ^ sign;
+                return mouseState[i-1] ^ sign;
             }).reduce(function(a, b){ return a & b; }, true);
 
-            state[cmd.name].pressed &= cmd.meta.map(function(i){
+            commandState[cmd.name].pressed &= cmd.meta.map(function(i){
                 var sign = i < 0 ? true : false;
                 i = Math.abs(i);
-                return state[META[i-1]] ^ sign;
+                return mouseState[META[i-1]] ^ sign;
             }).reduce(function(a, b){ return a & b; }, true);
 
-            state[cmd.name].value = cmd.axes.map(function(i){
+            commandState[cmd.name].value = cmd.axes.map(function(i){
                 var sign = i < 0 ? -1 : 1;
                 i = Math.abs(i);
-                return sign * state[AXES[i-1]];
+                return sign * mouseState[AXES[i-1]];
             }).reduce(function(a, b){ return Math.abs(a) > Math.abs(b) ? a : b; }, 0);
 
-            if(cmd.commandDown && state[cmd.name].pressed && fireAgain){
+            if(cmd.commandDown && commandState[cmd.name].pressed && fireAgain){
                 cmd.commandDown();
                 cmd.lt = t;
             }
 
-            if(cmd.commandUp && !state[cmd.name].pressed && wasPressed){
+            if(cmd.commandUp && !commandState[cmd.name].pressed && wasPressed){
                 cmd.commandUp();
             }
         });
@@ -209,7 +215,7 @@ function MouseCommandInterface(commands, DOMelement){
 
     // clone the arrays, so the consumer can't add elements to it in their own code.
     commands = commands.map(function(cmd){
-        state[cmd.name] = {pressed: false, value: 0};
+        commandState[cmd.name] = {pressed: false, value: 0};
         return {
             name: cmd.name,
             buttons: maybeClone(cmd.buttons),
@@ -223,55 +229,62 @@ function MouseCommandInterface(commands, DOMelement){
     });
 
     function setLocation(x, y){
-        state.lx = state.x;
-        state.ly = state.y;
-        state.x = x;
-        state.y = y;
-        state.dx = state.x - state.lx;
-        state.dy = state.y - state.ly;
+        mouseState.lx = mouseState.x;
+        mouseState.ly = mouseState.y;
+        mouseState.x = x;
+        mouseState.y = y;
+        mouseState.dx = mouseState.x - mouseState.lx;
+        mouseState.dy = mouseState.y - mouseState.ly;
     }
 
     function setMovement(dx, dy){
-        state.lx = state.x;
-        state.ly = state.y;
-        state.dx = dx;
-        state.dy = dy;
-        state.x += dx;
-        state.y += dy;
+        mouseState.lx = mouseState.x;
+        mouseState.ly = mouseState.y;
+        mouseState.dx = dx;
+        mouseState.dy = dy;
+        mouseState.x += dx;
+        mouseState.y += dy;
     }
 
-    function readEvent(evt){
-        if(isLocked){
-            setMovement(
-                evt.webkitMovementX || evt.mozMovementX || evt.movementX || 0,
-                evt.webkitMovementY || evt.mozMovementY || evt.movementY || 0);
-        }
-        else{
-            setLocation(evt.clientX, evt.clientY);
-        }
+    function readMeta(event){
         META.forEach(function(m){
-            state[m] = evt[m + "Key"];
+            mouseState[m] = event[m + "Key"];
         });
     }
 
+    function readEvent(event){
+        if(isLocked()){
+            setMovement(
+                event.webkitMovementX || event.mozMovementX || event.movementX || 0,
+                event.webkitMovementY || event.mozMovementY || event.movementY || 0);
+        }
+        else{
+            setLocation(event.clientX, event.clientY);
+        }
+        readMeta(event);
+    }
+
+    window.addEventListener("keydown", readMeta, false);
+
+    window.addEventListener("keyup", readMeta, false);
+
     window.addEventListener("mousedown", function(event){
-        state[event.button] = true;
-        readEvent(event);
-        //console.log(state);
-    }, false);
+        mouseState[event.button] = true;
+        readEvent.call(this, event);
+    }.bind(this), false);
 
     window.addEventListener("mouseup", function(event){
-        state[event.button] = false;
-        readEvent(event);
-    }, false);
+        mouseState[event.button] = false;
+        readEvent.call(this, event);
+    }.bind(this), false);
 
     window.addEventListener("mousemove", function(event){
-        readEvent(event);
-    }, false);
+        readEvent.call(this, event);
+    }.bind(this), false);
 
     window.addEventListener("mousewheel", function(event){
-        readEvent(event);
-        state.dz = event.wheelDelta;
-        state.z += state.dz;
-    }, false);
+        readEvent.call(this, event);
+        mouseState.dz = event.wheelDelta;
+        mouseState.z += mouseState.dz;
+    }.bind(this), false);
 }

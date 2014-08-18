@@ -14,10 +14,20 @@
             var output = document.getElementById("output"),
                 frame = 0,
                 mouse = new MouseCommandInterface([
-                    { name: "fire", buttons: [1], meta: [-1], commandDown: console.log.bind(console, "Fire"), dt: 1000 },
-                    { name: "alternate fire", buttons: [1], meta: [1], commandDown: console.log.bind(console, "Alt fire"), dt: 1000 },
-                    { name: "middle", buttons: [2] },
+                    { name: "fire", buttons: [1], meta: [-1], commandDown: console.log.bind(console, "Fire"), dt: 250 },
+                    { name: "alternate fire", buttons: [1], meta: [1], commandDown: console.log.bind(console, "Alternate fire"), dt: 250 },
+                    {
+                        name: "middle", buttons: [2], commandUp: function () {
+                            if (mouse.isPointerLocked()) {
+                                mouse.exitPointerLock();
+                            }
+                            else {
+                                mouse.requestPointerLock();
+                            }
+                        }
+                    },
                     { name: "right", buttons: [3] },
+                    { name: "left+right", buttons: [1, 3] },
                     { name: "minus-left", buttons: [-1] },
                     { name: "minus-middle", buttons: [-2] },
                     { name: "minus-right", buttons: [-3] },
@@ -26,11 +36,12 @@
                     { name: "vert", axes: [2] },
                     { name: "minus-vert", axes: [-2] },
                     { name: "wheel", axes: [3] },
-                    { name: "minus-wheel", axes: [-3] }
+                    { name: "minus-wheel", axes: [-3] },
+                    { name: "horiz+vert", axes: [1, 2] }
                 ], document.documentElement);
 
-            var buttons = ["fire", "alternate fire", "middle", "right", "minus-left", "minus-middle", "minus-right"];
-            var axis = ["horiz", "minus-horiz", "vert", "minus-vert", "wheel", "minus-wheel"];
+            var buttons = ["fire", "alternate fire", "left+right", "middle", "right", "minus-left", "minus-middle", "minus-right", "horiz+vert"];
+            var axis = ["horiz", "minus-horiz", "vert", "minus-vert", "wheel", "minus-wheel", "horiz+vert"];
 
             function loop(dt) {
                 requestAnimationFrame(loop);
