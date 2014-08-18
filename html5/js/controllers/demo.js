@@ -27,9 +27,10 @@ function animate() {
 
 function setCamera(dt) {
     camera.updateProjectionMatrix();
+    camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "YZX"));
     disp = speed * dt;
-
     camera.translateY(disp * vcy);
+    camera.rotateY(heading);
 
     if (keyboard.isDown("forward")) {
         camera.translateZ(-disp);
@@ -53,11 +54,12 @@ function setCamera(dt) {
     }
 
     if(mouse.isPointerLocked()){
-        heading += 500 * mouse.getValue("yaw") * dt / window.innerWidth;
-        pitch += 500 * mouse.getValue("pitch") * dt / window.innerHeight;
+        heading += 0.5 * mouse.getValue("yaw") * dt;
+        pitch += 0.5 * mouse.getValue("pitch") * dt;
     }
-
-    camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
+    
+    camera.rotateX(pitch);
+    camera.rotateZ(roll);
 }
 
 function draw() {
@@ -65,6 +67,7 @@ function draw() {
     gfx.font = "20px Arial";
     gfx.fillStyle = "#c00000";
     gfx.fillText(fmt("fps: $1.00, h: $2.00, p: $3.00", fps, heading, pitch), 10, 20);
+    gfx.fillText(fmt("x: $1.00, y: $2.00, z: $3.00", camera.position.x, camera.position.y, camera.position.z), 10, 40);
 
     if (effect) {
         effect.render(scene, camera);

@@ -192,7 +192,9 @@ function GamepadInput(commands, gpid){
                         return 0;
                     }
                     return v;
-                }).reduce(function(a, b){ return Math.abs(a) > Math.abs(b) ? a : b; }, 0);
+                }).reduce(function(a, b){ 
+                    return Math.abs(a) > Math.abs(b) ? a : b; 
+                }, 0);
 
                 if(cmd.commandDown && commandState[cmd.name].pressed && fireAgain){
                     cmd.commandDown(pad.id);
