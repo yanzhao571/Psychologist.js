@@ -30,11 +30,11 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /*
-    Class: GamepadCommandInterface
+    Class: GamepadInput
         
         Listens for gamepads and specific button presses and executes the associated command for each.
 
-    Constructor: new GamepadCommandInterface(commands, gamepadIDs?);
+    Constructor: new GamepadInput(commands, gamepadIDs?);
 
         The `commands` parameter specifies a collection of buttons an tied to callbacks
         that will be called when one of the buttons are depressed. Each callback can
@@ -55,13 +55,13 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
             The `name` property is a unique identifier that can be used for checking the `isDown()`
                 and `isUp()` methods later.
 
-            The `buttons` property is an array of button indices for which GamepadCommandInterface will
+            The `buttons` property is an array of button indices for which GamepadInput will
                 listen. If any of the numbers in the array matches matches a button that is pressed, 
                 the associated callbackFunction will be executed. A negated button index will instruct
-                GamepadCommandInterface to check the positive value's button, and negate the value
+                GamepadInput to check the positive value's button, and negate the value
                 for tracking analog button values.
 
-            The `axes` property is an array of axis indicies for which GamepadCommandInterface will
+            The `axes` property is an array of axis indicies for which GamepadInput will
                 listen. Axes are only used with the getValue function. They do not trigger commandDown
                 or commandUp events, as that notion doesn't really make sense for decimal values.
 
@@ -138,9 +138,9 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
             null if setup was successful.
 */
 
-function GamepadCommandInterface(commands, gamepads){
+function GamepadInput(commands, gpid){
     console.warn("At this time (August 16th, 2014), Gamepad API is extremely unreliable. No two browsers implement it in the same way, and various similar-looking controllers present vastly different behavior. Some attempt has been made within this library to normalize this behavior, but most of the defects are intractable. Browser vendors will have to get their acts together before Gamepad API is viable for serious projects. Please treat this library as a proof of concept for now, and a place holder until Gamepad API is implemented correctly.");
-    var state = {},
+    var commandState = {},
         available = null,
         errorMessage = null,
         connectedGamepads = [],
@@ -162,50 +162,46 @@ function GamepadCommandInterface(commands, gamepads){
         }];
 
     function checkPad(pad){
-        var n = Date.now();
-        if(gamepads.indexOf(pad.id) > -1){
-            var padState = state[pad.id],
-                trans = translations.filter(function(t){ return t.test.test(pad.id) || t.test.test(navigator.userAgent);});
+        var t = Date.now();
+        if(pad.id == gpid){
+            var trans = translations.filter(function(t){ return t.test.test(pad.id) || t.test.test(navigator.userAgent);});
             commands.forEach(function(cmd){
-                var buttonPressed = false,
-                    axisValue = 0.0,
-                    fireAgain = cmd.dt && (n - cmd.lt) > cmd.dt;
+                var wasPressed = commandState[cmd.name].pressed,
+                    fireAgain = (t - cmd.lt) >= cmd.dt;
 
-                cmd.buttons.forEach(function(i){
+                commandState[cmd.name].pressed = cmd.buttons.map(function(i){
+                    var sign = i < 0 ? true : false;
+                    i = Math.abs(i);
+                    i = trans.reduce(function(a, b){ return b.buttons && b.buttons[a] || a; }, i-1);
+                    return pad.buttons[i].pressed && !sign
+                        || !pad.buttons[i].pressed && sign;
+                }).reduce(function(a, b){ return a && b; }, true);
+
+                commandState[cmd.name].value = cmd.axes.map(function(i){
                     var sign = i < 0 ? -1 : 1;
                     i = Math.abs(i);
-                    i = trans.reduce(function(a, b){return b.buttons && b.buttons[a] || a; }, i);
-                    var value = pad.buttons[i].value;
-                    if(Math.abs(axisValue) < Math.abs(value)){
-                        axisValue = sign * value;
-                    }
-                });
-
-                cmd.axes.forEach(function(i){
+                    i = trans.reduce(function(a, b){return b.axes && b.axes[a] || a; }, i-1);
+                    return sign * pad.axes[i];
+                }).concat(cmd.buttons.map(function(i){
                     var sign = i < 0 ? -1 : 1;
                     i = Math.abs(i);
-                    i = trans.reduce(function(a, b){return b.axes && b.axes[a] || a; }, i);
-                    var value = trans.reduce(function(a, b){return b.values && b.values(a) || a; }, pad.axes[i]);
-                    if(Math.abs(axisValue) < Math.abs(value)){
-                        axisValue = sign * value;
+                    i = trans.reduce(function(a, b){return b.buttons && b.buttons[a] || a; }, i-1);
+                    return sign * pad.buttons[i].value;
+                })).map(function(v){
+                    if(cmd.deadzone && Math.abs(v) < cmd.deadzone){
+                        return 0;
                     }
-                });
+                    return v;
+                }).reduce(function(a, b){ return Math.abs(a) > Math.abs(b) ? a : b; }, 0);
 
-                if(cmd.deadzone && Math.abs(axisValue) < cmd.deadzone){
-                    axisValue = 0;
-                }
-
-                padState[cmd.name].value = axisValue;
-
-                if(cmd.commandDown && buttonPressed && (!padState[cmd.name].pressed || fireAgain)){
+                if(cmd.commandDown && commandState[cmd.name].pressed && fireAgain){
                     cmd.commandDown(pad.id);
-                    cmd.lt = n;
+                    cmd.lt = t;
                 }
-                
-                if(cmd.commandUp && !buttonPressed && padState[cmd.name].pressed){
+
+                if(cmd.commandUp && !commandState[cmd.name].pressed && wasPressed){
                     cmd.commandUp(pad.id);
                 }
-                padState[cmd.name].pressed = buttonPressed;
             });
         }
     }
@@ -243,28 +239,28 @@ function GamepadCommandInterface(commands, gamepads){
         return errorMessage;
     };
 
-    this.addGamepad = function(id){
-        add(gamepads, id);
+    this.setGamepad = function(id){
+        gpid = id;
     };
 
-    this.removeGamepad = function(id){
-        remove(gamepads, id);
+    this.clearGamepad = function(){
+        gpid = null;
     };
 
-    this.getGamepads = function(){
-        return gamepads.slice();
+    this.isGamepadSet = function(){
+        return !!gpid;
     };
 
-    this.isDown = function(id, name){
-        return state[id][name].pressed;
+    this.isDown = function(name){
+        return commandState[name].pressed;
     };
 
-    this.isUp = function(id, name){
-        return !this.isDown(id, name);
+    this.isUp = function(name){
+        return !this.isDown(name);
     };
 
-    this.getValue = function(id, name){
-        return state[id] && state[id][name] && state[id][name].value;
+    this.getValue = function(name){
+        return commandState[name] && commandState[name].value;
     };
 
     this.getConnectedGamepads = function(){
@@ -306,13 +302,6 @@ function GamepadCommandInterface(commands, gamepads){
 
         currentPads = pads.map(function(pad){
             if(connectedGamepads.indexOf(pad.id) == -1){
-                state[pad.id] = {};
-                commands.forEach(function(cmd){
-                    state[pad.id][cmd.name] = {
-                        pressed: false,
-                        value: 0.0
-                    };
-                });
                 connectedGamepads.push(pad.id);
                 onConnected(pad.id);
             }
@@ -323,7 +312,6 @@ function GamepadCommandInterface(commands, gamepads){
         for(var i = connectedGamepads.length - 1; i >= 0; --i){
             if(currentPads.indexOf(connectedGamepads[i]) == -1){
                 onDisconnected(connectedGamepads[i]);
-                delete state[connectedGamepads[i]];
                 connectedGamepads.splice(i, 1);
             }
         }
@@ -331,14 +319,8 @@ function GamepadCommandInterface(commands, gamepads){
 
     // clone the arrays, so the consumer can't add elements to it in their own code.
     commands = commands.slice();
-    if(gamepads){
-        gamepads = gamepads.slice();
-    }
-    else{
-        gamepads = [];
-    }
-
     commands.forEach(function(cmd){
+        commandState[cmd.name] = {};
         if(cmd.buttons){
             cmd.buttons = cmd.buttons.slice();
         }

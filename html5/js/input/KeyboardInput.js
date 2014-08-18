@@ -31,12 +31,12 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 /*
-    Class: KeyboardCommandInterface
+    Class: KeyboardInput
         
         Listens for specific key codes and executes the associated command for each
         keycode.
 
-    Constructor: new KeyboardCommandInterface(commands, domElement?);
+    Constructor: new KeyboardInput(commands, domElement?);
 
         The `commands` parameter specifies a collection of keycodes tied to callbacks
         that will be called when one of the keys are depressed. Each callback can
@@ -56,7 +56,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         The `name` property is a unique identifier that can be used for checking the `isDown()`
             and `isUp()` methods later.
 
-        The `buttons` property is an array of numbers for which KeyboardCommandInterface will
+        The `buttons` property is an array of numbers for which KeyboardInput will
             listen. If any of the numbers in the array matches matches the current keyCode, 
             the associated callbackFunction will be executed. It is named "buttons" instead of
             "keycodes" to mirror the other interface libraries being developed.
@@ -83,7 +83,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         `isUp(name)`: returns the boolean negation of `isDown()`.
 
 */
-function KeyboardCommandInterface(commands, domElement){
+function KeyboardInput(commands, domElement){
     var state = {};
 
     function execute(stateChange, commandName, event){

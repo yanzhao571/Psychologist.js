@@ -30,11 +30,11 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /*
-    Class: GamepadCommandInterface
+    Class: MouseInput
         
         Listens for gamepads and specific button presses and executes the associated command for each.
 
-    Constructor: new GamepadCommandInterface(commands, gamepadIDs?);
+    Constructor: new MouseInput(commands, gamepadIDs?);
 
         The `commands` parameter specifies a button tied to callbacks that will be called when the button 
         is depressed. Each callback can be associated with multiple buttons, to be able to provide 
@@ -55,11 +55,11 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
             The `name` property is a unique identifier that can be used for checking the `isDown()`
                 and `isUp()` methods later.
 
-            The `button` property is a button index for which MouseCommandInterface will listen. A negated 
-                button index will instruct MouseCommandInterface to check the logical negation of the button's
+            The `button` property is a button index for which MouseInput will listen. A negated 
+                button index will instruct MouseInput to check the logical negation of the button's
                 pressed value.
 
-            The `metaKeys` property is an array of key-names for which MouseCommandInterface will
+            The `metaKeys` property is an array of key-names for which MouseInput will
                 will check are combined with the button.
         
             The `commandDown` property is the callback function that will be executed when the button
@@ -107,7 +107,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         `removeEventListener(event, handler, bubbles?)`: get rid of a specific event handler for a specific event.
 
 */
-function MouseCommandInterface(commands, DOMelement){
+function MouseInput(commands, DOMelement){
     var mouseState = {
             0:false, 1: false, 2: false,
             x: 0, y: 0, z: 0,
@@ -179,18 +179,16 @@ function MouseCommandInterface(commands, DOMelement){
         commands.forEach(function(cmd){
             var wasPressed = commandState[cmd.name].pressed,
                 fireAgain = (t - cmd.lt) >= cmd.dt;
-            commandState[cmd.name].value = 0;
+
             commandState[cmd.name].pressed = cmd.buttons.map(function(i){
                 var sign = i < 0 ? true : false;
                 i = Math.abs(i);
                 return mouseState[i-1] ^ sign;
-            }).reduce(function(a, b){ return a & b; }, true);
-
-            commandState[cmd.name].pressed &= cmd.meta.map(function(i){
+            }).concat(cmd.meta.map(function(i){
                 var sign = i < 0 ? true : false;
                 i = Math.abs(i);
                 return mouseState[META[i-1]] ^ sign;
-            }).reduce(function(a, b){ return a & b; }, true);
+            })).reduce(function(a, b){ return a & b; }, true);
 
             commandState[cmd.name].value = cmd.axes.map(function(i){
                 var sign = i < 0 ? -1 : 1;
@@ -207,6 +205,7 @@ function MouseCommandInterface(commands, DOMelement){
                 cmd.commandUp();
             }
         });
+        mouseState.dx = mouseState.dy = mouseState.dz = 0;
     };
 
     function maybeClone(arr){

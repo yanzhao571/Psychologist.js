@@ -4,72 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
     <title>Gamepad, good</title>
+    <script type="text/javascript" src="js/input/GamepadInput.js"></script>
+    <script type="text/javascript" src="js/controllers/gamepad.js"></script>
 </head>
 <body onload="controllerTest()">
     <div id="output"></div>
-    <script type="text/javascript" src="js/GamepadCommandInterface.js"></script>
-    <script>
-        function controllerTest() {
-            "use strict";
-            var output = document.getElementById("output"),
-                frame = 0,
-                pads = new GamepadCommandInterface([
-                    { name: "a", buttons: [0] },
-                    { name: "b", buttons: [1] },
-                    { name: "x", buttons: [2] },
-                    { name: "y", buttons: [3] },
-                    { name: "lb", buttons: [4] },
-                    { name: "rb", buttons: [5] },
-                    { name: "lt", buttons: [6] },
-                    { name: "rt", buttons: [7] },
-                    { name: "select", buttons: [8] },
-                    { name: "start", buttons: [9] },
-                    { name: "ls", buttons: [10] },
-                    { name: "rs", buttons: [11] },
-                    { name: "du", buttons: [12] },
-                    { name: "dd", buttons: [13] },
-                    { name: "dl", buttons: [14] },
-                    { name: "dr", buttons: [15] },
-                    { name: "lhoriz", axes: [0] },
-                    { name: "lvert", axes: [1] },
-                    { name: "rhoriz", axes: [2] },
-                    { name: "rvert", axes: [3] }
-                ]);
-
-            function jump(id) {
-                console.log(id, "jumped");
-            }
-
-            function fire(id) {
-                console.log(id, "fired");
-            }
-
-            pads.addEventListener("gamepadconnected", function (id) {
-                if (confirm(id)) {
-                    pads.addGamepad(id);
-                    console.log("connected", id);
-                }
-            });
-            pads.addEventListener("gamepaddisconnected", console.log.bind(console, "disconnected"));
-
-            var buttons = ["a", "b", "x", "y", "lb", "rb", "lt", "rt", "dl", "dd", "dr", "du", "select", "start", "ls", "rs"];
-            var axis = ["lvert", "lhoriz", "rvert", "rhoriz"];
-
-            function loop(dt) {
-                requestAnimationFrame(loop);
-                pads.update();
-                output.innerHTML = pads.getGamepads().map(function (id) {
-                    return "<p>" + id + ": <ul><li>"
-                        + buttons.map(function(b){ return b + ": " + pads.isDown(id, b) + " -> " + pads.getValue(id, b); }).join("</li><li>")
-                        + "</li><li>"
-                        + axis.map(function(a){ return a + " -> " + pads.getValue(id, a); }).join("</li><li>")
-                        + "</li></ul></p>";
-                }).join("");
-            }
-
-            requestAnimationFrame(loop);
-        }
-    </script>
 </body>
-
 </html>

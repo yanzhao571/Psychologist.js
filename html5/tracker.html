@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
     <title>PointTrack</title>
     <link type="text/css" rel="stylesheet" href="css/style.css">
+    <script type="text/javascript" src="js/psychologist.js"></script>
+    <script type="text/javascript" src="js/input/KeyboardInput.js"></script>
+    <script type="text/javascript" src="js/camera.js"></script>
+    <script type="text/javascript" src="js/controllers/tracker.js"></script>
 </head>
-<body>
+<body onload="cameraTrackingTest()">
     <canvas id="picture"></canvas>
     <div id="ball" style="width:50px;height:50px;position:absolute;border-radius:25px;background-color:#f00;display:none"></div>
     <div id="instructions">
@@ -22,20 +26,5 @@
         </ul>
         <a class="button" href="javascript:pageLoad();">Close instructions and start!</a>
     </div>
-    <script id="setup">
-        var curAppVersion = 2;
-        var s = document.createElement("script");
-        s.async = 1;
-        s.addEventListener("load", function () {
-            include(curAppVersion,
-                function () { },
-                "js/psychologist.js",
-                "js/camera.js",
-                "js/KeyboardCommandInterface.js",
-                "js/tracker.js");
-        }, false);
-        s.src = "js/include.js?v" + curAppVersion;
-        document.body.appendChild(s);
-    </script>
 </body>
 </html>

@@ -4,46 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
     <title>Motion testing</title>
+    <script type="text/javascript" src="js/psychologist.js"></script>
+    <script type="text/javascript" src="js/input/LandscapeMotion.js"></script>
+    <script type="text/javascript" src="test/LandscapeMotion.js"></script>
+    <script type="text/javascript" src="js/controllers/motion.js"></script>
 </head>
-<body>
-    <ul id="output" style="list-style:none;margin:0;padding:0;">
-    </ul>
-    <script>
-
-        function motionTester() {
-            var d = findEverything();
-            with (d) {
-                LandscapeMotion.addEventListener("deviceorientation", function (evt) {
-                    var val = "";
-                    ["heading", "pitch", "roll",
-                     "original.orientation.alpha", "original.orientation.gamma", "original.orientation.beta",
-                     "original.acceleration.x", "original.acceleration.y", "original.acceleration.z"].forEach(function (key) {
-                         var obj = evt;
-                         var parts = key.split(".");
-                         parts.forEach(function(p){
-                             if (obj.hasOwnProperty(p)) {
-                                 obj = obj[p];
-                             }
-                         });
-                        val += fmt("<li>$1: $2.000</li>", key, obj);
-                    });
-                    output.innerHTML = val;
-                }, false);
-            }
-        }
-
-        var curAppVersion = 9;
-        var s = document.createElement("script");
-        s.async = 1;
-        s.addEventListener("load", function () {
-            include(curAppVersion,
-            function () { motionTester(); },
-            "js/psychologist.js",
-            "js/LandscapeMotion.js",
-            "test/LandscapeMotion.js");
-        }, false);
-        s.src = "js/include.js?v" + curAppVersion;
-        document.body.appendChild(s);
-    </script>
+<body onload="motionTester()">
+    <ul id="output" style="list-style:none;margin:0;padding:0;"></ul>
 </body>
 </html>

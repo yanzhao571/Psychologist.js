@@ -31,14 +31,14 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 /*
-    Class: SpeechCommandInterface
+    Class: SpeechInput
         
         Connects to a the webkitSpeechRecognition API and manages callbacks based on
         keyword sets related to the callbacks. Note that the webkitSpeechRecognition
         API requires a network connection, as the processing is done on an external
         server.
 
-    Constructor: new SpeechCommandInterface(commands);
+    Constructor: new SpeechInput(commands);
 
         The `commands` parameter specifies a collection of keywords tied to callbacks
         that will be called when one of the keywords are heard. Each callback can
@@ -52,7 +52,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
             "command": <callbackFunction>
         }
 
-        The `keywords` property is an array of strings for which SpeechCommandInterface will
+        The `keywords` property is an array of strings for which SpeechInput will
             listen. If any of the words or phrases in the array matches matches the heard
             command, the associated callbackFunction will be executed.
         
@@ -76,7 +76,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
             null if setup was successful.
 
 */
-function SpeechCommandInterface(commands, stopAfterEnd){
+function SpeechInput(commands, stopAfterEnd){
     var command = "",
         commandTimeout,
         running = false,

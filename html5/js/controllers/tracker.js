@@ -1,4 +1,4 @@
-﻿function pageLoad(){
+﻿function cameraTrackingTest(){
     var ball = document.getElementById("ball"),
         picture = document.getElementById("picture"),
         camera = document.createElement("video"),
@@ -32,7 +32,7 @@
     }
     
     // use WASD or arrow keys to change contrast and threshold parameters
-    keyboard = new KeyboardCommandInterface([
+    keyboard = new KeyboardInput([
         {name: "up", buttons: [87, 38], commandDown: changeParameters.bind(window, 1, 0), dt: 125},
         {name: "down", buttons: [83, 40], commandDown: changeParameters.bind(window, -1, 0), dt: 125},
         {name: "left", buttons: [65, 37], commandDown: changeParameters.bind(window, 0, -0.05), dt: 125},

@@ -1,4 +1,4 @@
-﻿function pageLoad(){
+﻿function stereoHelperCam(){
     var picture = document.getElementById("picture"),
         reticle = document.getElementById("reticle"),
         controls = document.getElementById("controls"),
@@ -276,7 +276,7 @@
     speechButton.addEventListener("click", toggleSpeech, false);
     fullScreenButton.addEventListener("click", goFullscreen, false);
 
-    speech = new SpeechCommandInterface([{
+    speech = new SpeechInput([{
         keywords: ["capture", "save", "safe", "save picture", "shoot", "shit", "snap", "take", "take picture"],
         command: capture
     },{
