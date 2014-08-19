@@ -291,3 +291,22 @@ var LandscapeMotion = {
         window.addEventListener("devicemotion", checkMotion, bubbles);
     }
 }
+
+function MotionInput(commands){
+    var state = {};
+    var AXES = ["heading", "pitch", "roll"];
+
+    LandscapeMotion.addEventListener("deviceorientation", function (evt) {
+        commands.forEach(function(cmd){
+            state[cmd.name] = cmd.axes.map(function(i){
+                var sign = i < 0 ? -1 : 1;
+                i = Math.abs(i);
+                return sign * evt[AXES[i-1]];
+            }).reduce(function(a, b){ return Math.abs(a) > Math.abs(b) ? a : b; }, 0);
+        });
+    });
+
+    this.getValue = function(name){
+        return state[name];
+    };
+}

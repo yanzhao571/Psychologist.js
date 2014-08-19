@@ -3,7 +3,7 @@ var pitch = 0,
     heading = 0,
     overlay, gfx, video,
     camera, scene, effect, renderer, map,
-    ax, ay, az, dmx, dmy, keyboard, mouse, gamepad, fps, speed = 9.8,
+    ax, ay, az, dmx, dmy, motion, keyboard, mouse, gamepad, fps, speed = 9.8,
     dt, disp, vcy = 0,
     clock,
     heightmap = [],
@@ -194,6 +194,12 @@ function gameDemo() {
         pitch = evt.pitch;
         heading = -evt.heading;
     });
+
+    motion = new MotionInput([
+        { name: "heading", axes: [-1] },
+        { name: "pitch", axes: [2] },
+        { name: "roll", axes: [-3] }
+    ]);
 
     mouse = new MouseInput([
         { name: "yaw", axes: [-4] },
