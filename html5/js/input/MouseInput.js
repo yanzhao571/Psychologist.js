@@ -44,9 +44,9 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         
         {
             "name": "unique identifier", // e.g. "UP"
-            "button": idx1,
-            "metaKeys": ["ctrlKey", "shiftKey"],
-            "axis": axis
+            "buttons": [idx1],
+            "metaKeys": [0, 1, etc],
+            "axes": [idx1],
             "commandDown" (optional): <callbackFunction>,
             "dt" (optional): <number>, //in milliseconds
             "commandUp" (optional): <callbackFunction>
@@ -108,6 +108,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 function MouseInput(commands, DOMelement){
+    DOMelement = DOMelement || document.documentElement;
     var mouseState = {
             0:false, 1: false, 2: false,
             x: 0, y: 0, z: 0,

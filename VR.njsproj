@@ -38,7 +38,6 @@
     <Compile Include="html5\js\lib\FileSaver.min.js" />
     <Compile Include="html5\js\lib\three\AnaglyphEffect.min.js" />
     <Compile Include="html5\js\lib\three\OculusRiftEffect.min.js" />
-    <Compile Include="html5\js\lib\three\StereoEffect.min.js" />
     <Compile Include="html5\js\lib\three\three.min.js" />
     <Compile Include="html5\js\input\MouseInput.js" />
     <Compile Include="html5\js\controllers\mouse.js" />

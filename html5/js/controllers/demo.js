@@ -6,7 +6,8 @@ var pitch = 0,
     ax, ay, az, dmx, dmy, keyboard, mouse, gamepad, fps, speed = 9.8,
     dt, disp, vcy = 0,
     clock,
-    heightmap = [];
+    heightmap = [],
+    MAP_WIDTH = 50, MAP_HEIGHT = 50;
 
 function animate() {
     requestAnimationFrame(animate);
@@ -14,10 +15,10 @@ function animate() {
     mouse.update();
     gamepad.update();
     vcy -= dt * speed;
-    var x = Math.floor(camera.position.x) + 25;
-    var y = Math.floor(camera.position.z) + 25;
+    var x = Math.floor(camera.position.x) + MAP_WIDTH / 2;
+    var y = Math.floor(camera.position.z) + MAP_HEIGHT / 2;
     var h = 1;
-    if (0 <= x && x < 50 && 0 <= y && y < 50){
+    if (0 <= x && x < MAP_WIDTH && 0 <= y && y < MAP_HEIGHT){
         h = heightmap[y][x] + 1;
     }
     if(camera.position.y <= h && vcy <= 0) {
@@ -128,13 +129,12 @@ function gameDemo() {
     }
 
     function showButtons(evt) {
-        if (evt) {
-            evt.preventDefault();
+        if(!mouse.isPointerLocked()){
+            if (!buttonsVisible) {
+                toggleButtons();
+            }
+            hideButtonsLater();
         }
-        if (!buttonsVisible) {
-            toggleButtons();
-        }
-        hideButtonsLater();
     }
 
     function hideButtons() {
@@ -167,7 +167,7 @@ function gameDemo() {
 
     camera = new THREE.PerspectiveCamera(53.13, window.innerWidth / window.innerHeight, 0.01, 1000);
 
-    renderer = new THREE.WebGLRenderer();
+    renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setClearColor(0xafbfff);
 
     if (confirm("use stereo rendering?")) {
@@ -200,7 +200,7 @@ function gameDemo() {
         { name: "pitch", axes: [5] },
         { name: "fire", buttons: [1], commandDown: fire, dt: 125 },
         { name: "jump", buttons: [2], commandDown: jump, dt: 250 },
-    ], overlay);
+    ]);
 
     keyboard = new KeyboardInput([
         { name: "left", buttons: [65, 37] },
@@ -243,35 +243,35 @@ function gameDemo() {
     var light = new THREE.DirectionalLight(0xffffff, 0.75);
     var light2 = new THREE.AmbientLight(0x808080);
     
-    for(var y = 0; y < 50; ++y){
+    for(var y = 0; y < MAP_HEIGHT; ++y){
         heightmap.push([]);
-        for(var x = 0; x < 50; ++x){
+        for(var x = 0; x < MAP_WIDTH; ++x){
             heightmap[y].push(0);
         }
     }
 
-    for(var h = 0; h < 5 + Math.random() * 5; ++h){
-        var x = Math.floor(2 + Math.random() * 46);
-        var y = Math.floor(2 + Math.random() * 46);
+    for(var h = 0; h < (MAP_WIDTH + Math.random() * MAP_HEIGHT) / 2; ++h){
+        var x = Math.floor(Math.random() * MAP_WIDTH);
+        var y = Math.floor(Math.random() * MAP_HEIGHT);
         var z = Math.floor(4 + Math.random() * 4);
         for(var dy = -z; dy < z; ++dy){
             var ty = y + dy;
-            for(var dx = -z; dx < z && 0 <= ty && ty < 50; ++dx){
+            for(var dx = -z; dx < z && 0 <= ty && ty < MAP_HEIGHT; ++dx){
                 var tx = x + dx;
-                if(0 <= tx && tx < 50){
+                if(0 <= tx && tx < MAP_WIDTH){
                     heightmap[ty][tx] = Math.max(heightmap[ty][tx], z - Math.abs(dx) - Math.abs(dy));
                 }
             }
         }
     }
     
-    for(var y = 0; y < 50; ++y){
-        for(var x = 0; x < 50; ++x){
+    for(var y = 0; y < MAP_HEIGHT; ++y){
+        for(var x = 0; x < MAP_WIDTH; ++x){
             heightmap[y][x] -= 10;
             var c = new THREE.Mesh(geometry, material);
-            c.position.x = x - 25;
+            c.position.x = x - MAP_WIDTH / 2;
             c.position.y = heightmap[y][x];
-            c.position.z = y - 25;
+            c.position.z = y - MAP_HEIGHT / 2;
             scene.add(c);
         }
     }    
