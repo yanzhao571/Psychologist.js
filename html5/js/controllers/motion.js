@@ -1,6 +1,6 @@
 ﻿function motionTester() {
-    var output = document.getElementById("output");
-    var arr = [
+    var output = document.getElementById("output"),
+        arr = [
         "heading",
         "pitch",
         "roll",

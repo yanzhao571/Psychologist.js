@@ -2,6 +2,8 @@
     "use strict";
     var output = document.getElementById("output"),
         frame = 0,
+        buttons = ["a", "b", "x", "y", "lb", "rb", "lt", "rt", "dl", "dd", "dr", "du", "select", "start", "ls", "rs"],
+        axis = ["lvert", "lhoriz", "rvert", "rhoriz"],
         gamepad = new GamepadInput([
             { name: "a", buttons: [1] },
             { name: "b", buttons: [2] },
@@ -40,9 +42,6 @@
         }
     });
     gamepad.addEventListener("gamepaddisconnected", console.log.bind(console, "disconnected"));
-
-    var buttons = ["a", "b", "x", "y", "lb", "rb", "lt", "rt", "dl", "dd", "dr", "du", "select", "start", "ls", "rs"];
-    var axis = ["lvert", "lhoriz", "rvert", "rhoriz"];
 
     function loop(dt) {
         requestAnimationFrame(loop);

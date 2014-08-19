@@ -2,22 +2,27 @@ var pitch = 0,
     roll = 0,
     heading = 0,
     overlay, gfx, video,
-    camera, scene, effect, renderer, cube, map,
-    ax, ay, az, dmx, dmy, keyboard, mouse, gamepad, fps, speed = 5,
+    camera, scene, effect, renderer, map,
+    ax, ay, az, dmx, dmy, keyboard, mouse, gamepad, fps, speed = 9.8,
     dt, disp, vcy = 0,
-    clock;
+    clock,
+    heightmap = [];
 
 function animate() {
     requestAnimationFrame(animate);
     dt = clock.getDelta();
     mouse.update();
     gamepad.update();
-    cube.rotation.x += 0.2 * dt;
-    cube.rotation.y += 0.3 * dt;
-    cube.rotation.z += 0.5 * dt;
     vcy -= dt * speed;
-    if (camera.position.y <= 0 && vcy < 0) {
+    var x = Math.floor(camera.position.x) + 25;
+    var y = Math.floor(camera.position.z) + 25;
+    var h = 1;
+    if (0 <= x && x < 50 && 0 <= y && y < 50){
+        h = heightmap[y][x] + 1;
+    }
+    if(camera.position.y <= h && vcy <= 0) {
         vcy = 0;
+        camera.position.y = h;
     }
     fps = 1 / dt;
     setCamera(dt);
@@ -66,8 +71,6 @@ function draw() {
     gfx.clearRect(0, 0, overlay.width, overlay.height);
     gfx.font = "20px Arial";
     gfx.fillStyle = "#c00000";
-    gfx.fillText(fmt("fps: $1.00, h: $2.00, p: $3.00", fps, heading, pitch), 10, 20);
-    gfx.fillText(fmt("x: $1.00, y: $2.00, z: $3.00", camera.position.x, camera.position.y, camera.position.z), 10, 40);
 
     if (effect) {
         effect.render(scene, camera);
@@ -142,7 +145,7 @@ function gameDemo() {
 
     function jump() {
         if (camera.position.y <= 0) {
-            vcy = 4;
+            vcy = 2;
         }
     }
 
@@ -162,7 +165,7 @@ function gameDemo() {
     window.addEventListener("mousemove", showButtons, false);
     window.addEventListener("mouseup", showButtons, false);
 
-    camera = new THREE.PerspectiveCamera(53.13, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(53.13, window.innerWidth / window.innerHeight, 0.01, 1000);
 
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(0xafbfff);
@@ -227,64 +230,57 @@ function gameDemo() {
         }
     }, false);
 
-    overlay.parentElement.insertBefore(renderer.domElement, overlay);
-
     window.addEventListener("resize", function () {
         setSize(window.innerWidth, window.innerHeight);
     }, false);
 
     var geometry = new THREE.BoxGeometry(1, 1, 1);
-    var material = new THREE.MeshLambertMaterial({ color: 0x70ff70, ambient: 0xffffff, opacity: 1, transparent: false });
-
-    var light = new THREE.DirectionalLight(0xffffff, 0.95);
-    var light2 = new THREE.AmbientLight(0x101010);
-    light.position.set(1, 1, 0);
-
-    var material3 = new THREE.LineBasicMaterial({ color: 0xff0000 });
-    var geometry3 = new THREE.Geometry();
-    for (var i = 0; i < 360; ++i) {
-        var a = i * Math.PI / 180;
-        var c = Math.cos(a);
-        var s = Math.sin(a);
-        geometry3.vertices.push(new THREE.Vector3(s, a, c));
+	var imgTexture = THREE.ImageUtils.loadTexture( "img/grass.png" );
+	imgTexture.repeat.set( 4, 2 );
+	imgTexture.wrapS = imgTexture.wrapT = THREE.RepeatWrapping;
+	imgTexture.anisotropy = 16;
+    var material = new THREE.MeshLambertMaterial({ color: 0xffffff, ambient: 0xffffff, opacity: 1, map: imgTexture });
+    var light = new THREE.DirectionalLight(0xffffff, 0.75);
+    var light2 = new THREE.AmbientLight(0x808080);
+    
+    for(var y = 0; y < 50; ++y){
+        heightmap.push([]);
+        for(var x = 0; x < 50; ++x){
+            heightmap[y].push(0);
+        }
     }
-    var line = new THREE.Line(geometry3, material3);
 
+    for(var h = 0; h < 5 + Math.random() * 5; ++h){
+        var x = Math.floor(2 + Math.random() * 46);
+        var y = Math.floor(2 + Math.random() * 46);
+        var z = Math.floor(4 + Math.random() * 4);
+        for(var dy = -z; dy < z; ++dy){
+            var ty = y + dy;
+            for(var dx = -z; dx < z && 0 <= ty && ty < 50; ++dx){
+                var tx = x + dx;
+                if(0 <= tx && tx < 50){
+                    heightmap[ty][tx] = Math.max(heightmap[ty][tx], z - Math.abs(dx) - Math.abs(dy));
+                }
+            }
+        }
+    }
+    
+    for(var y = 0; y < 50; ++y){
+        for(var x = 0; x < 50; ++x){
+            heightmap[y][x] -= 10;
+            var c = new THREE.Mesh(geometry, material);
+            c.position.x = x - 25;
+            c.position.y = heightmap[y][x];
+            c.position.z = y - 25;
+            scene.add(c);
+        }
+    }    
+
+    light.position.set(1, 1, 0);
     scene.add(light);
     scene.add(light2);
-    scene.add(line);
-
-    for (var i = 0; i < 11; ++i) {
-        var c = new THREE.Mesh(geometry, material);
-        c.position.x = i - 5;
-        c.position.y = i - 5;
-        c.position.z = i - 5;
-        scene.add(c);
-        if (i != 5) {
-            c = new THREE.Mesh(geometry, material);
-            c.position.x = 5 - i;
-            c.position.y = i - 5;
-            c.position.z = i - 5;
-            scene.add(c);
-
-            c = new THREE.Mesh(geometry, material);
-            c.position.x = i - 5;
-            c.position.y = 5 - i;
-            c.position.z = i - 5;
-            scene.add(c);
-
-            c = new THREE.Mesh(geometry, material);
-            c.position.x = i - 5;
-            c.position.y = i - 5;
-            c.position.z = 5 - i;
-            scene.add(c);
-        }
-        else {
-            cube = c;
-        }
-    }
-
     clock.start();
     setSize(window.innerWidth, window.innerHeight);
-    window.requestAnimationFrame(animate);
+    overlay.parentElement.insertBefore(renderer.domElement, overlay);
+    requestAnimationFrame(animate);
 }

@@ -2,6 +2,8 @@
     "use strict";
     var output = document.getElementById("output"),
         frame = 0,
+        buttons = ["fire", "alternate fire", "left+right", "middle", "right", "minus-left", "minus-middle", "minus-right", "horiz+vert"],
+        axis = ["horiz", "minus-horiz", "vert", "minus-vert", "wheel", "minus-wheel", "horiz+vert"],
         mouse = new MouseInput([
             { name: "fire", buttons: [1], meta: [-1], commandDown: console.log.bind(console, "Fire"), dt: 250 },
             { name: "alternate fire", buttons: [1], meta: [1], commandDown: console.log.bind(console, "Alternate fire"), dt: 250 },
@@ -28,17 +30,13 @@
             { name: "horiz+vert", axes: [1, 2] }
         ], document.documentElement);
 
-    var buttons = ["fire", "alternate fire", "left+right", "middle", "right", "minus-left", "minus-middle", "minus-right", "horiz+vert"];
-    var axis = ["horiz", "minus-horiz", "vert", "minus-vert", "wheel", "minus-wheel", "horiz+vert"];
-
     function loop(dt) {
         requestAnimationFrame(loop);
         mouse.update();
-        output.innerHTML = "<ul><li>"
-            + buttons.map(function (b) { return b + ": " + mouse.isDown(b); }).join("</li><li>")
-            + "</li><li>"
-            + axis.map(function (a) { return a + " -> " + mouse.getValue(a); }).join("</li><li>")
-            + "</li></ul></p>";
+        output.innerHTML = "<ul>"
+            + buttons.map(function (b) { return "<li>" + b + ": " + mouse.isDown(b) + "</li>"; }).join("")
+            + axis.map(function (a) { return "<li>" +a + " -> " + mouse.getValue(a)+ "</li>"; }).join("")
+            + "</ul>";
     }
 
     requestAnimationFrame(loop);

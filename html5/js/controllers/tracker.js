@@ -12,7 +12,8 @@
         cb = cr, 
         running = false,
         bx = 0, by = 0,
-        bleft = 0, btop = 0, lastX, lastY, dx, dy;
+        bleft = 0, btop = 0, lastX, lastY, dx, dy,
+        videoModes = [{w:640, h:480}, "default"];;
 
     if(instructions){
         instructions.style.display = "none";
@@ -141,8 +142,6 @@
         mappedResize(picture);
         running = true;
     };
-
-    var videoModes = [{w:640, h:480}, "default"];
 
     setupVideo(videoModes, camera, reset);
 }

@@ -143,6 +143,7 @@ function GamepadInput(commands, gpid){
     var commandState = {},
         available = null,
         errorMessage = null,
+        trans, t, i, wasPressed, fireAgain, sign,
         connectedGamepads = [],
         listeners = {
             gamepadconnected: [],
@@ -162,15 +163,15 @@ function GamepadInput(commands, gpid){
         }];
 
     function checkPad(pad){
-        var t = Date.now();
+        t = Date.now();
         if(pad.id == gpid){
-            var trans = translations.filter(function(t){ return t.test.test(pad.id) || t.test.test(navigator.userAgent);});
+            trans = translations.filter(function(t){ return t.test.test(pad.id) || t.test.test(navigator.userAgent);});
             commands.forEach(function(cmd){
-                var wasPressed = commandState[cmd.name].pressed,
-                    fireAgain = (t - cmd.lt) >= cmd.dt;
+                wasPressed = commandState[cmd.name].pressed;
+                fireAgain = (t - cmd.lt) >= cmd.dt;
 
                 commandState[cmd.name].pressed = cmd.buttons.map(function(i){
-                    var sign = i < 0 ? true : false;
+                    sign = i < 0 ? true : false;
                     i = Math.abs(i);
                     i = trans.reduce(function(a, b){ return b.buttons && b.buttons[a] || a; }, i-1);
                     return pad.buttons[i].pressed && !sign
@@ -178,12 +179,12 @@ function GamepadInput(commands, gpid){
                 }).reduce(function(a, b){ return a && b; }, true);
 
                 commandState[cmd.name].value = cmd.axes.map(function(i){
-                    var sign = i < 0 ? -1 : 1;
+                    sign = i < 0 ? -1 : 1;
                     i = Math.abs(i);
                     i = trans.reduce(function(a, b){return b.axes && b.axes[a] || a; }, i-1);
                     return sign * pad.axes[i];
                 }).concat(cmd.buttons.map(function(i){
-                    var sign = i < 0 ? -1 : 1;
+                    sign = i < 0 ? -1 : 1;
                     i = Math.abs(i);
                     i = trans.reduce(function(a, b){return b.buttons && b.buttons[a] || a; }, i-1);
                     return sign * pad.buttons[i].value;
@@ -311,7 +312,7 @@ function GamepadInput(commands, gpid){
             return pad.id;
         });
 
-        for(var i = connectedGamepads.length - 1; i >= 0; --i){
+        for(i = connectedGamepads.length - 1; i >= 0; --i){
             if(currentPads.indexOf(connectedGamepads[i]) == -1){
                 onDisconnected(connectedGamepads[i]);
                 connectedGamepads.splice(i, 1);

@@ -65,6 +65,7 @@
     <Compile Include="src\webServer.js" />
     <Content Include="html5\gamepad.html" />
     <Content Include="html5\ico\fs.png" />
+    <Content Include="html5\img\grass.png" />
     <Content Include="html5\mouse.html" />
     <Content Include="html5\tracker.html" />
     <Content Include="html5\demo.html" />
