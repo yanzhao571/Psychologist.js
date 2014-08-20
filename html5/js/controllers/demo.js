@@ -1,105 +1,117 @@
-var pitch = 0,
-    roll = 0,
-    heading = 0,
-    overlay, gfx, video,
-    camera, scene, effect, renderer, map, FOV = 60,
-    ax, ay, az, dmx, dmy, motion, keyboard, mouse, gamepad, fps, speed = 5,
-    dt, disp, vcy = 0, onground = false,
-    clock,
-    heightmap = [],
-    MAP_WIDTH = 50, MAP_HEIGHT = 50;
+include(
+    "js/lib/three/three.min.js",
+    "js/lib/three/OculusRiftEffect.min.js",
+    "js/lib/three/AnaglyphEffect.min.js",
+    "js/psychologist.js",
+    "js/input/SpeechInput.js",
+    "js/input/GamepadInput.js",
+    "js/input/KeyboardInput.js",
+    "js/input/LandscapeMotion.js",
+    "js/input/MouseInput.js",
+    "js/camera.js",
+function(){
+    var pitch = 0,
+        roll = 0,
+        heading = 0,
+        MAP_WIDTH = 50, MAP_HEIGHT = 50, SCALE = 100, BG_COLOR = 0xafbfff, DRAW_DISTANCE = SCALE * Math.sqrt(MAP_HEIGHT * MAP_HEIGHT + MAP_WIDTH * MAP_WIDTH) / 2,
+        overlay, gfx, video,
+        camera, scene, effect, renderer, map, FOV = 60,
+        ax, ay, az, dmx, dmy, motion, keyboard, mouse, gamepad, fps, speed = 9.8 * SCALE,
+        dt, disp, vcy = 0, onground = false,
+        clock,
+        heightmap = [];
 
-function animate() {
-    requestAnimationFrame(animate);
-    dt = clock.getDelta();
-    mouse.update();
-    gamepad.update();
-    vcy -= dt * speed;
-    var x = Math.floor(camera.position.x) + MAP_WIDTH / 2;
-    var y = Math.floor(camera.position.z) + MAP_HEIGHT / 2;
-    var h = 0;
-    if (0 <= x && x < MAP_WIDTH && 0 <= y && y < MAP_HEIGHT){
-        h = heightmap[y][x] + 2;
-    }
-    if(camera.position.y <= h && vcy <= 0) {
-        vcy = 0;
-        camera.position.y = h;
-        onground = true;
-    }
-    fps = 1 / dt;
-    setCamera(dt);
-    draw();
-}
-
-
-function setCamera(dt) {
-    camera.updateProjectionMatrix();
-    camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "YZX"));
-    disp = speed * dt;
-    camera.translateY(disp * vcy);
-    camera.rotateY(heading);
-
-    if (keyboard.isDown("forward")) {
-        camera.translateZ(-disp);
-    }
-    else if (keyboard.isDown("back")) {
-        camera.translateZ(disp);
+    function animate() {
+        requestAnimationFrame(animate);
+        dt = clock.getDelta();
+        mouse.update();
+        gamepad.update();
+        vcy -= dt * speed;
+        var x = Math.floor(camera.position.x/SCALE) + MAP_WIDTH / 2;
+        var y = Math.floor(camera.position.z/SCALE) + MAP_HEIGHT / 2;
+        var h = 0;
+        if (0 <= x && x < MAP_WIDTH && 0 <= y && y < MAP_HEIGHT){
+            h = (heightmap[y][x] + 2) * SCALE;
+        }
+        if(camera.position.y <= h && vcy <= 0) {
+            vcy = 0;
+            camera.position.y = camera.position.y * 0.75 + h * 0.25;
+            onground = true;
+        }
+        fps = 1 / dt;
+        setCamera(dt);
+        draw();
     }
 
-    if (keyboard.isDown("right")) {
-        camera.translateX(disp);
-    }
-    else if (keyboard.isDown("left")) {
-        camera.translateX(-disp);
-    }
+    function setCamera(dt) {
+        camera.updateProjectionMatrix();
+        camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "YZX"));
+        disp = speed * dt;
+        camera.translateY(vcy * dt);
+        camera.rotateY(heading);
 
-    if (gamepad.isGamepadSet()) {
-        camera.translateX(disp * gamepad.getValue("strafe"));
-        camera.translateZ(disp * gamepad.getValue("drive"));
-        heading += 2 * gamepad.getValue("yaw") * dt;
-        pitch += 2 * gamepad.getValue("pitch") * dt;
-    }
+        if (keyboard.isDown("forward")) {
+            camera.translateZ(-disp);
+        }
+        else if (keyboard.isDown("back")) {
+            camera.translateZ(disp);
+        }
 
-    if(mouse.isPointerLocked()){
-        heading += 0.5 * mouse.getValue("yaw") * dt;
-        pitch += 0.5 * mouse.getValue("pitch") * dt;
-    }
+        if (keyboard.isDown("right")) {
+            camera.translateX(disp);
+        }
+        else if (keyboard.isDown("left")) {
+            camera.translateX(-disp);
+        }
+
+        if (gamepad.isGamepadSet()) {
+            camera.translateX(disp * gamepad.getValue("strafe"));
+            camera.translateZ(disp * gamepad.getValue("drive"));
+            heading += 2 * gamepad.getValue("yaw") * dt;
+            pitch += 2 * gamepad.getValue("pitch") * dt;
+        }
+
+        if(mouse.isPointerLocked()){
+            heading += 0.5 * mouse.getValue("yaw") * dt;
+            pitch += 0.5 * mouse.getValue("pitch") * dt;
+        }
     
-    camera.rotateX(pitch);
-    camera.rotateZ(roll);
-}
+        camera.rotateX(pitch);
+        camera.rotateZ(roll);
+    }
 
-function draw() {
-    gfx.clearRect(0, 0, overlay.width, overlay.height);
-    gfx.font = "20px Arial";
-    gfx.fillStyle = "#c00000";
+    function draw() {
+        gfx.clearRect(0, 0, overlay.width, overlay.height);
+        gfx.font = "20px Arial";
+        gfx.fillStyle = "#c00000";
 
-    if (effect) {
-        effect.render(scene, camera);
+        if (effect) {
+            effect.render(scene, camera);
+        }
+        else {
+            renderer.render(scene, camera);
+        }
     }
-    else {
-        renderer.render(scene, camera);
-    }
-}
 
-function setSize(w, h) {
-    overlay.width = w;
-    overlay.height = h;
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    if (effect) {
-        effect.setSize(window.innerWidth, window.innerHeight);
+    function setSize(w, h) {
+        overlay.width = w;
+        overlay.height = h;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        if (effect) {
+            effect.setSize(window.innerWidth, window.innerHeight);
+        }
+        else if (effect) {
+            effect.setSize(window.innerWidth, window.innerHeight);
+        }
+        else {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
     }
-    else if (effect) {
-        effect.setSize(window.innerWidth, window.innerHeight);
-    }
-    else {
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-}
 
-function gameDemo() {
     scene = new THREE.Scene();
+	scene.fog = new THREE.FogExp2(BG_COLOR, 3 / DRAW_DISTANCE);
+
     clock = new THREE.Clock();
     overlay = document.getElementById("overlay");
     gfx = overlay.getContext("2d");
@@ -130,7 +142,7 @@ function gameDemo() {
     }
 
     function showButtons(evt) {
-        if(!mouse.isPointerLocked()){
+        if(!mouse || !mouse.isPointerLocked()){
             if (!buttonsVisible) {
                 toggleButtons();
             }
@@ -146,7 +158,7 @@ function gameDemo() {
 
     function jump() {
         if (onground) {
-            vcy = 2;
+            vcy = 10 * SCALE;
             onground = false;
         }
     }
@@ -168,11 +180,12 @@ function gameDemo() {
     window.addEventListener("mouseup", showButtons, false);
 
     renderer = new THREE.WebGLRenderer({antialias: true});
-    renderer.setClearColor(0xafbfff);
+    renderer.setClearColor(BG_COLOR);
 
     if (confirm("use stereo rendering?")) {
         FOV = 106.26;
         effect = new THREE.OculusRiftEffect(renderer, {
+            worldFactor: SCALE,
             HMD: {
                 hResolution: screen.availWidth,
                 vResolution: screen.availHeight,
@@ -193,7 +206,7 @@ function gameDemo() {
     function changeFOV(v){
         FOV += v;
         if(!camera){
-            camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, 1, 1000);
+            camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, 1, DRAW_DISTANCE);
         }
         else{
             camera.fov = FOV;
@@ -298,9 +311,12 @@ function gameDemo() {
         for(var x = 0; x < MAP_WIDTH; ++x){
             heightmap[y][x] -= 10;
             var c = new THREE.Mesh(geometry, material);
-            c.position.x = x - MAP_WIDTH / 2;
-            c.position.y = heightmap[y][x];
-            c.position.z = y - MAP_HEIGHT / 2;
+            c.position.x = SCALE * (x - MAP_WIDTH / 2);
+            c.position.y = SCALE * heightmap[y][x];
+            c.position.z = SCALE * (y - MAP_HEIGHT / 2);
+            c.scale.x = SCALE;
+            c.scale.y = SCALE;
+            c.scale.z = SCALE;
             scene.add(c);
         }
     }    
@@ -312,4 +328,4 @@ function gameDemo() {
     setSize(window.innerWidth, window.innerHeight);
     overlay.parentElement.insertBefore(renderer.domElement, overlay);
     requestAnimationFrame(animate);
-}
+});
