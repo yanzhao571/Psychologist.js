@@ -1,7 +1,8 @@
 include(
-    "js/lib/three/three.min.js",
-    "js/lib/three/OculusRiftEffect.min.js",
-    "js/lib/three/AnaglyphEffect.min.js",
+    2,
+    "lib/three/three.min.js",
+    "lib/three/OculusRiftEffect.min.js",
+    "lib/three/AnaglyphEffect.min.js",
     "js/psychologist.js",
     "js/input/SpeechInput.js",
     "js/input/GamepadInput.js",
