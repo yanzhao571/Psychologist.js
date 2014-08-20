@@ -4,7 +4,8 @@
     "license": "MIT License",
     "readme": "./README.txt",
     "dependencies": {
-        "mime": "latest"
+        "mime": "latest",
+        "socket.io": "latest"
     },
 
     "description": "HTML 5 VR system for phones and cardboard viewers.",
