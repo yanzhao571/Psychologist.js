@@ -10,23 +10,27 @@ include(
     "js/input/MouseInput.js",
     "js/camera.js",
 function(){
-    var pitch = 0,
-        roll = 0,
-        heading = 0,
-        MAP_WIDTH = 50, MAP_HEIGHT = 50, SCALE = 100, BG_COLOR = 0xafbfff, DRAW_DISTANCE = SCALE * Math.sqrt(MAP_HEIGHT * MAP_HEIGHT + MAP_WIDTH * MAP_WIDTH) / 2,
+    var MAP_WIDTH = 50, MAP_HEIGHT = 50, SCALE = 100, BG_COLOR = 0xafbfff, 
+        DRAW_DISTANCE = SCALE * Math.sqrt(MAP_HEIGHT * MAP_HEIGHT + MAP_WIDTH * MAP_WIDTH) / 2,
+        SPEED = 9.8 * SCALE, FOV = 60,
+        pitch = 0, roll = 0, heading = 0,
+        vcx = 0, vcz = 0, vcy = 0, tx, tz,
+        onground = false,
         overlay, gfx, video,
-        camera, scene, effect, renderer, map, FOV = 60,
-        ax, ay, az, dmx, dmy, motion, keyboard, mouse, gamepad, fps, speed = 9.8 * SCALE,
-        dt, disp, vcx = 0, vcz = 0, vcy = 0, onground = false,
-        clock,
-        heightmap = [];
+        camera, scene, effect, renderer, map,
+        motion, keyboard, mouse, gamepad, 
+        fps, dt, clock, heightmap = [],
+        fullScreenButton = document.getElementById("fullScreenButton"),
+        options = document.getElementById("options"),
+        buttonsTimeout = null,
+        buttonsVisible = true;
 
     function animate() {
         requestAnimationFrame(animate);
         dt = clock.getDelta();
         mouse.update();
         gamepad.update();
-        vcy -= dt * speed;
+        vcy -= dt * SPEED;
         var x = Math.floor(camera.position.x/SCALE) + MAP_WIDTH / 2;
         var y = Math.floor(camera.position.z/SCALE) + MAP_HEIGHT / 2;
         var h = 0;
@@ -43,19 +47,31 @@ function(){
         }
 
         if(onground){
-            vcx = keyboard.getValue("right") - keyboard.getValue("left") + gamepad.getValue("strafe");
-            vcz = keyboard.getValue("back") - keyboard.getValue("forward") + gamepad.getValue("drive");
-            if(vcx != 0 || vcz != 0){
-                len = speed / Math.sqrt(vcz * vcz + vcx * vcx);
+            tx = keyboard.getValue("right") - keyboard.getValue("left") + gamepad.getValue("strafe");
+            tz = keyboard.getValue("back") - keyboard.getValue("forward") + gamepad.getValue("drive");
+            if(tx != 0 || tz != 0){
+                len = SPEED / Math.sqrt(tz * tz + tx * tx);
             }
             else{
                 len = 0;
             }
-            vcx *= len;
-            vcz *= len;
-            len = vcx * Math.cos(-heading) - vcz * Math.sin(-heading);
-            vcz = vcx * Math.sin(-heading) + vcz * Math.cos(-heading);
-            vcx = len;
+            tx *= len;
+            tz *= len;
+            len = tx * Math.cos(heading) + tz * Math.sin(heading);
+            tz = tz * Math.cos(heading) - tx * Math.sin(heading);
+            tx = len;
+            vcx = vcx * 0.9 + tx * 0.1;
+            vcz = vcz * 0.9 + tz * 0.1;
+        }
+
+        if (gamepad.isGamepadSet()) {
+            heading += 2 * gamepad.getValue("yaw") * dt;
+            pitch += 2 * gamepad.getValue("pitch") * dt;
+        }
+
+        if(mouse.isPointerLocked()){
+            heading += 0.5 * mouse.getValue("yaw") * dt;
+            pitch += 0.5 * mouse.getValue("pitch") * dt;
         }
 
         fps = 1 / dt;
@@ -71,20 +87,7 @@ function(){
         camera.translateY(vcy * dt);
         camera.translateZ(vcz * dt);
 
-        camera.rotateY(heading);
-
-        if (gamepad.isGamepadSet()) {
-            heading += 2 * gamepad.getValue("yaw") * dt;
-            pitch += 2 * gamepad.getValue("pitch") * dt;
-        }
-
-        if(mouse.isPointerLocked()){
-            heading += 0.5 * mouse.getValue("yaw") * dt;
-            pitch += 0.5 * mouse.getValue("pitch") * dt;
-        }
-    
-        camera.rotateX(pitch);
-        camera.rotateZ(roll);
+        camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
     }
 
     function draw() {
@@ -122,10 +125,6 @@ function(){
     clock = new THREE.Clock();
     overlay = document.getElementById("overlay");
     gfx = overlay.getContext("2d");
-    var fullScreenButton = document.getElementById("fullScreenButton"),
-        options = document.getElementById("options"),
-        buttonsTimeout = null,
-        buttonsVisible = true;;
     fullScreenButton.addEventListener("click", reload, false);
 
     function hideButtonsLater() {
@@ -207,7 +206,7 @@ function(){
         });
     }
     else if (confirm("use red/cyan anaglyph rendering?")) {
-        effect = new THREE.AnaglyphEffect(renderer, 50, window.innerWidth, window.innerHeight);
+        effect = new THREE.AnaglyphEffect(renderer, 5 * SCALE, window.innerWidth, window.innerHeight);
     }
 
     function changeFOV(v){
