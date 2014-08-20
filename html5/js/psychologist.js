@@ -175,6 +175,8 @@ function makeURL(url, queryMap) {
     return url + "?" + output.join("&");
 }
 
+navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate;
+
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia || navigator.oGetUserMedia;
 
 MediaStreamTrack.getVideoTracks =

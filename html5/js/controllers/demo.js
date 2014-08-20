@@ -36,6 +36,9 @@ function(){
         if(camera.position.y <= h && vcy <= 0) {
             vcy = 0;
             camera.position.y = camera.position.y * 0.75 + h * 0.25;
+            if(!onground){
+                navigator.vibrate(100);
+            }
             onground = true;
         }
         fps = 1 / dt;
