@@ -14,56 +14,14 @@
 }
 
 var include = (function () {
-    var G = document.createElement("div");
-    var Gs = G.style;
-    Gs.position = "absolute";
-    Gs.height = "100%";
-    Gs.right = 0;
-    Gs.padding = 0;
-    Gs.margin = 0;
-    Gs.border = 0;
-    Gs.backgroundColor = "rgba(96, 96, 112, 0.5)";
-
-    var toLoad = {};
-    function set(i, m) {
-        if (m.indexOf("?") == m.length - 1) {
-            m = m.substring(0, m.length - 1);
-        }
-        toLoad[m] = i;
-        var c, g;
-        c = g = 0;
-        for (var k in toLoad) {
-            c++;
-            if (toLoad[k] == 1) {
-                g++;
-            }
-        }
-        var v = (g * 100 / c);
-        Gs.left = v + "%";
-        if (c > 0 && c == g) {
-            document.body.removeChild(G);
-        }
-    }
-
-    function tryAppend(success) {
-        if (!document.body) {
-            setTimeout(tryAppend.bind(this, success), 10);
-        }
-        else if (G.parentElement != document.body) {
-            document.body.appendChild(G);
-            success();
-        }
-    }
-
-    function loadLibs(done, libs) {
-        var thunk = function (m, l) {
-            set(1, m);
-            loadLibs(done, l);
-        };
-        if (libs.length > 0) {
-            var m = libs.shift();
-            var t = thunk.bind(this, m, libs);
-            getScript(m, t, t);
+    function loadLibs(progress, done, libs, libIndex) {
+        libIndex = libIndex || 0;
+        if (libIndex < libs.length) {
+            var thunk = function (type) {
+                progress(type, libs[libIndex], libIndex, libs.length);
+                loadLibs(progress, done, libs, libIndex + 1);
+            };
+            getScript(libs[libIndex], thunk.bind(this, "success"), thunk.bind(this, "error"));
         }
         else{
             done();
@@ -71,14 +29,29 @@ var include = (function () {
     }
 
     function include() {
-        var version = arguments[0],
-            done = arguments[1],
-            libs = Array.prototype.slice.call(arguments, 2)
-            .map(function(src){
-                return /http(s):/.test(src) ? src : src + "?v" + version;
-            });
-        libs.forEach(set.bind(this, 0));
-        tryAppend(loadLibs.bind(this, done, libs));
+        var args = Array.prototype.slice.call(arguments),
+
+            version = args.filter(function(arg){
+                return typeof(arg) == "number";
+            }).reduce(function(a, b){
+                return b;
+            }, 0),
+
+            libs = args.filter(function(arg){
+                return typeof(arg) == "string";
+            }).map(function(src){
+                return (/http(s):/.test(src) || version == 0) ? src : src + "?v" + version;
+            }),
+
+            callbacks = args.filter(function(arg){
+                return typeof(arg) == "function";
+            }),
+            
+            progress = callbacks.length == 2 ? callbacks[0] : console.log.bind(console, "file loaded"),
+            
+            done = callbacks.length >= 1 ? callbacks[callbacks.length - 1] : console.log.bind(console, "done loading");
+
+        setTimeout(loadLibs.bind(this, progress, done, libs));
     }
 
     return include;
