@@ -2,9 +2,9 @@ var pitch = 0,
     roll = 0,
     heading = 0,
     overlay, gfx, video,
-    camera, scene, effect, renderer, map,
-    ax, ay, az, dmx, dmy, motion, keyboard, mouse, gamepad, fps, speed = 9.8,
-    dt, disp, vcy = 0,
+    camera, scene, effect, renderer, map, FOV = 60,
+    ax, ay, az, dmx, dmy, motion, keyboard, mouse, gamepad, fps, speed = 5,
+    dt, disp, vcy = 0, onground = false,
     clock,
     heightmap = [],
     MAP_WIDTH = 50, MAP_HEIGHT = 50;
@@ -17,13 +17,14 @@ function animate() {
     vcy -= dt * speed;
     var x = Math.floor(camera.position.x) + MAP_WIDTH / 2;
     var y = Math.floor(camera.position.z) + MAP_HEIGHT / 2;
-    var h = 1;
+    var h = 0;
     if (0 <= x && x < MAP_WIDTH && 0 <= y && y < MAP_HEIGHT){
-        h = heightmap[y][x] + 1;
+        h = heightmap[y][x] + 2;
     }
     if(camera.position.y <= h && vcy <= 0) {
         vcy = 0;
         camera.position.y = h;
+        onground = true;
     }
     fps = 1 / dt;
     setCamera(dt);
@@ -144,8 +145,9 @@ function gameDemo() {
     }
 
     function jump() {
-        if (camera.position.y <= 0) {
+        if (onground) {
             vcy = 2;
+            onground = false;
         }
     }
 
@@ -165,12 +167,11 @@ function gameDemo() {
     window.addEventListener("mousemove", showButtons, false);
     window.addEventListener("mouseup", showButtons, false);
 
-    camera = new THREE.PerspectiveCamera(53.13, window.innerWidth / window.innerHeight, 0.01, 1000);
-
     renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setClearColor(0xafbfff);
 
     if (confirm("use stereo rendering?")) {
+        FOV = 106.26;
         effect = new THREE.OculusRiftEffect(renderer, {
             HMD: {
                 hResolution: screen.availWidth,
@@ -188,6 +189,27 @@ function gameDemo() {
     else if (confirm("use red/cyan anaglyph rendering?")) {
         effect = new THREE.AnaglyphEffect(renderer, 50, window.innerWidth, window.innerHeight);
     }
+
+    function changeFOV(v){
+        FOV += v;
+        if(!camera){
+            camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, 1, 1000);
+        }
+        else{
+            camera.fov = FOV;
+        }
+        console.log(FOV);
+    }
+
+    function increaseFOV(){
+        changeFOV(+5);
+    }
+
+    function decreaseFOV(){
+        changeFOV(-5);
+    }
+
+    changeFOV(0);
 
     LandscapeMotion.addEventListener("deviceorientation", function (evt) {
         roll = -evt.roll;
@@ -213,6 +235,8 @@ function gameDemo() {
         { name: "forward", buttons: [87, 38] },
         { name: "right", buttons: [68, 39] },
         { name: "back", buttons: [83, 40] },
+        { name: "decrease FOV", buttons: [81], commandDown: decreaseFOV, dt: 250},
+        { name: "increase FOV", buttons: [69], commandDown: increaseFOV, dt: 250},
         { name: "jump", buttons: [32], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [17], commandDown: fire, dt: 125 },
         { name: "reload", buttons: [70], commandDown: reload, dt: 125 },
@@ -242,7 +266,6 @@ function gameDemo() {
 
     var geometry = new THREE.BoxGeometry(1, 1, 1);
 	var imgTexture = THREE.ImageUtils.loadTexture( "img/grass.png" );
-	imgTexture.repeat.set( 4, 2 );
 	imgTexture.wrapS = imgTexture.wrapT = THREE.RepeatWrapping;
 	imgTexture.anisotropy = 16;
     var material = new THREE.MeshLambertMaterial({ color: 0xffffff, ambient: 0xffffff, opacity: 1, map: imgTexture });
