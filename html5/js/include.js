@@ -18,9 +18,10 @@ var include = (function () {
         libIndex = libIndex || 0;
         if (libIndex < libs.length) {
             var thunk = function (type) {
-                progress(type, libs[libIndex], libIndex, libs.length);
+                progress(type, libs[libIndex], libIndex + 1, libs.length);
                 loadLibs(progress, done, libs, libIndex + 1);
             };
+            progress("loading", libs[libIndex], libIndex, libs.length);
             getScript(libs[libIndex], thunk.bind(this, "success"), thunk.bind(this, "error"));
         }
         else{
