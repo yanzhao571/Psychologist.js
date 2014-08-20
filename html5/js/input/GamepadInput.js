@@ -263,7 +263,7 @@ function GamepadInput(commands, gpid){
     };
 
     this.getValue = function(name){
-        return commandState[name] && commandState[name].value;
+        return commandState[name] && commandState[name].value || 0;
     };
 
     this.getConnectedGamepads = function(){

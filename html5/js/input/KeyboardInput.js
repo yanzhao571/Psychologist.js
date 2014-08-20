@@ -112,6 +112,10 @@ function KeyboardInput(commands, domElement){
     this.isUp = function(name){
         return !state[name];
     };
+
+    this.getValue = function(name){
+        return this.isDown(name) ? 1 : 0;
+    };
     
     // clone the arrays, so the consumer can't add elements to it in their own code.
     commands = commands.slice();

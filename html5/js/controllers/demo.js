@@ -17,7 +17,7 @@ function(){
         overlay, gfx, video,
         camera, scene, effect, renderer, map, FOV = 60,
         ax, ay, az, dmx, dmy, motion, keyboard, mouse, gamepad, fps, speed = 9.8 * SCALE,
-        dt, disp, vcy = 0, onground = false,
+        dt, disp, vcx = 0, vcz = 0, vcy = 0, onground = false,
         clock,
         heightmap = [];
 
@@ -41,6 +41,23 @@ function(){
             }
             onground = true;
         }
+
+        if(onground){
+            vcx = keyboard.getValue("right") - keyboard.getValue("left") + gamepad.getValue("strafe");
+            vcz = keyboard.getValue("back") - keyboard.getValue("forward") + gamepad.getValue("drive");
+            if(vcx != 0 || vcz != 0){
+                len = speed / Math.sqrt(vcz * vcz + vcx * vcx);
+            }
+            else{
+                len = 0;
+            }
+            vcx *= len;
+            vcz *= len;
+            len = vcx * Math.cos(-heading) - vcz * Math.sin(-heading);
+            vcz = vcx * Math.sin(-heading) + vcz * Math.cos(-heading);
+            vcx = len;
+        }
+
         fps = 1 / dt;
         setCamera(dt);
         draw();
@@ -49,27 +66,14 @@ function(){
     function setCamera(dt) {
         camera.updateProjectionMatrix();
         camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "YZX"));
-        disp = speed * dt;
+
+        camera.translateX(vcx * dt);
         camera.translateY(vcy * dt);
+        camera.translateZ(vcz * dt);
+
         camera.rotateY(heading);
 
-        if (keyboard.isDown("forward")) {
-            camera.translateZ(-disp);
-        }
-        else if (keyboard.isDown("back")) {
-            camera.translateZ(disp);
-        }
-
-        if (keyboard.isDown("right")) {
-            camera.translateX(disp);
-        }
-        else if (keyboard.isDown("left")) {
-            camera.translateX(-disp);
-        }
-
         if (gamepad.isGamepadSet()) {
-            camera.translateX(disp * gamepad.getValue("strafe"));
-            camera.translateZ(disp * gamepad.getValue("drive"));
             heading += 2 * gamepad.getValue("yaw") * dt;
             pitch += 2 * gamepad.getValue("pitch") * dt;
         }
@@ -247,10 +251,10 @@ function(){
     ]);
 
     keyboard = new KeyboardInput([
-        { name: "left", buttons: [65, 37] },
-        { name: "forward", buttons: [87, 38] },
-        { name: "right", buttons: [68, 39] },
-        { name: "back", buttons: [83, 40] },
+        { name: "left", buttons: [65, 37], commandDown: function(){vcx = -1;}, commandDown: function(){vcx = 0;}  },
+        { name: "forward", buttons: [87, 38], commandDown: function(){vcz = -1;}, commandDown: function(){vcz = 0;} },
+        { name: "right", buttons: [68, 39], commandDown: function(){vcx = 1;}, commandDown: function(){vcx = 0;} },
+        { name: "back", buttons: [83, 40], commandDown: function(){vcz = 1;}, commandDown: function(){vcz = 0;}  },
         { name: "decrease FOV", buttons: [81], commandDown: decreaseFOV, dt: 250},
         { name: "increase FOV", buttons: [69], commandDown: increaseFOV, dt: 250},
         { name: "jump", buttons: [32], commandDown: jump, dt: 250 },
