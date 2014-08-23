@@ -257,10 +257,10 @@ var LandscapeMotion = {
                     heading: heading.getRadians(),
                     pitch: pitch.getRadians(),
                     roll: roll.getRadians(),
-                    original: {
-                        orientation: o,
-                        acceleration: a
-                    }
+                    accelx: a.x,
+                    accely: a.y,
+                    accelz: a.z,
+                    original: o,
                 });
             }
         }
@@ -293,20 +293,68 @@ var LandscapeMotion = {
 }
 
 function MotionInput(commands){
-    var state = {};
-    var AXES = ["heading", "pitch", "roll"];
+    var motionState = {
+        heading: 0, pitch: 0, roll: 0,
+        dheading: 0, dpitch: 0, droll: 0,
+        accelx: 0, accely: 0, accelz: 0,
+        daccelx: 0, daccely: 0, daccelz: 0,
+        alt: false, ctrl: false, meta: false, shift: false
+    }, 
+        commandState = {}, i, n, k,
+        AXES = ["heading", "pitch", "roll", "accelx", "accely", "accelz"],
+        len = AXES.length,
+        META = ["ctrl", "shift", "alt", "meta"];
+        
+    AXES = AXES.concat(AXES.map(function(a){ return "d" + a;}));
 
     LandscapeMotion.addEventListener("deviceorientation", function (evt) {
+        for(i = 0; i < len; ++i){
+            k = AXES[i];
+            motionState[AXES[i+len]] = motionState[k] - evt[k];
+            motionState[k] = evt[k];
+        }
+    });
+    
+    function readMeta(event){
+        META.forEach(function(m){
+            motionState[m] = event[m + "Key"];
+        });
+    }
+
+    window.addEventListener("keydown", readMeta, false);
+
+    window.addEventListener("keyup", readMeta, false);
+
+    this.update = function(){
         commands.forEach(function(cmd){
-            state[cmd.name] = cmd.axes.map(function(i){
+            commandState[cmd.name] = cmd.axes.map(function(i){
                 var sign = i < 0 ? -1 : 1;
                 i = Math.abs(i);
-                return sign * evt[AXES[i-1]];
-            }).reduce(function(a, b){ return Math.abs(a) > Math.abs(b) ? a : b; }, 0);
+                return sign * motionState[AXES[i-1]];
+            }).concat(cmd.meta.map(function(i){
+                var sign = i < 0 ? -1 : 1;
+                i = Math.abs(i);
+                return motionState[META[i-1]] ? sign : 0;
+            })).reduce(function(a, b){ return a * b; }, 1);
         });
-    });
+    };
 
     this.getValue = function(name){
-        return state[name];
+        return commandState[name];
     };
+    
+
+    function maybeClone(arr){
+        return (arr && arr.slice()) || [];
+    }
+
+    // clone the arrays, so the consumer can't add elements to it in their own code.
+    commands = commands.map(function(cmd){
+        commandState[cmd.name] = 0;
+        return {
+            name: cmd.name,
+            axes: maybeClone(cmd.axes),
+            meta: maybeClone(cmd.meta)
+        };
+    });
 }

@@ -47,12 +47,12 @@
     <Compile Include="html5\js\camera.js" />
     <Compile Include="html5\js\include.js" />
     <Compile Include="html5\js\input\KeyboardInput.js" />
-    <Compile Include="html5\js\input\LandscapeMotion.js" />
+    <Compile Include="html5\js\input\MotionInput.js" />
     <Compile Include="html5\js\psychologist.js" />
     <Compile Include="html5\js\input\SpeechInput.js" />
     <Compile Include="html5\js\controllers\cam3d.js" />
     <Compile Include="html5\test\testing.js" />
-    <Compile Include="html5\test\LandscapeMotion.js" />
+    <Compile Include="html5\test\MotionInput.js" />
     <Compile Include="minify.js" />
     <Compile Include="server.js" />
     <Compile Include="src\controllers.js" />

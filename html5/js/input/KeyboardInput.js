@@ -83,34 +83,46 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         `isUp(name)`: returns the boolean negation of `isDown()`.
 
 */
-function KeyboardInput(commands, domElement){
-    var state = {};
+function KeyboardInput(commands, DOMElement){
+    var keyState = {
+            alt: false, ctrl: false, meta: false, shift: false
+        },
+        commandState = {},
+        META = ["ctrl", "shift", "alt", "meta"];
 
-    function execute(stateChange, commandName, event){
-        var candidates = commands.filter(function(cmd){ return cmd && cmd.buttons && cmd.buttons.indexOf && cmd.buttons.indexOf(event.keyCode) > -1;});
-        if(candidates.length == 0){
-            console.log(fmt("Unknown command: $1", event.keyCode));
-        }
-        else{
-            var c = candidates[0];
-            var n = Date.now();
-            if(state[c.name] != stateChange 
-                || c.dt && (n - c.lt) > c.dt){
-                c.lt = n;
-                state[c.name] = stateChange;
-                if(c[commandName]){
-                    c[commandName]();
-                }
+    this.update = function(){
+        var t = Date.now();
+        commands.forEach(function(cmd){
+            var wasPressed = commandState[cmd.name],
+                fireAgain = (t - cmd.lt) >= cmd.dt;
+
+            commandState[cmd.name] = cmd.buttons.map(function(i){
+                var sign = i < 0 ? true : false;
+                i = Math.abs(i);
+                return keyState[i-1] ^ sign;
+            }).concat(cmd.meta.map(function(i){
+                var sign = i < 0 ? true : false;
+                i = Math.abs(i);
+                return keyState[META[i-1]] ^ sign;
+            })).reduce(function(a, b){ return a && b; }, true);
+
+            if(cmd.commandDown && commandState[cmd.name] && fireAgain){
+                cmd.commandDown();
+                cmd.lt = t;
             }
-        }
-    }
+
+            if(cmd.commandUp && !commandState[cmd.name] && wasPressed){
+                cmd.commandUp();
+            }
+        });
+    };
 
     this.isDown = function(name){
-        return state[name];
+        return keyState[name];
     };
 
     this.isUp = function(name){
-        return !state[name];
+        return !this.isDown(name);
     };
 
     this.getValue = function(name){
@@ -118,16 +130,32 @@ function KeyboardInput(commands, domElement){
     };
     
     // clone the arrays, so the consumer can't add elements to it in their own code.
-    commands = commands.slice();
-    
-    commands.forEach(function(c){
-        state[c.name] = false;
-        if(c.dt){
-            c.lt = Date.now();
-        }
+    // clone the arrays, so the consumer can't add elements to it in their own code.
+    commands = commands.map(function(cmd){
+        commandState[cmd.name] = false;
+        return {
+            name: cmd.name,
+            buttons: maybeClone(cmd.buttons),
+            meta: maybeClone(cmd.meta),
+            lt: Date.now(),
+            dt: cmd.dt,
+            commandDown: cmd.commandDown,
+            commandUp: cmd.commandUp
+        };
     });
+    
+    function maybeClone(arr){
+        return (arr && arr.slice()) || [];
+    }
 
-    domElement = domElement || document;
-    domElement.addEventListener("keydown", execute.bind(domElement, true, "commandDown"), false);
-    domElement.addEventListener("keyup", execute.bind(domElement, false, "commandUp"), false);
+    function execute(stateChange, event){
+        keyState[event.keyCode] = stateChange;
+        META.forEach(function(m){
+            keyState[m] = event[m + "Key"];
+        });
+    }
+
+    DOMElement = DOMElement || document;
+    DOMElement.addEventListener("keydown", execute.bind(DOMElement, true), false);
+    DOMElement.addEventListener("keyup", execute.bind(DOMElement, false), false);
 }

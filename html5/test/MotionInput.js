@@ -179,7 +179,7 @@ Corrector.headingTestData.forEach(function(dat){
         };
 });
 
-getScript("testing.js", function(){
+include("test/testing.js", function(){
     consoleTest(Angle);
     consoleTest(Corrector);
 });
