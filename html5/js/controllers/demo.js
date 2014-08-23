@@ -316,6 +316,7 @@ function(){
     }    
 
     clock.start();
+    options.parentElement.insertBefore(renderer.domElement, options);
     setSize(window.innerWidth, window.innerHeight);
     requestAnimationFrame(animate);
 });
