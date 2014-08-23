@@ -40,7 +40,6 @@ function(){
         if (0 <= x && x < MAP_WIDTH && 0 <= y && y < MAP_HEIGHT){
             h = (heightmap[y][x] + 2) * SCALE;
         }
-        console.log(h);
         if(camera.position.y <= h && vcy <= 0) {
             vcy = 0;
             camera.position.y = camera.position.y * 0.75 + h * 0.25;
@@ -68,17 +67,17 @@ function(){
             vcz = vcz * 0.9 + tz * 0.1;
         }
 
-        //heading += (gamepad.getValue("yaw") 
-        //    + mouse.getValue("yaw") 
-        //    + motion.getValue("yaw")) * dt;
-        //pitch += (gamepad.getValue("pitch") 
-        //    + mouse.getValue("pitch") 
-        //    + motion.getValue("pitch")) * dt;
-        //roll += (gamepad.getValue("rollLeft") 
-        //    + gamepad.getValue("rollRight") 
-        //    + keyboard.getValue("rollLeft") 
-        //    + keyboard.getValue("rollRight") 
-        //    + motion.getValue("roll")) * dt;
+        heading += (gamepad.getValue("yaw") 
+            + mouse.getValue("yaw") 
+            + motion.getValue("yaw")) * dt;
+        pitch += (gamepad.getValue("pitch") 
+            + mouse.getValue("pitch") 
+            + motion.getValue("pitch")) * dt;
+        roll += (gamepad.getValue("rollLeft") 
+            + gamepad.getValue("rollRight") 
+            + keyboard.getValue("rollLeft") 
+            + keyboard.getValue("rollRight") 
+            + motion.getValue("roll")) * dt;
 
         fps = 1 / dt;
         setCamera(dt);
@@ -88,12 +87,10 @@ function(){
     function setCamera(dt) {
         camera.updateProjectionMatrix();
         camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "YZX"));
-
-        camera.translateX(vcx * dt);
-        camera.translateY(vcy * dt);
-        camera.translateZ(vcz * dt);
-
-        camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
+        //camera.translateX(vcx * dt);
+        //camera.translateY(vcy * dt);
+        //camera.translateZ(vcz * dt);
+        //camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
     }
 
     function draw() {
@@ -318,7 +315,6 @@ function(){
         }
     }    
 
-    console.log(heightmap);
     clock.start();
     setSize(window.innerWidth, window.innerHeight);
     requestAnimationFrame(animate);
