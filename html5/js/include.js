@@ -1,7 +1,10 @@
 ﻿function getScript(src, success, fail) {
     // make sure the script hasn't already been loaded into the page
     var s = document.querySelector("script[src='"+src+"']");
-    if(!s){
+    if(s){
+        success();
+    }
+    else{
         s = document.createElement("script");
         s.type = "text/javascript";
         s.async = true;
@@ -29,27 +32,16 @@ var include = (function () {
         }
     }
 
+    function ofType(arr, t){
+        return arr.filter(function(elem){ return typeof(elem) == t; });
+    }
+
     function include() {
         var args = Array.prototype.slice.call(arguments),
-
-            version = args.filter(function(arg){
-                return typeof(arg) == "number";
-            }).reduce(function(a, b){
-                return b;
-            }, 0),
-
-            libs = args.filter(function(arg){
-                return typeof(arg) == "string";
-            }).map(function(src){
-                return (/http(s):/.test(src) || version == 0) ? src : src + "?v" + version;
-            }),
-
-            callbacks = args.filter(function(arg){
-                return typeof(arg) == "function";
-            }),
-            
-            progress = callbacks.length == 2 ? callbacks[0] : console.log.bind(console, "file loaded"),
-            
+            version = ofType(args, "number").reduce(function(a, b){ return b; }, 0),
+            libs = ofType(args, "string").map(function(src){ return (/http(s):/.test(src) || version == 0) ? src : src + "?v" + version; }),
+            callbacks = ofType(args, "function"),            
+            progress = callbacks.length == 2 ? callbacks[0] : console.log.bind(console, "file loaded"),            
             done = callbacks.length >= 1 ? callbacks[callbacks.length - 1] : console.log.bind(console, "done loading");
 
         setTimeout(loadLibs.bind(this, progress, done, libs));
