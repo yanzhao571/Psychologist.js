@@ -50,6 +50,7 @@ function(){
         }
 
         if(onground){
+            console.log(keyboard.getValue("strafeRight"), keyboard.getValue("strafeLeft"), gamepad.getValue("strafe"), keyboard.getValue("driveBack"), keyboard.getValue("driveForward"), gamepad.getValue("drive"));
             tx = keyboard.getValue("strafeRight") + keyboard.getValue("strafeLeft") + gamepad.getValue("strafe");
             tz = keyboard.getValue("driveBack") + keyboard.getValue("driveForward") + gamepad.getValue("drive");
             if(tx != 0 || tz != 0){
@@ -87,10 +88,10 @@ function(){
     function setCamera(dt) {
         camera.updateProjectionMatrix();
         camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "YZX"));
-        //camera.translateX(vcx * dt);
-        //camera.translateY(vcy * dt);
-        //camera.translateZ(vcz * dt);
-        //camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
+        camera.translateX(vcx * dt);
+        camera.translateY(vcy * dt);
+        camera.translateZ(vcz * dt);
+        camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
     }
 
     function draw() {
@@ -231,10 +232,10 @@ function(){
     ]);
 
     keyboard = new KeyboardInput([
-        { name: "strafeLeft", buttons: [-65, -37] },
-        { name: "driveForward", buttons: [-87, -38] },
-        { name: "strafeRight", buttons: [68, 39] },
-        { name: "driveBack", buttons: [83, 40] },
+        { name: "strafeLeft", buttons: [65] },
+        { name: "strafeRight", buttons: [68] },
+        { name: "driveForward", buttons: [87] },
+        { name: "driveBack", buttons: [83] },
         { name: "rollLeft", buttons: [81] },
         { name: "rollRight", buttons: [69] },
         { name: "jump", buttons: [32], commandDown: jump, dt: 250 },

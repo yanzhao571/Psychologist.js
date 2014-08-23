@@ -84,55 +84,14 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 function KeyboardInput(commands, DOMElement){
-    var keyState = {
-            alt: false, ctrl: false, meta: false, shift: false
-        },
+    var keyState = { alt: false, ctrl: false, meta: false, shift: false },
         commandState = {},
         META = ["ctrl", "shift", "alt", "meta"];
-
-    this.update = function(){
-        var t = Date.now();
-        commands.forEach(function(cmd){
-            var wasPressed = commandState[cmd.name],
-                fireAgain = (t - cmd.lt) >= cmd.dt;
-
-            commandState[cmd.name] = cmd.buttons.map(function(i){
-                var sign = i < 0 ? true : false;
-                i = Math.abs(i);
-                return keyState[i-1] ^ sign;
-            }).concat(cmd.meta.map(function(i){
-                var sign = i < 0 ? true : false;
-                i = Math.abs(i);
-                return keyState[META[i-1]] ^ sign;
-            })).reduce(function(a, b){ return a && b; }, true);
-
-            if(cmd.commandDown && commandState[cmd.name] && fireAgain){
-                cmd.commandDown();
-                cmd.lt = t;
-            }
-
-            if(cmd.commandUp && !commandState[cmd.name] && wasPressed){
-                cmd.commandUp();
-            }
-        });
-    };
-
-    this.isDown = function(name){
-        return keyState[name];
-    };
-
-    this.isUp = function(name){
-        return !this.isDown(name);
-    };
-
-    this.getValue = function(name){
-        return this.isDown(name) ? 1 : 0;
-    };
     
     // clone the arrays, so the consumer can't add elements to it in their own code.
-    // clone the arrays, so the consumer can't add elements to it in their own code.
     commands = commands.map(function(cmd){
-        commandState[cmd.name] = false;
+        commandState[cmd.name] = { pressed: false, value: 0 };
+        cmd.buttons.forEach(function(b){ keyState[b] = false; });
         return {
             name: cmd.name,
             buttons: maybeClone(cmd.buttons),
@@ -144,9 +103,7 @@ function KeyboardInput(commands, DOMElement){
         };
     });
     
-    function maybeClone(arr){
-        return (arr && arr.slice()) || [];
-    }
+    function maybeClone(arr){ return (arr && arr.slice()) || []; }
 
     function execute(stateChange, event){
         keyState[event.keyCode] = stateChange;
@@ -154,6 +111,44 @@ function KeyboardInput(commands, DOMElement){
             keyState[m] = event[m + "Key"];
         });
     }
+
+    this.update = function(){
+        var t = Date.now();
+        commands.forEach(function(cmd){
+            var wasPressed = commandState[cmd.name],
+                fireAgain = (t - cmd.lt) >= cmd.dt,
+                metaSet = cmd.meta.map(function(i){
+                    var sign = i > 0;
+                    i = Math.abs(i);
+                    return keyState[META[i-1]] ^ sign;
+                }).reduce(function(a, b){ return a && b; }, true);
+
+            commandState[cmd.name].pressed = metaSet && cmd.buttons.map(function(i){
+                var sign = i < 0;
+                i = Math.abs(i);
+                return keyState[i-1] ^ sign;
+            }).reduce(function(a, b){ return a && b; }, true);
+
+            commandState[cmd.name].value = !metaSet ? 0 : cmd.buttons.map(function(i){
+                var sign = i > 0 ? 1 : -1;
+                i = Math.abs(i);
+                return keyState[i-1] ? sign : 0;
+            }).reduce(function(a, b){ return a * b; }, 1);
+
+            if(cmd.commandDown && this.isDown(cmd.name) && fireAgain){
+                cmd.commandDown();
+                cmd.lt = t;
+            }
+
+            if(cmd.commandUp && this.isUp(cmd.name) && wasPressed){
+                cmd.commandUp();
+            }
+        }.bind(this));
+    };
+
+    this.isDown = function(name){ return commandState[name].pressed; };
+    this.isUp = function(name){ return !commandState[name].pressed; };
+    this.getValue = function(name){ return commandState[name].value; };
 
     DOMElement = DOMElement || document;
     DOMElement.addEventListener("keydown", execute.bind(DOMElement, true), false);
