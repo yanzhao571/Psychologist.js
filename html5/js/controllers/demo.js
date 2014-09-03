@@ -3,6 +3,7 @@ include(
     "lib/three/three.min.js",
     "lib/three/OculusRiftEffect.min.js",
     "lib/three/AnaglyphEffect.min.js",
+    "lib/three/ColladaLoader.js",
     "js/psychologist.js",
     "js/input/SpeechInput.js",
     "js/input/GamepadInput.js",
@@ -20,7 +21,7 @@ function(){
         video,
         camera, scene, effect, renderer, map,
         motion, keyboard, mouse, gamepad, 
-        fps, dt, clock, heightmap = [],
+        fps, dt, clock, heightmap,
         fullScreenButton = document.getElementById("fullScreenButton"),
         options = document.getElementById("options"),
         buttonsTimeout = null,
@@ -33,11 +34,12 @@ function(){
         keyboard.update();
         mouse.update();
         gamepad.update();
+
         vcy -= dt * SPEED;
         var x = Math.floor(camera.position.x/SCALE) + MAP_WIDTH / 2;
         var y = Math.floor(camera.position.z/SCALE) + MAP_HEIGHT / 2;
         var h = 0;
-        if (0 <= x && x < MAP_WIDTH && 0 <= y && y < MAP_HEIGHT){
+        if (heightmap && 0 <= x && x < MAP_WIDTH && 0 <= y && y < MAP_HEIGHT){
             h = (heightmap[y][x] + 2) * SCALE;
         }
         if(camera.position.y <= h && vcy <= 0) {
@@ -50,7 +52,6 @@ function(){
         }
 
         if(onground){
-            console.log(keyboard.getValue("strafeRight"), keyboard.getValue("strafeLeft"), gamepad.getValue("strafe"), keyboard.getValue("driveBack"), keyboard.getValue("driveForward"), gamepad.getValue("drive"));
             tx = keyboard.getValue("strafeRight") + keyboard.getValue("strafeLeft") + gamepad.getValue("strafe");
             tz = keyboard.getValue("driveBack") + keyboard.getValue("driveForward") + gamepad.getValue("drive");
             if(tx != 0 || tz != 0){
@@ -118,7 +119,7 @@ function(){
     }
 
     scene = new THREE.Scene();
-	scene.fog = new THREE.FogExp2(BG_COLOR, 3 / DRAW_DISTANCE);
+//	scene.fog = new THREE.FogExp2(BG_COLOR, 3 / DRAW_DISTANCE);
 
     clock = new THREE.Clock();
     fullScreenButton.addEventListener("click", reload, false);
@@ -173,8 +174,8 @@ function(){
             document.location = document.location.href;
         }
         else {
-            toggleFullScreen();
             mouse.requestPointerLock();
+            toggleFullScreen();
         }
     }
 
@@ -184,26 +185,26 @@ function(){
     renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setClearColor(BG_COLOR);
 
-    if (confirm("use stereo rendering?")) {
-        FOV = 106.26;
-        effect = new THREE.OculusRiftEffect(renderer, {
-            worldFactor: SCALE,
-            HMD: {
-                hResolution: screen.availWidth,
-                vResolution: screen.availHeight,
-                hScreenSize: 0.126,
-                vScreenSize: 0.075,
-                interpupillaryDistance: 0.064,
-                lensSeparationDistance: 0.064,
-                eyeToScreenDistance: 0.051,
-                distortionK: [1, 0.22, 0.06, 0.0],
-                chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
-            }
-        });
-    }
-    else if (confirm("use red/cyan anaglyph rendering?")) {
-        effect = new THREE.AnaglyphEffect(renderer, 5 * SCALE, window.innerWidth, window.innerHeight);
-    }
+    //if (confirm("use stereo rendering?")) {
+    //    FOV = 106.26;
+    //    effect = new THREE.OculusRiftEffect(renderer, {
+    //        worldFactor: SCALE,
+    //        HMD: {
+    //            hResolution: screen.availWidth,
+    //            vResolution: screen.availHeight,
+    //            hScreenSize: 0.126,
+    //            vScreenSize: 0.075,
+    //            interpupillaryDistance: 0.064,
+    //            lensSeparationDistance: 0.064,
+    //            eyeToScreenDistance: 0.051,
+    //            distortionK: [1, 0.22, 0.06, 0.0],
+    //            chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
+    //        }
+    //    });
+    //}
+    //else if (confirm("use red/cyan anaglyph rendering?")) {
+    //    effect = new THREE.AnaglyphEffect(renderer, 5 * SCALE, window.innerWidth, window.innerHeight);
+    //}
 
     function changeFOV(v){
         FOV += v;
@@ -232,12 +233,12 @@ function(){
     ]);
 
     keyboard = new KeyboardInput([
-        { name: "strafeLeft", buttons: [65] },
+        { name: "strafeLeft", buttons: [-65] },
         { name: "strafeRight", buttons: [68] },
-        { name: "driveForward", buttons: [87] },
+        { name: "driveForward", buttons: [-87] },
         { name: "driveBack", buttons: [83] },
         { name: "rollLeft", buttons: [81] },
-        { name: "rollRight", buttons: [69] },
+        { name: "rollRight", buttons: [-69] },
         { name: "jump", buttons: [32], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [17], commandDown: fire, dt: 125 },
         { name: "reload", buttons: [70], commandDown: reload, dt: 125 },
@@ -264,6 +265,29 @@ function(){
     window.addEventListener("resize", function () {
         setSize(window.innerWidth, window.innerHeight);
     }, false);
+
+    //heightmap = constructScene(scene, MAP_WIDTH, MAP_HEIGHT, SCALE);
+
+    var loader = new THREE.ColladaLoader();
+    loader.options.convertUpAxis = true;
+    loader.load("scene/untitled.dae?v4", function(collada){
+        collada.scene.traverse(function(child){
+            if(child instanceof(THREE.PerspectiveCamera)){
+                camera = child;
+            }
+        });
+        collada.scene.updateMatrix();
+        scene.add(collada.scene);
+    });
+
+    clock.start();
+    options.parentElement.insertBefore(renderer.domElement, options);
+    setSize(window.innerWidth, window.innerHeight);
+    requestAnimationFrame(animate);
+});
+
+function constructScene(scene, MAP_WIDTH, MAP_HEIGHT, SCALE){
+    var heightmap = []
 
     var geometry = new THREE.BoxGeometry(1, 1, 1);
 	
@@ -314,10 +338,6 @@ function(){
             c.scale.z = SCALE;
             scene.add(c);
         }
-    }    
-
-    clock.start();
-    options.parentElement.insertBefore(renderer.domElement, options);
-    setSize(window.innerWidth, window.innerHeight);
-    requestAnimationFrame(animate);
-});
+    }
+    return heightmap;
+}

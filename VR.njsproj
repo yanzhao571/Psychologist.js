@@ -19,7 +19,7 @@
     <OutputPath>.</OutputPath>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{349c5851-65df-11da-9384-00065b846f21};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
-    <ProjectView>ProjectFiles</ProjectView>
+    <ProjectView>ShowAllFiles</ProjectView>
     <NodejsPort>1337</NodejsPort>
     <StartWebBrowser>true</StartWebBrowser>
   </PropertyGroup>
@@ -37,7 +37,9 @@
     <Compile Include="html5\lib\canvas-toBlob.min.js" />
     <Compile Include="html5\lib\FileSaver.min.js" />
     <Compile Include="html5\lib\three\AnaglyphEffect.min.js" />
+    <Compile Include="html5\lib\three\ColladaLoader.js" />
     <Compile Include="html5\lib\three\OculusRiftEffect.min.js" />
+    <Compile Include="html5\lib\three\SceneLoader.js" />
     <Compile Include="html5\lib\three\three.min.js" />
     <Compile Include="html5\js\input\MouseInput.js" />
     <Compile Include="html5\js\controllers\mouse.js" />
@@ -66,6 +68,11 @@
     <Content Include="html5\ico\fs.png" />
     <Content Include="html5\img\grass.png" />
     <Content Include="html5\mouse.html" />
+    <Content Include="html5\music\game1.ogg" />
+    <Content Include="html5\music\menu.mp3" />
+    <Content Include="html5\music\menu.ogg" />
+    <Content Include="html5\music\title.ogg" />
+    <Content Include="html5\scene\untitled.dae" />
     <Content Include="html5\tracker.html" />
     <Content Include="html5\demo.html" />
     <Content Include="html5\motion.html" />
@@ -87,6 +94,8 @@
     <Folder Include="html5\lib\three\" />
     <Folder Include="html5\js\input\" />
     <Folder Include="html5\js\controllers\" />
+    <Folder Include="html5\music\" />
+    <Folder Include="html5\scene\" />
     <Folder Include="html5\test\" />
     <Folder Include="src\" />
     <Folder Include="src\controllers\" />

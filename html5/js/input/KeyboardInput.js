@@ -110,6 +110,7 @@ function KeyboardInput(commands, DOMElement){
         META.forEach(function(m){
             keyState[m] = event[m + "Key"];
         });
+        this.update();
     }
 
     this.update = function(){
@@ -126,13 +127,13 @@ function KeyboardInput(commands, DOMElement){
             commandState[cmd.name].pressed = metaSet && cmd.buttons.map(function(i){
                 var sign = i < 0;
                 i = Math.abs(i);
-                return keyState[i-1] ^ sign;
+                return keyState[i] ^ sign;
             }).reduce(function(a, b){ return a && b; }, true);
 
             commandState[cmd.name].value = !metaSet ? 0 : cmd.buttons.map(function(i){
                 var sign = i > 0 ? 1 : -1;
                 i = Math.abs(i);
-                return keyState[i-1] ? sign : 0;
+                return keyState[i] ? sign : 0;
             }).reduce(function(a, b){ return a * b; }, 1);
 
             if(cmd.commandDown && this.isDown(cmd.name) && fireAgain){
@@ -151,6 +152,6 @@ function KeyboardInput(commands, DOMElement){
     this.getValue = function(name){ return commandState[name].value; };
 
     DOMElement = DOMElement || document;
-    DOMElement.addEventListener("keydown", execute.bind(DOMElement, true), false);
-    DOMElement.addEventListener("keyup", execute.bind(DOMElement, false), false);
+    DOMElement.addEventListener("keydown", execute.bind(this, true), false);
+    DOMElement.addEventListener("keyup", execute.bind(this, false), false);
 }
