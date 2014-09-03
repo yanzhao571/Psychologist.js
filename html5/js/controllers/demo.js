@@ -105,8 +105,10 @@ function(){
     }
 
     function setSize(w, h) {
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
+        if(camera){
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+        }
         if (effect) {
             effect.setSize(window.innerWidth, window.innerHeight);
         }
@@ -119,8 +121,6 @@ function(){
     }
 
     scene = new THREE.Scene();
-	//scene.fog = new THREE.FogExp2(BG_COLOR, 3 / DRAW_DISTANCE);
-
     clock = new THREE.Clock();
     fullScreenButton.addEventListener("click", reload, false);
 
@@ -206,19 +206,6 @@ function(){
         effect = new THREE.AnaglyphEffect(renderer, 5 * SCALE, window.innerWidth, window.innerHeight);
     }
 
-    function changeFOV(v){
-        FOV += v;
-        if(!camera){
-            camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, 1, DRAW_DISTANCE);
-        }
-        else{
-            camera.fov = FOV;
-        }
-        console.log(FOV);
-    }
-
-    changeFOV(0);
-
     motion = new MotionInput([
         { name: "yaw", axes: [-7] },
         { name: "pitch", axes: [8] },
@@ -266,14 +253,15 @@ function(){
         setSize(window.innerWidth, window.innerHeight);
     }, false);
 
-    //heightmap = constructScene(scene, MAP_WIDTH, MAP_HEIGHT, SCALE);
-
     var loader = new THREE.ColladaLoader();
     loader.options.convertUpAxis = true;
     loader.load("scene/untitled.dae?v4", function(collada){
         collada.scene.traverse(function(child){
             if(child instanceof(THREE.PerspectiveCamera)){
                 camera = child;
+            }
+            else{
+                console.log(child);
             }
         });
         collada.scene.updateMatrix();
@@ -285,59 +273,3 @@ function(){
     setSize(window.innerWidth, window.innerHeight);
     requestAnimationFrame(animate);
 });
-
-function constructScene(scene, MAP_WIDTH, MAP_HEIGHT, SCALE){
-    var heightmap = []
-
-    var geometry = new THREE.BoxGeometry(1, 1, 1);
-	
-    var imgTexture = THREE.ImageUtils.loadTexture( "img/grass.png" );
-	imgTexture.wrapS = imgTexture.wrapT = THREE.RepeatWrapping;
-	imgTexture.anisotropy = 16;
-    
-    var material = new THREE.MeshLambertMaterial({ color: 0xffffff, ambient: 0xffffff, opacity: 1, map: imgTexture });
-    
-    var light = new THREE.DirectionalLight(0xffffff, 0.75);
-    light.position.set(1, 1, 0);
-    scene.add(light);
-
-    var light2 = new THREE.AmbientLight(0x808080);
-    scene.add(light2);
-
-    for(var y = 0; y < MAP_HEIGHT; ++y){
-        heightmap.push([]);
-        for(var x = 0; x < MAP_WIDTH; ++x){
-            heightmap[y].push(0);
-        }
-    }
-
-    for(var h = 0; h < (MAP_WIDTH + Math.random() * MAP_HEIGHT) / 2; ++h){
-        var x = Math.floor(Math.random() * MAP_WIDTH);
-        var y = Math.floor(Math.random() * MAP_HEIGHT);
-        var z = Math.floor(4 + Math.random() * 4);
-        for(var dy = -z; dy < z; ++dy){
-            var ty = y + dy;
-            for(var dx = -z; dx < z && 0 <= ty && ty < MAP_HEIGHT; ++dx){
-                var tx = x + dx;
-                if(0 <= tx && tx < MAP_WIDTH){
-                    heightmap[ty][tx] = Math.max(heightmap[ty][tx], z - Math.abs(dx) - Math.abs(dy));
-                }
-            }
-        }
-    }
-    
-    for(var y = 0; y < MAP_HEIGHT; ++y){
-        for(var x = 0; x < MAP_WIDTH; ++x){
-            heightmap[y][x] -= 10;
-            var c = new THREE.Mesh(geometry, material);
-            c.position.x = SCALE * (x - MAP_WIDTH / 2);
-            c.position.y = SCALE * heightmap[y][x];
-            c.position.z = SCALE * (y - MAP_HEIGHT / 2);
-            c.scale.x = SCALE;
-            c.scale.y = SCALE;
-            c.scale.z = SCALE;
-            scene.add(c);
-        }
-    }
-    return heightmap;
-}
