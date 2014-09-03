@@ -107,7 +107,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         `removeEventListener(event, handler, bubbles?)`: get rid of a specific event handler for a specific event.
 
 */
-function MouseInput(commands, DOMelement){
+function MouseInput(commands, DOMelement, socket){
     DOMelement = DOMelement || document.documentElement;
     var mouseState = {
             0:false, 1: false, 2: false,

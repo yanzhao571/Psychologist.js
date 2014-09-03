@@ -138,55 +138,62 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
             null if setup was successful.
 */
 
-function GamepadInput(commands, gpid){
+function GamepadInput(commands, gpid, socket){
     console.warn("At this time (August 16th, 2014), Gamepad API is extremely unreliable. No two browsers implement it in the same way, and various similar-looking controllers present vastly different behavior. Some attempt has been made within this library to normalize this behavior, but most of the defects are intractable. Browser vendors will have to get their acts together before Gamepad API is viable for serious projects. Please treat this library as a proof of concept for now, and a place holder until Gamepad API is implemented correctly.");
-    var commandState = {},
+    var commandState = {}, prevState = "", finalState = "",
         available = null,
         errorMessage = null,
-        trans, t, i, wasPressed, fireAgain, sign,
+        t, i, wasPressed, fireAgain, sign,
         connectedGamepads = [],
         listeners = {
             gamepadconnected: [],
             gamepaddisconnected: []
-        },
-        translations = [
-        { 
-            test: /ouya/i,
-            buttons: [0, 2, 3, 1, 4, 5, 14, 15, 12, 7, 13, 6, 11, 9, 8, 10],
-            axes: [0, 1, 3, 2],
-            values: function(v){ return (-v / 65535) - 1; }
-        },
-        { 
-            test: /firefox/i,
-            buttons: [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 8, 6, 7, 9, 11, 10],
-            axes: [1, 0, 3, 2]
-        }];
+        };
+
+    function fireCommands(){
+        commands.forEach(function(cmd){                
+            if(cmd.commandDown && commandState[cmd.name].pressed && commandState[cmd.name].fireAgain){
+                cmd.commandDown(gpid);
+                cmd.lt = t;
+            }
+
+            if(cmd.commandUp && !commandState[cmd.name].pressed && commandState[cmd.name].wasPressed){
+                cmd.commandUp(gpid);
+            }
+        });
+    }
+
+    if(socket){
+        socket.on("gamepad", function(cmdState){
+            commandState = cmdState
+            fireCommands();
+        });
+    }
 
     function checkPad(pad){
         t = Date.now();
         if(pad.id == gpid){
-            trans = translations.filter(function(t){ return t.test.test(pad.id) || t.test.test(navigator.userAgent);});
+            if(socket){
+                prevState = JSON.stringify(commandState);
+            }
             commands.forEach(function(cmd){
-                wasPressed = commandState[cmd.name].pressed;
-                fireAgain = (t - cmd.lt) >= cmd.dt;
+                commandState[cmd.name].wasPressed = commandState[cmd.name].pressed;
+                commandState[cmd.name].fireAgain = (t - cmd.lt) >= cmd.dt;
 
                 commandState[cmd.name].pressed = cmd.buttons.map(function(i){
                     sign = i < 0 ? true : false;
-                    i = Math.abs(i);
-                    i = trans.reduce(function(a, b){ return b.buttons && b.buttons[a] || a; }, i-1);
+                    i = Math.abs(i) - 1;
                     return pad.buttons[i].pressed && !sign
                         || !pad.buttons[i].pressed && sign;
                 }).reduce(function(a, b){ return a && b; }, true);
 
                 commandState[cmd.name].value = cmd.axes.map(function(i){
                     sign = i < 0 ? -1 : 1;
-                    i = Math.abs(i);
-                    i = trans.reduce(function(a, b){return b.axes && b.axes[a] || a; }, i-1);
+                    i = Math.abs(i) - 1;
                     return sign * pad.axes[i];
                 }).concat(cmd.buttons.map(function(i){
                     sign = i < 0 ? -1 : 1;
-                    i = Math.abs(i);
-                    i = trans.reduce(function(a, b){return b.buttons && b.buttons[a] || a; }, i-1);
+                    i = Math.abs(i) - 1;
                     return sign * pad.buttons[i].value;
                 })).map(function(v){
                     if(cmd.deadzone && Math.abs(v) < cmd.deadzone){
@@ -196,16 +203,16 @@ function GamepadInput(commands, gpid){
                 }).reduce(function(a, b){ 
                     return Math.abs(a) > Math.abs(b) ? a : b; 
                 }, 0);
-
-                if(cmd.commandDown && commandState[cmd.name].pressed && fireAgain){
-                    cmd.commandDown(pad.id);
-                    cmd.lt = t;
-                }
-
-                if(cmd.commandUp && !commandState[cmd.name].pressed && wasPressed){
-                    cmd.commandUp(pad.id);
-                }
             });
+
+            fireCommands();
+
+            if(socket){
+                finalState = JSON.stringify(commandState);
+            }
+            if(finalState != prevState){
+                socket.emit("gamepad", commandState);
+            }
         }
     }
 
@@ -323,7 +330,10 @@ function GamepadInput(commands, gpid){
     // clone the arrays, so the consumer can't add elements to it in their own code.
     commands = commands.slice();
     commands.forEach(function(cmd){
-        commandState[cmd.name] = {};
+        commandState[cmd.name] = {
+            wasPressed: false,
+            fireAgain: false
+        };
         if(cmd.buttons){
             cmd.buttons = cmd.buttons.slice();
         }

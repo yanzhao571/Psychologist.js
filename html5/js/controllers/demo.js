@@ -4,6 +4,7 @@ include(
     "lib/three/OculusRiftEffect.min.js",
     "lib/three/AnaglyphEffect.min.js",
     "lib/three/ColladaLoader.js",
+    "/socket.io/socket.io.js",
     "js/psychologist.js",
     "js/input/SpeechInput.js",
     "js/input/GamepadInput.js",
@@ -25,7 +26,25 @@ function(){
         fullScreenButton = document.getElementById("fullScreenButton"),
         options = document.getElementById("options"),
         buttonsTimeout = null,
-        buttonsVisible = true;
+        buttonsVisible = true,
+        key = prompt("Enter a key. Make it good."),
+        socket;
+
+    if(key){
+        socket = io.connect(document.location.hostname,
+        {
+            "reconnect": true,
+            "reconnection delay": 1000,
+            "max reconnection attempts": 60
+        });
+        socket.on("bad", function(){
+            alert("Key already in use!");
+        });
+        socket.on("good", function(side){
+            console.log("You are on the " + side);
+        });
+        socket.emit("key", key);
+    }
 
     function animate() {
         requestAnimationFrame(animate);
@@ -210,14 +229,14 @@ function(){
         { name: "yaw", axes: [-7] },
         { name: "pitch", axes: [8] },
         { name: "roll", axes: [-9] }
-    ]);
+    ], socket);
 
     mouse = new MouseInput([
         { name: "yaw", axes: [-4] },
         { name: "pitch", axes: [5] },
         { name: "fire", buttons: [1], commandDown: fire, dt: 125 },
         { name: "jump", buttons: [2], commandDown: jump, dt: 250 },
-    ]);
+    ], null, socket);
 
     keyboard = new KeyboardInput([
         { name: "strafeLeft", buttons: [-65] },
@@ -229,7 +248,7 @@ function(){
         { name: "jump", buttons: [32], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [17], commandDown: fire, dt: 125 },
         { name: "reload", buttons: [70], commandDown: reload, dt: 125 },
-    ]);
+    ], null, socket);
 
     gamepad = new GamepadInput([
         { name: "strafe", axes: [1], deadzone: 0.1 },
@@ -240,7 +259,7 @@ function(){
         { name: "rollLeft", buttons: [-6] },
         { name: "jump", buttons: [1], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [2], commandDown: fire, dt: 125 },
-    ]);
+    ], null, socket);
 
     gamepad.addEventListener("gamepadconnected", function (id) {
         if (!gamepad.isGamepadSet() 
@@ -259,6 +278,7 @@ function(){
         collada.scene.traverse(function(child){
             if(child instanceof(THREE.PerspectiveCamera)){
                 camera = child;
+                requestAnimationFrame(animate);
             }
             else{
                 console.log(child);
@@ -271,5 +291,4 @@ function(){
     clock.start();
     options.parentElement.insertBefore(renderer.domElement, options);
     setSize(window.innerWidth, window.innerHeight);
-    requestAnimationFrame(animate);
 });

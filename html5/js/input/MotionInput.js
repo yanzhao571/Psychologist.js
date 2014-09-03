@@ -292,7 +292,7 @@ var LandscapeMotion = {
     }
 }
 
-function MotionInput(commands){
+function MotionInput(commands, socket){
     var motionState = {
         heading: 0, pitch: 0, roll: 0,
         accelx: 0, accely: 0, accelz: 0,

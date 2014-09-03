@@ -83,7 +83,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         `isUp(name)`: returns the boolean negation of `isDown()`.
 
 */
-function KeyboardInput(commands, DOMElement){
+function KeyboardInput(commands, DOMElement, socket){
     var keyState = { alt: false, ctrl: false, meta: false, shift: false },
         commandState = {},
         META = ["ctrl", "shift", "alt", "meta"];
