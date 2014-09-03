@@ -295,24 +295,22 @@ var LandscapeMotion = {
 function MotionInput(commands){
     var motionState = {
         heading: 0, pitch: 0, roll: 0,
-        dheading: 0, dpitch: 0, droll: 0,
         accelx: 0, accely: 0, accelz: 0,
+        dheading: 0, dpitch: 0, droll: 0,
         daccelx: 0, daccely: 0, daccelz: 0,
+        lheading: 0, lpitch: 0, lroll: 0,
+        laccelx: 0, laccely: 0, laccelz: 0,
         alt: false, ctrl: false, meta: false, shift: false
     }, 
-        commandState = {}, i, n, k,
-        AXES = ["heading", "pitch", "roll", "accelx", "accely", "accelz"],
-        len = AXES.length,
-        META = ["ctrl", "shift", "alt", "meta"];
-        
-    AXES = AXES.concat(AXES.map(function(a){ return "d" + a;}));
+        commandState = {}, i, n,
+        BASE = ["heading", "pitch", "roll", "accelx", "accely", "accelz"]
+        META = ["ctrl", "shift", "alt", "meta"],
+        AXES = BASE.concat(BASE.map(function(v){return "d" + v;})).concat(BASE.map(function(v){return "l" + v;}));
 
     LandscapeMotion.addEventListener("deviceorientation", function (evt) {
-        for(i = 0; i < len; ++i){
-            k = AXES[i];
-            motionState[AXES[i+len]] = motionState[k] - evt[k];
+        BASE.forEach(function(k){
             motionState[k] = evt[k];
-        }
+        });
     });
     
     function readMeta(event){
@@ -326,15 +324,21 @@ function MotionInput(commands){
     window.addEventListener("keyup", readMeta, false);
 
     this.update = function(){
+        BASE.forEach(function(k){
+            if(motionState["l" + k]){
+                motionState["d" + k] = motionState[k] - motionState["l" + k];
+            }
+            motionState["l" + k] = motionState[k];
+        });
         commands.forEach(function(cmd){
             commandState[cmd.name] = cmd.axes.map(function(i){
                 var sign = i < 0 ? -1 : 1;
-                i = Math.abs(i);
-                return sign * motionState[AXES[i-1]];
+                i = Math.abs(i) - 1;
+                return sign * motionState[AXES[i]];
             }).concat(cmd.meta.map(function(i){
                 var sign = i < 0 ? -1 : 1;
-                i = Math.abs(i);
-                return motionState[META[i-1]] ? sign : 0;
+                i = Math.abs(i) - 1;
+                return motionState[META[i]] ? sign : 0;
             })).reduce(function(a, b){ return a * b; }, 1);
         });
     };

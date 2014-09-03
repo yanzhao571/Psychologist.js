@@ -70,16 +70,16 @@ function(){
         }
 
         heading += (gamepad.getValue("yaw") 
-            + mouse.getValue("yaw") 
-            + motion.getValue("yaw")) * dt;
+            + mouse.getValue("yaw")) * dt 
+            + motion.getValue("yaw");
         pitch += (gamepad.getValue("pitch") 
-            + mouse.getValue("pitch") 
-            + motion.getValue("pitch")) * dt;
+            + mouse.getValue("pitch") ) * dt
+            + motion.getValue("pitch");
         roll += (gamepad.getValue("rollLeft") 
             + gamepad.getValue("rollRight") 
             + keyboard.getValue("rollLeft") 
-            + keyboard.getValue("rollRight") 
-            + motion.getValue("roll")) * dt;
+            + keyboard.getValue("rollRight")) * dt
+            + motion.getValue("roll");
 
         fps = 1 / dt;
         setCamera(dt);
@@ -119,7 +119,7 @@ function(){
     }
 
     scene = new THREE.Scene();
-//	scene.fog = new THREE.FogExp2(BG_COLOR, 3 / DRAW_DISTANCE);
+	//scene.fog = new THREE.FogExp2(BG_COLOR, 3 / DRAW_DISTANCE);
 
     clock = new THREE.Clock();
     fullScreenButton.addEventListener("click", reload, false);
@@ -185,26 +185,26 @@ function(){
     renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setClearColor(BG_COLOR);
 
-    //if (confirm("use stereo rendering?")) {
-    //    FOV = 106.26;
-    //    effect = new THREE.OculusRiftEffect(renderer, {
-    //        worldFactor: SCALE,
-    //        HMD: {
-    //            hResolution: screen.availWidth,
-    //            vResolution: screen.availHeight,
-    //            hScreenSize: 0.126,
-    //            vScreenSize: 0.075,
-    //            interpupillaryDistance: 0.064,
-    //            lensSeparationDistance: 0.064,
-    //            eyeToScreenDistance: 0.051,
-    //            distortionK: [1, 0.22, 0.06, 0.0],
-    //            chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
-    //        }
-    //    });
-    //}
-    //else if (confirm("use red/cyan anaglyph rendering?")) {
-    //    effect = new THREE.AnaglyphEffect(renderer, 5 * SCALE, window.innerWidth, window.innerHeight);
-    //}
+    if (confirm("use stereo rendering?")) {
+        FOV = 106.26;
+        effect = new THREE.OculusRiftEffect(renderer, {
+            worldFactor: SCALE,
+            HMD: {
+                hResolution: screen.availWidth,
+                vResolution: screen.availHeight,
+                hScreenSize: 0.126,
+                vScreenSize: 0.075,
+                interpupillaryDistance: 0.064,
+                lensSeparationDistance: 0.064,
+                eyeToScreenDistance: 0.051,
+                distortionK: [1, 0.22, 0.06, 0.0],
+                chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
+            }
+        });
+    }
+    else if (confirm("use red/cyan anaglyph rendering?")) {
+        effect = new THREE.AnaglyphEffect(renderer, 5 * SCALE, window.innerWidth, window.innerHeight);
+    }
 
     function changeFOV(v){
         FOV += v;
