@@ -1,29 +1,44 @@
-﻿function motionTester() {
-    var output = document.getElementById("output"),
-        arr = [
-        "heading",
-        "pitch",
-        "roll",
-        "original.orientation.alpha",
-        "original.orientation.gamma",
-        "original.orientation.beta",
-        "original.acceleration.x",
-        "original.acceleration.y",
-        "original.acceleration.z"
-    ];
-
-    LandscapeMotion.addEventListener("deviceorientation", function (evt) {
-        var val = "";
-        arr.forEach(function (key) {
-            var obj = evt;
-            var parts = key.split(".");
-            parts.forEach(function(p){
-                if (obj.hasOwnProperty(p)) {
-                    obj = obj[p];
+﻿include(0,
+    "js/psychologist.js",
+    "js/input/MotionInput.js",
+//    "test/MotionInput.js",
+    function() {
+        var output = document.getElementById("output"),
+            commands = [
+                {name: "heading", axes: [1]},
+                {name: "pitch", axes: [2]},
+                {name: "roll", axes: [3]},
+                {name: "dheading", axes: [7]},
+                {name: "dpitch", axes: [8]},
+                {name: "droll", axes: [9]},
+            ],
+            h, p, r,
+            motion = new MotionInput(commands);
+        setInterval(function(){
+            motion.update();
+            if(!h){
+                h = motion.getValue("heading");
+                p = motion.getValue("pitch");
+                r = motion.getValue("roll");
+            }
+            else{
+                h += motion.getValue("dheading");
+                p += motion.getValue("dpitch");
+                r += motion.getValue("droll");
+            }
+            var arr = [h, p, r];
+            output.innerHTML = "";
+            commands.forEach(function (cmd, i) {
+                var li = document.createElement("li");
+                var v = motion.getValue(cmd.name);
+                if(i < 3){
+                    li.innerHTML = fmt("$1: $2.000, $3.000 ($4)", cmd.name, v, arr[i], v - arr[i]);
                 }
+                else{
+                    li.innerHTML = fmt("$1: $2.000", cmd.name, v);
+                }
+                output.appendChild(li);
             });
-            val += fmt("<li>$1: $2.000</li>", key, obj);
-        });
-        output.innerHTML = val;
-    }, false);
-}
+        }, 16);
+    }
+);

@@ -83,51 +83,75 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
         `isUp(name)`: returns the boolean negation of `isDown()`.
 
 */
-function KeyboardInput(commands, domElement){
-    var state = {};
-
-    function execute(stateChange, commandName, event){
-        var candidates = commands.filter(function(cmd){ return cmd && cmd.buttons && cmd.buttons.indexOf && cmd.buttons.indexOf(event.keyCode) > -1;});
-        if(candidates.length == 0){
-            console.log(fmt("Unknown command: $1", event.keyCode));
-        }
-        else{
-            var c = candidates[0];
-            var n = Date.now();
-            if(state[c.name] != stateChange 
-                || c.dt && (n - c.lt) > c.dt){
-                c.lt = n;
-                state[c.name] = stateChange;
-                if(c[commandName]){
-                    c[commandName]();
-                }
-            }
-        }
-    }
-
-    this.isDown = function(name){
-        return state[name];
-    };
-
-    this.isUp = function(name){
-        return !state[name];
-    };
-
-    this.getValue = function(name){
-        return this.isDown(name) ? 1 : 0;
-    };
+function KeyboardInput(commands, DOMElement){
+    var keyState = { alt: false, ctrl: false, meta: false, shift: false },
+        commandState = {},
+        META = ["ctrl", "shift", "alt", "meta"];
     
     // clone the arrays, so the consumer can't add elements to it in their own code.
-    commands = commands.slice();
-    
-    commands.forEach(function(c){
-        state[c.name] = false;
-        if(c.dt){
-            c.lt = Date.now();
-        }
+    commands = commands.map(function(cmd){
+        commandState[cmd.name] = { pressed: false, value: 0 };
+        cmd.buttons.forEach(function(b){ keyState[b] = false; });
+        return {
+            name: cmd.name,
+            buttons: maybeClone(cmd.buttons),
+            meta: maybeClone(cmd.meta),
+            lt: Date.now(),
+            dt: cmd.dt,
+            commandDown: cmd.commandDown,
+            commandUp: cmd.commandUp
+        };
     });
+    
+    function maybeClone(arr){ return (arr && arr.slice()) || []; }
 
-    domElement = domElement || document;
-    domElement.addEventListener("keydown", execute.bind(domElement, true, "commandDown"), false);
-    domElement.addEventListener("keyup", execute.bind(domElement, false, "commandUp"), false);
+    function execute(stateChange, event){
+        keyState[event.keyCode] = stateChange;
+        META.forEach(function(m){
+            keyState[m] = event[m + "Key"];
+        });
+        this.update();
+    }
+
+    this.update = function(){
+        var t = Date.now();
+        commands.forEach(function(cmd){
+            var wasPressed = commandState[cmd.name],
+                fireAgain = (t - cmd.lt) >= cmd.dt,
+                metaSet = cmd.meta.map(function(i){
+                    var sign = i > 0;
+                    i = Math.abs(i);
+                    return keyState[META[i-1]] ^ sign;
+                }).reduce(function(a, b){ return a && b; }, true);
+
+            commandState[cmd.name].pressed = metaSet && cmd.buttons.map(function(i){
+                var sign = i < 0;
+                i = Math.abs(i);
+                return keyState[i] ^ sign;
+            }).reduce(function(a, b){ return a && b; }, true);
+
+            commandState[cmd.name].value = !metaSet ? 0 : cmd.buttons.map(function(i){
+                var sign = i > 0 ? 1 : -1;
+                i = Math.abs(i);
+                return keyState[i] ? sign : 0;
+            }).reduce(function(a, b){ return a * b; }, 1);
+
+            if(cmd.commandDown && this.isDown(cmd.name) && fireAgain){
+                cmd.commandDown();
+                cmd.lt = t;
+            }
+
+            if(cmd.commandUp && this.isUp(cmd.name) && wasPressed){
+                cmd.commandUp();
+            }
+        }.bind(this));
+    };
+
+    this.isDown = function(name){ return commandState[name].pressed; };
+    this.isUp = function(name){ return !commandState[name].pressed; };
+    this.getValue = function(name){ return commandState[name].value; };
+
+    DOMElement = DOMElement || document;
+    DOMElement.addEventListener("keydown", execute.bind(this, true), false);
+    DOMElement.addEventListener("keyup", execute.bind(this, false), false);
 }

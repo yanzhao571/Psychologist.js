@@ -3,24 +3,25 @@ include(
     "lib/three/three.min.js",
     "lib/three/OculusRiftEffect.min.js",
     "lib/three/AnaglyphEffect.min.js",
+    "lib/three/ColladaLoader.js",
     "js/psychologist.js",
     "js/input/SpeechInput.js",
     "js/input/GamepadInput.js",
     "js/input/KeyboardInput.js",
-    "js/input/LandscapeMotion.js",
+    "js/input/MotionInput.js",
     "js/input/MouseInput.js",
     "js/camera.js",
 function(){
-    var MAP_WIDTH = 50, MAP_HEIGHT = 50, SCALE = 100, BG_COLOR = 0xafbfff, 
+    var MAP_WIDTH = 50, MAP_HEIGHT = 50, SCALE = 1, BG_COLOR = 0xafbfff, 
         DRAW_DISTANCE = SCALE * Math.sqrt(MAP_HEIGHT * MAP_HEIGHT + MAP_WIDTH * MAP_WIDTH) / 2,
         SPEED = 9.8 * SCALE, FOV = 60,
         pitch = 0, roll = 0, heading = 0,
         vcx = 0, vcz = 0, vcy = 0, tx, tz,
         onground = false,
-        overlay, gfx, video,
+        video,
         camera, scene, effect, renderer, map,
         motion, keyboard, mouse, gamepad, 
-        fps, dt, clock, heightmap = [],
+        fps, dt, clock, heightmap,
         fullScreenButton = document.getElementById("fullScreenButton"),
         options = document.getElementById("options"),
         buttonsTimeout = null,
@@ -29,13 +30,16 @@ function(){
     function animate() {
         requestAnimationFrame(animate);
         dt = clock.getDelta();
+        motion.update();
+        keyboard.update();
         mouse.update();
         gamepad.update();
+
         vcy -= dt * SPEED;
         var x = Math.floor(camera.position.x/SCALE) + MAP_WIDTH / 2;
         var y = Math.floor(camera.position.z/SCALE) + MAP_HEIGHT / 2;
         var h = 0;
-        if (0 <= x && x < MAP_WIDTH && 0 <= y && y < MAP_HEIGHT){
+        if (heightmap && 0 <= x && x < MAP_WIDTH && 0 <= y && y < MAP_HEIGHT){
             h = (heightmap[y][x] + 2) * SCALE;
         }
         if(camera.position.y <= h && vcy <= 0) {
@@ -48,8 +52,8 @@ function(){
         }
 
         if(onground){
-            tx = keyboard.getValue("right") - keyboard.getValue("left") + gamepad.getValue("strafe");
-            tz = keyboard.getValue("back") - keyboard.getValue("forward") + gamepad.getValue("drive");
+            tx = keyboard.getValue("strafeRight") + keyboard.getValue("strafeLeft") + gamepad.getValue("strafe");
+            tz = keyboard.getValue("driveBack") + keyboard.getValue("driveForward") + gamepad.getValue("drive");
             if(tx != 0 || tz != 0){
                 len = SPEED / Math.sqrt(tz * tz + tx * tx);
             }
@@ -65,15 +69,17 @@ function(){
             vcz = vcz * 0.9 + tz * 0.1;
         }
 
-        if (gamepad.isGamepadSet()) {
-            heading += 2 * gamepad.getValue("yaw") * dt;
-            pitch += 2 * gamepad.getValue("pitch") * dt;
-        }
-
-        if(mouse.isPointerLocked()){
-            heading += 0.5 * mouse.getValue("yaw") * dt;
-            pitch += 0.5 * mouse.getValue("pitch") * dt;
-        }
+        heading += (gamepad.getValue("yaw") 
+            + mouse.getValue("yaw")) * dt 
+            + motion.getValue("yaw");
+        pitch += (gamepad.getValue("pitch") 
+            + mouse.getValue("pitch") ) * dt
+            + motion.getValue("pitch");
+        roll += (gamepad.getValue("rollLeft") 
+            + gamepad.getValue("rollRight") 
+            + keyboard.getValue("rollLeft") 
+            + keyboard.getValue("rollRight")) * dt
+            + motion.getValue("roll");
 
         fps = 1 / dt;
         setCamera(dt);
@@ -83,19 +89,13 @@ function(){
     function setCamera(dt) {
         camera.updateProjectionMatrix();
         camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "YZX"));
-
         camera.translateX(vcx * dt);
         camera.translateY(vcy * dt);
         camera.translateZ(vcz * dt);
-
         camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
     }
 
     function draw() {
-        gfx.clearRect(0, 0, overlay.width, overlay.height);
-        gfx.font = "20px Arial";
-        gfx.fillStyle = "#c00000";
-
         if (effect) {
             effect.render(scene, camera);
         }
@@ -105,8 +105,6 @@ function(){
     }
 
     function setSize(w, h) {
-        overlay.width = w;
-        overlay.height = h;
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
         if (effect) {
@@ -121,11 +119,9 @@ function(){
     }
 
     scene = new THREE.Scene();
-	scene.fog = new THREE.FogExp2(BG_COLOR, 3 / DRAW_DISTANCE);
+	//scene.fog = new THREE.FogExp2(BG_COLOR, 3 / DRAW_DISTANCE);
 
     clock = new THREE.Clock();
-    overlay = document.getElementById("overlay");
-    gfx = overlay.getContext("2d");
     fullScreenButton.addEventListener("click", reload, false);
 
     function hideButtonsLater() {
@@ -178,8 +174,8 @@ function(){
             document.location = document.location.href;
         }
         else {
-            toggleFullScreen();
             mouse.requestPointerLock();
+            toggleFullScreen();
         }
     }
 
@@ -221,26 +217,12 @@ function(){
         console.log(FOV);
     }
 
-    function increaseFOV(){
-        changeFOV(+5);
-    }
-
-    function decreaseFOV(){
-        changeFOV(-5);
-    }
-
     changeFOV(0);
 
-    LandscapeMotion.addEventListener("deviceorientation", function (evt) {
-        roll = -evt.roll;
-        pitch = evt.pitch;
-        heading = -evt.heading;
-    });
-
     motion = new MotionInput([
-        { name: "heading", axes: [-1] },
-        { name: "pitch", axes: [2] },
-        { name: "roll", axes: [-3] }
+        { name: "yaw", axes: [-7] },
+        { name: "pitch", axes: [8] },
+        { name: "roll", axes: [-9] }
     ]);
 
     mouse = new MouseInput([
@@ -251,12 +233,12 @@ function(){
     ]);
 
     keyboard = new KeyboardInput([
-        { name: "left", buttons: [65, 37], commandDown: function(){vcx = -1;}, commandDown: function(){vcx = 0;}  },
-        { name: "forward", buttons: [87, 38], commandDown: function(){vcz = -1;}, commandDown: function(){vcz = 0;} },
-        { name: "right", buttons: [68, 39], commandDown: function(){vcx = 1;}, commandDown: function(){vcx = 0;} },
-        { name: "back", buttons: [83, 40], commandDown: function(){vcz = 1;}, commandDown: function(){vcz = 0;}  },
-        { name: "decrease FOV", buttons: [81], commandDown: decreaseFOV, dt: 250},
-        { name: "increase FOV", buttons: [69], commandDown: increaseFOV, dt: 250},
+        { name: "strafeLeft", buttons: [-65] },
+        { name: "strafeRight", buttons: [68] },
+        { name: "driveForward", buttons: [-87] },
+        { name: "driveBack", buttons: [83] },
+        { name: "rollLeft", buttons: [81] },
+        { name: "rollRight", buttons: [-69] },
         { name: "jump", buttons: [32], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [17], commandDown: fire, dt: 125 },
         { name: "reload", buttons: [70], commandDown: reload, dt: 125 },
@@ -267,8 +249,8 @@ function(){
         { name: "drive", axes: [2], deadzone: 0.1 },
         { name: "yaw", axes: [-3], deadzone: 0.1 },
         { name: "pitch", axes: [4], deadzone: 0.1 },
-        { name: "rollRight", buttons: [5], commandDown: function () { roll = 0.25; }, commandUp: function () { roll = 0; } },
-        { name: "rollLeft", buttons: [6], commandDown: function () { roll = -0.25; }, commandUp: function () { roll = 0; } },
+        { name: "rollRight", buttons: [5] },
+        { name: "rollLeft", buttons: [-6] },
         { name: "jump", buttons: [1], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [2], commandDown: fire, dt: 125 },
     ]);
@@ -284,14 +266,44 @@ function(){
         setSize(window.innerWidth, window.innerHeight);
     }, false);
 
+    //heightmap = constructScene(scene, MAP_WIDTH, MAP_HEIGHT, SCALE);
+
+    var loader = new THREE.ColladaLoader();
+    loader.options.convertUpAxis = true;
+    loader.load("scene/untitled.dae?v4", function(collada){
+        collada.scene.traverse(function(child){
+            if(child instanceof(THREE.PerspectiveCamera)){
+                camera = child;
+            }
+        });
+        collada.scene.updateMatrix();
+        scene.add(collada.scene);
+    });
+
+    clock.start();
+    options.parentElement.insertBefore(renderer.domElement, options);
+    setSize(window.innerWidth, window.innerHeight);
+    requestAnimationFrame(animate);
+});
+
+function constructScene(scene, MAP_WIDTH, MAP_HEIGHT, SCALE){
+    var heightmap = []
+
     var geometry = new THREE.BoxGeometry(1, 1, 1);
-	var imgTexture = THREE.ImageUtils.loadTexture( "img/grass.png" );
+	
+    var imgTexture = THREE.ImageUtils.loadTexture( "img/grass.png" );
 	imgTexture.wrapS = imgTexture.wrapT = THREE.RepeatWrapping;
 	imgTexture.anisotropy = 16;
-    var material = new THREE.MeshLambertMaterial({ color: 0xffffff, ambient: 0xffffff, opacity: 1, map: imgTexture });
-    var light = new THREE.DirectionalLight(0xffffff, 0.75);
-    var light2 = new THREE.AmbientLight(0x808080);
     
+    var material = new THREE.MeshLambertMaterial({ color: 0xffffff, ambient: 0xffffff, opacity: 1, map: imgTexture });
+    
+    var light = new THREE.DirectionalLight(0xffffff, 0.75);
+    light.position.set(1, 1, 0);
+    scene.add(light);
+
+    var light2 = new THREE.AmbientLight(0x808080);
+    scene.add(light2);
+
     for(var y = 0; y < MAP_HEIGHT; ++y){
         heightmap.push([]);
         for(var x = 0; x < MAP_WIDTH; ++x){
@@ -326,13 +338,6 @@ function(){
             c.scale.z = SCALE;
             scene.add(c);
         }
-    }    
-
-    light.position.set(1, 1, 0);
-    scene.add(light);
-    scene.add(light2);
-    clock.start();
-    setSize(window.innerWidth, window.innerHeight);
-    overlay.parentElement.insertBefore(renderer.domElement, overlay);
-    requestAnimationFrame(animate);
-});
+    }
+    return heightmap;
+}

@@ -113,15 +113,14 @@ function MouseInput(commands, DOMelement){
             0:false, 1: false, 2: false,
             x: 0, y: 0, z: 0,
             dx: 0, dy: 0, dz: 0,
-            lx: 0, ly: 0, lz: 0,
             alt: false, ctrl: false, meta: false, shift: false
         },
         commandState = {},
-        AXES = ["x", "y", "z", "dx", "dy", "dz", "lx", "ly", "lz"],
+        AXES = ["x", "y", "z", "dx", "dy", "dz"],
         META = ["ctrl", "shift", "alt", "meta"],
         listeners = {
             pointerlockchanged: []
-        };
+        }, t, sign;
 
     this.isDown = function(name){
         return commandState[name] && commandState[name].pressed;
@@ -176,26 +175,30 @@ function MouseInput(commands, DOMelement){
     this.isPointerLocked = isLocked;
 
     this.update = function(){
-        var t = Date.now();
+        t = Date.now();
         commands.forEach(function(cmd){
             var wasPressed = commandState[cmd.name].pressed,
                 fireAgain = (t - cmd.lt) >= cmd.dt;
 
             commandState[cmd.name].pressed = cmd.buttons.map(function(i){
-                var sign = i < 0 ? true : false;
+                sign = i < 0 ? true : false;
                 i = Math.abs(i);
                 return mouseState[i-1] ^ sign;
             }).concat(cmd.meta.map(function(i){
-                var sign = i < 0 ? true : false;
+                sign = i < 0 ? true : false;
                 i = Math.abs(i);
                 return mouseState[META[i-1]] ^ sign;
             })).reduce(function(a, b){ return a & b; }, true);
 
             commandState[cmd.name].value = cmd.axes.map(function(i){
-                var sign = i < 0 ? -1 : 1;
+                sign = i < 0 ? -1 : 1;
                 i = Math.abs(i);
                 return sign * mouseState[AXES[i-1]];
-            }).reduce(function(a, b){ return Math.abs(a) > Math.abs(b) ? a : b; }, 0);
+            }).concat(cmd.meta.map(function(i){
+                sign = i < 0 ? -1 : 1;
+                i = Math.abs(i);
+                return motionState[META[i-1]] ? sign : 0;
+            })).reduce(function(a, b){ return a * b; }, 1);
 
             if(cmd.commandDown && commandState[cmd.name].pressed && fireAgain){
                 cmd.commandDown();
@@ -229,17 +232,13 @@ function MouseInput(commands, DOMelement){
     });
 
     function setLocation(x, y){
-        mouseState.lx = mouseState.x;
-        mouseState.ly = mouseState.y;
+        mouseState.dx = x - mouseState.x;
+        mouseState.dy = y - mouseState.y;
         mouseState.x = x;
         mouseState.y = y;
-        mouseState.dx = mouseState.x - mouseState.lx;
-        mouseState.dy = mouseState.y - mouseState.ly;
     }
 
     function setMovement(dx, dy){
-        mouseState.lx = mouseState.x;
-        mouseState.ly = mouseState.y;
         mouseState.dx = dx;
         mouseState.dy = dy;
         mouseState.x += dx;
