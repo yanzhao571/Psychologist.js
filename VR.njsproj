@@ -32,6 +32,7 @@
   <ItemGroup>
     <Compile Include="html5\js\controllers\gamepad.js" />
     <Compile Include="html5\js\controllers\motion.js" />
+    <Compile Include="html5\js\input\Input.js" />
     <Compile Include="html5\js\input\GamepadInput.js" />
     <Compile Include="html5\lib\Blob.min.js" />
     <Compile Include="html5\lib\canvas-toBlob.min.js" />

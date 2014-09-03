@@ -6,6 +6,7 @@ include(
     "lib/three/ColladaLoader.js",
     "/socket.io/socket.io.js",
     "js/psychologist.js",
+    "js/input/Input.js",
     "js/input/SpeechInput.js",
     "js/input/GamepadInput.js",
     "js/input/KeyboardInput.js",
@@ -281,7 +282,7 @@ function(){
                 requestAnimationFrame(animate);
             }
             else{
-                console.log(child);
+                // console.log(child);
             }
         });
         collada.scene.updateMatrix();

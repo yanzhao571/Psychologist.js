@@ -1,4 +1,8 @@
 // so named because it keeps me from going crazy
+function inherit(classType, parentType) {
+    classType.prototype = Object.create(parentType.prototype);
+    classType.prototype.constructor = classType;
+}
 
 function getSetting(name, defValue) {
     return (window.localStorage && window.localStorage.getItem(name)) || defValue;
