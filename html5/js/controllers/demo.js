@@ -237,7 +237,7 @@ function(){
         { name: "pitch", axes: [5] },
         { name: "fire", buttons: [1], commandDown: fire, dt: 125 },
         { name: "jump", buttons: [2], commandDown: jump, dt: 250 },
-    ], null, socket);
+    ], socket);
 
     keyboard = new KeyboardInput([
         { name: "strafeLeft", buttons: [-65] },
@@ -249,7 +249,7 @@ function(){
         { name: "jump", buttons: [32], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [17], commandDown: fire, dt: 125 },
         { name: "reload", buttons: [70], commandDown: reload, dt: 125 },
-    ], null, socket);
+    ], socket);
 
     gamepad = new GamepadInput([
         { name: "strafe", axes: [1], deadzone: 0.1 },
@@ -260,7 +260,7 @@ function(){
         { name: "rollLeft", buttons: [-6] },
         { name: "jump", buttons: [1], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [2], commandDown: fire, dt: 125 },
-    ], null, socket);
+    ], socket);
 
     gamepad.addEventListener("gamepadconnected", function (id) {
         if (!gamepad.isGamepadSet() 

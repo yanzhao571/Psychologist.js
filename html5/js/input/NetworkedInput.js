@@ -29,56 +29,23 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-var META = ["ctrl", "shift", "alt", "meta"];
-function NetworkedInput(name, commands, socket, offset){
-    var commandState = {};
-    this.inPhysicalUse = false;
+function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
     offset = offset || 0;
+    deltaTrackedAxes = deltaTrackedAxes || [];
+
+    var commandState = {},
+        deviceState = {
+            buttons: [],
+            axes: [],
+        },
+        metaKeys = ["ctrl", "shift", "alt", "metaKeys"],
+        axisNames = deltaTrackedAxes
+            .concat(deltaTrackedAxes.map(function(v){return "d" + v;}))
+            .concat(deltaTrackedAxes.map(function(v){return "l" + v;})),
+        inPhysicalUse = false;
     
+    function readMetaKeys(event){ metaKeys.forEach(function(m){ deviceState[m] = event[m + "Key"]; }); }
     function maybeClone(arr){ return (arr && arr.slice()) || []; }
-
-    // clone the arrays, so the consumer can't add elements to it in their own code.
-    commands = commands.map(function(cmd){
-        commandState[cmd.name] = {
-            value: 0,
-            pressed: false,
-            wasPressed: false,
-            fireAgain: false,
-            lt: Date.now()
-        };
-
-        var newCmd = {
-            name: cmd.name,
-            deadzone: cmd.deadzone,
-            axes: maybeClone(cmd.axes),
-            buttons: maybeClone(cmd.buttons),
-            meta: maybeClone(cmd.meta),
-            dt: cmd.dt,
-            commandDown: cmd.commandDown,
-            commandUp: cmd.commandUp
-        };
-
-        for(var k in newCmd){
-            if(newCmd[k] === undefined || newCmd[k] === null){
-                delete newCmd[k];
-            }
-        }
-
-        return newCmd;
-    });
-    
-
-    this.isDown = function(name){
-        return commandState[name] && commandState[name].pressed;
-    };
-
-    this.isUp = function(name){
-        return commandState[name] && !commandState[name].pressed;
-    };
-
-    this.getValue = function(name){
-        return commandState[name] && commandState[name].value || 0;
-    };
 
     function fireCommands(){
         commands.forEach(function(cmd){
@@ -93,35 +60,74 @@ function NetworkedInput(name, commands, socket, offset){
         });
     }
 
-    if(socket){
-        socket.on(name, function(cmdState){
-            commandState = cmdState
-            fireCommands();
-        });
-    }
+    this.setAxis = function(index, value){
+        inPhysicalUse = true;
+        if(typeof(index) == "string"){
+            index = axisNames.indexOf(index)
+        }
+        deviceState.axes[index] = value;
+    };
 
-    this.checkDevice = function(deviceState){
-        if(this.inPhysicalUse){
+    this.incAxis = function(index, value){
+        inPhysicalUse = true;
+        if(typeof(index) == "string"){
+            index = axisNames.indexOf(index)
+        }
+        deviceState.axes[index] += value;
+    };
+
+    this.setButton = function(index, pressed){
+        inPhysicalUse = true;
+        deviceState.buttons[index] = {
+            pressed: pressed,
+            value: pressed ? 1 : 0
+        };
+    };    
+
+    this.isDown = function(name){
+        return commandState[name] && commandState[name].pressed;
+    };
+
+    this.isUp = function(name){
+        return commandState[name] && !commandState[name].pressed;
+    };
+
+    this.getValue = function(name){
+        return commandState[name] && commandState[name].value || 0;
+    };
+
+    this.update = function(){
+        if(inPhysicalUse){
             var prevState = "", finalState = "", t = Date.now();
             if(socket){
                 prevState = JSON.stringify(commandState);
             }
 
+            deltaTrackedAxes.forEach(function(k){
+                var l = axisNames.indexOf("l" + k);
+                var d = axisNames.indexOf("d" + k);
+                k = axisNames.indexOf(k);
+                if(deviceState.axes[l]){
+                    deviceState.axes[d] = deviceState.axes[k] - deviceState.axes[l];
+                }
+                deviceState.axes[l] = deviceState.axes[k];
+            });
+
             commands.forEach(function(cmd){
                 commandState[cmd.name].wasPressed = commandState[cmd.name].pressed;
                 commandState[cmd.name].fireAgain = (t - commandState[cmd.name].lt) >= cmd.dt;
-                var metaSet = true, pressed, value;
+                var metaKeysSet = true, pressed, value;
                 
-                for(var n = 0; n < cmd.meta.length && metaSet; ++n){
-                    var i = cmd.meta[n];
+                for(var n = 0; n < cmd.metaKeys.length && metaKeysSet; ++n){
+                    var i = cmd.metaKeys[n];
                     var sign = i > 0;
                     i = Math.abs(i) - offset;
-                    metaSet &= deviceState[META[i]] && !sign || !deviceState[META[i]] && sign;
+                    metaKeysSet &= deviceState[metaKeys[i]] && !sign || !deviceState[metaKeys[i]] && sign;
                 }
 
-                commandState[cmd.name].pressed = pressed = metaSet;
+                commandState[cmd.name].pressed = pressed = metaKeysSet;
                 commandState[cmd.name].value = value = 0;
-                if(metaSet){
+                if(metaKeysSet){
                     for(var n = 0; n < cmd.buttons.length && pressed; ++n){
                         var i = cmd.buttons[n];
                         sign = i < 0 ? true : false;
@@ -169,9 +175,48 @@ function NetworkedInput(name, commands, socket, offset){
 
             fireCommands();
         }
-    };
-}
+    };   
+    
 
-META.forEach(function(m, i){
-    NetworkedInput[m] = i;
-});
+    // clone the arrays, so the consumer can't add elements to it in their own code.
+    commands = commands.map(function(cmd){
+        commandState[cmd.name] = {
+            value: 0,
+            pressed: false,
+            wasPressed: false,
+            fireAgain: false,
+            lt: Date.now()
+        };
+
+        var newCmd = {
+            name: cmd.name,
+            deadzone: cmd.deadzone,
+            axes: maybeClone(cmd.axes),
+            buttons: maybeClone(cmd.buttons),
+            metaKeys: maybeClone(cmd.metaKeys),
+            dt: cmd.dt,
+            commandDown: cmd.commandDown,
+            commandUp: cmd.commandUp
+        };
+
+        for(var k in newCmd){
+            if(newCmd[k] === undefined || newCmd[k] === null){
+                delete newCmd[k];
+            }
+        }
+
+        return newCmd;
+    });
+
+    if(socket){
+        socket.on(name, function(cmdState){
+            commandState = cmdState
+            fireCommands();
+        });
+    }
+
+    metaKeys.forEach(function(v){ deviceState[v] = false; });
+    axisNames.forEach(function(v, i){ deviceState.axes[i] = 0; });
+    window.addEventListener("keydown", readMetaKeys, false);
+    window.addEventListener("keyup", readMetaKeys, false);
+}

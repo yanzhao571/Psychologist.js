@@ -290,47 +290,14 @@ var LandscapeMotion = {
 }
 
 function MotionInput(commands, socket){
-    NetworkedInput.call(this, "motion", commands, socket, 1);
-    var motionState = {
-        buttons:[],
-        axes:[],
-        alt: false, ctrl: false, meta: false, shift: false
-    }, 
-        commandState = {}, i, n,
-        BASE = ["heading", "pitch", "roll", "accelx", "accely", "accelz"]
-        AXES = BASE.concat(BASE.map(function(v){return "d" + v;})).concat(BASE.map(function(v){return "l" + v;}));
-
-    AXES.forEach(function(v, i){ motionState.axes[i] = 0; });
+    var axes = ["heading", "pitch", "roll", "accelx", "accely", "accelz"];
+    NetworkedInput.call(this, "motion", commands, socket, 1, axes);
 
     LandscapeMotion.addEventListener("deviceorientation", function (evt) {
-        this.inPhysicalUse = true;
-        BASE.forEach(function(k){
-            motionState.axes[BASE.indexOf(k)] = evt[k];
-        });
+        axes.forEach(function(k){
+            this.setAxis(k, evt[k]);
+        }.bind(this));
     }.bind(this));
-    
-    function readMeta(event){
-        META.forEach(function(m){
-            motionState[m] = event[m + "Key"];
-        });
-    }
-
-    window.addEventListener("keydown", readMeta, false);
-
-    window.addEventListener("keyup", readMeta, false);
-
-    this.update = function(){
-        BASE.forEach(function(k){
-            var l = AXES.indexOf("l" + k);
-            var d = AXES.indexOf("d" + k);
-            k = AXES.indexOf(k);
-            if(motionState.axes[l]){
-                motionState.axes[d] = motionState.axes[k] - motionState.axes[l];
-            }
-            motionState.axes[l] = motionState.axes[k];
-        });
-        this.checkDevice(motionState);
-    };
 }
 
 inherit(MotionInput, NetworkedInput);

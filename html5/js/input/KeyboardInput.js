@@ -29,31 +29,12 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-function KeyboardInput(commands, DOMElement, socket){
-    NetworkedInput.call(this, "keyboard", commands, socket, 0);
-    var keyState = { 
-        buttons: [],
-        axes: []
-    };
+function KeyboardInput(commands, socket, DOMElement){
+    NetworkedInput.call(this, "keyboard", commands, socket);
     
-    META.forEach(function(m){
-        keyState[m] = false;
-    });
-
     function execute(stateChange, event){
-        this.inPhysicalUse = true;
-        keyState.buttons[event.keyCode] = {
-            pressed: stateChange,
-            value: stateChange ? 1 : 0
-        };
-        META.forEach(function(m){
-            keyState[m] = event[m + "Key"];
-        });
+        this.setButton(event.keyCode, stateChange);
     }
-
-    this.update = function(){
-        this.checkDevice(keyState);
-    };
 
     DOMElement = DOMElement || document;
     DOMElement.addEventListener("keydown", execute.bind(this, true), false);

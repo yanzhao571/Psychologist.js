@@ -6,6 +6,58 @@
             gamepaddisconnected: []
         };
 
+    this.superUpdate = this.update;
+
+    this.checkDevice = function(pad){
+        pad.buttons.forEach(function(b, i){
+            this.setButton(i, b.pressed);
+        }.bind(this));
+        pad.axes.forEach(function(a, i){
+            this.setAxis(i, a);
+        }.bind(this));
+        this.superUpdate();
+    }
+    
+    this.update = function(){
+        var pads = null,
+            currentPads = null;
+
+        if(navigator.getGamepads){
+            pads = navigator.getGamepads();
+        }
+        else if(navigator.webkitGetGamepads){
+            pads = navigator.webkitGetGamepads();
+        }
+
+        if(pads){
+            pads = Array.prototype.filter.call(pads, function(pad){ return !!pad; });
+        }
+        else{
+            pads = [];
+        }
+
+        currentPads = []
+        
+        for(var i = 0; i < pads.length; ++i){
+            var pad = pads[i];
+            if(connectedGamepads.indexOf(pad.id) == -1){
+                connectedGamepads.push(pad.id);
+                onConnected(pad.id);
+            }
+            if(pad.id == gpid){
+                this.checkDevice(pad);
+            }
+            currentPads.push(pad.id);
+        }
+
+        for(var i = connectedGamepads.length - 1; i >= 0; --i){
+            if(currentPads.indexOf(connectedGamepads[i]) == -1){
+                onDisconnected(connectedGamepads[i]);
+                connectedGamepads.splice(i, 1);
+            }
+        }
+    };
+
     function add(arr, val){
         if(arr.indexOf(val) == -1){
             arr.push(val);
@@ -72,45 +124,6 @@
         }
     };
 
-    this.update = function(){
-        var pads = null,
-            currentPads = null;
-
-        if(navigator.getGamepads){
-            pads = navigator.getGamepads();
-        }
-        else if(navigator.webkitGetGamepads){
-            pads = navigator.webkitGetGamepads();
-        }
-
-        if(pads){
-            pads = Array.prototype.filter.call(pads, function(pad){ return !!pad; });
-        }
-        else{
-            pads = [];
-        }
-
-        currentPads = []
-        
-        for(var i = 0; i < pads.length; ++i){
-            var pad = pads[i];
-            if(connectedGamepads.indexOf(pad.id) == -1){
-                connectedGamepads.push(pad.id);
-                onConnected(pad.id);
-            }
-            if(pad.id == gpid){
-                this.checkDevice(pad);
-            }
-            currentPads.push(pad.id);
-        }
-
-        for(var i = connectedGamepads.length - 1; i >= 0; --i){
-            if(currentPads.indexOf(connectedGamepads[i]) == -1){
-                onDisconnected(connectedGamepads[i]);
-                connectedGamepads.splice(i, 1);
-            }
-        }
-    };
 
     try{
         this.update();
