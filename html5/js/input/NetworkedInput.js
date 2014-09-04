@@ -30,8 +30,17 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
-    offset = offset || 0;
+    var numAxes = 0;
+    if(typeof(deltaTrackedAxes) == "number"){
+        numAxes = deltaTrackedAxes;
+        deltaTrackedAxes = null;
+    }
+    else if(deltaTrackedAxes instanceof Array){
+        numAxes = deltaTrackedAxes.length;
+    }
+
     deltaTrackedAxes = deltaTrackedAxes || [];
+    offset = offset || 0;
 
     var commandState = {},
         deviceState = {
@@ -50,8 +59,6 @@ function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
             deviceState[m] = event[m + "Key"]; 
         }
     }
-
-    function maybeClone(arr){ return (arr && arr.slice()) || []; }
 
     function fireCommands(){
         for(var i = 0; i < commands.length; ++i){
@@ -92,10 +99,7 @@ function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
 
     this.setButton = function(index, pressed){
         inPhysicalUse = true;
-        deviceState.buttons[index] = {
-            pressed: pressed,
-            value: pressed ? 1 : 0
-        };
+        deviceState.buttons[index] = pressed;
     };    
 
     this.isDown = function(name){
@@ -133,29 +137,26 @@ function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
                 var metaKeysSet = true, pressed, value;
                 
                 for(var n = 0; n < cmd.metaKeys.length && metaKeysSet; ++n){
-                    var i = cmd.metaKeys[n];
-                    var sign = i > 0;
-                    i = Math.abs(i) - offset;
-                    metaKeysSet &= deviceState[metaKeys[i]] && !sign || !deviceState[metaKeys[i]] && sign;
+                    var m = cmd.metaKeys[n];
+                    metaKeysSet = metaKeysSet && (deviceState[metaKeys[m.index]] && m.toggle || !deviceState[metaKeys[m.index]] && !m.toggle);
                 }
 
                 commandState[cmd.name].pressed = pressed = metaKeysSet;
                 commandState[cmd.name].value = value = 0;
                 if(metaKeysSet){
-                    for(var n = 0; n < cmd.buttons.length && pressed; ++n){
-                        var i = cmd.buttons[n];
-                        sign = i < 0 ? true : false;
-                        i = Math.abs(i) - offset;
-                        var p = deviceState.buttons[i] && deviceState.buttons[i].pressed;
-                        pressed = pressed && (p && !sign || !p && sign);
+                    for(var n = 0; n < cmd.buttons.length; ++n){
+                        var b = cmd.buttons[n];
+                        var p = !!deviceState.buttons[b.index];
+                        var v = p ? b.sign : 0;
+                        pressed = pressed && (p && !b.toggle || !p && b.toggle);
+                        if(Math.abs(v) > Math.abs(value)){
+                            value = v;
+                        }
                     }
-                    commandState[cmd.name].pressed = pressed;
 
                     for(var n = 0; n < cmd.axes.length; ++n){
-                        var i = cmd.axes[n];
-                        sign = i < 0 ? -1 : 1;
-                        i = Math.abs(i) - offset;
-                        var v = sign * deviceState.axes[i];
+                        var a = cmd.axes[n];
+                        var v = a.sign * deviceState.axes[a.index];
                         if(cmd.deadzone && Math.abs(v) < cmd.deadzone){
                             v = 0;
                         }
@@ -163,19 +164,8 @@ function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
                             value = v;
                         }
                     }
-                    
-                    for(var n = 0; n < cmd.buttons.length; ++n){
-                        var i = cmd.buttons[n];
-                        sign = i < 0 ? -1 : 1;
-                        i = Math.abs(i) - offset;
-                        var v = sign * ((deviceState.buttons[i] && deviceState.buttons[i].value) || 0);
-                        if(cmd.deadzone && Math.abs(v) < cmd.deadzone){
-                            v = 0;
-                        }                      
-                        else if(Math.abs(v) > Math.abs(value)){
-                            value = v;
-                        }
-                    }                    
+
+                    commandState[cmd.name].pressed = pressed;                
                     commandState[cmd.name].value = value;
                 }
             }
@@ -191,6 +181,16 @@ function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
         }
     };   
     
+
+    function maybeClone(arr){ 
+        return ((arr && arr.slice()) || []).map(function(i){
+            return {
+                index: Math.abs(i) - offset,
+                toggle: i < 0,
+                sign: (i < 0) ? -1: 1
+            }
+        }); 
+    }
 
     // clone the arrays, so the consumer can't add elements to it in their own code.
     commands = commands.map(function(cmd){
@@ -222,6 +222,8 @@ function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
         return newCmd;
     });
 
+    console.log(name, commands);
+
     if(socket){
         socket.on(name, function(cmdState){
             commandState = cmdState
@@ -237,8 +239,11 @@ function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
         });
     }
 
+    for(var i = 0; i < numAxes; ++i){
+        deviceState.axes[i] = 0;
+    }
+
     metaKeys.forEach(function(v){ deviceState[v] = false; });
-    axisNames.forEach(function(v, i){ deviceState.axes[i] = 0; });
     window.addEventListener("keydown", readMetaKeys, false);
     window.addEventListener("keyup", readMetaKeys, false);
 }
