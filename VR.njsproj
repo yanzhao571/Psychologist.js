@@ -32,6 +32,7 @@
   <ItemGroup>
     <Compile Include="html5\js\controllers\gamepad.js" />
     <Compile Include="html5\js\controllers\motion.js" />
+    <Compile Include="html5\js\controllers\touch.js" />
     <Compile Include="html5\js\input\TouchInput.js" />
     <Compile Include="html5\js\input\NetworkedInput.js" />
     <Compile Include="html5\js\input\GamepadInput.js" />
@@ -68,6 +69,7 @@
     <Content Include="html5\gamepad.html" />
     <Content Include="html5\ico\fs.png" />
     <Content Include="html5\img\grass.png" />
+    <Content Include="html5\touch.html" />
     <Content Include="html5\mouse.html" />
     <Content Include="html5\music\game1.ogg" />
     <Content Include="html5\music\menu.mp3" />
