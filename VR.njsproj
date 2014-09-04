@@ -82,9 +82,9 @@
     <Content Include="html5\img\reticle.png" />
     <Content Include="html5\cam3d.html" />
     <Content Include="html5\css\style.css" />
+    <Content Include="LICENSE.md" />
     <Content Include="package.json" />
     <Content Include="README.md" />
-    <Content Include="src\README.md" />
     <Content Include="src\templates\master.html" />
   </ItemGroup>
   <ItemGroup>
