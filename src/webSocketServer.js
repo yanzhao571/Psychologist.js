@@ -6,7 +6,7 @@ function proxyCommand(key, there, command, commandState){
     }
 }
 
-var types = ["gamepad", "keyboard", "mouse", "motion", "speech"];
+var types = ["gamepad", "keyboard", "mouse", "motion", "touch", "speech"];
 
 module.exports = function (socket) {
     socket.on("key", function (key) {

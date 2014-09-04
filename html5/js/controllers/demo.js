@@ -12,6 +12,7 @@ include(
     "js/input/KeyboardInput.js",
     "js/input/MotionInput.js",
     "js/input/MouseInput.js",
+    "js/input/TouchInput.js",
     "js/camera.js",
 function(){
     var MAP_WIDTH = 50, MAP_HEIGHT = 50, SCALE = 1, BG_COLOR = 0xafbfff, 
@@ -54,6 +55,7 @@ function(){
         keyboard.update();
         mouse.update();
         gamepad.update();
+        touch.update();
 
         vcy -= dt * SPEED;
         var x = Math.floor(camera.position.x/SCALE) + MAP_WIDTH / 2;
@@ -73,7 +75,7 @@ function(){
 
         if(onground){
             tx = keyboard.getValue("strafeRight") + keyboard.getValue("strafeLeft") + gamepad.getValue("strafe");
-            tz = keyboard.getValue("driveBack") + keyboard.getValue("driveForward") + gamepad.getValue("drive");
+            tz = keyboard.getValue("driveBack") + keyboard.getValue("driveForward") + gamepad.getValue("drive") + touch.getValue("drive");
             if(tx != 0 || tz != 0){
                 len = SPEED / Math.sqrt(tz * tz + tx * tx);
             }
@@ -90,7 +92,8 @@ function(){
         }
 
         heading += (gamepad.getValue("yaw") 
-            + mouse.getValue("yaw")) * dt 
+            + mouse.getValue("yaw")
+            + touch.getValue("yaw")) * dt 
             + motion.getValue("yaw");
         pitch += (gamepad.getValue("pitch") 
             + mouse.getValue("pitch") ) * dt
@@ -237,6 +240,11 @@ function(){
         { name: "pitch", axes: [5] },
         { name: "fire", buttons: [1], commandDown: fire, dt: 125 },
         { name: "jump", buttons: [2], commandDown: jump, dt: 250 },
+    ], socket, renderer.domElement);
+
+    touch = new TouchInput(1, [], [
+        { name: "yaw", axes: [-3] },
+        { name: "drive", axes: [4] },
     ], socket, renderer.domElement);
 
     keyboard = new KeyboardInput([
