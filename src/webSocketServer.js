@@ -6,21 +6,23 @@ function proxyCommand(key, there, command, commandState){
     }
 }
 
-var types = ["gamepad", "keyboard", "mouse", "motion", "touch", "speech"];
+var types = ["gamepad", "keyboard", "mouse", "touch", "motion", "speech"];
 
 module.exports = function (socket) {
     socket.on("key", function (key) {
-        var here, there;
+        var here, there, pair;
         
         if(!pairs[key]){
             pairs[key] = {};
         }
 
-        if(!pairs[key].left){
+        pair = pairs[key];
+
+        if(!pair.left){
             here = "left";
             there = "right";
         }
-        else if(!pairs[key].right){
+        else if(!pair.right){
             here = "right";
             there = "left";
         }
@@ -29,19 +31,26 @@ module.exports = function (socket) {
         }
 
         if(here && there){
-            pairs[key][here] = socket;
+            pair[here] = socket;
 
             types.forEach(function(t){
                 socket.on(t, proxyCommand.bind(socket, key, there, t));
             });
 
             socket.on("disconnect", function(){
-                delete pairs[key][here];
-                if(!pairs[key][there]){
+                delete pair[here];
+                if(pair[there]){
+                    pair[there].emit("close");
+                }
+                else{
                     delete pairs[key];
+                    pair = null;
                 }
             });
             socket.emit("good", here);
+            if(pair[there]){
+                pair[there].emit("open");
+            }
         }
     });
 }

@@ -227,6 +227,14 @@ function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
             commandState = cmdState
             fireCommands();
         });
+        socket.on("close", function(){
+            // will force the local event loop to take over and cancel out any lingering command activity
+            inPhysicalUse = true;
+        });
+        socket.on("open", function(){
+            // local input activity could override this, but that is fine.
+            inPhysicalUse = false;
+        });
     }
 
     metaKeys.forEach(function(v){ deviceState[v] = false; });
