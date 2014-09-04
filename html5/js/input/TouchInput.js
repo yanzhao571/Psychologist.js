@@ -1,4 +1,4 @@
-﻿function TouchInput(numFingers, buttonBounds, commands, socket){
+﻿function TouchInput(numFingers, buttonBounds, commands, socket, DOMElement){
     var axes = [], last = [];
     for(var i = 0; i < numFingers; ++i){
         axes.push("x" + i);
@@ -44,9 +44,9 @@
         event.preventDefault();
     }
 
-    window.addEventListener("touchstart", setState.bind(this, true, false), false);
-    window.addEventListener("touchend", setState.bind(this, false, true), false);
-    window.addEventListener("touchmove", setState.bind(this, true, true), false);
+    DOMElement.addEventListener("touchstart", setState.bind(this, true, false), false);
+    DOMElement.addEventListener("touchend", setState.bind(this, false, true), false);
+    DOMElement.addEventListener("touchmove", setState.bind(this, true, true), false);
 }
 
 inherit(TouchInput, NetworkedInput);
