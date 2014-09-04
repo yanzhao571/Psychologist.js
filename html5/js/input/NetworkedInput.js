@@ -222,8 +222,6 @@ function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
         return newCmd;
     });
 
-    console.log(name, commands);
-
     if(socket){
         socket.on(name, function(cmdState){
             commandState = cmdState
