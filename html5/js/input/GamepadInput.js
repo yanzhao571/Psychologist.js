@@ -1,5 +1,5 @@
 ﻿function GamepadInput(commands, socket, gpid){
-    NetworkedInput.call(this, "gamepad", commands, socket, 1);
+    NetworkedInput.call(this, "gamepad", commands, socket, 1, 6);
     var connectedGamepads = [],
         listeners = {
             gamepadconnected: [],
