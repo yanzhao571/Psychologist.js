@@ -30,7 +30,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 function KeyboardInput(commands, socket, DOMElement){
-    NetworkedInput.call(this, "keyboard", commands, socket);
+    NetworkedInput.call(this, "keyboard", commands, socket, 0, 0);
     
     function execute(stateChange, event){
         this.setButton(event.keyCode, stateChange);
