@@ -1,5 +1,6 @@
 ﻿include(0,
     "js/psychologist.js",
+    "js/input/NetworkedInput.js",
     "js/input/MotionInput.js",
 //    "test/MotionInput.js",
     function() {

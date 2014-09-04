@@ -1,4 +1,8 @@
-﻿function controllerTest() {
+﻿include(0,
+    "js/psychologist.js",
+    "js/input/NetworkedInput.js",
+    "js/input/GamepadInput.js",
+    function () {
     "use strict";
     var output = document.getElementById("output"),
         frame = 0,
@@ -56,4 +60,4 @@
     }
 
     requestAnimationFrame(loop);
-}
+});

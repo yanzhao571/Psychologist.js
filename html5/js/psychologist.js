@@ -198,13 +198,13 @@ MediaStreamTrack.getVideoTracks =
         return success([]);
 };
 
-function findEverything(){
-    return arr(document.querySelectorAll("*")).filter(function(elem){
+function findEverything(elem, obj){
+    return arr(elem.querySelectorAll("*")).filter(function(elem){
         return elem.hasOwnProperty("id") && elem.id.length > 0;
     }).reduce(function(obj, elem){
         obj[elem.id] = elem;
         return obj;
-    }, {});
+    }, obj);
 }
 // full-screen-ism polyfill
 if (!document.documentElement.requestFullscreen){
