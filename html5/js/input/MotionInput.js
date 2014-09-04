@@ -294,9 +294,10 @@ function MotionInput(commands, socket){
     NetworkedInput.call(this, "motion", commands, socket, 1, axes);
 
     LandscapeMotion.addEventListener("deviceorientation", function (evt) {
-        axes.forEach(function(k){
+        for(var i = 0; i < axes.length; ++i){
+            var k = axes[i];
             this.setAxis(k, evt[k]);
-        }.bind(this));
+        }
     }.bind(this));
 }
 

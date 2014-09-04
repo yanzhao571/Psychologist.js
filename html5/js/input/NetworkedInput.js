@@ -44,11 +44,18 @@ function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
             .concat(deltaTrackedAxes.map(function(v){return "l" + v;})),
         inPhysicalUse = false;
     
-    function readMetaKeys(event){ metaKeys.forEach(function(m){ deviceState[m] = event[m + "Key"]; }); }
+    function readMetaKeys(event){ 
+        for(var i = 0; i < metaKeys.length; ++i){
+            var m = metaKeys[i];
+            deviceState[m] = event[m + "Key"]; 
+        }
+    }
+
     function maybeClone(arr){ return (arr && arr.slice()) || []; }
 
     function fireCommands(){
-        commands.forEach(function(cmd){
+        for(var i = 0; i < commands.length; ++i){
+            var cmd = commands[i];
             if(cmd.commandDown && commandState[cmd.name].pressed && commandState[cmd.name].fireAgain){
                 cmd.commandDown();
                 commandState[cmd.name].lt = Date.now();
@@ -57,24 +64,31 @@ function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
             if(cmd.commandUp && !commandState[cmd.name].pressed && commandState[cmd.name].wasPressed){
                 cmd.commandUp();
             }
-        });
+        }
     }
 
-    this.setAxis = function(index, value){
-        inPhysicalUse = true;
-        if(typeof(index) == "string"){
-            index = axisNames.indexOf(index)
-        }
-        deviceState.axes[index] = value;
-    };
+    if(deltaTrackedAxes.length > 0){
+        this.setAxis = function(name, value){
+            inPhysicalUse = true;
+            deviceState.axes[axisNames.indexOf(name)] = value;
+        };
 
-    this.incAxis = function(index, value){
-        inPhysicalUse = true;
-        if(typeof(index) == "string"){
-            index = axisNames.indexOf(index)
-        }
-        deviceState.axes[index] += value;
-    };
+        this.incAxis = function(name, value){
+            inPhysicalUse = true;
+            deviceState.axes[axisNames.indexOf(name)] += value;
+        };
+    }
+    else{
+        this.setAxis = function(index, value){
+            inPhysicalUse = true;
+            deviceState.axes[index] = value;
+        };
+
+        this.incAxis = function(index, value){
+            inPhysicalUse = true;
+            deviceState.axes[index] += value;
+        };
+    }
 
     this.setButton = function(index, pressed){
         inPhysicalUse = true;
@@ -103,17 +117,17 @@ function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
                 prevState = JSON.stringify(commandState);
             }
 
-            deltaTrackedAxes.forEach(function(k){
-                var l = axisNames.indexOf("l" + k);
-                var d = axisNames.indexOf("d" + k);
-                k = axisNames.indexOf(k);
+            for(var i = 0; i < deltaTrackedAxes.length; ++i){
+                var d = i + deltaTrackedAxes.length;
+                var l = i + deltaTrackedAxes.length * 2;
                 if(deviceState.axes[l]){
-                    deviceState.axes[d] = deviceState.axes[k] - deviceState.axes[l];
+                    deviceState.axes[d] = deviceState.axes[i] - deviceState.axes[l];
                 }
-                deviceState.axes[l] = deviceState.axes[k];
-            });
-
-            commands.forEach(function(cmd){
+                deviceState.axes[l] = deviceState.axes[i];
+            }
+            
+            for(var c = 0; c < commands.length; ++c){
+                var cmd = commands[c];
                 commandState[cmd.name].wasPressed = commandState[cmd.name].pressed;
                 commandState[cmd.name].fireAgain = (t - commandState[cmd.name].lt) >= cmd.dt;
                 var metaKeysSet = true, pressed, value;
@@ -164,7 +178,7 @@ function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
                     }                    
                     commandState[cmd.name].value = value;
                 }
-            });
+            }
 
             if(socket){
                 finalState = JSON.stringify(commandState);

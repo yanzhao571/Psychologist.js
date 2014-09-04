@@ -29,6 +29,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 function MouseInput(commands, socket, DOMElement){
+    DOMElement = DOMElement || document.documentElement;
     NetworkedInput.call(this, "mouse", commands, socket, 1, ["x", "y", "z"]);
 
     this.setLocation = function(x, y){
@@ -42,7 +43,7 @@ function MouseInput(commands, socket, DOMElement){
     }
 
     this.readEvent = function(event){
-        if(isLocked()){
+        if(this.isPointerLocked()){
             this.setMovement(
                 event.webkitMovementX || event.mozMovementX || event.movementX || 0,
                 event.webkitMovementY || event.mozMovementY || event.movementY || 0);
@@ -52,27 +53,27 @@ function MouseInput(commands, socket, DOMElement){
         }
     }
 
-    window.addEventListener("mousedown", function(event){
+    DOMElement.addEventListener("mousedown", function(event){
         this.setButton(event.button, true);
         this.readEvent(event);
     }.bind(this), false);
 
-    window.addEventListener("mouseup", function(event){
+    DOMElement.addEventListener("mouseup", function(event){
         this.setButton(event.button, false);
         this.readEvent(event);
     }.bind(this), false);
 
-    window.addEventListener("mousemove", this.readEvent.bind(this), false);
+    DOMElement.addEventListener("mousemove", this.readEvent.bind(this), false);
 
-    window.addEventListener("mousewheel", function(event){
+    DOMElement.addEventListener("mousewheel", function(event){
         this.incAxis("z", event.wheelDelta);
         this.readEvent(event);
     }.bind(this), false);
 
 
     var listeners = {
-            pointerlockchanged: []
-        };
+        pointerlockchanged: []
+    };
 
     this.addEventListener = function(event, handler, bubbles){
         if(event == "pointerlockchange"){
@@ -90,7 +91,6 @@ function MouseInput(commands, socket, DOMElement){
         }
     };
     
-    DOMElement = DOMElement || document.documentElement;
     DOMElement.requestPointerLock = DOMElement.requestPointerLock
         || DOMElement.webkitRequestPointerLock
         || DOMElement.mozRequestPointerLock;
@@ -107,13 +107,11 @@ function MouseInput(commands, socket, DOMElement){
 
     this.exitPointerLock = document.exitPointerLock.bind(document);
 
-    function isLocked(){
+    this.isPointerLocked = function (){
         return document.pointerLockElement === DOMElement
             || document.webkitPointerLockElement === DOMElement
             || document.mozPointerLockElement === DOMElement;
-    };
-
-    this.isPointerLocked = isLocked;
+    };;
 }
 
 inherit(MouseInput, NetworkedInput);

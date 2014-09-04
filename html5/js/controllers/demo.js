@@ -237,7 +237,7 @@ function(){
         { name: "pitch", axes: [5] },
         { name: "fire", buttons: [1], commandDown: fire, dt: 125 },
         { name: "jump", buttons: [2], commandDown: jump, dt: 250 },
-    ], socket);
+    ], socket, renderer.domElement);
 
     keyboard = new KeyboardInput([
         { name: "strafeLeft", buttons: [-65] },

@@ -1,4 +1,4 @@
-﻿function GamepadInput(commands, gpid, socket){
+﻿function GamepadInput(commands, socket, gpid){
     NetworkedInput.call(this, "gamepad", commands, socket, 1);
     var connectedGamepads = [],
         listeners = {
@@ -9,18 +9,18 @@
     this.superUpdate = this.update;
 
     this.checkDevice = function(pad){
-        pad.buttons.forEach(function(b, i){
-            this.setButton(i, b.pressed);
-        }.bind(this));
-        pad.axes.forEach(function(a, i){
-            this.setAxis(i, a);
-        }.bind(this));
+        for(var i = 0; i < pad.buttons.length; ++i){
+            this.setButton(i, pad.buttons[i].pressed);
+        }
+        for(var i = 0; i < pad.axes.length; ++i){
+            this.setAxis(i, pad.axes[i]);
+        }
         this.superUpdate();
     }
     
     this.update = function(){
-        var pads = null,
-            currentPads = null;
+        var pads,
+            currentPads = [];
 
         if(navigator.getGamepads){
             pads = navigator.getGamepads();
@@ -28,26 +28,21 @@
         else if(navigator.webkitGetGamepads){
             pads = navigator.webkitGetGamepads();
         }
-
-        if(pads){
-            pads = Array.prototype.filter.call(pads, function(pad){ return !!pad; });
-        }
-        else{
-            pads = [];
-        }
-
-        currentPads = []
         
-        for(var i = 0; i < pads.length; ++i){
-            var pad = pads[i];
-            if(connectedGamepads.indexOf(pad.id) == -1){
-                connectedGamepads.push(pad.id);
-                onConnected(pad.id);
+        if(pads){
+            for(var i = 0; i < pads.length; ++i){
+                var pad = pads[i];
+                if(pad){
+                    if(connectedGamepads.indexOf(pad.id) == -1){
+                        connectedGamepads.push(pad.id);
+                        onConnected(pad.id);
+                    }
+                    if(pad.id == gpid){
+                        this.checkDevice(pad);
+                    }
+                    currentPads.push(pad.id);
+                }
             }
-            if(pad.id == gpid){
-                this.checkDevice(pad);
-            }
-            currentPads.push(pad.id);
         }
 
         for(var i = connectedGamepads.length - 1; i >= 0; --i){
@@ -72,7 +67,9 @@
     }
 
     function sendAll(arr, id){
-        arr.forEach(function(f){ f(id); });
+        for(var i = 0; i < arr.length; ++i){
+            arr[i](id);
+        }
     }
 
     function onConnected(id){
