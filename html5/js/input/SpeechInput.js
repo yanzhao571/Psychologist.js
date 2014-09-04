@@ -76,7 +76,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
             null if setup was successful.
 
 */
-function SpeechInput(commands, stopAfterEnd, socket){
+function SpeechInput(commands, socket, stopAfterEnd){
     var command = "",
         commandTimeout,
         running = false,
@@ -92,7 +92,7 @@ function SpeechInput(commands, stopAfterEnd, socket){
     }
 
     this.start = function(){
-        if(!avialable){
+        if(!available){
             return warn();
         }
         else if(!running){

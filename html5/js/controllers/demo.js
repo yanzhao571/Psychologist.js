@@ -40,10 +40,15 @@ function(){
             "max reconnection attempts": 60
         });
         socket.on("bad", function(){
-            alert("Key already in use!");
+            alert("Key already in use! You're going to have to reload the page if you want to try again. Sorry. Try not to pick such a stupid key next time.");
         });
         socket.on("good", function(side){
-            console.log("You are on the " + side);
+            if(side == "left"){
+                alert("After you close this dialog, the demo will be waiting for a paired device.");
+            }
+            else{
+                alert("This demo has been paired with another device now. If this is your first time entering your key, it means you've chosen a key someone else is already using, in which case you should reload the page and try another, less stupid key.");
+            }
         });
         socket.emit("key", key);
     }
@@ -269,6 +274,14 @@ function(){
         { name: "jump", buttons: [1], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [2], commandDown: fire, dt: 125 },
     ], socket);
+
+    speech = new SpeechInput([
+        { keywords: ["jump"], command: jump }
+    ], socket);
+
+    if(confirm("Use speech?")){
+        speech.start();
+    }
 
     gamepad.addEventListener("gamepadconnected", function (id) {
         if (!gamepad.isGamepadSet() 
