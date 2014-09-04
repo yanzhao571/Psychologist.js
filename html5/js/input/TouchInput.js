@@ -28,7 +28,7 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
 OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-function TouchInput(numFingers, buttonBounds, commands, socket, DOMElement){
+function TouchInput(numFingers, buttonBounds, commands, socket){
     var axes = [], last = [];
     for(var i = 0; i < numFingers; ++i){
         axes.push("x" + i);
@@ -48,34 +48,35 @@ function TouchInput(numFingers, buttonBounds, commands, socket, DOMElement){
             b.y2 = b.y + b.h;
         }
     }
-    DOMElement = DOMElement || document.documentElement;
+
     NetworkedInput.call(this, "touch", commands, socket, 1, axes);
 
-    setState = function(stateChange, setAxis, event){
-        for(var i = 0; i < event.targetTouches.length && i < numFingers; ++i){
-            var t = event.targetTouches[i];
-            for(var j = 0; j < buttonBounds.length; ++b){
-                var b = buttonBounds[j];
-                if(    b.x <= t.pageX && t.pageX < b.x2
-                    && b.y <= t.pageY && t.pageY < b.y2){
-                    this.setButton(j, stateChange);
-                }
-                else if(stateChange){
-                    this.setButton(j, false);
-                }
-            }
+    function setState (stateChange, setAxis, event){
+        var touches = stateChange ? event.touches : event.changedTouches;
+        for(var i = 0; i < touches.length && i < numFingers; ++i){
+            var t = touches[i];
             if(setAxis){
-                this.incAxis("x" + i, last[i].pageX - t.pageX);
-                this.incAxis("y" + i, last[i].pageY - t.pageY);
+                for(var j = 0; j < buttonBounds.length; ++j){
+                    this.setButton(j, false);
+                    var b = buttonBounds[j];
+                    if(b.x <= t.pageX && t.pageX < b.x2
+                        && b.y <= t.pageY && t.pageY < b.y2){
+                        this.setButton(j, stateChange);
+                    }
+                }
+                if(last[t.identifier]){
+                    this.incAxis("x" + i, last[t.identifier].pageX - t.pageX);
+                    this.incAxis("y" + i, last[t.identifier].pageY - t.pageY);
+                }
             }
-            last[i] = t;
+            last[t.identifier] = t;
         }
         event.preventDefault();
     }
 
-    DOMElement.addEventListener("touchstart", setState.bind(this, true, false), false);
-    DOMElement.addEventListener("touchend", setState.bind(this, false, true), false);
-    DOMElement.addEventListener("touchmove", setState.bind(this, true, true), false);
+    window.addEventListener("touchstart", setState.bind(this, true, false), false);
+    window.addEventListener("touchend", setState.bind(this, false, true), false);
+    window.addEventListener("touchmove", setState.bind(this, true, true), false);
 }
 
 inherit(TouchInput, NetworkedInput);
