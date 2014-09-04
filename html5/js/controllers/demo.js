@@ -27,6 +27,7 @@ function(){
         fps, dt, clock, heightmap,
         fullScreenButton = document.getElementById("fullScreenButton"),
         options = document.getElementById("options"),
+        github = document.getElementById("github"),
         buttonsTimeout = null,
         buttonsVisible = true,
         key = prompt("Enter a key. Make it good."),
@@ -162,6 +163,7 @@ function(){
 
     function setButtons() {
         options.style.opacity = buttonsVisible ? 1 : 0;
+        github.style.opacity = buttonsVisible ? 1 : 0;
         if (buttonsVisible) {
             hideButtonsLater();
         }
