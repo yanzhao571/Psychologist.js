@@ -7,9 +7,15 @@ var fs = require("fs"),
 function serverError(res, code) {
     var rest = Array.prototype.slice.call(arguments, 2),
         msg = rest.length == 0 ? "" : core.fmt(" -> [$1]", rest.join("], ["));
-    res.writeHead(500);
-    console.log("Error", rest);
-    res.end("Error" + msg);
+    res.writeHead(code);
+    if(code >= 500){
+        console.error("Error", rest);
+        res.end("Error" + msg);
+    }
+    else{
+        console.warn("Warning", rest);
+        res.end("Warning" + msg);
+    }
 }
 
 function matchController(res, url, method) {
