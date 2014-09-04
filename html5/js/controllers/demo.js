@@ -6,7 +6,7 @@ include(
     "lib/three/ColladaLoader.js",
     "/socket.io/socket.io.js",
     "js/psychologist.js",
-    "js/input/Input.js",
+    "js/input/NetworkedInput.js",
     "js/input/SpeechInput.js",
     "js/input/GamepadInput.js",
     "js/input/KeyboardInput.js",

@@ -30,7 +30,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 function KeyboardInput(commands, DOMElement, socket){
-    Input.call(this, "keyboard", commands, socket, 0);
+    NetworkedInput.call(this, "keyboard", commands, socket, 0);
     var keyState = { 
         buttons: [],
         axes: []
@@ -60,4 +60,4 @@ function KeyboardInput(commands, DOMElement, socket){
     DOMElement.addEventListener("keyup", execute.bind(this, false), false);
 }
 
-inherit(KeyboardInput, Input);
+inherit(KeyboardInput, NetworkedInput);

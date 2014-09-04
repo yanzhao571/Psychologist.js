@@ -1,5 +1,5 @@
 ﻿function GamepadInput(commands, gpid, socket){
-    Input.call(this, "gamepad", commands, socket, 1);
+    NetworkedInput.call(this, "gamepad", commands, socket, 1);
     var connectedGamepads = [],
         listeners = {
             gamepadconnected: [],
@@ -122,4 +122,4 @@
     }
 }
 
-inherit(GamepadInput, Input);
+inherit(GamepadInput, NetworkedInput);

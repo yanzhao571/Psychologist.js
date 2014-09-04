@@ -247,6 +247,7 @@ var LandscapeMotion = {
             o, a;
 
         function onChange(){
+            console.log("boo");
             o = corrector.getOrientation();
             a = corrector.getAcceleration();
             if(o && a){
@@ -266,7 +267,7 @@ var LandscapeMotion = {
         }
 
         function checkOrientation(event) {
-            corrector.setOrientation((!!event && event.alpha !== null && event) || LandscapeMotion.ZERO_EULER);
+            corrector.setOrientation(event.alpha !== null && event);
             onChange();
         }
 
@@ -277,15 +278,12 @@ var LandscapeMotion = {
             else if(event && event.acceleration && event.acceleration.x){
                 corrector.setAcceleration(event.acceleration);
             }
-            else{
-                corrector.setAcceleration(LandscapeMotion.ZERO_VECTOR);
-            }
 
             onChange();
         }
-
-        checkMotion();
-        checkOrientation();
+        
+        corrector.setAcceleration(LandscapeMotion.ZERO_VECTOR);
+        corrector.setOrientation(LandscapeMotion.ZERO_EULER);
 
         window.addEventListener("deviceorientation", checkOrientation, bubbles);
         window.addEventListener("devicemotion", checkMotion, bubbles);
@@ -293,25 +291,24 @@ var LandscapeMotion = {
 }
 
 function MotionInput(commands, socket){
+    NetworkedInput.call(this, "motion", commands, socket, 1);
     var motionState = {
-        heading: 0, pitch: 0, roll: 0,
-        accelx: 0, accely: 0, accelz: 0,
-        dheading: 0, dpitch: 0, droll: 0,
-        daccelx: 0, daccely: 0, daccelz: 0,
-        lheading: 0, lpitch: 0, lroll: 0,
-        laccelx: 0, laccely: 0, laccelz: 0,
+        buttons:[],
+        axes:[],
         alt: false, ctrl: false, meta: false, shift: false
     }, 
         commandState = {}, i, n,
         BASE = ["heading", "pitch", "roll", "accelx", "accely", "accelz"]
-        META = ["ctrl", "shift", "alt", "meta"],
         AXES = BASE.concat(BASE.map(function(v){return "d" + v;})).concat(BASE.map(function(v){return "l" + v;}));
 
+    AXES.forEach(function(v, i){ motionState.axes[i] = 0; });
+
     LandscapeMotion.addEventListener("deviceorientation", function (evt) {
+        this.inPhysicalUse = true;
         BASE.forEach(function(k){
-            motionState[k] = evt[k];
+            motionState.axes[BASE.indexOf(k)] = evt[k];
         });
-    });
+    }.bind(this));
     
     function readMeta(event){
         META.forEach(function(m){
@@ -325,40 +322,16 @@ function MotionInput(commands, socket){
 
     this.update = function(){
         BASE.forEach(function(k){
-            if(motionState["l" + k]){
-                motionState["d" + k] = motionState[k] - motionState["l" + k];
+            var l = AXES.indexOf("l" + k);
+            var d = AXES.indexOf("d" + k);
+            k = AXES.indexOf(k);
+            if(motionState.axes[l]){
+                motionState.axes[d] = motionState.axes[k] - motionState.axes[l];
             }
-            motionState["l" + k] = motionState[k];
+            motionState.axes[l] = motionState.axes[k];
         });
-        commands.forEach(function(cmd){
-            commandState[cmd.name] = cmd.axes.map(function(i){
-                var sign = i < 0 ? -1 : 1;
-                i = Math.abs(i) - 1;
-                return sign * motionState[AXES[i]];
-            }).concat(cmd.meta.map(function(i){
-                var sign = i < 0 ? -1 : 1;
-                i = Math.abs(i) - 1;
-                return motionState[META[i]] ? sign : 0;
-            })).reduce(function(a, b){ return a * b; }, 1);
-        });
+        this.checkDevice(motionState);
     };
-
-    this.getValue = function(name){
-        return commandState[name];
-    };
-    
-
-    function maybeClone(arr){
-        return (arr && arr.slice()) || [];
-    }
-
-    // clone the arrays, so the consumer can't add elements to it in their own code.
-    commands = commands.map(function(cmd){
-        commandState[cmd.name] = 0;
-        return {
-            name: cmd.name,
-            axes: maybeClone(cmd.axes),
-            meta: maybeClone(cmd.meta)
-        };
-    });
 }
+
+inherit(MotionInput, NetworkedInput);

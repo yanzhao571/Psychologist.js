@@ -30,7 +30,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 var META = ["ctrl", "shift", "alt", "meta"];
-function Input(name, commands, socket, offset){
+function NetworkedInput(name, commands, socket, offset){
     var commandState = {};
     this.inPhysicalUse = false;
     offset = offset || 0;
@@ -173,5 +173,5 @@ function Input(name, commands, socket, offset){
 }
 
 META.forEach(function(m, i){
-    Input[m] = i;
+    NetworkedInput[m] = i;
 });

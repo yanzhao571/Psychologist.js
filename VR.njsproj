@@ -32,7 +32,7 @@
   <ItemGroup>
     <Compile Include="html5\js\controllers\gamepad.js" />
     <Compile Include="html5\js\controllers\motion.js" />
-    <Compile Include="html5\js\input\Input.js" />
+    <Compile Include="html5\js\input\NetworkedInput.js" />
     <Compile Include="html5\js\input\GamepadInput.js" />
     <Compile Include="html5\lib\Blob.min.js" />
     <Compile Include="html5\lib\canvas-toBlob.min.js" />
@@ -56,7 +56,6 @@
     <Compile Include="html5\js\controllers\cam3d.js" />
     <Compile Include="html5\test\testing.js" />
     <Compile Include="html5\test\MotionInput.js" />
-    <Compile Include="minify.js" />
     <Compile Include="server.js" />
     <Compile Include="src\controllers.js" />
     <Compile Include="src\controllers\listRoot.js" />

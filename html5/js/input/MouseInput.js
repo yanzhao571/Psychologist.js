@@ -29,7 +29,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 function MouseInput(commands, DOMelement, socket){
-    Input.call(this, "mouse", commands, socket, 1);
+    NetworkedInput.call(this, "mouse", commands, socket, 1);
     DOMelement = DOMelement || document.documentElement;
     var mouseState = {
             buttons: [{pressed: false, value: 0},{pressed: false, value: 0},{pressed: false, value: 0}],
@@ -43,6 +43,19 @@ function MouseInput(commands, DOMelement, socket){
         };
 
     AXES.forEach(function(v, i){ mouseState.axes[i] = 0; });
+
+    this.update = function(){
+        BASE.forEach(function(k){
+            var l = AXES.indexOf("l" + k);
+            var d = AXES.indexOf("d" + k);
+            k = AXES.indexOf(k);
+            if(mouseState.axes[l]){
+                mouseState.axes[d] = mouseState.axes[k] - mouseState.axes[l];
+            }
+            mouseState.axes[l] = mouseState.axes[k];
+        });
+        this.checkDevice(mouseState);
+    };
     
     this.addEventListener = function(event, handler, bubbles){
         if(event == "pointerlockchange"){
@@ -83,19 +96,6 @@ function MouseInput(commands, DOMelement, socket){
     };
 
     this.isPointerLocked = isLocked;
-
-    this.update = function(){
-        BASE.forEach(function(k){
-            var l = AXES.indexOf("l" + k);
-            var d = AXES.indexOf("d" + k);
-            k = AXES.indexOf(k);
-            if(mouseState.axes[l]){
-                mouseState.axes[d] = mouseState.axes[k] - mouseState.axes[l];
-            }
-            mouseState.axes[l] = mouseState.axes[k];
-        });
-        this.checkDevice(mouseState);
-    };
 
     function setLocation(x, y){
         mouseState.axes[0] = x;
@@ -156,4 +156,4 @@ function MouseInput(commands, DOMelement, socket){
     }.bind(this), false);
 }
 
-inherit(MouseInput, Input);
+inherit(MouseInput, NetworkedInput);

@@ -76,7 +76,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
             null if setup was successful.
 
 */
-function SpeechInput(commands, stopAfterEnd){
+function SpeechInput(commands, stopAfterEnd, socket){
     var command = "",
         commandTimeout,
         running = false,
@@ -122,6 +122,25 @@ function SpeechInput(commands, stopAfterEnd){
     this.getErrorMessage = function(){
         return errorMessage;
     };
+
+    function executeCommand(command){
+        var candidates = commands.filter(function(cmd){ 
+            return cmd 
+                && cmd.keywords 
+                && cmd.keywords.indexOf 
+                && cmd.keywords.indexOf(command) > -1;
+        });
+        if(candidates.length == 0){
+            console.log("Unknown command: " + command);
+        }
+        else{
+            candidates[0].command();
+        }
+    }
+
+    if(socket){
+        socket.on("speech", executeCommand);
+    }
 
     // clone the arrays, so the consumer can't add elements to it in their own code.
     commands = commands.slice();
@@ -173,12 +192,9 @@ function SpeechInput(commands, stopAfterEnd){
 
             if(newCommand != command){
                 command = newCommand;
-                var candidates = commands.filter(function(cmd){ return cmd && cmd.keywords && cmd.keywords.indexOf && cmd.keywords.indexOf(command) > -1;});
-                if(candidates.length == 0){
-                    console.log("Unknown command: " + command);
-                }
-                else{
-                    candidates[0].command();
+                executeCommand(command);
+                if(socket){
+                    socket.emit("speech", command);
                 }
             }
 
