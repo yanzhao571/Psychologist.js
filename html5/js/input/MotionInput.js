@@ -247,7 +247,6 @@ var LandscapeMotion = {
             o, a;
 
         function onChange(){
-            console.log("boo");
             o = corrector.getOrientation();
             a = corrector.getAcceleration();
             if(o && a){
