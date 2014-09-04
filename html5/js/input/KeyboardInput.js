@@ -1,4 +1,18 @@
-﻿/*
+﻿function KeyboardInput(commands, socket, DOMElement){
+    NetworkedInput.call(this, "keyboard", commands, socket, 0, 0);
+    
+    function execute(stateChange, event){
+        this.setButton(event.keyCode, stateChange);
+    }
+
+    DOMElement = DOMElement || document;
+    DOMElement.addEventListener("keydown", execute.bind(this, true), false);
+    DOMElement.addEventListener("keyup", execute.bind(this, false), false);
+}
+
+inherit(KeyboardInput, NetworkedInput);
+
+/*
 https://www.github.com/capnmidnight/VR
 Copyright (c) 2014 Sean T. McBeth
 All rights reserved.
@@ -28,17 +42,3 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
 OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-
-function KeyboardInput(commands, socket, DOMElement){
-    NetworkedInput.call(this, "keyboard", commands, socket, 0, 0);
-    
-    function execute(stateChange, event){
-        this.setButton(event.keyCode, stateChange);
-    }
-
-    DOMElement = DOMElement || document;
-    DOMElement.addEventListener("keydown", execute.bind(this, true), false);
-    DOMElement.addEventListener("keyup", execute.bind(this, false), false);
-}
-
-inherit(KeyboardInput, NetworkedInput);
