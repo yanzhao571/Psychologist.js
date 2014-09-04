@@ -242,7 +242,7 @@ function(){
         { name: "jump", buttons: [2], commandDown: jump, dt: 250 },
     ], socket, renderer.domElement);
 
-    touch = new TouchInput(1, [], [
+    touch = new TouchInput(1, null, [
         { name: "yaw", axes: [-3] },
         { name: "drive", axes: [4] },
     ], socket, renderer.domElement);
