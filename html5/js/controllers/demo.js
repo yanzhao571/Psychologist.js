@@ -66,9 +66,9 @@ function(){
         vcy -= dt * SPEED;
         var x = Math.floor(camera.position.x/SCALE) + MAP_WIDTH / 2;
         var y = Math.floor(camera.position.z/SCALE) + MAP_HEIGHT / 2;
-        var h = 0;
+        var h = 2 * SCALE;
         if (heightmap && 0 <= x && x < MAP_WIDTH && 0 <= y && y < MAP_HEIGHT){
-            h = (heightmap[y][x] + 2) * SCALE;
+            h += heightmap[y][x] * SCALE;
         }
         if(camera.position.y <= h && vcy <= 0) {
             vcy = 0;
@@ -150,6 +150,7 @@ function(){
     }
 
     scene = new THREE.Scene();
+    //scene.fog = new THREE.FogExp2(BG_COLOR, 1 / DRAW_DISTANCE);
     clock = new THREE.Clock();
     fullScreenButton.addEventListener("click", reload, false);
 
