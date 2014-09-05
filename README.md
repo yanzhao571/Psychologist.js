@@ -7,11 +7,11 @@ http://www.seanmcbeth.com:8080/demo.html
 Though it's best to set this up locally and use it over WiFi. Over the internet, it's quite laggy. So please don't complain to me about it making you sick. I know already. I have a bucket sitting next to my desk. But it's sufficient for making demos and trying things out before you decide to spend more money on an HMD.
 
 A few things to note:
-0) If you open a browsing session on your PC as well as your smartphone, you can choose your own secret key and enter it in both browsers, at which point any keyboard, mouse, or gamepad input you use on your PC will be proxied to your smartphone.
-1) You can choose stereo rendering with barrel distortion for use with Google Cardboard,
-2) Or choose red/cyan anaglyph rendering for use with glasses on any type of display,
-3) Or just skip it all and run around the really crappy landscape, viewing it with obsolete 2D display technology.
-4) The only speech command is "jump", and until I get SSL setup on the server, you'll have to continually re-enable it about once every 10 or 15 seconds.
+0. If you open a browsing session on your PC as well as your smartphone, you can choose your own secret key and enter it in both browsers, at which point any keyboard, mouse, or gamepad input you use on your PC will be proxied to your smartphone.
+1. You can choose stereo rendering with barrel distortion for use with Google Cardboard,
+2. Or choose red/cyan anaglyph rendering for use with glasses on any type of display,
+3. Or just skip it all and run around the really crappy landscape, viewing it with obsolete 2D display technology.
+4. The only speech command is "jump", and until I get SSL setup on the server, you'll have to continually re-enable it about once every 10 or 15 seconds.
 
 Note that this is extremely hacked together right now and picking a stupid key like "12345" or something equally asinine will have a high likelihood of colliding with someone else who has failed to be thoughtful in their secret key selection process. The responsibility of not giving someone else keyboard/mouse/gamepad access to your run of the demo lies with you. But don't worry, it's only this site, not your phone as a whole. This can't be used to attack your phone. 
 
@@ -21,9 +21,9 @@ I've so far only tested this with Google Chrome on Windows and Android, but ther
 
 The input system is is kind of interesting. I've built an API that allows one to define groups of commands that can be activated in different ways for different input systems. In other words, it provides options for different types of UI in parallel.
 
-For example:
+# Example
 
-````
+````javascript
     // given:
     //    socket - a WebSocket to the server
     //    canvas - a DOM element refering to the canvas to which you're rendering
