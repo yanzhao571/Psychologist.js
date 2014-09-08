@@ -43,6 +43,7 @@
     <Compile Include="html5\lib\three\ColladaLoader.js" />
     <Compile Include="html5\lib\three\OculusRiftEffect.min.js" />
     <Compile Include="html5\lib\three\SceneLoader.js" />
+    <Compile Include="html5\lib\three\StereoEffect.js" />
     <Compile Include="html5\lib\three\three.min.js" />
     <Compile Include="html5\js\input\MouseInput.js" />
     <Compile Include="html5\js\controllers\mouse.js" />
@@ -68,7 +69,12 @@
     <Compile Include="src\webSocketServer.js" />
     <Content Include="html5\gamepad.html" />
     <Content Include="html5\ico\fs.png" />
+    <Content Include="html5\img\brick.PNG" />
     <Content Include="html5\img\grass.png" />
+    <Content Include="html5\img\ocean.jpg" />
+    <Content Include="html5\scene\brick.PNG" />
+    <Content Include="html5\scene\grass.png" />
+    <Content Include="html5\scene\ocean.jpg" />
     <Content Include="html5\touch.html" />
     <Content Include="html5\mouse.html" />
     <Content Include="html5\music\game1.ogg" />
