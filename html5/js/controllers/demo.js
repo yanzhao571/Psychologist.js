@@ -39,6 +39,8 @@ function(){
         key = null,
         isDebug = true,
         isLocal = document.location.hostname == "localhost",
+        isHost = false,
+        isClient = false,
         isWAN = /\d+\.\d+\.\d+\.\d+/.test(document.location.hostname),
         socket,
         audioContext = new AudioContext();
@@ -107,8 +109,7 @@ function(){
         dheading += (gamepad.getValue("dheading") 
             + mouse.getValue("dheading")
             + touch.getValue("dheading")) * dt;
-        dpitch += (gamepad.getValue("dpitch") 
-            + mouse.getValue("dpitch") ) * dt;
+        dpitch += mouse.getValue("dpitch") * dt;
         droll += (gamepad.getValue("drollLeft") 
             + gamepad.getValue("drollRight") 
             + keyboard.getValue("drollLeft") 
@@ -165,7 +166,6 @@ function(){
         }
     }
 
-    options.style.display = "none";
     scene = new THREE.Scene();
     //scene.fog = new THREE.Fog(BG_COLOR, 1, DRAW_DISTANCE);
     fullScreenButton.addEventListener("click", reload, false);
@@ -215,9 +215,13 @@ function(){
         socket.on("good", function(side){
             if(isLocal){
                 if(side == "left"){
+                    isHost = true;
+                    isClient = false;
                     msg("After you close this dialog, the demo will be waiting for a paired device.");
                 }
                 else{
+                    isHost = false;
+                    isClient = true;
                     msg("This demo has been paired with another device now. If this is your first time entering your key, it means you've chosen a key someone else is already using, in which case you should reload the page and try another, less stupid key.");
                 }
             }
@@ -225,7 +229,7 @@ function(){
         socket.emit("key", key);
     }
 
-    if (isWAN && confirm("use stereo rendering?")) {
+    if (isWAN && ask("use stereo rendering?", true)) {
         FOV = 106.26;
         effect = new THREE.StereoEffect(renderer, {
             worldFactor: 1,
@@ -316,7 +320,9 @@ function(){
         collada.scene.traverse(function(child){
             if(child instanceof(THREE.PerspectiveCamera)){
                 camera = child;
-                requestAnimationFrame(animate);
+                if(oceanSound.source){
+                    requestAnimationFrame(animate);
+                }
             }
             else if(child.name == "Terrain"){
                 heightmap = [];
@@ -357,12 +363,9 @@ function(){
     var oceanSound = {};
     var mainVolume = audioContext.createGain();
     mainVolume.connect(audioContext.destination);
-    mainVolume.gain.value = 1.5;
-    console.log("start loading audio");
     request.onload = function() {
-        console.log("audio loaded");
         audioContext.decodeAudioData(request.response, function(buffer) {
-            console.log("audio decoded");
+            mainVolume.gain.value = isClient ? 1.5 : (isHost ? 0 : 1);
             oceanSound.panner = audioContext.createPanner();
             oceanSound.panner.connect(mainVolume);
             oceanSound.panner.setPosition(0, 0, 0);
@@ -373,7 +376,9 @@ function(){
             oceanSound.source.loop = true;
             oceanSound.source.connect(oceanSound.volume);            
             oceanSound.source.start(0);
-            options.style.display = "block";
+            if(camera){
+                requestAnimationFrame(animate);
+            }
         }, console.error.bind(console));
     }
     request.send();
