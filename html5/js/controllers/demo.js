@@ -40,7 +40,8 @@ function(){
         isDebug = true,
         isLocal = document.location.hostname == "localhost",
         isWAN = /\d+\.\d+\.\d+\.\d+/.test(document.location.hostname),
-        socket;
+        socket,
+        audioContext = new AudioContext();
 
     function msg(){
         if(!isDebug){
@@ -129,6 +130,14 @@ function(){
         camera.translateY(vcy * dt);
         camera.translateZ(vcz * dt);
         camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
+        var x = camera.position.x / 10,
+            y = camera.position.y / 10,
+            z = camera.position.z / 10;
+        audioContext.listener.setPosition(x, y, z);
+        audioContext.listener.setVelocity(vcx, vcy, vcz);
+        var len = Math.sqrt(x * x + y * y + z * z);
+
+        audioContext.listener.setOrientation(x / len, y / len, z / len, 0, 1, 0);
     }
 
     function draw() {
@@ -156,6 +165,7 @@ function(){
         }
     }
 
+    options.style.display = "none";
     scene = new THREE.Scene();
     //scene.fog = new THREE.Fog(BG_COLOR, 1, DRAW_DISTANCE);
     fullScreenButton.addEventListener("click", reload, false);
@@ -338,4 +348,33 @@ function(){
 
     options.parentElement.insertBefore(renderer.domElement, options);
     setSize(window.innerWidth, window.innerHeight);
+
+    
+    var request = new XMLHttpRequest();
+    request.open("GET", "music/ocean.mp3", true);
+    request.responseType = "arraybuffer";
+
+    var oceanSound = {};
+    var mainVolume = audioContext.createGain();
+    mainVolume.connect(audioContext.destination);
+    mainVolume.gain.value = 1.5;
+    console.log("start loading audio");
+    request.onload = function() {
+        console.log("audio loaded");
+        audioContext.decodeAudioData(request.response, function(buffer) {
+            console.log("audio decoded");
+            oceanSound.panner = audioContext.createPanner();
+            oceanSound.panner.connect(mainVolume);
+            oceanSound.panner.setPosition(0, 0, 0);
+            oceanSound.volume = audioContext.createGain();
+            oceanSound.volume.connect(oceanSound.panner);
+            oceanSound.source = audioContext.createBufferSource();
+            oceanSound.source.buffer = buffer;
+            oceanSound.source.loop = true;
+            oceanSound.source.connect(oceanSound.volume);            
+            oceanSound.source.start(0);
+            options.style.display = "block";
+        }, console.error.bind(console));
+    }
+    request.send();
 });

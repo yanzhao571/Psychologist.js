@@ -72,6 +72,7 @@
     <Content Include="html5\img\brick.PNG" />
     <Content Include="html5\img\grass.png" />
     <Content Include="html5\img\ocean.jpg" />
+    <Content Include="html5\music\ocean.mp3" />
     <Content Include="html5\scene\brick.PNG" />
     <Content Include="html5\scene\grass.png" />
     <Content Include="html5\scene\ocean.jpg" />
