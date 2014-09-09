@@ -202,7 +202,6 @@ function(){
         key = prompt("Enter a key. Make it good.");
     }
 
-    if(key){
         socket = io.connect(document.location.hostname,
         {
             "reconnect": true,
@@ -224,6 +223,8 @@ function(){
                 msg("This demo has been paired with another device now. If this is your first time entering your key, it means you've chosen a key someone else is already using, in which case you should reload the page and try another, less stupid key.");
             }
         });
+
+    if(key){
         socket.emit("key", key);
     }
 
