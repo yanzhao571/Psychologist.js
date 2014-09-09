@@ -43,8 +43,9 @@ function(){
         isClient = false,
         isWAN = /\d+\.\d+\.\d+\.\d+/.test(document.location.hostname),
         socket,
-        audioContext = new AudioContext();
-
+        audioContext = new AudioContext(),
+        mainVolume = audioContext.createGain();
+    
     function msg(){
         if(!isDebug){
             alert.apply(window, arguments);
@@ -64,64 +65,66 @@ function(){
         mouse.update();
         gamepad.update();
         touch.update();
-        vcy -= dt * GRAVITY;
-        var x = Math.floor((camera.position.x - minX) / CLUSTER);
-        var z = Math.floor((camera.position.z - minZ) / CLUSTER);
-        var y = PLAYER_HEIGHT;
-        if (heightmap 
-            && 0 <= z && z < heightmap.length
-            && 0 <= x && x < heightmap[z].length){
-            y += heightmap[z][x];
-        }
-
-        if(camera.position.y <= y && vcy <= 0) {
-            vcy = 0;
-            camera.position.y = camera.position.y * 0.75 + y * 0.25;
-            if(!onground){
-                navigator.vibrate(100);
+        if(camera){
+            vcy -= dt * GRAVITY;
+            var x = Math.floor((camera.position.x - minX) / CLUSTER);
+            var z = Math.floor((camera.position.z - minZ) / CLUSTER);
+            var y = PLAYER_HEIGHT;
+            if (heightmap 
+                && 0 <= z && z < heightmap.length
+                && 0 <= x && x < heightmap[z].length){
+                y += heightmap[z][x];
             }
-            onground = true;
-        }
 
-        if(onground){
-            tx = keyboard.getValue("strafeRight")
-                + keyboard.getValue("strafeLeft")
-                + gamepad.getValue("strafe");
-            tz = keyboard.getValue("driveBack")
-                + keyboard.getValue("driveForward")
-                + gamepad.getValue("drive")
-                + touch.getValue("drive");
-            if(tx != 0 || tz != 0){
-                len = SPEED / Math.sqrt(tz * tz + tx * tx);
+            if(camera.position.y <= y && vcy <= 0) {
+                vcy = 0;
+                camera.position.y = camera.position.y * 0.75 + y * 0.25;
+                if(!onground){
+                    navigator.vibrate(100);
+                }
+                onground = true;
             }
-            else{
-                len = 0;
+
+            if(onground){
+                tx = keyboard.getValue("strafeRight")
+                    + keyboard.getValue("strafeLeft")
+                    + gamepad.getValue("strafe");
+                tz = keyboard.getValue("driveBack")
+                    + keyboard.getValue("driveForward")
+                    + gamepad.getValue("drive")
+                    + touch.getValue("drive");
+                if(tx != 0 || tz != 0){
+                    len = SPEED / Math.sqrt(tz * tz + tx * tx);
+                }
+                else{
+                    len = 0;
+                }
+                tx *= len;
+                tz *= len;
+                len = tx * Math.cos(heading) + tz * Math.sin(heading);
+                tz = tz * Math.cos(heading) - tx * Math.sin(heading);
+                tx = len;
+                vcx = vcx * 0.9 + tx * 0.1;
+                vcz = vcz * 0.9 + tz * 0.1;
             }
-            tx *= len;
-            tz *= len;
-            len = tx * Math.cos(heading) + tz * Math.sin(heading);
-            tz = tz * Math.cos(heading) - tx * Math.sin(heading);
-            tx = len;
-            vcx = vcx * 0.9 + tx * 0.1;
-            vcz = vcz * 0.9 + tz * 0.1;
+
+            dheading += (gamepad.getValue("dheading") 
+                + mouse.getValue("dheading")
+                + touch.getValue("dheading")) * dt;
+            dpitch += mouse.getValue("dpitch") * dt;
+            droll += (gamepad.getValue("drollLeft") 
+                + gamepad.getValue("drollRight") 
+                + keyboard.getValue("drollLeft") 
+                + keyboard.getValue("drollRight")) * dt;
+
+            heading = motion.getValue("heading") + dheading;
+            pitch = motion.getValue("pitch") + dpitch;
+            roll = motion.getValue("roll") + droll;
+
+            fps = 1 / dt;
+            setCamera(dt);
+            draw();
         }
-
-        dheading += (gamepad.getValue("dheading") 
-            + mouse.getValue("dheading")
-            + touch.getValue("dheading")) * dt;
-        dpitch += mouse.getValue("dpitch") * dt;
-        droll += (gamepad.getValue("drollLeft") 
-            + gamepad.getValue("drollRight") 
-            + keyboard.getValue("drollLeft") 
-            + keyboard.getValue("drollRight")) * dt;
-
-        heading = motion.getValue("heading") + dheading;
-        pitch = motion.getValue("pitch") + dpitch;
-        roll = motion.getValue("roll") + droll;
-
-        fps = 1 / dt;
-        setCamera(dt);
-        draw();
     }
 
     function setCamera(dt) {
@@ -134,6 +137,7 @@ function(){
         var x = camera.position.x / 10,
             y = camera.position.y / 10,
             z = camera.position.z / 10;
+
         audioContext.listener.setPosition(x, y, z);
         audioContext.listener.setVelocity(vcx, vcy, vcz);
         var len = Math.sqrt(x * x + y * y + z * z);
@@ -202,27 +206,23 @@ function(){
         key = prompt("Enter a key. Make it good.");
     }
 
-        socket = io.connect(document.location.hostname,
-        {
-            "reconnect": true,
-            "reconnection delay": 1000,
-            "max reconnection attempts": 60
-        });
-        socket.on("bad", function(){
-            msg("Key already in use! You're going to have to reload the page if you want to try again. Sorry. Try not to pick such a stupid key next time.");
-        });
-        socket.on("good", function(side){
-            if(side == "left"){
-                isHost = true;
-                isClient = false;
-                msg("After you close this dialog, the demo will be waiting for a paired device.");
-            }
-            else{
-                isHost = false;
-                isClient = true;
-                msg("This demo has been paired with another device now. If this is your first time entering your key, it means you've chosen a key someone else is already using, in which case you should reload the page and try another, less stupid key.");
-            }
-        });
+    socket = io.connect(document.location.hostname,
+    {
+        "reconnect": true,
+        "reconnection delay": 1000,
+        "max reconnection attempts": 60
+    });
+    socket.on("bad", function(){
+        msg("Key already in use! You're going to have to reload the page if you want to try again. Sorry. Try not to pick such a stupid key next time.");
+    });
+    socket.on("good", function(info){
+        isHost = info.index == 0;
+        isClient = info.index > 0;
+        msg(fmt("You are device $1 of $2. If this is your first time entering your key, it means you've chosen a key someone else is already using, in which case you should reload the page and try another, less stupid key.", info.index + 1, info.total));
+    });
+    socket.on("close", function(info){
+        msg(info);
+    });
 
     if(key){
         socket.emit("key", key);
@@ -354,16 +354,15 @@ function(){
     setSize(window.innerWidth, window.innerHeight);
 
     
+    mainVolume.connect(audioContext.destination);
+
     var request = new XMLHttpRequest();
     request.open("GET", "music/ocean.mp3", true);
     request.responseType = "arraybuffer";
-
+    
     var oceanSound = {};
-    var mainVolume = audioContext.createGain();
-    mainVolume.connect(audioContext.destination);
     request.onload = function() {
         audioContext.decodeAudioData(request.response, function(buffer) {
-            mainVolume.gain.value = isClient ? 1.5 : (isHost ? 0 : 1);
             oceanSound.panner = audioContext.createPanner();
             oceanSound.panner.connect(mainVolume);
             oceanSound.panner.setPosition(0, 0, 0);
@@ -374,10 +373,8 @@ function(){
             oceanSound.source.loop = true;
             oceanSound.source.connect(oceanSound.volume);            
             oceanSound.source.start(0);
-            if(camera){
-                requestAnimationFrame(animate);
-            }
         }, console.error.bind(console));
     }
     request.send();
+    requestAnimationFrame(animate);
 });
