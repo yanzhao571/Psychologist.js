@@ -37,7 +37,7 @@ function(){
         buttonsTimeout = null,
         buttonsVisible = true,
         key = null,
-        isDebug = true,
+        isDebug = false,
         isLocal = document.location.hostname == "localhost",
         isHost = false,
         isClient = false,
@@ -195,7 +195,7 @@ function(){
     });
     renderer.setClearColor(BG_COLOR);
 
-    if(isDebug || isLocal || isWAN){
+    if(isDebug){
         key = "local";
     }
     else{
@@ -213,23 +213,21 @@ function(){
             msg("Key already in use! You're going to have to reload the page if you want to try again. Sorry. Try not to pick such a stupid key next time.");
         });
         socket.on("good", function(side){
-            if(isLocal){
-                if(side == "left"){
-                    isHost = true;
-                    isClient = false;
-                    msg("After you close this dialog, the demo will be waiting for a paired device.");
-                }
-                else{
-                    isHost = false;
-                    isClient = true;
-                    msg("This demo has been paired with another device now. If this is your first time entering your key, it means you've chosen a key someone else is already using, in which case you should reload the page and try another, less stupid key.");
-                }
+            if(side == "left"){
+                isHost = true;
+                isClient = false;
+                msg("After you close this dialog, the demo will be waiting for a paired device.");
+            }
+            else{
+                isHost = false;
+                isClient = true;
+                msg("This demo has been paired with another device now. If this is your first time entering your key, it means you've chosen a key someone else is already using, in which case you should reload the page and try another, less stupid key.");
             }
         });
         socket.emit("key", key);
     }
 
-    if (isWAN && ask("use stereo rendering?", true)) {
+    if (ask("use stereo rendering?", true)) {
         FOV = 106.26;
         effect = new THREE.StereoEffect(renderer, {
             worldFactor: 1,
@@ -250,7 +248,7 @@ function(){
             github.style.display = "none";
         }, 5000);
     }
-    else if (isLocal && ask("use red/cyan anaglyph rendering?")) {
+    else if (ask("use red/cyan anaglyph rendering?", false)) {
         effect = new THREE.AnaglyphEffect(renderer, 5, window.innerWidth, window.innerHeight);
     }
 
@@ -304,8 +302,7 @@ function(){
     }
 
     gamepad.addEventListener("gamepadconnected", function (id) {
-        if (!gamepad.isGamepadSet() 
-            && ask(fmt("Would you like to use this gamepad? \"$1\"", id), true)) {
+        if (!gamepad.isGamepadSet() && ask(fmt("Would you like to use this gamepad? \"$1\"", id), true)) {
             gamepad.setGamepad(id);
         }
     }, false);

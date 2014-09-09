@@ -1,36 +1,57 @@
 ﻿var format = require("util").format,
     fs = require("fs"),
-    os = require("os"),
     http = require("http"),
+    https = require("https"),
     path = require("path"),
     socketio = require("socket.io"),
-    spawn = require("child_process").spawn,
-
+    starter = require("./src/starter"),
     webServer = require("./src/webServer"),
     webSocketServer = require("./src/webSocketServer"),
     options = require("./src/options"),
 
     srcDir = "html5",
+    startPage = "demo.html",
     port = 8080,
-    startPage = "",
-    startProc = {
-        linux: "xdg-open",
-        win32: "explorer"
-    }[os.platform()],
-    
-    app, startUrl, io;
+    app, io;
 
 options.parse(process.argv);
 
-app = http.createServer(webServer(srcDir));
-app.listen(port);
-io = socketio.listen(app);
-io.sockets.on("connection", webSocketServer);
-
-if(options.v != "false" && startProc){
-    startUrl = "http://localhost";
-    if(port != 80){
-        startUrl += ":" + port;
+function start(key, cert){
+    if(key && cert){
+        console.log("secure");
+        app = https.createServer({key: key, cert: cert}, webServer(srcDir));
     }
-    spawn(startProc, [startUrl + "/" + startPage]);
+    else{
+        console.log("insecure");
+        app = http.createServer(webServer(srcDir));
+    }
+    app.listen(port);
+    io = socketio.listen(app);
+    io.sockets.on("connection", webSocketServer);
+    try{
+        starter(!!(key && cert), port, startPage);
+    }
+    catch(exp){
+        console.error("couldn't start browser", exp.message);
+    }
 }
+
+fs.readFile("../key.pem", {encoding: "utf8"}, function(err, key){
+    if(err){
+        console.log("no key", err);
+        start();
+    }
+    else{
+        console.log("key found");
+        fs.readFile("../cert.pem", {encoding: "utf8"}, function(err, cert){ 
+            if(err){   
+                console.log("no cert", err);
+                start();
+            }
+            else{
+                console.log("cert found");
+                start(key, cert);
+            }
+        });
+    }
+});
