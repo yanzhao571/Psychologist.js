@@ -211,6 +211,7 @@ function(){
     ctrls.pointerLockButton.addEventListener("click", function(){
         mouse.togglePointerLock();
         ctrls.options.style.display = "none";
+        ctrls.menuButton.style.display = "";
     }, false);
 
     ctrls.fullScreenButton.addEventListener("click", function(){
