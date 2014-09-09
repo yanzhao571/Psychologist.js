@@ -1,49 +1,39 @@
+section
+{
+    border-radius: 7px;
+    position: absolute;
+    padding: 2em;
+    color: #2e2e2e;
+    background-color: #ffffff;
+    padding: 3em;
+    top:10em;
+    right:10em;
+    left:10em;
+}
+
+#instructions
+{
+}
+
+#menuButton
+{
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    width: 32px;
+    height: 32px;
+    background-image:url(../ico/menu.png);
+}
+
 body
 {
     font-family: sans-serif;
     background-color: #000;
 }
 
-ul#options
+html, body
 {
-    list-style: none;
-}
-
-#options>li
-{
-    display: block;
-    padding: 0;
-}
-
-#instructions
-{
-    position: absolute;
-    padding: 2em;
-    color: #2e2e2e;
-    background-color: #ffffff;
-}
-
-html, body, canvas, video, img, ul#options, #options>li
-{
-    padding: 0;
-    margin: 0;
-    border: 0;
-}
-
-html, body, canvas, video, img, ul#options
-{
-    position: absolute;
-}
-
-#controls, #options
-{
-    position: fixed;
-    -webkit-transition-property: all;
-    -webkit-transition-duration: 0.25s;
-    -webkit-transition-timing-function: ease-in-out;
-    transition-property: all;
-    transition-duration: 0.25s;
-    transition-timing-function: ease-in-out;
+    height: 100%;
 }
 
 html, body, canvas, video, .overlay
@@ -53,27 +43,16 @@ html, body, canvas, video, .overlay
     top: 0;
 }
 
-html, body
+html, body, canvas, video, img
 {
-    height: 100%;
+    padding: 0;
+    margin: 0;
+    border: 0;
 }
 
-#controls
+canvas, video, img
 {
-    right: 0;
-    bottom: 0;
-}
-
-    #controls > li
-    {
-        display: inline-block;
-    }
-
-#options
-{
-    left: 0;
-    bottom: 0;
-    overflow: hidden;
+    position: absolute;
 }
 
 a.button
@@ -99,3 +78,61 @@ a.button
     {
         background-color: #1b2c63;
     }
+
+
+table
+{
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: #aaa;
+    border-style: solid;
+    border-spacing: 0;
+}
+
+    table > thead
+    {
+        background-color: #ccc;
+    }
+
+    table > tfoot
+    {
+        background-color: #eee;
+    }
+
+    table > thead > tr > th
+    {
+        padding-left:0.5em;
+        padding-right:0.5em;
+    }
+
+table>tbody>tr>td
+{
+    padding: 3px;
+    border-right: solid 1px #aaa;
+}
+
+    table td > div
+    {
+        text-align: left;
+    }
+    
+table > tbody
+{
+    background-color: #fff;
+}
+
+table > tbody > tr.alternateRow
+{
+    background-color:#f7f7f7;
+}
+
+table > tfoot td
+{
+    text-align: right;
+}
+
+table > tfoot a, table > tfoot span
+{
+    padding-right: 1em;
+    font-weight: bold;
+}

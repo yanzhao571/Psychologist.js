@@ -199,6 +199,8 @@ MediaStreamTrack.getVideoTracks =
 };
 
 function findEverything(elem, obj){
+    elem = elem || document;
+    obj = obj || {};
     return arr(elem.querySelectorAll("*")).filter(function(elem){
         return elem.hasOwnProperty("id") && elem.id.length > 0;
     }).reduce(function(obj, elem){

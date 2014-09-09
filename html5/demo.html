@@ -7,10 +7,131 @@
     <link type="text/css" rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <ul id="options">
-        <li><a class="button" id="fullScreenButton" style="width:32px;height:32px;background-image:url(ico/fs.png)" title="fullscreen"></a></li>
-    </ul>
-    <a id="github" href="https://github.com/capnmidnight/VR"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub"></a>
+    <a class="button" id="menuButton" title="menu"></a>
+    <section id="instructions">
+        <a id="github" href="https://github.com/capnmidnight/VR"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub"></a>
+        <h1>Virtual Reality in WebGL Demo</h1>
+        <p>This WebGL application is to demonstrate the use of open source software and open standards to be able to create 3D scenes that can be viewed in a progressively enhanced way. The application is capable of rendering as a regular 3D graphics application, or it can operate in anaglyph red/cyan mode and stereo viewer mode.</p>
+        <h2>Controls</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Command</th>
+                    <th>Keyboard</th>
+                    <th>Mouse</th>
+                    <th>Touch</th>
+                    <th>Gamepad</th>
+                    <th>Speech</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Move forward</td>
+                    <td>W</td>
+                    <td>--</td>
+                    <td>touch-drag down</td>
+                    <td>left-stick up</td>
+                    <td>--</td>
+                </tr>
+                <tr class="alternateRow">
+                    <td>Move backward</td>
+                    <td>A</td>
+                    <td>--</td>
+                    <td>touch-drag up</td>
+                    <td>left-stick down</td>
+                    <td>--</td>
+                </tr>
+                <tr>
+                    <td>Strafe left</td>
+                    <td>A</td>
+                    <td>--</td>
+                    <td>--</td>
+                    <td>left-stick left</td>
+                    <td>--</td>
+                </tr>
+                <tr class="alternateRow">
+                    <td>Strafe right</td>
+                    <td>E</td>
+                    <td>--</td>
+                    <td>--</td>
+                    <td>left-stick right</td>
+                    <td>--</td>
+                </tr>
+                <tr>
+                    <td>Turn left</td>
+                    <td>--</td>
+                    <td>move left</td>
+                    <td>touch-drag right</td>
+                    <td>right-stick left</td>
+                    <td>--</td>
+                </tr>
+                <tr class="alternateRow">
+                    <td>Turn right</td>
+                    <td>--</td>
+                    <td>move right</td>
+                    <td>touch-drag left</td>
+                    <td>right-stick right</td>
+                    <td>--</td>
+                </tr>
+                <tr>
+                    <td>Look up</td>
+                    <td>--</td>
+                    <td>move down</td>
+                    <td>--</td>
+                    <td>right-stick down</td>
+                    <td>--</td>
+                </tr>
+                <tr class="alternateRow">
+                    <td>Look down</td>
+                    <td>--</td>
+                    <td>move up</td>
+                    <td>--</td>
+                    <td>right-stick up</td>
+                    <td>--</td>
+                </tr>
+                <tr>
+                    <td>Jump</td>
+                    <td>spacebar</td>
+                    <td>middle-click</td>
+                    <td>--</td>
+                    <td>A-button</td>
+                    <td>say "jump"</td>
+                </tr>
+            </tbody>
+        </table>
+        <p>When you close this box, the application will go into full screen mode and lock the mouse pointer to the window. Just hit your escape key to exit, or double tap your screen.</p>
+        <a class="button closeSectionButton">Close</a>
+    </section>
+    <section id="options">
+        <h1>Options</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Renderers</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><a class="button" id="regularRenderButton">Use Regular Rendering</a></td></tr>
+                <tr><td><a class="button" id="anaglyphRenderButton">Use Cyan/Red Anaglyph Rendering</a></td></tr>
+                <tr><td><a class="button" id="stereoRenderButton">Use Stereo Rendering</a></td></tr>
+                <tr><td><a class="button" id="riftRenderButton">Use Stereo Rendering with Barrel Distortion</a></td></tr>
+            </tbody>
+        </table>
+        <table>
+            <thead>
+                <tr>
+                    <th>Other</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><a class="button" id="connectButton">Connect to Device Server</a></td></tr>
+                <tr><td><a class="button" id="startSpeechButton">Start Speech Recognition</a></td></tr>
+                <tr><td><a class="button" id="fullScreenButton">Toggle Full Screen</a></td></tr>
+                <tr><td><a class="button" id="pointerLockButton">Toggle Pointer Lock (and close options window)</a></td></tr>
+            </tbody>
+        </table>
+        <a class="button closeSectionButton">Close</a>
+    </section>
     <script type="text/javascript" src="js/include.js"></script>
     <script type="text/javascript" src="js/controllers/demo.js"></script>
 </body>
