@@ -31,9 +31,6 @@ function(){
         camera, scene, effect, renderer, map,
         motion, keyboard, mouse, gamepad, 
         fps, dt, heightmap,
-        fullScreenButton = document.getElementById("fullScreenButton"),
-        options = document.getElementById("options"),
-        github = document.getElementById("github"),
         buttonsTimeout = null,
         buttonsVisible = true,
         key = null,
@@ -44,7 +41,8 @@ function(){
         isWAN = /\d+\.\d+\.\d+\.\d+/.test(document.location.hostname),
         socket,
         audioContext = new AudioContext(),
-        mainVolume = audioContext.createGain();
+        mainVolume = audioContext.createGain(),
+        ctrls = findEverything();
     
     function msg(){
         if(!isDebug){
@@ -172,7 +170,81 @@ function(){
 
     scene = new THREE.Scene();
     //scene.fog = new THREE.Fog(BG_COLOR, 1, DRAW_DISTANCE);
-    fullScreenButton.addEventListener("click", reload, false);
+
+    var closers = document.getElementsByClassName("closeSectionButton");
+    for(var i = 0; i < closers.length; ++i){
+        closers[i].addEventListener("click", function(){
+            this.parentElement.style.display = "none";
+            if(this.parentElement.id == "instructions"){
+                toggleFullScreen();
+                mouse.requestPointerLock();
+            }
+            ctrls.menuButton.style.display = "";
+        }, false);
+    }
+
+    ctrls.options.style.display = "none";
+    ctrls.menuButton.style.display = "none";
+
+    ctrls.menuButton.addEventListener("click", function(){
+        ctrls.options.style.display = "";
+        ctrls.menuButton.style.display = "none";
+    }, false);
+
+    ctrls.connectButton.addEventListener("click", function(){
+        if(socket){
+            key = prompt("Enter a key.");
+            if(key){
+                socket.emit("key", key);
+            }
+            this.innerHTML = fmt("Connect to Device Server (current key: $1", key);
+        }
+        else{
+            msg("No socket available");
+        }
+    }, false);
+
+    ctrls.startSpeechButton.addEventListener("click", function(){
+        speech.start();
+    }, false);
+
+    ctrls.pointerLockButton.addEventListener("click", function(){
+        mouse.togglePointerLock();
+        ctrls.options.style.display = "none";
+    }, false);
+
+    ctrls.fullScreenButton.addEventListener("click", function(){
+        toggleFullScreen();
+    }, false);
+
+    ctrls.regularRenderButton.addEventListener("click", function(){
+        effect = null;
+    }, false);
+
+    ctrls.anaglyphRenderButton.addEventListener("click", function(){
+        effect = new THREE.AnaglyphEffect(renderer, 5, window.innerWidth, window.innerHeight);
+    }, false);
+
+    ctrls.stereoRenderButton.addEventListener("click", function(){
+        effect = new THREE.StereoEffect(renderer);
+    }, false);
+
+    ctrls.riftRenderButton.addEventListener("click", function(){
+        effect = new THREE.OculusRiftEffect(renderer, {
+            worldFactor: 1,
+            HMD: {
+                hResolution: screen.availWidth,
+                vResolution: screen.availHeight,
+                hScreenSize: 0.126,
+                vScreenSize: 0.075,
+                interpupillaryDistance: 0.064,
+                lensSeparationDistance: 0.064,
+                eyeToScreenDistance: 0.051,
+                distortionK: [1, 0.22, 0.06, 0.0],
+                chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
+            }
+        });
+    }, false);
 
     function jump() {
         if (onground) {
@@ -199,58 +271,27 @@ function(){
     });
     renderer.setClearColor(BG_COLOR);
 
-    if(isDebug){
-        key = "local";
-    }
-    else{
-        key = prompt("Enter a key. Make it good.");
-    }
-
     socket = io.connect(document.location.hostname,
     {
         "reconnect": true,
         "reconnection delay": 1000,
         "max reconnection attempts": 60
     });
+
     socket.on("bad", function(){
         msg("Key already in use! You're going to have to reload the page if you want to try again. Sorry. Try not to pick such a stupid key next time.");
     });
+
     socket.on("good", function(info){
         isHost = info.index == 0;
         isClient = info.index > 0;
         msg(fmt("You are device $1 of $2. If this is your first time entering your key, it means you've chosen a key someone else is already using, in which case you should reload the page and try another, less stupid key.", info.index + 1, info.total));
-    });
-    socket.on("close", function(info){
-        msg(info);
-    });
+    });    
 
-    if(key){
+    if(isDebug){
+        key = "debug";
+        ctrls.connectButton.innerHTML = fmt("Connect to Device Server (current key: $1", key)
         socket.emit("key", key);
-    }
-
-    if (ask("use stereo rendering?", true)) {
-        FOV = 106.26;
-        effect = new THREE.StereoEffect(renderer, {
-            worldFactor: 1,
-            HMD: {
-                hResolution: screen.availWidth,
-                vResolution: screen.availHeight,
-                hScreenSize: 0.126,
-                vScreenSize: 0.075,
-                interpupillaryDistance: 0.064,
-                lensSeparationDistance: 0.064,
-                eyeToScreenDistance: 0.051,
-                distortionK: [1, 0.22, 0.06, 0.0],
-                chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
-            }
-        });
-
-        setTimeout(function(){
-            github.style.display = "none";
-        }, 5000);
-    }
-    else if (ask("use red/cyan anaglyph rendering?", false)) {
-        effect = new THREE.AnaglyphEffect(renderer, 5, window.innerWidth, window.innerHeight);
     }
 
     motion = new MotionInput([
@@ -297,10 +338,6 @@ function(){
     speech = new SpeechInput([
         { keywords: ["jump"], command: jump }
     ], socket);
-
-    if(isLocal && ask("Use speech?")){
-        speech.start();
-    }
 
     gamepad.addEventListener("gamepadconnected", function (id) {
         if (!gamepad.isGamepadSet() && ask(fmt("Would you like to use this gamepad? \"$1\"", id), true)) {
@@ -350,7 +387,7 @@ function(){
         scene.add(collada.scene);
     });
 
-    options.parentElement.insertBefore(renderer.domElement, options);
+    document.body.insertBefore(renderer.domElement, document.body.firstChild);
     setSize(window.innerWidth, window.innerHeight);
 
     

@@ -81,7 +81,16 @@
         return document.pointerLockElement === DOMElement
             || document.webkitPointerLockElement === DOMElement
             || document.mozPointerLockElement === DOMElement;
-    };;
+    };
+
+    this.togglePointerLock = function(){
+        if(this.isPointerLocked()){
+            this.exitPointerLock();
+        }
+        else{
+            this.requestPointerLock();
+        }
+    };
 }
 
 inherit(MouseInput, NetworkedInput);
