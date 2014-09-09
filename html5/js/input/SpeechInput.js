@@ -134,9 +134,6 @@ function SpeechInput(commands, socket, stopAfterEnd){
         recognition.addEventListener("error", function(event) {
             running = false;
             command = "speech error";
-            if(restart){
-                recognition.start();
-            }
         }, true);
 
         recognition.addEventListener("end", function() {
