@@ -384,7 +384,6 @@ function(){
                 }
             }
         });
-        //collada.scene.updateMatrix();
         scene.add(collada.scene);
     });
 
