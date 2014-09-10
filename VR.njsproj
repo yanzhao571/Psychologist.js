@@ -61,6 +61,7 @@
     <Compile Include="html5\test\MotionInput.js" />
     <Compile Include="server.js" />
     <Compile Include="src\controllers.js" />
+    <Compile Include="src\controllers\manifest.js" />
     <Compile Include="src\controllers\listRoot.js" />
     <Compile Include="src\core.js" />
     <Compile Include="src\master.js" />

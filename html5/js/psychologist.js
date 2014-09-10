@@ -153,24 +153,6 @@ function sum (arr, get) {
     return agg(arr, get, add);
 };
 
-function getText(url, success, fail){
-   var xhr = new XMLHttpRequest();
-    xhr.open("GET", url);
-    xhr.onload = function (){
-        success(xhr.responseText);
-    };
-    xhr.onerror = function (err){
-        fail(err);
-    };
-    xhr.send();
-}
-
-function getObject(url, success, fail){
-    getText(url, function(txt){
-        success(JSON.parse(txt));
-    }, fail);
-}
-
 function makeURL(url, queryMap) {
     var output = [];
     for (var key in queryMap) {

@@ -11,6 +11,20 @@ section
     left:3em;
 }
 
+.progressBar
+{
+    position: absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    color:white;
+}
+    .progressBar > span
+    {
+        float: left;
+        height:100%;
+    }
+
 #instructions
 {
 }
