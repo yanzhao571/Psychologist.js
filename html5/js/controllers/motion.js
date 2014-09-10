@@ -29,7 +29,9 @@
             }
             var arr = [h, p, r];
             output.innerHTML = "";
-            commands.forEach(function (cmd, i) {
+            
+            for(var i = 0; i < commands.length; ++i) {
+                var cmd = commands[i];
                 var li = document.createElement("li");
                 var v = motion.getValue(cmd.name);
                 if(i < 3){
@@ -39,7 +41,7 @@
                     li.innerHTML = fmt("$1: $2.000", cmd.name, v);
                 }
                 output.appendChild(li);
-            });
+            }
         }, 16);
     }
 );

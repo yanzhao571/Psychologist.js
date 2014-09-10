@@ -43,9 +43,9 @@ module.exports = function (socket) {
         socket.index = group.length;
         group.push(socket);
 
-        types.forEach(function(t){
-            socket.on(t, proxyCommand.bind(socket, key, t));
-        });
+        for(var i = 0; i < types.length; ++i) {
+            socket.on(types[i], proxyCommand.bind(socket, key, types[i]));
+        }
 
         socket.on("disconnect", disconnect);
         socket.emit("good", {index: socket.index, total: group.length});

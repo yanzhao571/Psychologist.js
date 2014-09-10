@@ -32,7 +32,7 @@ module.exports = {
                     .join("");
 
                     master.build(done, error, "src/templates/master.html", "Root file list", 
-                        fmt("<div id=\"instructions\"><h1>JSVR</h1><p>Virtual reality-related HTML5 and JavaScript demos</p><ul>$1</ul></div>", paths));
+                        fmt("<section><h1>JSVR</h1><p>Virtual reality-related HTML5 and JavaScript demos</p><ul>$1</ul></div>", paths));
                 }
             });
         }

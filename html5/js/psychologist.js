@@ -128,15 +128,15 @@ function group(arr, getKey, getValue) {
         return 0;
     });
 
-    clone.forEach(function (obj) {
+    for(var i = 0; i < clone.length; ++i) {
+        var obj = clone[i];
         var key = getKey ? getKey(obj) : obj;
         var val = getValue ? getValue(obj) : obj;
-        if (groups.length == 0
-            || groups[groups.length - 1].key != key) {
+        if (groups.length == 0 || groups[groups.length - 1].key != key) {
             groups.push({key: key, values: []});
         }
         groups[groups.length - 1].values.push(val);
-    });
+    }
     return groups;
 };
 
@@ -201,12 +201,14 @@ MediaStreamTrack.getVideoTracks =
 function findEverything(elem, obj){
     elem = elem || document;
     obj = obj || {};
-    return arr(elem.querySelectorAll("*")).filter(function(elem){
-        return elem.hasOwnProperty("id") && elem.id.length > 0;
-    }).reduce(function(obj, elem){
-        obj[elem.id] = elem;
-        return obj;
-    }, obj);
+    var arr = elem.querySelectorAll("*");
+    for(var i = 0; i < arr.length; ++i){
+        var elem = arr[i];
+        if(elem.hasOwnProperty("id") && elem.id.length > 0){
+            obj[elem.id] = elem;
+        }
+    }
+    return obj;
 }
 // full-screen-ism polyfill
 if (!document.documentElement.requestFullscreen){
