@@ -21,6 +21,8 @@ function(){
 	};
     var BG_COLOR = 0xafbfff, PLAYER_HEIGHT = 3, CLUSTER = 2,
         DRAW_DISTANCE = 100,
+        TRACKING_SCALE = 0.5,
+        TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
         GRAVITY = 9.8, SPEED = 10, FOV = 60,
         pitch = 0, roll = 0, heading = 0,
         dpitch = 0, droll = 0, dheading = 0,
@@ -115,9 +117,9 @@ function(){
                 + keyboard.getValue("drollLeft") 
                 + keyboard.getValue("drollRight")) * dt;
 
-            heading = motion.getValue("heading") + dheading;
-            pitch = motion.getValue("pitch") + dpitch;
-            roll = motion.getValue("roll") + droll;
+            heading = heading * TRACKING_SCALE + (motion.getValue("heading") + dheading) * TRACKING_SCALE_COMP;
+            pitch = pitch * TRACKING_SCALE + (motion.getValue("pitch") + dpitch) * TRACKING_SCALE_COMP;
+            roll = roll * TRACKING_SCALE + (motion.getValue("roll") + droll) * TRACKING_SCALE_COMP;
 
             fps = 1 / dt;
             setCamera(dt);
