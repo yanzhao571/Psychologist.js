@@ -292,7 +292,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
                 if(key){
                     socket.emit("key", key);
                 }
-                this.innerHTML = fmt("Connect to Device Server (current key: $1", key);
+                this.innerHTML = fmt("Connect to Device Server (current key: $1)", key);
             }
             else{
                 msg("No socket available");
@@ -497,7 +497,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
         
         progress("loading", "music/game1.ogg");
         audio3d.loadSoundFixed("music/game1.ogg", true, function(prog){
-            progress("intermediate", "musicgame1.ogg", prog.loaded);
+            progress("intermediate", "music/game1.ogg", prog.loaded);
         }, function(){  
             progress("success", "music/game1.ogg");
         }, function(err){
