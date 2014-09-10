@@ -23,7 +23,7 @@ function(){
         DRAW_DISTANCE = 100,
         TRACKING_SCALE = 0.5,
         TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
-        GRAVITY = 9.8, SPEED = 10, FOV = 60,
+        GRAVITY = 9.8, SPEED = 15, FOV = 60,
         pitch = 0, roll = 0, heading = 0,
         dpitch = 0, droll = 0, dheading = 0,
         minX = 0, minY = 0, minZ = 0, lt = 0,
@@ -94,7 +94,7 @@ function(){
                     + gamepad.getValue("drive")
                     + touch.getValue("drive");
                 if(tx != 0 || tz != 0){
-                    len = SPEED / Math.sqrt(tz * tz + tx * tx);
+                    len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
                 }
                 else{
                     len = 0;
