@@ -47,7 +47,7 @@
     <Compile Include="html5\lib\three\three.min.js" />
     <Compile Include="html5\js\input\MouseInput.js" />
     <Compile Include="html5\js\controllers\mouse.js" />
-    <Compile Include="html5\js\SpeechOutput.js" />
+    <Compile Include="html5\js\output\SpeechOutput.js" />
     <Compile Include="html5\js\controllers\tracker.js" />
     <Compile Include="html5\js\controllers\demo.js" />
     <Compile Include="html5\js\camera.js" />
@@ -73,6 +73,7 @@
     <Content Include="html5\img\brick.PNG" />
     <Content Include="html5\img\grass.png" />
     <Content Include="html5\img\ocean.jpg" />
+    <Content Include="html5\js\output\Audio3DOutput.js" />
     <Content Include="html5\music\ocean.mp3" />
     <Content Include="html5\scene\brick.PNG" />
     <Content Include="html5\scene\grass.png" />
@@ -101,6 +102,7 @@
     <Folder Include="html5\js\" />
     <Folder Include="html5\css\" />
     <Folder Include="html5\img\" />
+    <Folder Include="html5\js\output\" />
     <Folder Include="html5\lib\" />
     <Folder Include="html5\lib\three\" />
     <Folder Include="html5\js\input\" />

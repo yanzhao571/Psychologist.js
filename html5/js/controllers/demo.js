@@ -14,6 +14,8 @@ include(
     "js/input/MotionInput.js",
     "js/input/MouseInput.js",
     "js/input/TouchInput.js",
+    "js/output/Audio3DOutput.js",
+    "js/output/SpeechOutput.js",
     "js/camera.js",
 function(){
     THREE.DefaultLoadingManager.onProgress = function ( item, loaded, total ) {
@@ -42,8 +44,8 @@ function(){
         isClient = false,
         isWAN = /\d+\.\d+\.\d+\.\d+/.test(document.location.hostname),
         socket,
-        audioContext = new AudioContext(),
-        mainVolume = audioContext.createGain(),
+        oceanSound = null,
+        audio3d = new Audio3DOutput();
         ctrls = findEverything();
     
     function msg(){
@@ -137,12 +139,11 @@ function(){
         var x = camera.position.x / 10,
             y = camera.position.y / 10,
             z = camera.position.z / 10;
-
-        audioContext.listener.setPosition(x, y, z);
-        audioContext.listener.setVelocity(vcx, vcy, vcz);
+            
         var len = Math.sqrt(x * x + y * y + z * z);
-
-        audioContext.listener.setOrientation(x / len, y / len, z / len, 0, 1, 0);
+        audio3d.setPosition(x, y, z);
+        audio3d.setVelocity(vcx, vcy, vcz);
+        audio3d.setOrientation(x / len, y / len, z / len, 0, 1, 0);
     }
 
     function draw() {
@@ -358,9 +359,6 @@ function(){
         collada.scene.traverse(function(child){
             if(child instanceof(THREE.PerspectiveCamera)){
                 camera = child;
-                if(oceanSound.source){
-                    requestAnimationFrame(animate);
-                }
             }
             else if(child.name == "Terrain"){
                 heightmap = [];
@@ -386,35 +384,17 @@ function(){
                 }
             }
         });
-        collada.scene.updateMatrix();
+        //collada.scene.updateMatrix();
         scene.add(collada.scene);
-    });
+    });    
+
+    audio3d.loadSound("music/ocean.mp3", true, 0, 0, 0, function(snd){
+        oceanSound = snd;
+        snd.source.start(0);
+    }, console.error.bind(console));
 
     document.body.insertBefore(renderer.domElement, document.body.firstChild);
     setSize(window.innerWidth, window.innerHeight);
 
-    
-    mainVolume.connect(audioContext.destination);
-
-    var request = new XMLHttpRequest();
-    request.open("GET", "music/ocean.mp3", true);
-    request.responseType = "arraybuffer";
-    
-    var oceanSound = {};
-    request.onload = function() {
-        audioContext.decodeAudioData(request.response, function(buffer) {
-            oceanSound.panner = audioContext.createPanner();
-            oceanSound.panner.connect(mainVolume);
-            oceanSound.panner.setPosition(0, 0, 0);
-            oceanSound.volume = audioContext.createGain();
-            oceanSound.volume.connect(oceanSound.panner);
-            oceanSound.source = audioContext.createBufferSource();
-            oceanSound.source.buffer = buffer;
-            oceanSound.source.loop = true;
-            oceanSound.source.connect(oceanSound.volume);            
-            oceanSound.source.start(0);
-        }, console.error.bind(console));
-    }
-    request.send();
     requestAnimationFrame(animate);
 });
