@@ -386,11 +386,16 @@ function(){
         });
         //collada.scene.updateMatrix();
         scene.add(collada.scene);
-    });    
+    });
 
-    audio3d.loadSound("music/ocean.mp3", true, 0, 0, 0, function(snd){
+    audio3d.loadSound3D("music/ocean.mp3", true, 0, 0, 0, function(snd){
         oceanSound = snd;
         snd.source.start(0);
+    }, console.error.bind(console));
+
+    audio3d.loadSoundFixed("music/menu.mp3", true, function(snd){
+        snd.source.start(0);
+        snd.volume.gain.value = 0.25;
     }, console.error.bind(console));
 
     document.body.insertBefore(renderer.domElement, document.body.firstChild);
