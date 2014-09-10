@@ -42,7 +42,7 @@ function test(func, printer){
             succeeded: 0
         };
         for(var key in func.tests){
-            if(func.tests.hasOwnProperty(key)
+            if(func.tests[key]
                 && typeof(func.tests[key]) === "function"){
                 if(printer){
                     printer(fmt("Running $1:", key));
@@ -84,7 +84,7 @@ function consoleTest(func){
         if(result.succeeded > 0){
             console.log("\tSuccesses:");
             for(var key in result.success){
-                if(result.success.hasOwnProperty(key)){
+                if(result.success[key]){
                     console.log(fmt("\t\t$1 succeeded after $2ms", key, result.success[key].dt));
                 }
             }
@@ -93,7 +93,7 @@ function consoleTest(func){
         if(result.failed > 0){
             console.log("\Failures:");
             for(var key in result.failure){
-                if(result.failure.hasOwnProperty(key)){
+                if(result.failure[key]){
                     var val = result.failure[key];
                     console.log(fmt("\t\t$1 FAILED after $2ms: $3", key, val.dt, val.msg));
                     if(val.stack && val.stack.indexOf("at Object.Assert") == -1){

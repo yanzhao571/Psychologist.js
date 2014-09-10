@@ -36,76 +36,6 @@ function arr(arg, a, b) {
     return Array.prototype.slice.call(arg, a, b);
 }
 
-function sigfig(x, y) {
-    var p = Math.pow(10, y);
-    var v = (Math.round(x * p) / p).toString();
-    if (y > 0) {
-        var i = v.indexOf(".");
-        if (i == -1) {
-            v += ".";
-            i = v.length - 1;
-        }
-        while (v.length - i - 1 < y)
-            v += "0";
-    }
-    return v;
-}
-
-
-/*
-    Replace template place holders in a string with a positional value.
-    Template place holders start with a dollar sign ($) and are followed
-    by a digit that references the parameter position of the value to 
-    use in the text replacement. Note that the first position, position 0,
-    is the template itself. However, you cannot reference the first position,
-    as zero digit characters are used to indicate the width of number to
-    pad values out to.
-
-    Numerical precision padding is indicated with a period and trailing
-    zeros.
-
-    examples:
-        fmt("a: $1, b: $2", 123, "Sean") => "a: 123, b: Sean"
-        fmt("$001, $002, $003", 1, 23, 456) => "001, 023, 456"
-        fmt("$1.00 + $2.00 = $3.00", Math.sqrt(2), Math.PI, 9001) 
-           => "1.41 + 3.14 = 9001.00"
-        fmt("$001.000", Math.PI) => 003.142
-*/
-function fmt(template) {
-    // - match a dollar sign ($) literally, 
-    // - (optional) then zero or more zero digit (0) characters, greedily
-    // - then one or more digits (the previous rule would necessitate that
-    //      the first of these digits be at least one).
-    // - (optional) then a period (.) literally
-    // -            then one or more zero digit (0) characters
-    var regex = /\$(0*)(\d+)(\.(0+))?/g;
-    var args = arguments;
-    return template.replace(regex, function (m, pad, index, _, precision) {
-        index = parseInt(index, 10);
-        if (0 <= index && index < args.length) {
-            var val = args[index];
-            if (val != undefined) {
-                val = val.toString();
-                var regex2;
-                if (precision && precision.length > 0) {
-                    val = sigfig(parseFloat(val, 10), precision.length);
-                }
-                if (pad && pad.length > 0) {
-                    regex2 = new RegExp("^\\d{" + (pad.length + 1) + "}(\\.\\d+)?");
-                    while (!val.match(regex2))
-                        val = "0" + val;
-                }
-                return val;
-            }
-        }
-        return undefined;
-    });
-}
-
-var px = fmt.bind(this, "$1px");
-var pct = fmt.bind(this, "$1%");
-var ems = fmt.bind(this, "$1em");
-
 function add(a, b) { return a + b; }
 
 function group(arr, getKey, getValue) {
@@ -128,15 +58,15 @@ function group(arr, getKey, getValue) {
         return 0;
     });
 
-    clone.forEach(function (obj) {
+    for(var i = 0; i < clone.length; ++i) {
+        var obj = clone[i];
         var key = getKey ? getKey(obj) : obj;
         var val = getValue ? getValue(obj) : obj;
-        if (groups.length == 0
-            || groups[groups.length - 1].key != key) {
+        if (groups.length == 0 || groups[groups.length - 1].key != key) {
             groups.push({key: key, values: []});
         }
         groups[groups.length - 1].values.push(val);
-    });
+    }
     return groups;
 };
 
@@ -152,24 +82,6 @@ function agg(arr, get, red) {
 function sum (arr, get) {
     return agg(arr, get, add);
 };
-
-function getText(url, success, fail){
-   var xhr = new XMLHttpRequest();
-    xhr.open("GET", url);
-    xhr.onload = function (){
-        success(xhr.responseText);
-    };
-    xhr.onerror = function (err){
-        fail(err);
-    };
-    xhr.send();
-}
-
-function getObject(url, success, fail){
-    getText(url, function(txt){
-        success(JSON.parse(txt));
-    }, fail);
-}
 
 function makeURL(url, queryMap) {
     var output = [];
@@ -198,16 +110,6 @@ MediaStreamTrack.getVideoTracks =
         return success([]);
 };
 
-function findEverything(elem, obj){
-    elem = elem || document;
-    obj = obj || {};
-    return arr(elem.querySelectorAll("*")).filter(function(elem){
-        return elem.hasOwnProperty("id") && elem.id.length > 0;
-    }).reduce(function(obj, elem){
-        obj[elem.id] = elem;
-        return obj;
-    }, obj);
-}
 // full-screen-ism polyfill
 if (!document.documentElement.requestFullscreen){
     if (document.documentElement.msRequestFullscreen){

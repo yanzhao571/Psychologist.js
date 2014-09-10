@@ -2,13 +2,42 @@ section
 {
     border-radius: 7px;
     position: absolute;
-    padding: 2em;
     color: #2e2e2e;
     background-color: #ffffff;
-    padding: 3em;
-    top:3em;
-    right:3em;
-    left:3em;
+}
+
+
+@media(min-width:320px){
+    section{
+        padding: 1em;
+        padding: 1em;
+        top:1em;
+        right:1em;
+        left:1em;
+    }
+}
+
+@media(min-width:640px){
+    section{
+        padding: 2em;
+        padding: 3em;
+        top:3em;
+        right:3em;
+        left:3em;
+    }
+}
+
+.progressBar
+{
+    border-radius: 7px;
+    position: absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    color:white;
+    text-align:center;
+    vertical-align:middle;
+    width:0;
 }
 
 #instructions
@@ -52,7 +81,7 @@ html, body, canvas, video, img
 
 canvas, video, img
 {
-    position: absolute;
+    position: fixed;
 }
 
 a.button

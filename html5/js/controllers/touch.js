@@ -31,18 +31,19 @@
             { name: "dx0", axes: [7] },
         ], null, document.documentElement);
 
-        buttons.forEach(function(b){
-            var d = document.createElement("div");
-            d.style.position = "absolute";
-            d.style.left = px(b.x);
-            d.style.top = px(b.y);
-            d.style.width = px(b.w);
-            d.style.height = px(b.h);
-            d.style.background = "#c0c0c0";
-            d.innerHTML = b.name;
-            d.id = b.name;
-            document.body.appendChild(d);
-        });
+    for(var i = 0; i < buttons.length; ++i) {
+        var b = buttons[i];
+        var d = document.createElement("div");
+        d.style.position = "absolute";
+        d.style.left = px(b.x);
+        d.style.top = px(b.y);
+        d.style.width = px(b.w);
+        d.style.height = px(b.h);
+        d.style.background = "#c0c0c0";
+        d.innerHTML = b.name;
+        d.id = b.name;
+        document.body.appendChild(d);
+    }
     function loop(dt) {
         requestAnimationFrame(loop);
         touch.update();

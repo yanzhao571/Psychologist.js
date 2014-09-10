@@ -257,11 +257,12 @@
     
     function reset(){
         size = camera.videoWidth * (modes[modeIndex] == "anaglyph" ? 1 : 0.5);
-        frames.forEach(function(f, i){
+        for(var i = 0; i < frames.length; ++i){
+            var f = frames[i];
             f.width = size;
             f.height = camera.videoHeight;
             fxs[i].clearRect(0, 0, f.width, f.height);
-        });
+        }
         camera.width = picture.width = camera.videoWidth;
         camera.height = picture.height = camera.videoHeight;
         frameIndex = 0;

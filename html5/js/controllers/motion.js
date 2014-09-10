@@ -9,9 +9,13 @@
                 {name: "heading", axes: [1]},
                 {name: "pitch", axes: [2]},
                 {name: "roll", axes: [3]},
-                {name: "dheading", axes: [7]},
-                {name: "dpitch", axes: [8]},
-                {name: "droll", axes: [9]},
+                {name: "x", axes: [4]},
+                {name: "y", axes: [5]},
+                {name: "z", axes: [6]},
+                {name: "alpha", axes: [7]},
+                {name: "dheading", axes: [8]},
+                {name: "dpitch", axes: [9]},
+                {name: "droll", axes: [10]},
             ],
             h, p, r,
             motion = new MotionInput(commands);
@@ -29,7 +33,9 @@
             }
             var arr = [h, p, r];
             output.innerHTML = "";
-            commands.forEach(function (cmd, i) {
+            
+            for(var i = 0; i < commands.length; ++i) {
+                var cmd = commands[i];
                 var li = document.createElement("li");
                 var v = motion.getValue(cmd.name);
                 if(i < 3){
@@ -39,7 +45,7 @@
                     li.innerHTML = fmt("$1: $2.000", cmd.name, v);
                 }
                 output.appendChild(li);
-            });
+            }
         }, 16);
     }
 );
