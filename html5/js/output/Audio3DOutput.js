@@ -8,13 +8,15 @@
     this.setOrientation = this.audioContext.listener.setOrientation.bind(this.audioContext.listener);
 }
 
-Audio3DOutput.prototype.loadSound = function(src, loop, success, error){
+Audio3DOutput.prototype.loadSound = function(src, loop, progress, loaded, error, success){
     var request = new XMLHttpRequest();
     request.open("GET", src, true);
     request.responseType = "arraybuffer";
     request.onerror = error;
     request.onabort = error;
+    request.onprogress = progress;
     request.onload = function() {
+        loaded();
         this.audioContext.decodeAudioData(request.response, function(buffer) {
             var snd = {
                 volume: this.audioContext.createGain(),
@@ -28,23 +30,23 @@ Audio3DOutput.prototype.loadSound = function(src, loop, success, error){
     request.send();    
 };
 
-Audio3DOutput.prototype.loadSound3D = function(src, loop, x, y, z, success, error){
-    this.loadSound(src, loop, function(snd){
+Audio3DOutput.prototype.loadSound3D = function(src, loop, x, y, z, progress, loaded, error, success){
+    this.loadSound(src, loop, progress, loaded, error, function(snd){
         snd.panner = this.audioContext.createPanner();
         snd.panner.setPosition(x, y, z);
         snd.panner.connect(this.mainVolume);
         snd.volume.connect(snd.panner);
         snd.source.connect(snd.volume);
         success(snd);
-    }.bind(this), error);
+    }.bind(this));
 };
 
-Audio3DOutput.prototype.loadSoundFixed = function(src, loop, success, error){
-    this.loadSound(src, loop, function(snd){
+Audio3DOutput.prototype.loadSoundFixed = function(src, loop, progress, loaded, error, success){
+    this.loadSound(src, loop, progress, loaded, error, function(snd){
         snd.volume.connect(this.mainVolume);
         snd.source.connect(snd.volume);
         success(snd);
-    }.bind(this), error);  
+    }.bind(this));  
 };
 
 /*

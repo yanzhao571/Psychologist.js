@@ -229,6 +229,7 @@
                     accelx: a.x,
                     accely: a.y,
                     accelz: a.z,
+                    alpha: o.alpha,
                     original: o,
                 });
             }
@@ -259,7 +260,7 @@
 }
 
 function MotionInput(commands, socket){
-    var axes = ["heading", "pitch", "roll", "accelx", "accely", "accelz"];
+    var axes = ["heading", "pitch", "roll", "accelx", "accely", "accelz", "alpha"];
     NetworkedInput.call(this, "motion", commands, socket, 1, axes);
 
     LandscapeMotion.addEventListener("deviceorientation", function (evt) {

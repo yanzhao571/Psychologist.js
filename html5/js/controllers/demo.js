@@ -1,16 +1,36 @@
 getObject("manifest/js/controllers/demo.js", function(files){
-    var totalFileSize = 0,
-        fileSizes = {},
-        ctrls = null,
-        triedSoFar = 0,
-        loadedSoFar = 0,
-        processedSoFar = 0,
-        errorSoFar = 0;
-
-    for(var i = 0; i < files.length; ++i){
-        totalFileSize += files[i].size;
-        fileSizes[files[i].name] = files[i].size;
+    function FileState(obj){
+        this.name = obj.name;
+        this.size = obj.size;
+        this.progress = 0;
+        this.state = FileState.NONE;
+        this.errored = false;
+        this.complete = false;
     }
+
+    FileState.prototype.toString = function(){
+        return fmt("$1 ($2.00KB of $3.00KB): $4", this.name, this.progress/1000, this.size/1000, FileState.STATE_NAMES[this.state]);
+    };
+
+    FileState.STATE_NAMES = ["none", "started", "error", null, "success"]
+    FileState.NONE = 0;
+    FileState.STARTED = 1;
+    FileState.ERRORED = 2;
+    FileState.COMPLETE = 4;
+
+    files = files.map(function(f){ return new FileState(f); });
+
+    function sumOfState(state, prop){
+        return files.filter(function(f){
+            return (f.state & state) != 0 || (state == 0 && f.state == 0);
+        }).reduce(function(a, b){
+            return a + b[prop];
+        }, 0);
+    }
+
+    var totalFileSize = sumOfState(FileState.NONE, "size"),
+        fileMap = files.reduce(function(a, b){ a[b.name] = b; return a;}, {}),
+        ctrls = findEverything();
 
     include(
         2,
@@ -34,51 +54,60 @@ getObject("manifest/js/controllers/demo.js", function(files){
         progress,
         done);
 
-    function addProgress(p, file, cur){
-        //if(p.innerHTML.trim().length > 0){
-        //    p.innerHTML += ", ";
-        //}
-        //p.innerHTML += file;
-        cur = cur + (fileSizes[file] || 0);
-        p.style.width = pct(100 * cur / totalFileSize);
-        return cur;
+    function addProgress(p, file, arr){
+        if(arr.indexOf(file) == -1){
+            arr.push(file);
+        }
+        p.style.width = pct(100 * countProgress(arr) / totalFileSize);
     }
 
-    function progress(op, file){
-        if(file == "js/psychologist.js" && op == "success"){
-            ctrls = findEverything();
-        }
-        if(ctrls){
-            if(op == "loading"){
-                triedSoFar = addProgress(ctrls.triedSoFar, file, triedSoFar);
-                ctrls.triedSoFar.innerHTML
-                    = ctrls.processedSoFar.innerHTML
-                    = ctrls.loadedSoFar.innerHTML
-                    = ctrls.errorSoFar.innerHTML = file;
+    function makeSize(state, prop){
+        return pct(100 * sumOfState(state, prop) / totalFileSize);
+    }
+
+    function displayProgress(complete){
+        ctrls.triedSoFar.style.width = makeSize(FileState.NONE, "size");
+        ctrls.processedSoFar.style.width = makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
+        ctrls.loadedSoFar.style.width = makeSize(FileState.COMPLETE, "size");
+        ctrls.errorSoFar.style.width = makeSize(FileState.ERRORED, "size");
+        ctrls.progressFileName.innerHTML = "Loading...<br/>" + files.map(function(f){ return f.toString();}).join("<br/>");
+    }
+
+    function progress(op, file, inter){
+        if(op == "loading"){
+            if(fileMap[file]){
+                fileMap[file].state = FileState.STARTED;
             }
-            else {
-                processedSoFar = addProgress(ctrls.processedSoFar, file, processedSoFar);
-                if(op == "success"){
-                    loadedSoFar = addProgress(ctrls.loadedSoFar, file, loadedSoFar);
-                    delete fileSizes[file];
+            displayProgress();
+        }
+        else {
+            if(fileMap[file]){
+                if(op == "intermediate" && inter){
+                    fileMap[file].progress = inter;
                 }
-                else{
-                    errorSoFar = addProgress(ctrls.errorSoFar, file, errorSoFar);
-                    delete fileSizes[file];
+                else if(op == "success"){
+                    fileMap[file].progress = fileMap[file].size;
+                    fileMap[file].state = FileState.COMPLETE;
                 }
-                console.log(processedSoFar, file, totalFileSize, fileSizes);
-                if(processedSoFar == totalFileSize){
+                else if(op == "error") {
+                    fileMap[file].state = FileState.ERRORED;
+                }
+            }
+            
+            displayProgress();
+
+            if(sumOfState(FileState.COMPLETE, "size") + sumOfState(FileState.ERRORED, "size") == totalFileSize){
+
+                ctrls.progressFileName.innerHTML = "Loading complete!";
+                setTimeout(function(){
                     ctrls.loading.style.display = "none";
                     ctrls.main.style.display = "";
-                }
+                }, 2000);
             }
         }
     }
 
     function done(){
-        THREE.DefaultLoadingManager.onProgress = function ( item, loaded, total ) {
-		    console.log( item, loaded, total );
-	    };
         var BG_COLOR = 0xafbfff, PLAYER_HEIGHT = 3, CLUSTER = 2,
             DRAW_DISTANCE = 100,
             TRACKING_SCALE = 0.5,
@@ -176,7 +205,12 @@ getObject("manifest/js/controllers/demo.js", function(files){
                     + keyboard.getValue("drollLeft") 
                     + keyboard.getValue("drollRight")) * dt;
 
-                heading = heading * TRACKING_SCALE + (motion.getValue("heading") + dheading) * TRACKING_SCALE_COMP;
+                var p = motion.getValue("pitch");
+                if(p != 0){
+                    p = p / Math.sqrt(Math.abs(p));
+                }
+
+                heading = heading * TRACKING_SCALE + (motion.getValue("heading")  + dheading) * TRACKING_SCALE_COMP;
                 pitch = pitch * TRACKING_SCALE + (motion.getValue("pitch") + dpitch) * TRACKING_SCALE_COMP;
                 roll = roll * TRACKING_SCALE + (motion.getValue("roll") + droll) * TRACKING_SCALE_COMP;
 
@@ -442,23 +476,35 @@ getObject("manifest/js/controllers/demo.js", function(files){
                     }
                 }
             });
-            scene.add(collada.scene);            
+            scene.add(collada.scene);
             progress("success", "scene/untitled.dae");
+        }, function(prog){
+            progress("intermediate","scene/untitled.dae", prog.loaded)
         });
         
-        progress("loading", "scene/untitled.dae");
-        audio3d.loadSound3D("music/ocean.mp3", true, 0, 0, 0, function(snd){
+        progress("loading", "music/ocean.mp3");
+        audio3d.loadSound3D("music/ocean.mp3", true, 0, 0, 0, function(prog){
+            progress("intermediate", "music/ocean.mp3", prog.loaded);
+        }, function(){  
+            progress("success", "music/ocean.mp3");
+        }, function(err){
+            progress("error", "music/ocean.mp3");
+        }, function(snd){
             oceanSound = snd;
             snd.source.start(0);
-            progress("success", "music/ocean.mp3");
-        }, console.error.bind(console));
+        });
         
-        progress("loading", "scene/untitled.dae");
-        audio3d.loadSoundFixed("music/menu.mp3", true, function(snd){
-            snd.source.start(0);
-            snd.volume.gain.value = 0.25;
+        progress("loading", "music/menu.mp3");
+        audio3d.loadSound3D("music/menu.mp3", true, 0, 0, 0, function(prog){
+            progress("intermediate", "music/menu.mp3", prog.loaded);
+        }, function(){  
             progress("success", "music/menu.mp3");
-        }, console.error.bind(console));
+        }, function(err){
+            progress("error", "music/menu.mp3");
+        }, function(snd){
+            oceanSound = snd;
+            snd.source.start(0);
+        });
 
         ctrls.main.insertBefore(renderer.domElement, ctrls.main.firstChild);
         setSize(window.innerWidth, window.innerHeight);

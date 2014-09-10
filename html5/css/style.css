@@ -18,12 +18,11 @@ section
     top:0;
     bottom:0;
     color:white;
+    overflow:hidden;
+    text-align:center;
+    vertical-align:middle;
+    width:0;
 }
-    .progressBar > span
-    {
-        float: left;
-        height:100%;
-    }
 
 #instructions
 {

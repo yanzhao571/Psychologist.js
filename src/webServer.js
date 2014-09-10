@@ -26,7 +26,7 @@ function matchController(res, url, method) {
             found = true;
             matches.shift();
             routes[i].handler.call(this, method, matches, function (mimeType, data) {
-                res.writeHead(200, { "Content-Type": mimeType });
+                res.writeHead(200, { "Content-Type": mimeType, "Content-Length": data.length });
                 res.end(data);
             }, serverError.bind(this, res, 500, core.fmt("Server error [$1]", url)));
         }
@@ -40,7 +40,7 @@ function sendStaticFile(res, url, path) {
             serverError(res, 403, core.fmt("Permission denied [$1]", url));
         }
         else {
-            res.writeHead(200, { "Content-Type": mime.lookup(path) });
+            res.writeHead(200, { "Content-Type": mime.lookup(path), "Content-Length": data.length });
             res.end(data);
         }
     });

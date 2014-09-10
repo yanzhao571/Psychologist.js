@@ -12,7 +12,7 @@ function makeManifest(strings, done, index, accum){
             if(!err){
                 accum.push({name: strings[index], size: stats["size"]});
             }
-            setTimeout(makeManifest.bind(this, strings, done, index + 1, accum), 0);
+            setImmediate(makeManifest, strings, done, index + 1, accum);
         });
     }
 }
