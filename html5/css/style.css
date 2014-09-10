@@ -65,7 +65,7 @@ html, body, canvas, video, img
 
 canvas, video, img
 {
-    position: absolute;
+    position: fixed;
 }
 
 a.button

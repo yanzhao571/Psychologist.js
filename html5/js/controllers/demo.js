@@ -22,7 +22,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
 
     function sumOfState(state, prop){
         return files.filter(function(f){
-            return (f.state & state) != 0 || (state == 0 && f.state == 0);
+            return (f.state & state) != 0 || (state == 0);
         }).reduce(function(a, b){
             return a + b[prop];
         }, 0);
@@ -66,11 +66,13 @@ getObject("manifest/js/controllers/demo.js", function(files){
     }
 
     function displayProgress(complete){
-        ctrls.triedSoFar.style.width = makeSize(FileState.NONE, "size");
-        ctrls.processedSoFar.style.width = makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
-        ctrls.loadedSoFar.style.width = makeSize(FileState.COMPLETE, "size");
-        ctrls.errorSoFar.style.width = makeSize(FileState.ERRORED, "size");
-        ctrls.progressFileName.innerHTML = "Loading...<br/>" + files.map(function(f){ return f.toString();}).join("<br/>");
+        if(ctrls){
+            ctrls.triedSoFar.style.width = makeSize(FileState.NONE, "size");
+            ctrls.processedSoFar.style.width = makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
+            ctrls.loadedSoFar.style.width = makeSize(FileState.COMPLETE, "size");
+            ctrls.errorSoFar.style.width = makeSize(FileState.ERRORED, "size");
+            ctrls.progressFileName.innerHTML = "Loading...<br/>" + files.map(function(f){ return f.toString();}).join("<br/>");
+        }
     }
 
     function progress(op, file, inter){
@@ -271,7 +273,6 @@ getObject("manifest/js/controllers/demo.js", function(files){
                 this.parentElement.style.display = "none";
                 if(this.parentElement.id == "instructions"){
                     toggleFullScreen();
-                    mouse.requestPointerLock();
                 }
                 ctrls.menuButton.style.display = "";
             }, false);
@@ -494,15 +495,15 @@ getObject("manifest/js/controllers/demo.js", function(files){
             snd.source.start(0);
         });
         
-        progress("loading", "music/menu.mp3");
-        audio3d.loadSound3D("music/menu.mp3", true, 0, 0, 0, function(prog){
-            progress("intermediate", "music/menu.mp3", prog.loaded);
+        progress("loading", "music/game1.ogg");
+        audio3d.loadSoundFixed("music/game1.ogg", true, function(prog){
+            progress("intermediate", "musicgame1.ogg", prog.loaded);
         }, function(){  
-            progress("success", "music/menu.mp3");
+            progress("success", "music/game1.ogg");
         }, function(err){
-            progress("error", "music/menu.mp3");
+            progress("error", "music/game1.ogg");
         }, function(snd){
-            oceanSound = snd;
+            snd.volume.gain.value = 0.5;
             snd.source.start(0);
         });
 

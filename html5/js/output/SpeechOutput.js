@@ -13,7 +13,7 @@
     }),
 
     pickRandomOption: function(options, key, min, max){
-        if(!options.hasOwnProperty(key)){
+        if(!options[key]){
             options[key] = min + (max - min) * Math.random();
         }
         else{

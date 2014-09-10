@@ -107,7 +107,7 @@
     };
     
     this.addEventListener = function(event, handler, bubbles){
-        if(listeners.hasOwnProperty(event)){
+        if(listeners[event]){
             add(listeners[event], handler);
         }
         if(event == "gamepadconnected"){
@@ -116,7 +116,7 @@
     };
 
     this.removeEventListener = function(event, handler, bubbles){
-        if(listeners.hasOwnProperty(event)){
+        if(listeners[event]){
             remove(listeners[event], handler);
         }
     };

@@ -110,7 +110,7 @@ function findEverything(elem, obj){
     var arr = elem.querySelectorAll("*");
     for(var i = 0; i < arr.length; ++i){
         var elem = arr[i];
-        if(elem.hasOwnProperty("id") && elem.id.length > 0){
+        if(elem.id && elem.id.length > 0){
             obj[elem.id] = elem;
         }
     }
