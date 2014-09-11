@@ -207,13 +207,8 @@ getObject("manifest/js/controllers/demo.js", function(files){
                     + keyboard.getValue("drollLeft") 
                     + keyboard.getValue("drollRight")) * dt;
 
-                var p = motion.getValue("pitch");
-                if(p != 0){
-                    p = p / Math.sqrt(Math.abs(p));
-                }
-
-                heading = heading * TRACKING_SCALE + (motion.getValue("heading")  + dheading) * TRACKING_SCALE_COMP;
-                pitch = pitch * TRACKING_SCALE + (motion.getValue("pitch") + dpitch) * TRACKING_SCALE_COMP;
+                heading = heading * TRACKING_SCALE + (motion.getValue("heading") + dheading) * TRACKING_SCALE_COMP;
+                pitch = Math.max(-1.5, Math.min(1.5, pitch * TRACKING_SCALE + (motion.getValue("pitch") + dpitch) * TRACKING_SCALE_COMP));
                 roll = roll * TRACKING_SCALE + (motion.getValue("roll") + droll) * TRACKING_SCALE_COMP;
 
                 fps = 1 / dt;
@@ -397,15 +392,15 @@ getObject("manifest/js/controllers/demo.js", function(files){
         ], socket);
 
         mouse = new MouseInput([
-            { name: "dheading", axes: [-4] },
-            { name: "dpitch", axes: [5] },
+            { name: "dheading", axes: [-4], scale: 0.4 },
+            { name: "dpitch", axes: [-5], scale: 0.4 },
             { name: "fire", buttons: [1], commandDown: fire, dt: 125 },
             { name: "jump", buttons: [2], commandDown: jump, dt: 250 },
         ], socket, renderer.domElement);
 
         touch = new TouchInput(1, null, [
             { name: "dheading", axes: [-3] },
-            { name: "drive", axes: [4] },
+            { name: "drive", axes: [4], scale: 1.5 },
         ], socket, renderer.domElement);
 
         keyboard = new KeyboardInput([

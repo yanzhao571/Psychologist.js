@@ -19,7 +19,8 @@
         metaKeys = ["ctrl", "shift", "alt", "metaKeys"],
         axisNames = deltaTrackedAxes
             .concat(deltaTrackedAxes.map(function(v){return "d" + v;}))
-            .concat(deltaTrackedAxes.map(function(v){return "l" + v;})),
+            .concat(deltaTrackedAxes.map(function(v){return "l" + v;}))
+            .concat(deltaTrackedAxes.map(function(v){return "i" + v;})),
         inPhysicalUse = false;
     
     function readMetaKeys(event){ 
@@ -135,7 +136,7 @@
                     }
 
                     commandState[cmd.name].pressed = pressed;                
-                    commandState[cmd.name].value = value;
+                    commandState[cmd.name].value = value * cmd.scale;
                 }
             }
 
@@ -175,6 +176,7 @@
             name: cmd.name,
             deadzone: cmd.deadzone,
             axes: maybeClone(cmd.axes),
+            scale: cmd.scale || 1,
             buttons: maybeClone(cmd.buttons),
             metaKeys: maybeClone(cmd.metaKeys),
             dt: cmd.dt,
