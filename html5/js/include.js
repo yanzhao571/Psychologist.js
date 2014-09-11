@@ -1,22 +1,25 @@
-﻿function getText(url, success, fail){
-   var xhr = new XMLHttpRequest();
+﻿function GET(url, type, progress, error, success){
+    type = type || "text";
+    var xhr = new XMLHttpRequest();
     xhr.open("GET", url);
+    xhr.responseType = type;
+    xhr.onerror = error;
+    xhr.onabort = error;
+    xhr.onprogress = progress;
     xhr.onload = function (){
-        success(xhr.responseText);
-    };
-    xhr.onerror = function (err){
-        fail(err);
+        success(xhr.response);
     };
     xhr.send();
 }
 
-function getObject(url, success, fail){
-    getText(url, function(txt){
-        success(JSON.parse(txt));
-    }, fail);
+function getObject(url, progress, error, success){
+    GET(url, "json", 
+        success && error && progress, 
+        (success && error) || (error && progress), 
+        success || error || progress);
 }
 
-function getScript(src, success, fail) {
+function getScript(src, success, error) {
     // make sure the script hasn't already been loaded into the page
     var s = document.querySelector("script[src='"+src+"']");
     if(s){
@@ -26,8 +29,8 @@ function getScript(src, success, fail) {
         s = document.createElement("script");
         s.type = "text/javascript";
         s.async = true;
-        s.addEventListener("error", fail);
-        s.addEventListener("abort", fail);
+        s.addEventListener("error", error);
+        s.addEventListener("abort", error);
         s.addEventListener("load", success);
         document.head.appendChild(s);
         s.src = src;
@@ -117,13 +120,22 @@ function findEverything(elem, obj){
     return obj;
 }
 
+function ofType(arr, t){
+    if(typeof(t) === "function"){
+        return arr.filter(function(elem){ return elem instanceof t; });
+    }
+    else{
+        return arr.filter(function(elem){ return typeof(elem) === t; });
+    }
+}
+
 var include = (function () {
     function loadLibs(version, progress, done, libs, libIndex) {
         libIndex = libIndex || 0;
         if (libIndex < libs.length) {
             var thunk = function (type) {
                 progress(type, libs[libIndex], libIndex + 1, libs.length);
-                loadLibs(version, progress, done, libs, libIndex + 1);
+                setTimeout(loadLibs, 0, version, progress, done, libs, libIndex + 1);
             };
             progress("loading", libs[libIndex], libIndex, libs.length);
             var file = libs[libIndex];
@@ -137,10 +149,6 @@ var include = (function () {
         }
     }
 
-    function ofType(arr, t){
-        return arr.filter(function(elem){ return typeof(elem) == t; });
-    }
-
     function include() {
         var args = Array.prototype.slice.call(arguments),
             version = ofType(args, "number").reduce(function(a, b){ return b; }, 0),
@@ -149,7 +157,7 @@ var include = (function () {
             progress = callbacks.length == 2 ? callbacks[0] : console.log.bind(console, "file loaded"),            
             done = callbacks.length >= 1 ? callbacks[callbacks.length - 1] : console.log.bind(console, "done loading");
 
-        setTimeout(loadLibs.bind(this, version, progress, done, libs));
+        setTimeout(loadLibs, 0, version, progress, done, libs);
     }
 
     return include;

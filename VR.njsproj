@@ -36,6 +36,7 @@
     <Compile Include="html5\js\input\TouchInput.js" />
     <Compile Include="html5\js\input\NetworkedInput.js" />
     <Compile Include="html5\js\input\GamepadInput.js" />
+    <Compile Include="html5\js\output\ModelOutput.js" />
     <Compile Include="html5\lib\Blob.min.js" />
     <Compile Include="html5\lib\canvas-toBlob.min.js" />
     <Compile Include="html5\lib\FileSaver.min.js" />

@@ -50,6 +50,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
         "js/input/TouchInput.js",
         "js/output/Audio3DOutput.js",
         "js/output/SpeechOutput.js",
+        "js/output/ModelOutput.js",
         "js/camera.jsx",
         progress,
         done);
@@ -71,7 +72,6 @@ getObject("manifest/js/controllers/demo.js", function(files){
             ctrls.processedSoFar.style.width = makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
             ctrls.loadedSoFar.style.width = makeSize(FileState.COMPLETE, "size");
             ctrls.errorSoFar.style.width = makeSize(FileState.ERRORED, "size");
-            ctrls.progressFileName.innerHTML = "Loading...<br/>" + files.map(function(f){ return f.toString();}).join("<br/>");
         }
     }
 
@@ -99,12 +99,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
             displayProgress();
 
             if(sumOfState(FileState.COMPLETE, "size") + sumOfState(FileState.ERRORED, "size") == totalFileSize){
-
-                ctrls.progressFileName.innerHTML = "Loading complete!";
-                setTimeout(function(){
-                    ctrls.loading.style.display = "none";
-                    ctrls.main.style.display = "";
-                }, 2000);
+                ctrls.loading.style.display = "none";
             }
         }
     }
@@ -440,10 +435,8 @@ getObject("manifest/js/controllers/demo.js", function(files){
             setSize(window.innerWidth, window.innerHeight);
         }, false);
 
-        var loader = new THREE.ColladaLoader();
-        loader.options.convertUpAxis = true;
-        progress("loading", "scene/untitled.dae");
-        loader.load("scene/untitled.dae", function(collada){
+        var loader = new ModelOutput();
+        loader.loadCollada("scene/untitled.dae", progress, function(collada){
             collada.scene.traverse(function(child){
                 if(child instanceof(THREE.PerspectiveCamera)){
                     camera = child;
@@ -473,36 +466,19 @@ getObject("manifest/js/controllers/demo.js", function(files){
                 }
             });
             scene.add(collada.scene);
-            progress("success", "scene/untitled.dae");
-        }, function(prog){
-            progress("intermediate","scene/untitled.dae", prog.loaded)
         });
         
-        progress("loading", "music/ocean.mp3");
-        audio3d.loadSound3D("music/ocean.mp3", true, 0, 0, 0, function(prog){
-            progress("intermediate", "music/ocean.mp3", prog.loaded);
-        }, function(){  
-            progress("success", "music/ocean.mp3");
-        }, function(err){
-            progress("error", "music/ocean.mp3");
-        }, function(snd){
+        audio3d.loadSound3D("music/ocean.mp3", true, 0, 0, 0, progress, function(snd){
             oceanSound = snd;
             snd.source.start(0);
         });
         
-        progress("loading", "music/game1.ogg");
-        audio3d.loadSoundFixed("music/game1.ogg", true, function(prog){
-            progress("intermediate", "music/game1.ogg", prog.loaded);
-        }, function(){  
-            progress("success", "music/game1.ogg");
-        }, function(err){
-            progress("error", "music/game1.ogg");
-        }, function(snd){
+        audio3d.loadSoundFixed("music/game1.ogg", true, progress, function(snd){
             snd.volume.gain.value = 0.5;
             snd.source.start(0);
         });
 
-        ctrls.main.insertBefore(renderer.domElement, ctrls.main.firstChild);
+        document.body.insertBefore(renderer.domElement, document.body.firstChild);
         setSize(window.innerWidth, window.innerHeight);
 
         requestAnimationFrame(animate);

@@ -8,16 +8,14 @@
     this.setOrientation = this.audioContext.listener.setOrientation.bind(this.audioContext.listener);
 }
 
-Audio3DOutput.prototype.loadSound = function(src, loop, progress, loaded, error, success){
-    var request = new XMLHttpRequest();
-    request.open("GET", src, true);
-    request.responseType = "arraybuffer";
-    request.onerror = error;
-    request.onabort = error;
-    request.onprogress = progress;
-    request.onload = function() {
-        loaded();
-        this.audioContext.decodeAudioData(request.response, function(buffer) {
+Audio3DOutput.prototype.loadSound = function(src, loop, progress, success){
+    var func = progress;
+    var error = function(){ func("error", src); };
+    var progress = function(evt){ func("intermediate", src, evt.loaded); };
+    func("loading", src);
+    GET(src, "arraybuffer", progress, error, function(response) {
+        func("success", src);
+        this.audioContext.decodeAudioData(response, function(buffer) {
             var snd = {
                 volume: this.audioContext.createGain(),
                 source: this.audioContext.createBufferSource()
@@ -26,12 +24,11 @@ Audio3DOutput.prototype.loadSound = function(src, loop, progress, loaded, error,
             snd.source.loop = loop;
             success(snd);
         }.bind(this), error);
-    }.bind(this);
-    request.send();    
+    }.bind(this));
 };
 
-Audio3DOutput.prototype.loadSound3D = function(src, loop, x, y, z, progress, loaded, error, success){
-    this.loadSound(src, loop, progress, loaded, error, function(snd){
+Audio3DOutput.prototype.loadSound3D = function(src, loop, x, y, z, progress, success){
+    this.loadSound(src, loop, progress, function(snd){
         snd.panner = this.audioContext.createPanner();
         snd.panner.setPosition(x, y, z);
         snd.panner.connect(this.mainVolume);
@@ -41,8 +38,8 @@ Audio3DOutput.prototype.loadSound3D = function(src, loop, x, y, z, progress, loa
     }.bind(this));
 };
 
-Audio3DOutput.prototype.loadSoundFixed = function(src, loop, progress, loaded, error, success){
-    this.loadSound(src, loop, progress, loaded, error, function(snd){
+Audio3DOutput.prototype.loadSoundFixed = function(src, loop, progress, success){
+    this.loadSound(src, loop, progress, function(snd){
         snd.volume.connect(this.mainVolume);
         snd.source.connect(snd.volume);
         success(snd);
