@@ -7,149 +7,146 @@
     <link type="text/css" rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <a class="button" id="menuButton" title="menu"></a>
     <div id="loading" class="loadBar">
         <div class="progressBar" id="triedSoFar" style="background-color:#333"></div>
         <div class="progressBar" id="processedSoFar" style="background-color:#666"></div>
         <div class="progressBar" id="loadedSoFar" style="background-color:#999"></div>
         <div class="progressBar" id="errorSoFar" style="background-color: #700000"></div>
-        <div class="progressBar" id="progressFileName" style="width:100%;font-size:8pt;"></div>
     </div>
-    <div id="main" style="display:none">
-        <a class="button" id="menuButton" title="menu"></a>
-        <section id="instructions">
-            <a id="github" href="https://github.com/capnmidnight/VR"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub"></a>
-            <h1>Virtual Reality in WebGL Demo</h1>
-            <p>This WebGL application demonstrates the use of open source software--such as Blender for 3D modeling--and open standards (HTML5, WebGL, Collada, etc.) to be able to experience 3D scenes with a variety of output features (stereo rendering, 3D audio) and input systems (keyboard, mouse, touch screen, motion tracking, gamepads) on a variety of platforms. Most of these options are enabled in the options menu, accessible from the button in the lower-left corner after this window is closed.</p>
-            <p>Additionally, the project includes a proxying system for user input. By loading the application in separate browser sessions and specifying a secret key in the options screen, the browser sessions will share between each other the commands the user has activated. This is useful for Google Cardboard-style head-mounted displays built around smartphones, allowing this user to utilize the keyboard, mouse, or gamepad attached to their PC with the application running on the smartphone. NOTE: you will experience a lot of latency if you setup the proxy connection with this Website. This feature is primarily suggested for use on local WiFi networks, with the application hosted on your own PC.</p>
-            <p>When you close this box, the application will go into full screen mode. If you prefer to hide the mouse cursor, there is an option to activate the mouse cursor lock in the options screen. When you are done, just hit your escape key on your keyboard, or tap your phones' menu button, to exit full screen mode.</p>
-            <h2>Controls</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Command</th>
-                        <th>Keyboard</th>
-                        <th>Mouse</th>
-                        <th>Touch</th>
-                        <th>Gamepad</th>
-                        <th>Speech</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Move forward</td>
-                        <td>W</td>
-                        <td>--</td>
-                        <td>touch-drag down</td>
-                        <td>left-stick up</td>
-                        <td>--</td>
-                    </tr>
-                    <tr class="alternateRow">
-                        <td>Move backward</td>
-                        <td>A</td>
-                        <td>--</td>
-                        <td>touch-drag up</td>
-                        <td>left-stick down</td>
-                        <td>--</td>
-                    </tr>
-                    <tr>
-                        <td>Strafe left</td>
-                        <td>A</td>
-                        <td>--</td>
-                        <td>--</td>
-                        <td>left-stick left</td>
-                        <td>--</td>
-                    </tr>
-                    <tr class="alternateRow">
-                        <td>Strafe right</td>
-                        <td>E</td>
-                        <td>--</td>
-                        <td>--</td>
-                        <td>left-stick right</td>
-                        <td>--</td>
-                    </tr>
-                    <tr>
-                        <td>Turn left</td>
-                        <td>--</td>
-                        <td>move left</td>
-                        <td>touch-drag right</td>
-                        <td>right-stick left</td>
-                        <td>--</td>
-                    </tr>
-                    <tr class="alternateRow">
-                        <td>Turn right</td>
-                        <td>--</td>
-                        <td>move right</td>
-                        <td>touch-drag left</td>
-                        <td>right-stick right</td>
-                        <td>--</td>
-                    </tr>
-                    <tr>
-                        <td>Look up</td>
-                        <td>--</td>
-                        <td>move down</td>
-                        <td>--</td>
-                        <td>right-stick down</td>
-                        <td>--</td>
-                    </tr>
-                    <tr class="alternateRow">
-                        <td>Look down</td>
-                        <td>--</td>
-                        <td>move up</td>
-                        <td>--</td>
-                        <td>right-stick up</td>
-                        <td>--</td>
-                    </tr>
-                    <tr>
-                        <td>Jump</td>
-                        <td>spacebar</td>
-                        <td>middle-click</td>
-                        <td>--</td>
-                        <td>A-button</td>
-                        <td>say "jump"</td>
-                    </tr>
-                </tbody>
-            </table>
-            <h2>Credits</h2>
-            <p>
-                <ul>
-                    <li>Programming, modeling, and texture work: Sean T. McBeth</li>
-                    <li>Background music: <a href="http://www.hive76.org/hive76-mourns-the-loss-of-our-friend-and-president-brendan-schrader">Brendan Schrader</a></li>
-                    <li>Ambient sound: <a href="https://soundcloud.com/alejandro-erickson/juan-de-fuca-campfire-and-ocean">Alejandro Erickson</a></li>
-                </ul>
-            </p>
-            <a class="button closeSectionButton">Close</a>
-        </section>
-        <section id="options">
-            <h1>Options</h1>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Renderers</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td><a class="button" id="regularRenderButton">Use Regular Rendering</a></td></tr>
-                    <tr><td><a class="button" id="anaglyphRenderButton">Use Cyan/Red Anaglyph Rendering</a></td></tr>
-                    <tr><td><a class="button" id="stereoRenderButton">Use Stereo Rendering</a></td></tr>
-                    <tr><td><a class="button" id="riftRenderButton">Use Stereo Rendering with Barrel Distortion</a></td></tr>
-                </tbody>
-            </table>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Other</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td><a class="button" id="connectButton">Connect to Device Server</a></td></tr>
-                    <tr><td><a class="button" id="startSpeechButton">Start Speech Recognition</a></td></tr>
-                    <tr><td><a class="button" id="fullScreenButton">Toggle Full Screen</a></td></tr>
-                    <tr><td><a class="button" id="pointerLockButton">Toggle Pointer Lock (and close options window)</a></td></tr>
-                </tbody>
-            </table>
-            <a class="button closeSectionButton">Close</a>
-        </section>
-    </div>
+    <section id="instructions">
+        <a id="github" href="https://github.com/capnmidnight/VR"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub"></a>
+        <h1>Virtual Reality in WebGL Demo</h1>
+        <p>This WebGL application demonstrates the use of open source software--such as Blender for 3D modeling--and open standards (HTML5, WebGL, Collada, etc.) to be able to experience 3D scenes with a variety of output features (stereo rendering, 3D audio) and input systems (keyboard, mouse, touch screen, motion tracking, gamepads) on a variety of platforms. Most of these options are enabled in the options menu, accessible from the button in the lower-left corner after this window is closed.</p>
+        <p>Additionally, the project includes a proxying system for user input. By loading the application in separate browser sessions and specifying a secret key in the options screen, the browser sessions will share between each other the commands the user has activated. This is useful for Google Cardboard-style head-mounted displays built around smartphones, allowing this user to utilize the keyboard, mouse, or gamepad attached to their PC with the application running on the smartphone. NOTE: you will experience a lot of latency if you setup the proxy connection with this Website. This feature is primarily suggested for use on local WiFi networks, with the application hosted on your own PC.</p>
+        <p>When you close this box, the application will go into full screen mode. If you prefer to hide the mouse cursor, there is an option to activate the mouse cursor lock in the options screen. When you are done, just hit your escape key on your keyboard, or tap your phones' menu button, to exit full screen mode.</p>
+        <h2>Controls</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Command</th>
+                    <th>Keyboard</th>
+                    <th>Mouse</th>
+                    <th>Touch</th>
+                    <th>Gamepad</th>
+                    <th>Speech</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Move forward</td>
+                    <td>W</td>
+                    <td>--</td>
+                    <td>touch-drag down</td>
+                    <td>left-stick up</td>
+                    <td>--</td>
+                </tr>
+                <tr class="alternateRow">
+                    <td>Move backward</td>
+                    <td>A</td>
+                    <td>--</td>
+                    <td>touch-drag up</td>
+                    <td>left-stick down</td>
+                    <td>--</td>
+                </tr>
+                <tr>
+                    <td>Strafe left</td>
+                    <td>A</td>
+                    <td>--</td>
+                    <td>--</td>
+                    <td>left-stick left</td>
+                    <td>--</td>
+                </tr>
+                <tr class="alternateRow">
+                    <td>Strafe right</td>
+                    <td>E</td>
+                    <td>--</td>
+                    <td>--</td>
+                    <td>left-stick right</td>
+                    <td>--</td>
+                </tr>
+                <tr>
+                    <td>Turn left</td>
+                    <td>--</td>
+                    <td>move left</td>
+                    <td>touch-drag right</td>
+                    <td>right-stick left</td>
+                    <td>--</td>
+                </tr>
+                <tr class="alternateRow">
+                    <td>Turn right</td>
+                    <td>--</td>
+                    <td>move right</td>
+                    <td>touch-drag left</td>
+                    <td>right-stick right</td>
+                    <td>--</td>
+                </tr>
+                <tr>
+                    <td>Look up</td>
+                    <td>--</td>
+                    <td>move down</td>
+                    <td>--</td>
+                    <td>right-stick down</td>
+                    <td>--</td>
+                </tr>
+                <tr class="alternateRow">
+                    <td>Look down</td>
+                    <td>--</td>
+                    <td>move up</td>
+                    <td>--</td>
+                    <td>right-stick up</td>
+                    <td>--</td>
+                </tr>
+                <tr>
+                    <td>Jump</td>
+                    <td>spacebar</td>
+                    <td>middle-click</td>
+                    <td>--</td>
+                    <td>A-button</td>
+                    <td>say "jump"</td>
+                </tr>
+            </tbody>
+        </table>
+        <h2>Credits</h2>
+        <p>
+            <ul>
+                <li>Programming, modeling, and texture work: Sean T. McBeth</li>
+                <li>Background music: <a href="http://www.hive76.org/hive76-mourns-the-loss-of-our-friend-and-president-brendan-schrader">Brendan Schrader</a></li>
+                <li>Ambient sound: <a href="https://soundcloud.com/alejandro-erickson/juan-de-fuca-campfire-and-ocean">Alejandro Erickson</a></li>
+            </ul>
+        </p>
+        <a class="button closeSectionButton">Close</a>
+    </section>
+    <section id="options">
+        <h1>Options</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Renderers</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><a class="button" id="regularRenderButton">Use Regular Rendering</a></td></tr>
+                <tr><td><a class="button" id="anaglyphRenderButton">Use Cyan/Red Anaglyph Rendering</a></td></tr>
+                <tr><td><a class="button" id="stereoRenderButton">Use Stereo Rendering</a></td></tr>
+                <tr><td><a class="button" id="riftRenderButton">Use Stereo Rendering with Barrel Distortion</a></td></tr>
+            </tbody>
+        </table>
+        <table>
+            <thead>
+                <tr>
+                    <th>Other</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><a class="button" id="connectButton">Connect to Device Server</a></td></tr>
+                <tr><td><a class="button" id="startSpeechButton">Start Speech Recognition</a></td></tr>
+                <tr><td><a class="button" id="fullScreenButton">Toggle Full Screen</a></td></tr>
+                <tr><td><a class="button" id="pointerLockButton">Toggle Pointer Lock (and close options window)</a></td></tr>
+            </tbody>
+        </table>
+        <a class="button closeSectionButton">Close</a>
+    </section>
     <script type="text/javascript" src="js/include.js"></script>
     <script type="text/javascript" src="js/controllers/demo.js"></script>
 </body>
