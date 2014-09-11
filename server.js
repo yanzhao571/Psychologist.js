@@ -7,51 +7,70 @@
     starter = require("./src/starter"),
     webServer = require("./src/webServer"),
     webSocketServer = require("./src/webSocketServer"),
-    options = require("./src/options"),
+    options = require("./src/options").parse(process.argv, {
+        v: true
+    }),
 
     srcDir = "html5",
     startPage = "demo.html",
     port = 8080,
-    app, io;
+    app, redir, io;
 
-options.parse(process.argv);
-
-function start(key, cert){
-    if(key && cert){
+function start(key, cert, ca){
+    var useSecure = !!(key && cert && ca);
+    if(useSecure){
         console.log("secure");
-        app = https.createServer({key: key, cert: cert}, webServer(srcDir));
+        app = https.createServer({key: key, cert: cert, ca: ca}, webServer(srcDir));
+        redir = http.createServer(webServer(port + 1));
+        redir.listen(port);
+        app.listen(port + 1);
     }
     else{
         console.log("insecure");
         app = http.createServer(webServer(srcDir));
+        app.listen(port);
     }
-    app.listen(port);
     io = socketio.listen(app);
     io.sockets.on("connection", webSocketServer);
-    try{
-        starter(!!(key && cert), port, startPage);
-    }
-    catch(exp){
-        console.error("couldn't start browser", exp.message);
+    
+    if(options.v){
+        try{
+            starter(useSecure, port + (useSecure ? 1 : 0), startPage);
+        }
+        catch(exp){
+            console.error("couldn't start browser", exp.message);
+        }
     }
 }
 
-fs.readFile("../key.pem", {encoding: "utf8"}, function(err, key){
-    if(err){
-        console.log("no key", err);
-        start();
+function readFiles(files, error, success, index, accum){
+    index = index || 0;
+    accum = accum || [];
+    if(index == files.length){
+        success(accum);
     }
     else{
-        console.log("key found");
-        fs.readFile("../cert.pem", {encoding: "utf8"}, function(err, cert){ 
-            if(err){   
-                console.log("no cert", err);
-                start();
+        fs.readFile(files[index], {encoding: "utf8"}, function(err, file){
+            if(err){
+                error(err);
             }
             else{
-                console.log("cert found");
-                start(key, cert);
+                accum.push(file);
+                setImmediate(readFiles, files, error, success, index + 1, accum);
             }
         });
     }
-});
+}
+
+readFiles([
+    "../key.pem",
+    "../cert.pem",
+    "../ca.pem"],
+    function(err){
+        console.error(err);
+        start();
+    },
+    function(files){
+        start.apply(this, files);
+    }
+);

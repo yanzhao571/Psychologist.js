@@ -1,5 +1,6 @@
 var fs = require("fs"),
     mime = require("mime"),
+    url = require("url"),
     core = require("./core.js"),
     routes = require("./controllers.js"),
     filePattern = /([^?]+)(\?([^?]+))?/;
@@ -46,19 +47,41 @@ function sendStaticFile(res, url, path) {
     });
 }
 
-module.exports = function (dirName) {
-    return function (req, res) {
-        if (!matchController(res, req.url, req.method) && req.method == "GET") {
-            var path = dirName + req.url,
-                file = path.match(filePattern)[1];
-            fs.exists(file, function (yes) {
-                if (yes) {
-                    sendStaticFile(res, req.url, file);
-                }
-                else {
-                    serverError(res, 404, core.fmt("File not found [$1]", path));
-                }
-            });
+/*
+    Creates a callback function that listens for requests and either redirects them
+    to the port specified by `target` (if `target` is a number) or serves applications
+    and static files from the directory named by `target` (if `target` is a string).
+    
+    target: a number or a string.
+        - number: the port number to redirect to, keeping the request the same, otherwise.
+        - string: the directory from which to serve static files.
+*/
+module.exports = function (target) {
+    if(typeof(target) === "number" || target instanceof Number){
+        return function (req, res) {
+            var url = "https://" + req.headers.host.replace(/(:\d+|$)/, ":" + target) + req.url;
+            console.log("redirecting to", url);
+            res.writeHead(307, { "Location": url });
+            res.end();
         }
+    }
+    else if(typeof(target) === "string" || target instanceof String){
+        return function(req, res){
+            if (!matchController(res, req.url, req.method) && req.method == "GET") {
+                var path = target + req.url,
+                file = path.match(filePattern)[1];
+                fs.exists(file, function (yes) {
+                    if (yes) {
+                        sendStaticFile(res, req.url, file);
+                    }
+                    else {
+                        serverError(res, 404, core.fmt("File not found [$1]", path));
+                    }
+                });
+            }
+        }
+    }
+    else{
+        throw new Error("`target` parameter not a supported type. Excpected number or string. Given: " + target + ", type: " + typeof(target));
     }
 };
