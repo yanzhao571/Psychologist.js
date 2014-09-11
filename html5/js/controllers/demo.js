@@ -33,7 +33,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
         ctrls = findEverything();
 
     include(
-        2,
+        3,
         "js/psychologist.js",
         "lib/three/three.min.js",
         "lib/three/StereoEffect.js",

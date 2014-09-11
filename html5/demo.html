@@ -14,6 +14,36 @@
         <div class="progressBar" id="loadedSoFar" style="background-color:#999"></div>
         <div class="progressBar" id="errorSoFar" style="background-color: #700000"></div>
     </div>
+    <section id="options" style="display:none">
+        <h1>Options</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Renderers</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><a class="button" id="regularRenderButton">Use Regular Rendering</a></td></tr>
+                <tr><td><a class="button" id="anaglyphRenderButton">Use Cyan/Red Anaglyph Rendering</a></td></tr>
+                <tr><td><a class="button" id="stereoRenderButton">Use Stereo Rendering</a></td></tr>
+                <tr><td><a class="button" id="riftRenderButton">Use Stereo Rendering with Barrel Distortion</a></td></tr>
+            </tbody>
+        </table>
+        <table>
+            <thead>
+                <tr>
+                    <th>Other</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><a class="button" id="connectButton">Connect to Device Server</a></td></tr>
+                <tr><td><a class="button" id="startSpeechButton">Start Speech Recognition</a></td></tr>
+                <tr><td><a class="button" id="fullScreenButton">Toggle Full Screen</a></td></tr>
+                <tr><td><a class="button" id="pointerLockButton">Toggle Pointer Lock (and close options window)</a></td></tr>
+            </tbody>
+        </table>
+        <a class="button closeSectionButton">Close</a>
+    </section>
     <section id="instructions">
         <a id="github" href="https://github.com/capnmidnight/VR"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub"></a>
         <h1>Virtual Reality in WebGL Demo</h1>
@@ -115,36 +145,6 @@
                 <li>Ambient sound: <a href="https://soundcloud.com/alejandro-erickson/juan-de-fuca-campfire-and-ocean">Alejandro Erickson</a></li>
             </ul>
         </p>
-        <a class="button closeSectionButton">Close</a>
-    </section>
-    <section id="options">
-        <h1>Options</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>Renderers</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td><a class="button" id="regularRenderButton">Use Regular Rendering</a></td></tr>
-                <tr><td><a class="button" id="anaglyphRenderButton">Use Cyan/Red Anaglyph Rendering</a></td></tr>
-                <tr><td><a class="button" id="stereoRenderButton">Use Stereo Rendering</a></td></tr>
-                <tr><td><a class="button" id="riftRenderButton">Use Stereo Rendering with Barrel Distortion</a></td></tr>
-            </tbody>
-        </table>
-        <table>
-            <thead>
-                <tr>
-                    <th>Other</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td><a class="button" id="connectButton">Connect to Device Server</a></td></tr>
-                <tr><td><a class="button" id="startSpeechButton">Start Speech Recognition</a></td></tr>
-                <tr><td><a class="button" id="fullScreenButton">Toggle Full Screen</a></td></tr>
-                <tr><td><a class="button" id="pointerLockButton">Toggle Pointer Lock (and close options window)</a></td></tr>
-            </tbody>
-        </table>
         <a class="button closeSectionButton">Close</a>
     </section>
     <script type="text/javascript" src="js/include.js"></script>
