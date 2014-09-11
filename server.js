@@ -33,7 +33,7 @@ function start(key, cert, ca){
     io = socketio.listen(app);
     io.sockets.on("connection", webSocketServer);
     
-    if(options.v){
+    if(options.v !== "false"){
         try{
             starter(useSecure, port + (useSecure ? 1 : 0), startPage);
         }
