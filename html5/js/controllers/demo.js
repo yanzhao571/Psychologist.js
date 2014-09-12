@@ -455,36 +455,6 @@ getObject("manifest/js/controllers/demo.js", function(files){
             object.scene.traverse(function(child){
                 if(child instanceof(THREE.PerspectiveCamera)){
                     camera = child;
-                    loader.loadCollada("models/bear.dae", progress, function(collada){                        
-
-                        var objectProto = collada.scene;
-
-                        for (var i = 0; i < 10; i++) {
-
-                            var object = objectProto.clone();
-
-                            object.name = "Bear" + i;
-
-                            if(i > 0){
-                                object.position.x = Math.random() * 80 - 40;
-                                object.position.y = 0;
-                                object.position.z = Math.random() * 80 - 40;
-                                object.rotation.y = ( Math.random() * 360 ) * Math.PI / 180;
-                            }
-
-                            object.traverse(function(child){
-                                if (child instanceof THREE.SkinnedMesh ) {
-                                    bears.push(child);
-					                child.animation = new THREE.Animation(child, child.geometry.animation);
-                                    child.name = "BearAnim" + i;
-                                    child.animation.data = child.animation.data || bears[0].animation.data;
-                                    console.log(i, child.animation.data);
-				                }
-                            });
-
-                            scene.add(object);
-                        }
-                    });
                 }
                 else if(child.name == "Terrain"){
                     heightmap = [];
@@ -510,6 +480,29 @@ getObject("manifest/js/controllers/demo.js", function(files){
                     }
                 }
             });
+        });
+
+        loader.loadCollada("models/bear.dae", progress, function(collada){
+            var objectProto = collada.scene;
+            for (var i = 0; i < 10; i++) {
+                var object = objectProto.clone();
+                if(i > 0){
+                    object.position.x = Math.random() * 80 - 40;
+                    object.position.y = 0;
+                    object.position.z = Math.random() * 80 - 40;
+                    object.rotation.y = ( Math.random() * 2 ) * Math.PI;
+                }
+                
+                scene.add(object);
+                object.traverse(function(child){
+                    if (child instanceof THREE.SkinnedMesh ) {
+                        bears.push(child);
+					    child.animation = new THREE.Animation(child, child.geometry.animation);
+                        child.animation.data = child.animation.data || bears[0].animation.data;
+                        console.log(i, child.animation.data);
+				    }
+                });
+            }
         });
 
         audio3d.loadSound3D("music/ocean.mp3", true, 0, 0, 0, progress, function(snd){
