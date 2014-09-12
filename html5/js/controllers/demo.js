@@ -106,7 +106,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
     }
 
     function done(){
-        var BG_COLOR = 0xafbfff, PLAYER_HEIGHT = 3, CLUSTER = 2,
+        var BG_COLOR = 0xafbfff, PLAYER_HEIGHT = 6, CLUSTER = 2,
             DRAW_DISTANCE = 100,
             TRACKING_SCALE = 0.5,
             TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
@@ -183,13 +183,15 @@ getObject("manifest/js/controllers/demo.js", function(files){
                         + touch.getValue("drive");
                     if(tx != 0 || tz != 0){
                         len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
-                        if(!bear.animation.isPlaying){
+                        if(bear && bear.animation && !bear.animation.isPlaying){
                             bear.animation.play();
                         }
                     }
                     else{
                         len = 0;
-                        bear.animation.stop();
+                        if(bear && bear.animation){
+                            bear.animation.stop();
+                        }
                     }
                     tx *= len;
                     tz *= len;
@@ -210,7 +212,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
                     + keyboard.getValue("drollRight")) * dt;
 
                 heading = heading * TRACKING_SCALE + (motion.getValue("heading") + dheading) * TRACKING_SCALE_COMP;
-                pitch = Math.max(-1.5, Math.min(1.5, pitch * TRACKING_SCALE + (motion.getValue("pitch") + dpitch) * TRACKING_SCALE_COMP));
+                pitch = pitch * TRACKING_SCALE + (motion.getValue("pitch") + dpitch) * TRACKING_SCALE_COMP;
                 roll = roll * TRACKING_SCALE + (motion.getValue("roll") + droll) * TRACKING_SCALE_COMP;
 
                 fps = 1 / dt;
@@ -221,18 +223,18 @@ getObject("manifest/js/controllers/demo.js", function(files){
 
         function setCamera(dt) {
             camera.updateProjectionMatrix();
-
             camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
             camera.translateX(vcx * dt);
             camera.translateY(vcy * dt);
             camera.translateZ(vcz * dt);
             camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
-            bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-            bear.position.x = camera.position.x;
-            bear.position.y = camera.position.y;
-            bear.position.z = camera.position.z;
-            bear.rotateY(heading);
-
+            if(bear){
+                bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+                bear.rotateY(heading);
+                bear.position.x = camera.position.x;
+                bear.position.y = camera.position.y - PLAYER_HEIGHT;
+                bear.position.z = camera.position.z;
+            }
             var x = camera.position.x / 10,
                 y = camera.position.y / 10,
                 z = camera.position.z / 10;
@@ -281,9 +283,6 @@ getObject("manifest/js/controllers/demo.js", function(files){
                 ctrls.menuButton.style.display = "";
             }, false);
         }
-
-        ctrls.options.style.display = "none";
-        ctrls.menuButton.style.display = "none";
 
         ctrls.menuButton.addEventListener("click", function(){
             ctrls.options.style.display = "";
@@ -457,10 +456,13 @@ getObject("manifest/js/controllers/demo.js", function(files){
                     console.log(camera);
                     loader.loadCollada("models/bear.dae", progress, function(collada){
                         collada.scene.traverse(function(child){
+                            console.log(child);
+                            if (child.name == "BearMesh"){
+                                bear = child;
+                            }
                             if (child instanceof THREE.SkinnedMesh ) {
                                 bear = child;
 					            bear.animation = new THREE.Animation(child, child.geometry.animation);
-                                console.log(bear);
 				            }
                         });
                         scene.add(collada.scene);
@@ -493,12 +495,12 @@ getObject("manifest/js/controllers/demo.js", function(files){
             scene.add(collada.scene);
         });
         
-        audio3d.loadSound3D("music/ocean.mp3", true, 0, 0, 0, progress, function(snd){
+        audio3d.loadSound3D("music/ocean.mp3.break", true, 0, 0, 0, progress, function(snd){
             oceanSound = snd;
             snd.source.start(0);
         });
         
-        audio3d.loadSoundFixed("music/game1.ogg", true, progress, function(snd){
+        audio3d.loadSoundFixed("music/game1.ogg.break", true, progress, function(snd){
             snd.volume.gain.value = 0.5;
             snd.source.start(0);
         });
