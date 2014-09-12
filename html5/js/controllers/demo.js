@@ -130,7 +130,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
             socket,
             oceanSound = null,
             audio3d = new Audio3DOutput(),
-            bear;
+            bears = [];
     
         function msg(){
             if(!isDebug){
@@ -182,14 +182,16 @@ getObject("manifest/js/controllers/demo.js", function(files){
                         + touch.getValue("drive");
                     if(tx != 0 || tz != 0){
                         len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
-                        if(bear && bear.animation && !bear.animation.isPlaying){
-                            bear.animation.play();
+                        for(var n = 0; n < bears.length; ++n){
+                            if(!bears[n].animation.isPlaying){
+                                bears[n].animation.play();
+                            }
                         }
                     }
                     else{
                         len = 0;
-                        if(bear && bear.animation){
-                            bear.animation.stop();
+                        if(bears[0] && bears[0].animation){
+                            bears[0].animation.stop();
                         }
                     }
                     tx *= len;
@@ -227,12 +229,12 @@ getObject("manifest/js/controllers/demo.js", function(files){
             camera.translateY(vcy * dt);
             camera.translateZ(vcz * dt);
             camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
-            if(bear){
-                bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-                bear.rotateY(heading);
-                bear.position.x = camera.position.x;
-                bear.position.y = camera.position.y - PLAYER_HEIGHT;
-                bear.position.z = camera.position.z;
+            if(bears[0]){
+                bears[0].setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+                bears[0].rotateY(heading);
+                bears[0].position.x = camera.position.x;
+                bears[0].position.y = camera.position.y - PLAYER_HEIGHT;
+                bears[0].position.z = camera.position.z;
             }
             var x = camera.position.x / 10,
                 y = camera.position.y / 10,
@@ -461,21 +463,22 @@ getObject("manifest/js/controllers/demo.js", function(files){
 
                             var object = objectProto.clone();
 
-                            object.name = 'Bear #' + i;
+                            object.name = "Bear" + i;
+
                             if(i > 0){
                                 object.position.x = Math.random() * 80 - 40;
                                 object.position.y = 0;
                                 object.position.z = Math.random() * 80 - 40;
-
                                 object.rotation.y = ( Math.random() * 360 ) * Math.PI / 180;
                             }
 
                             object.traverse(function(child){
                                 if (child instanceof THREE.SkinnedMesh ) {
-                                    if(i == 0){
-                                        bear = child;
-                                    }
+                                    bears.push(child);
 					                child.animation = new THREE.Animation(child, child.geometry.animation);
+                                    child.name = "BearAnim" + i;
+                                    child.animation.data = child.animation.data || bears[0].animation.data;
+                                    console.log(i, child.animation.data);
 				                }
                             });
 
