@@ -390,7 +390,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
 
         if(isDebug){
             key = "debug";
-            ctrls.connectButton.innerHTML = fmt("Connect to Device Server (current key: $1", key)
+            ctrls.connectButton.innerHTML = fmt("Connect to Device Server (current key: $1)", key)
             socket.emit("key", key);
         }
 

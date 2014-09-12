@@ -78,7 +78,7 @@ html, body, canvas, video, img
     border: 0;
 }
 
-canvas, video, img
+canvas, video, .overlay
 {
     position: fixed;
 }
