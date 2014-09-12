@@ -1,5 +1,8 @@
 ﻿function GET(url, type, progress, error, success){
     type = type || "text";
+    if(window.CUR_APP_VERSION){
+        url += "?v" + window.CUR_APP_VERSION;
+    }
     var xhr = new XMLHttpRequest();
     xhr.open("GET", url);
     xhr.responseType = type;

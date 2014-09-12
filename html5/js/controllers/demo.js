@@ -1,4 +1,5 @@
 getObject("manifest/js/controllers/demo.js", function(files){
+    var CUR_APP_VERSION = 4;
     function FileState(obj){
         this.name = obj.name;
         this.size = obj.size;
@@ -33,7 +34,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
         ctrls = findEverything();
 
     include(
-        3,
+        CUR_APP_VERSION,
         "js/psychologist.js",
         "lib/three/three.min.js",
         "lib/three/StereoEffect.js",
@@ -129,7 +130,8 @@ getObject("manifest/js/controllers/demo.js", function(files){
             isWAN = /\d+\.\d+\.\d+\.\d+/.test(document.location.hostname),
             socket,
             oceanSound = null,
-            audio3d = new Audio3DOutput();
+            audio3d = new Audio3DOutput(),
+            bear;
     
         function msg(){
             if(!isDebug){
@@ -144,6 +146,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
         function animate(t) {
             requestAnimationFrame(animate);
             dt = (t - lt) / 1000;
+			THREE.AnimationHandler.update(dt);
             lt = t;
             motion.update();
             keyboard.update();
@@ -180,9 +183,13 @@ getObject("manifest/js/controllers/demo.js", function(files){
                         + touch.getValue("drive");
                     if(tx != 0 || tz != 0){
                         len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
+                        if(!bear.animation.isPlaying){
+                            bear.animation.play();
+                        }
                     }
                     else{
                         len = 0;
+                        bear.animation.stop();
                     }
                     tx *= len;
                     tz *= len;
@@ -214,11 +221,18 @@ getObject("manifest/js/controllers/demo.js", function(files){
 
         function setCamera(dt) {
             camera.updateProjectionMatrix();
+
             camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
             camera.translateX(vcx * dt);
             camera.translateY(vcy * dt);
             camera.translateZ(vcz * dt);
             camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
+            bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+            bear.position.x = camera.position.x;
+            bear.position.y = camera.position.y;
+            bear.position.z = camera.position.z;
+            bear.rotateY(heading);
+
             var x = camera.position.x / 10,
                 y = camera.position.y / 10,
                 z = camera.position.z / 10;
@@ -436,10 +450,21 @@ getObject("manifest/js/controllers/demo.js", function(files){
         }, false);
 
         var loader = new ModelOutput();
-        loader.loadCollada("scene/untitled.dae", progress, function(collada){
+        loader.loadCollada("models/scene.dae", progress, function(collada){
             collada.scene.traverse(function(child){
                 if(child instanceof(THREE.PerspectiveCamera)){
                     camera = child;
+                    console.log(camera);
+                    loader.loadCollada("models/bear.dae", progress, function(collada){
+                        collada.scene.traverse(function(child){
+                            if (child instanceof THREE.SkinnedMesh ) {
+                                bear = child;
+					            bear.animation = new THREE.Animation(child, child.geometry.animation);
+                                console.log(bear);
+				            }
+                        });
+                        scene.add(collada.scene);
+                    });
                 }
                 else if(child.name == "Terrain"){
                     heightmap = [];
