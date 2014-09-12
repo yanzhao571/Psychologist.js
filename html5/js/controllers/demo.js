@@ -52,7 +52,6 @@ getObject("manifest/js/controllers/demo.js", function(files){
         "js/output/Audio3DOutput.js",
         "js/output/SpeechOutput.js",
         "js/output/ModelOutput.js",
-        "js/camera.jsx",
         progress,
         done);
 
@@ -495,12 +494,12 @@ getObject("manifest/js/controllers/demo.js", function(files){
             scene.add(collada.scene);
         });
         
-        audio3d.loadSound3D("music/ocean.mp3.break", true, 0, 0, 0, progress, function(snd){
+        audio3d.loadSound3D("music/ocean.mp3", true, 0, 0, 0, progress, function(snd){
             oceanSound = snd;
             snd.source.start(0);
         });
         
-        audio3d.loadSoundFixed("music/game1.ogg.break", true, progress, function(snd){
+        audio3d.loadSoundFixed("music/game1.ogg", true, progress, function(snd){
             snd.volume.gain.value = 0.5;
             snd.source.start(0);
         });
