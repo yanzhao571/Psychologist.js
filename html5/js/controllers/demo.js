@@ -448,23 +448,39 @@ getObject("manifest/js/controllers/demo.js", function(files){
         }, false);
 
         var loader = new ModelOutput();
-        loader.loadCollada("models/scene.dae", progress, function(collada){
-            collada.scene.traverse(function(child){
+        loader.loadCollada("models/scene.dae", progress, function(object){
+            scene.add(object.scene);
+            object.scene.traverse(function(child){
                 if(child instanceof(THREE.PerspectiveCamera)){
                     camera = child;
-                    console.log(camera);
-                    loader.loadCollada("models/bear.dae", progress, function(collada){
-                        collada.scene.traverse(function(child){
-                            console.log(child);
-                            if (child.name == "BearMesh"){
-                                bear = child;
+                    loader.loadCollada("models/bear.dae", progress, function(collada){                        
+
+                        var objectProto = collada.scene;
+
+                        for (var i = 0; i < 10; i++) {
+
+                            var object = objectProto.clone();
+
+                            object.name = 'Bear #' + i;
+                            if(i > 0){
+                                object.position.x = Math.random() * 80 - 40;
+                                object.position.y = 0;
+                                object.position.z = Math.random() * 80 - 40;
+
+                                object.rotation.y = ( Math.random() * 360 ) * Math.PI / 180;
                             }
-                            if (child instanceof THREE.SkinnedMesh ) {
-                                bear = child;
-					            bear.animation = new THREE.Animation(child, child.geometry.animation);
-				            }
-                        });
-                        scene.add(collada.scene);
+
+                            object.traverse(function(child){
+                                if (child instanceof THREE.SkinnedMesh ) {
+                                    if(i == 0){
+                                        bear = child;
+                                    }
+					                child.animation = new THREE.Animation(child, child.geometry.animation);
+				                }
+                            });
+
+                            scene.add(object);
+                        }
                     });
                 }
                 else if(child.name == "Terrain"){
@@ -491,15 +507,14 @@ getObject("manifest/js/controllers/demo.js", function(files){
                     }
                 }
             });
-            scene.add(collada.scene);
         });
-        
+
         audio3d.loadSound3D("music/ocean.mp3", true, 0, 0, 0, progress, function(snd){
             oceanSound = snd;
             snd.source.start(0);
         });
         
-        audio3d.loadSoundFixed("music/game1.ogg", true, progress, function(snd){
+        audio3d.loadSoundFixed("music/game1.ogg.break", true, progress, function(snd){
             snd.volume.gain.value = 0.5;
             snd.source.start(0);
         });

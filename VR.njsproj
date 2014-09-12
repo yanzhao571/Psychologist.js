@@ -42,6 +42,7 @@
     <Compile Include="html5\lib\FileSaver.min.js" />
     <Compile Include="html5\lib\three\AnaglyphEffect.min.js" />
     <Compile Include="html5\lib\three\ColladaLoader.js" />
+    <Compile Include="html5\lib\three\Mirror.js" />
     <Compile Include="html5\lib\three\OculusRiftEffect.min.js" />
     <Compile Include="html5\lib\three\SceneLoader.js" />
     <Compile Include="html5\lib\three\StereoEffect.js" />
