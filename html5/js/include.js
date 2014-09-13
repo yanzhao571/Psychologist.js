@@ -61,7 +61,8 @@ FileState.COMPLETE = 4;
 
 function LoadingProgress(files){
     this.files = files.map(function(f){ return new FileState(f);});
-
+    this.totalFileSize = this.sum(FileState.NONE, "size");
+    this.fileMap = this.files.reduce(function(a, b){ a[b.name] = b; return a;}, {});
 }
 
 LoadingProgress.prototype.sum = function(state, prop){

@@ -4,9 +4,6 @@ getObject("manifest/js/controllers/demo.js", function(files){
     var CUR_APP_VERSION = 4;
     var prog = new LoadingProgress(files);
 
-    var totalFileSize = prog.sum(FileState.NONE, "size"),
-        fileMap = prog.files.reduce(function(a, b){ a[b.name] = b; return a;}, {});
-
     include(
         CUR_APP_VERSION,
         "js/psychologist.js",
@@ -30,7 +27,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
         done);
 
     function makeSize(state, prop){
-        return pct(100 * prog.sum(state, prop) / totalFileSize);
+        return pct(100 * prog.sum(state, prop) / prog.totalFileSize);
     }
 
     function displayProgress(){
@@ -44,28 +41,28 @@ getObject("manifest/js/controllers/demo.js", function(files){
 
     function progress(op, file, inter){
         if(op == "loading"){
-            if(fileMap[file]){
-                fileMap[file].state = FileState.STARTED;
+            if(prog.fileMap[file]){
+                prog.fileMap[file].state = FileState.STARTED;
             }
             displayProgress();
         }
         else {
-            if(fileMap[file]){
+            if(prog.fileMap[file]){
                 if(op == "intermediate" && inter){
-                    fileMap[file].progress = inter;
+                    prog.fileMap[file].progress = inter;
                 }
                 else if(op == "success"){
-                    fileMap[file].progress = fileMap[file].size;
-                    fileMap[file].state = FileState.COMPLETE;
+                    prog.fileMap[file].progress = prog.fileMap[file].size;
+                    prog.fileMap[file].state = FileState.COMPLETE;
                 }
                 else if(op == "error") {
-                    fileMap[file].state = FileState.ERRORED;
+                    prog.fileMap[file].state = FileState.ERRORED;
                 }
             }
             
             displayProgress();
 
-            if(prog.sum(FileState.COMPLETE, "size") + prog.sum(FileState.ERRORED, "size") == totalFileSize){
+            if(prog.sum(FileState.COMPLETE, "size") + prog.sum(FileState.ERRORED, "size") == prog.totalFileSize){
                 ctrls.loading.style.display = "none";
             }
         }
