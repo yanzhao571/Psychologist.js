@@ -111,8 +111,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
             TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
             GRAVITY = 9.8, SPEED = 15, FOV = 60,
             pitch = 0, roll = 0, heading = 0,
-            dpitch = 0, droll = 0, dheading = 0,
-            minX = 0, minY = 0, minZ = 0, lt = 0,
+            dpitch = 0, droll = 0, dheading = 0, lt = 0,
             vcx = 0, vcz = 0, vcy = 0, tx, tz,
             onground = false,
             video,
@@ -152,10 +151,10 @@ getObject("manifest/js/controllers/demo.js", function(files){
             mouse.update();
             gamepad.update();
             touch.update();
-            if(camera){
+            if(camera && heightmap){
                 vcy -= dt * GRAVITY;
-                var x = Math.floor((camera.position.x - minX) / CLUSTER);
-                var z = Math.floor((camera.position.z - minZ) / CLUSTER);
+                var x = Math.floor((camera.position.x - heightmap.minX) / CLUSTER);
+                var z = Math.floor((camera.position.z - heightmap.minZ) / CLUSTER);
                 var y = PLAYER_HEIGHT;
                 if (heightmap 
                     && 0 <= z && z < heightmap.length
@@ -466,25 +465,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
             console.log(mainScene);
             camera = mainScene.Camera.children[0];
             mainScene.Ocean.children[0].material.transparent = true;
-            heightmap = [];
-            var verts = mainScene.Terrain.children[0].geometry.vertices;
-            for(var i = 0; i < verts.length; ++i){
-                minX = Math.min(minX, verts[i].x);
-                minZ = Math.min(minZ, verts[i].z);
-            }
-            for(var i = 0; i < verts.length; ++i){
-                var x = Math.round((verts[i].x - minX) / CLUSTER);
-                var z = Math.round((verts[i].z - minZ) / CLUSTER);
-                if(!heightmap[z]){
-                    heightmap[z] = [];
-                }
-                if(heightmap[z][x] == undefined){
-                    heightmap[z][x] = verts[i].y;
-                }
-                else{
-                    heightmap[z][x] = Math.max(heightmap[z][x], verts[i].y);
-                }
-            }
+            heightmap = ModelOutput.makeHeightMap(mainScene.Terrain, CLUSTER);
         });
 
         var bearModel = new ModelOutput("models/bear.dae", progress, function(object){
