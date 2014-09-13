@@ -27,12 +27,10 @@ getObject("manifest/js/controllers/demo.js", function(files){
         done);
 
     function displayProgress(){
-        if(ctrls){
-            ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
-            ctrls.processedSoFar.style.width = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
-            ctrls.loadedSoFar.style.width = prog.makeSize(FileState.COMPLETE, "size");
-            ctrls.errorSoFar.style.width = prog.makeSize(FileState.ERRORED, "size");
-        }
+        ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
+        ctrls.processedSoFar.style.width = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
+        ctrls.loadedSoFar.style.width = prog.makeSize(FileState.COMPLETE, "size");
+        ctrls.errorSoFar.style.width = prog.makeSize(FileState.ERRORED, "size");
     }
 
     function progress(op, file, inter){
@@ -324,30 +322,19 @@ getObject("manifest/js/controllers/demo.js", function(files){
         }
 
         function fire() {
-            var mouseX = ( event.clientX / window.innerWidth ) * 2 - 1;
-					var mouseY = -( event.clientY / window.innerHeight ) * 2 + 1;
-
-					var vector = new THREE.Vector3( mouseX, mouseY, camera.near );
-
-					// Convert the [-1, 1] screen coordinate into a world coordinate on the near plane
-					var projector = new THREE.Projector();
-					projector.unprojectVector( vector, camera );
-
-					var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
-
-					// See if the ray from the camera into the world hits one of our meshes
-					var intersects = raycaster.intersectObject( mesh );
-					lastIntersects = intersects;
-
-					// Toggle rotation bool for meshes that we clicked
-					if ( intersects.length > 0 ) {
-
-						helper.position.set( 0, 0, 0 );
-						helper.lookAt( intersects[ 0 ].face.normal );
-
-						helper.position.copy( intersects[ 0 ].point );
-
-					}
+            var mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+			var mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+			var vector = new THREE.Vector3(mouseX, mouseY, camera.near);
+			var projector = new THREE.Projector();
+			projector.unprojectVector(vector, camera);
+			var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
+			var intersects = raycaster.intersectObject(mesh);
+			lastIntersects = intersects;
+			if (intersects.length > 0) {
+				helper.position.set(0, 0, 0);
+				helper.lookAt(intersects[0].face.normal);
+				helper.position.copy(intersects[0].point);
+			}
         }
 
         function reload() {
