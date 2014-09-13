@@ -1,11 +1,11 @@
+var ctrls = findEverything();
+
 getObject("manifest/js/controllers/demo.js", function(files){
     var CUR_APP_VERSION = 4;
+    var prog = new LoadingProgress(files);
 
-    files = files.map(function(f){ return new FileState(f); });
-
-    var totalFileSize = FileState.sum(files, FileState.NONE, "size"),
-        fileMap = files.reduce(function(a, b){ a[b.name] = b; return a;}, {}),
-        ctrls = findEverything();
+    var totalFileSize = prog.sum(FileState.NONE, "size"),
+        fileMap = prog.files.reduce(function(a, b){ a[b.name] = b; return a;}, {});
 
     include(
         CUR_APP_VERSION,
@@ -30,7 +30,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
         done);
 
     function makeSize(state, prop){
-        return pct(100 * FileState.sum(files, state, prop) / totalFileSize);
+        return pct(100 * prog.sum(state, prop) / totalFileSize);
     }
 
     function displayProgress(){
@@ -65,7 +65,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
             
             displayProgress();
 
-            if(FileState.sum(files, FileState.COMPLETE, "size") + FileState.sum(files, FileState.ERRORED, "size") == totalFileSize){
+            if(prog.sum(FileState.COMPLETE, "size") + prog.sum(FileState.ERRORED, "size") == totalFileSize){
                 ctrls.loading.style.display = "none";
             }
         }

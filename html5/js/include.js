@@ -53,19 +53,24 @@ FileState.prototype.toString = function(){
     return fmt("$1 ($2.00KB of $3.00KB): $4", this.name, this.progress/1000, this.size/1000, FileState.STATE_NAMES[this.state]);
 };
 
-FileState.sum = function(files, state, prop){
-    return files.filter(function(f){
-        return (f.state & state) != 0 || (state == 0);
-    }).reduce(function(a, b){
-        return a + b[prop];
-    }, 0);
-}
-
 FileState.STATE_NAMES = ["none", "started", "error", null, "success"]
 FileState.NONE = 0;
 FileState.STARTED = 1;
 FileState.ERRORED = 2;
 FileState.COMPLETE = 4;
+
+function LoadingProgress(files){
+    this.files = files.map(function(f){ return new FileState(f);});
+
+}
+
+LoadingProgress.prototype.sum = function(state, prop){
+    return this.files.filter(function(f){
+        return (f.state & state) != 0 || (state == 0);
+    }).reduce(function(a, b){
+        return a + b[prop];
+    }, 0);
+};
 
 /*
     Replace template place holders in a string with a positional value.
