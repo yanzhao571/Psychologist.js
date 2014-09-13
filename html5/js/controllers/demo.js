@@ -317,8 +317,19 @@ getObject("manifest/js/controllers/demo.js", function(files){
             toggleFullScreen();
         }, false);
 
-        ctrls.regularRenderButton.addEventListener("click", function(){
-            effect = null;
+        ctrls.userNameButton.addEventListener("click"< function(){
+            if(socket){
+                if(!key){
+                    alert("You need to set a secret key, first. I know, that sounds backwards, but it's correct.");
+                }
+                else{
+                    var user = prompt("Enter user name");
+                    if(user){
+                        socket.emit("user", user);
+                        ctrls.userNameButton.innerHTML = "Set User Name (current name: " + user + ")";
+                    }
+                }
+            }
         }, false);
 
         ctrls.anaglyphRenderButton.addEventListener("click", function(){
