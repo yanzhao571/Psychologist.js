@@ -73,6 +73,10 @@ LoadingProgress.prototype.sum = function(state, prop){
     }, 0);
 };
 
+LoadingProgress.prototype.makeSize = function(state, prop){
+    return pct(100 * this.sum(state, prop) / this.totalFileSize);
+};
+
 /*
     Replace template place holders in a string with a positional value.
     Template place holders start with a dollar sign ($) and are followed

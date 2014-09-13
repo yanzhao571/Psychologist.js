@@ -26,16 +26,12 @@ getObject("manifest/js/controllers/demo.js", function(files){
         progress,
         done);
 
-    function makeSize(state, prop){
-        return pct(100 * prog.sum(state, prop) / prog.totalFileSize);
-    }
-
     function displayProgress(){
         if(ctrls){
-            ctrls.triedSoFar.style.width = makeSize(FileState.NONE, "size");
-            ctrls.processedSoFar.style.width = makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
-            ctrls.loadedSoFar.style.width = makeSize(FileState.COMPLETE, "size");
-            ctrls.errorSoFar.style.width = makeSize(FileState.ERRORED, "size");
+            ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
+            ctrls.processedSoFar.style.width = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
+            ctrls.loadedSoFar.style.width = prog.makeSize(FileState.COMPLETE, "size");
+            ctrls.errorSoFar.style.width = prog.makeSize(FileState.ERRORED, "size");
         }
     }
 
