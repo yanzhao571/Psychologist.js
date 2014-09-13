@@ -1,35 +1,9 @@
 getObject("manifest/js/controllers/demo.js", function(files){
     var CUR_APP_VERSION = 4;
-    function FileState(obj){
-        this.name = obj.name;
-        this.size = obj.size;
-        this.progress = 0;
-        this.state = FileState.NONE;
-        this.errored = false;
-        this.complete = false;
-    }
-
-    FileState.prototype.toString = function(){
-        return fmt("$1 ($2.00KB of $3.00KB): $4", this.name, this.progress/1000, this.size/1000, FileState.STATE_NAMES[this.state]);
-    };
-
-    FileState.STATE_NAMES = ["none", "started", "error", null, "success"]
-    FileState.NONE = 0;
-    FileState.STARTED = 1;
-    FileState.ERRORED = 2;
-    FileState.COMPLETE = 4;
 
     files = files.map(function(f){ return new FileState(f); });
 
-    function sumOfState(state, prop){
-        return files.filter(function(f){
-            return (f.state & state) != 0 || (state == 0);
-        }).reduce(function(a, b){
-            return a + b[prop];
-        }, 0);
-    }
-
-    var totalFileSize = sumOfState(FileState.NONE, "size"),
+    var totalFileSize = FileState.sum(files, FileState.NONE, "size"),
         fileMap = files.reduce(function(a, b){ a[b.name] = b; return a;}, {}),
         ctrls = findEverything();
 
@@ -55,18 +29,11 @@ getObject("manifest/js/controllers/demo.js", function(files){
         progress,
         done);
 
-    function addProgress(p, file, arr){
-        if(arr.indexOf(file) == -1){
-            arr.push(file);
-        }
-        p.style.width = pct(100 * countProgress(arr) / totalFileSize);
-    }
-
     function makeSize(state, prop){
-        return pct(100 * sumOfState(state, prop) / totalFileSize);
+        return pct(100 * FileState.sum(files, state, prop) / totalFileSize);
     }
 
-    function displayProgress(complete){
+    function displayProgress(){
         if(ctrls){
             ctrls.triedSoFar.style.width = makeSize(FileState.NONE, "size");
             ctrls.processedSoFar.style.width = makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
@@ -98,7 +65,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
             
             displayProgress();
 
-            if(sumOfState(FileState.COMPLETE, "size") + sumOfState(FileState.ERRORED, "size") == totalFileSize){
+            if(FileState.sum(files, FileState.COMPLETE, "size") + FileState.sum(files, FileState.ERRORED, "size") == totalFileSize){
                 ctrls.loading.style.display = "none";
             }
         }
@@ -364,7 +331,30 @@ getObject("manifest/js/controllers/demo.js", function(files){
         }
 
         function fire() {
+            var mouseX = ( event.clientX / window.innerWidth ) * 2 - 1;
+					var mouseY = -( event.clientY / window.innerHeight ) * 2 + 1;
 
+					var vector = new THREE.Vector3( mouseX, mouseY, camera.near );
+
+					// Convert the [-1, 1] screen coordinate into a world coordinate on the near plane
+					var projector = new THREE.Projector();
+					projector.unprojectVector( vector, camera );
+
+					var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+					// See if the ray from the camera into the world hits one of our meshes
+					var intersects = raycaster.intersectObject( mesh );
+					lastIntersects = intersects;
+
+					// Toggle rotation bool for meshes that we clicked
+					if ( intersects.length > 0 ) {
+
+						helper.position.set( 0, 0, 0 );
+						helper.lookAt( intersects[ 0 ].face.normal );
+
+						helper.position.copy( intersects[ 0 ].point );
+
+					}
         }
 
         function reload() {
