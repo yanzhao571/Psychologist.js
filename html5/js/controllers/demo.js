@@ -460,59 +460,43 @@ getObject("manifest/js/controllers/demo.js", function(files){
             setSize(window.innerWidth, window.innerHeight);
         }, false);
 
-        var loader = new ModelOutput();
-        loader.loadCollada("models/scene.dae", progress, function(object){
-            scene.add(object.scene);
-            object.scene.traverse(function(child){
-                if(child instanceof(THREE.PerspectiveCamera)){
-                    camera = child;
+        var mainScene = new ModelOutput("models/scene.dae", progress, function(object){
+            scene.add(object);
+            camera = mainScene.namedObjects["Camera"].children[0];
+            heightmap = [];
+            var verts = mainScene.namedObjects["Terrain"].children[0].geometry.vertices;
+            for(var i = 0; i < verts.length; ++i){
+                minX = Math.min(minX, verts[i].x);
+                minZ = Math.min(minZ, verts[i].z);
+            }
+            for(var i = 0; i < verts.length; ++i){
+                var x = Math.round((verts[i].x - minX) / CLUSTER);
+                var z = Math.round((verts[i].z - minZ) / CLUSTER);
+                if(!heightmap[z]){
+                    heightmap[z] = [];
                 }
-                else if(child.name == "Terrain"){
-                    heightmap = [];
-                    var verts = child.children[0].geometry.vertices;
-                    var l = verts.length;
-                    for(var i = 0; i < l; ++i){
-                        minX = Math.min(minX, verts[i].x);
-                        minY = Math.min(minY, verts[i].y);
-                        minZ = Math.min(minZ, verts[i].z);
-                    }
-                    for(var i = 0; i < l; ++i){
-                        var x = Math.round((verts[i].x - minX) / CLUSTER);
-                        var z = Math.round((verts[i].z - minZ) / CLUSTER);
-                        if(!heightmap[z]){
-                            heightmap[z] = [];
-                        }
-                        if(heightmap[z][x] == undefined){
-                            heightmap[z][x] = verts[i].y;
-                        }
-                        else{
-                            heightmap[z][x] = Math.max(heightmap[z][x], verts[i].y);
-                        }
-                    }
+                if(heightmap[z][x] == undefined){
+                    heightmap[z][x] = verts[i].y;
                 }
-            });
+                else{
+                    heightmap[z][x] = Math.max(heightmap[z][x], verts[i].y);
+                }
+            }
         });
 
-        loader.loadCollada("models/bear.dae", progress, function(collada){
-            var objectProto = collada.scene;
+        var bearModel = new ModelOutput("models/bear.dae", progress, function(object){
             for (var i = 0; i < 10; i++) {
-                var object = objectProto.clone();
+                var obj = bearModel.clone();
+                bears.push(obj.mesh);
+
                 if(i > 0){
-                    object.position.x = Math.random() * 80 - 40;
-                    object.position.y = 0;
-                    object.position.z = Math.random() * 80 - 40;
-                    object.rotation.y = ( Math.random() * 2 ) * Math.PI;
+                    obj.position.x = Math.random() * 80 - 40;
+                    obj.position.y = 0;
+                    obj.position.z = Math.random() * 80 - 40;
+                    obj.rotation.y = ( Math.random() * 2 ) * Math.PI;
                 }
                 
-                scene.add(object);
-                object.traverse(function(child){
-                    if (child instanceof THREE.SkinnedMesh ) {
-                        bears.push(child);
-					    child.animation = new THREE.Animation(child, child.geometry.animation);
-                        child.animation.data = child.animation.data || bears[0].animation.data;
-                        console.log(i, child.animation.data);
-				    }
-                });
+                scene.add(obj);
             }
         });
 
