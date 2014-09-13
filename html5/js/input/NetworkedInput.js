@@ -34,8 +34,8 @@
         for(var i = 0; i < commands.length; ++i){
             var cmd = commands[i];
             if(cmd.commandDown && commandState[cmd.name].pressed && commandState[cmd.name].fireAgain){
-                cmd.commandDown();
                 commandState[cmd.name].lt = Date.now();
+                cmd.commandDown();
             }
 
             if(cmd.commandUp && !commandState[cmd.name].pressed && commandState[cmd.name].wasPressed){
