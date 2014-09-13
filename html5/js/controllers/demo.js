@@ -463,9 +463,11 @@ getObject("manifest/js/controllers/demo.js", function(files){
 
         var mainScene = new ModelOutput("models/scene.dae", progress, function(object){
             scene.add(object);
-            camera = mainScene.namedObjects["Camera"].children[0];
+            console.log(mainScene);
+            camera = mainScene.Camera.children[0];
+            mainScene.Ocean.children[0].material.transparent = true;
             heightmap = [];
-            var verts = mainScene.namedObjects["Terrain"].children[0].geometry.vertices;
+            var verts = mainScene.Terrain.children[0].geometry.vertices;
             for(var i = 0; i < verts.length; ++i){
                 minX = Math.min(minX, verts[i].x);
                 minZ = Math.min(minZ, verts[i].z);

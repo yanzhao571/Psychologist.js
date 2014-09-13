@@ -1,11 +1,10 @@
 ﻿function ModelOutput(src, progress, success){
-    this.namedObjects = {};
     if(src){
         ModelOutput.loadCollada(src, progress, function(object){
             this.template = object;
             object.traverse(function(child){
                 if(child.name){
-                    this.namedObjects[child.name] = child;
+                    this[child.name] = child;
                 }
             }.bind(this));
             success(object);
