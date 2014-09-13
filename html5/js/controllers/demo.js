@@ -272,7 +272,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
         }
 
         scene = new THREE.Scene();
-        //scene.fog = new THREE.Fog(BG_COLOR, 1, DRAW_DISTANCE);
+        scene.fog = new THREE.Fog(BG_COLOR, 1, DRAW_DISTANCE);
 
         var closers = document.getElementsByClassName("closeSectionButton");
         for(var i = 0; i < closers.length; ++i){
@@ -365,6 +365,7 @@ getObject("manifest/js/controllers/demo.js", function(files){
         }
 
         function fire() {
+
         }
 
         function reload() {
