@@ -1,8 +1,5 @@
 ﻿function GET(url, type, progress, error, success){
     type = type || "text";
-    if(window.CUR_APP_VERSION){
-        url += "?v" + window.CUR_APP_VERSION;
-    }
     var xhr = new XMLHttpRequest();
     xhr.open("GET", url);
     xhr.responseType = type;
@@ -59,10 +56,47 @@ FileState.STARTED = 1;
 FileState.ERRORED = 2;
 FileState.COMPLETE = 4;
 
-function LoadingProgress(files){
-    this.files = files.map(function(f){ return new FileState(f);});
-    this.totalFileSize = this.sum(FileState.NONE, "size");
-    this.fileMap = this.files.reduce(function(a, b){ a[b.name] = b; return a;}, {});
+function LoadingProgress(){
+    var args = Array.prototype.slice.call(arguments),
+        version = ofType(args, "number").reduce(function(a, b){ return b; }, 0),
+        paths = ofType(args, "string"),
+        callbacks = ofType(args, "function"),
+        manifest = paths.shift(),
+        displayProgress = callbacks.shift(),
+        postScriptLoad = callbacks.shift();
+
+    getObject(manifest, function(files){
+        this.files = files.map(function(f){ return new FileState(f);});
+        this.totalFileSize = this.sum(FileState.NONE, "size");
+        this.fileMap = this.files.reduce(function(a, b){ a[b.name] = b; return a;}, {});
+            
+        function progress(op, file, inter){
+            if(op == "loading"){
+                if(this.fileMap[file]){
+                    this.fileMap[file].state = FileState.STARTED;
+                }
+                displayProgress();
+            }
+            else {
+                if(this.fileMap[file]){
+                    if(op == "intermediate" && inter){
+                        this.fileMap[file].progress = inter;
+                    }
+                    else if(op == "success"){
+                        this.fileMap[file].progress = this.fileMap[file].size;
+                        this.fileMap[file].state = FileState.COMPLETE;
+                    }
+                    else if(op == "error") {
+                        this.fileMap[file].state = FileState.ERRORED;
+                    }
+                }
+            
+                displayProgress();
+            }
+        }
+
+        include(version, paths, progress.bind(this), postScriptLoad);
+    }.bind(this));
 }
 
 LoadingProgress.prototype.sum = function(state, prop){
@@ -169,12 +203,12 @@ function ofType(arr, t){
 }
 
 var include = (function () {
-    function loadLibs(version, progress, done, libs, libIndex) {
+    function loadLibs(version, libs, progress, postScriptLoad, libIndex) {
         libIndex = libIndex || 0;
         if (libIndex < libs.length) {
             var thunk = function (type) {
                 progress(type, libs[libIndex], libIndex + 1, libs.length);
-                setTimeout(loadLibs, 0, version, progress, done, libs, libIndex + 1);
+                setTimeout(loadLibs, 0, version, libs, progress, postScriptLoad, libIndex + 1);
             };
             progress("loading", libs[libIndex], libIndex, libs.length);
             var file = libs[libIndex];
@@ -183,20 +217,13 @@ var include = (function () {
             }
             getScript(file, thunk.bind(this, "success"), thunk.bind(this, "error"));
         }
-        else{
-            done();
+        else if(postScriptLoad){
+            postScriptLoad(progress);
         }
     }
 
-    function include() {
-        var args = Array.prototype.slice.call(arguments),
-            version = ofType(args, "number").reduce(function(a, b){ return b; }, 0),
-            libs = ofType(args, "string"),
-            callbacks = ofType(args, "function"),            
-            progress = callbacks.length == 2 ? callbacks[0] : console.log.bind(console, "file loaded"),            
-            done = callbacks.length >= 1 ? callbacks[callbacks.length - 1] : console.log.bind(console, "done loading");
-
-        setTimeout(loadLibs, 0, version, progress, done, libs);
+    function include(version, libs, progress, postScriptLoad) {
+        setTimeout(loadLibs, 0, version, libs, progress, postScriptLoad);
     }
 
     return include;
