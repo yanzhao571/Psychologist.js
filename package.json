@@ -21,7 +21,7 @@
 
     "main": "./server.js",
     "scripts": {
-        "desktop": "node server -v:true"
+        "desktop": "node server -v:true",
         "server": "node server -v:false"
     }
 }
