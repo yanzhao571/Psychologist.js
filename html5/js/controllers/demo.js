@@ -40,7 +40,6 @@ function postScriptLoad(progress){
         dpitch = 0, droll = 0, dheading = 0, lt = 0,
         vcx = 0, vcz = 0, vcy = 0, tx, tz,
         onground = false,
-        video,
         camera, scene, effect, renderer, map,
         motion, keyboard, mouse, gamepad, 
         fps, dt, heightmap,
@@ -288,21 +287,26 @@ function postScriptLoad(progress){
             onground = false;
         }
     }
-
+    var lastBear = null;
     function fire() {
-        var mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-		var mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-		var vector = new THREE.Vector3(mouseX, mouseY, camera.near);
+		var vector = new THREE.Vector3(0, 0, camera.near);
 		var projector = new THREE.Projector();
 		projector.unprojectVector(vector, camera);
 		var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
-		var intersects = raycaster.intersectObject(mesh);
-		lastIntersects = intersects;
-		if (intersects.length > 0) {
-			helper.position.set(0, 0, 0);
-			helper.lookAt(intersects[0].face.normal);
-			helper.position.copy(intersects[0].point);
-		}
+		var intersects = raycaster.intersectObject(mainScene.Terrain.children[0]);
+        if(intersects.length > 0){
+            var intersect = intersects[0].point;
+            console.log(intersect);
+            var newBear = bearModel.clone();
+            newBear.position.x = intersect.x;
+            newBear.position.y = intersect.y;
+            newBear.position.z = intersect.z;
+            scene.add(newBear);
+            if(lastBear){
+                scene.remove(lastBear);
+            }
+            lastBear = newBear;
+        }
     }
 
     function reload() {
@@ -320,8 +324,7 @@ function postScriptLoad(progress){
     });
     renderer.setClearColor(BG_COLOR);
 
-    socket = io.connect(document.location.hostname,
-    {
+    socket = io.connect(document.location.hostname, {
         "reconnect": true,
         "reconnection delay": 1000,
         "max reconnection attempts": 60
