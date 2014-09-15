@@ -49,20 +49,39 @@ ModelOutput.makeHeightMap = function(obj, CLUSTER){
     return heightmap;
 };
 
-ModelOutput.prototype.clone = function(){
+ModelOutput.prototype.clone = function(userName, socket){
     var obj = this.template.clone();
                 
     obj.traverse(function(child){
         if (child instanceof THREE.SkinnedMesh ) {
             obj.mesh = child;
-			child.animation = new THREE.Animation(child, child.geometry.animation);
-            if(!this.template.originalAnimationData && child.animation.data){
-                this.template.originalAnimationData = child.animation.data;
+			obj.animation = new THREE.Animation(child, child.geometry.animation);
+            if(!this.template.originalAnimationData && obj.animation.data){
+                this.template.originalAnimationData = obj.animation.data;
             }
-            if(!child.animation.data){
-                child.animation.data = this.template.originalAnimationData;
+            if(!obj.animation.data){
+                obj.animation.data = this.template.originalAnimationData;
             }
 		}
     }.bind(this));
+
+    if(socket){
+        socket.on("state", function(user, state){
+            if(user == userName){
+                obj.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+                obj.rotateY(state.heading);
+                obj.position.x = state.x;
+                obj.position.y = state.y;
+                obj.position.z = state.z;
+                if(state.isRunning && !obj.animation.isPlaying){
+                    obj.animation.play();
+                }
+                else if(!state.isRunning && obj.animation.isPlaying){
+                    obj.animation.stop();
+                }
+            }
+        });
+    }
+
     return obj;
 };

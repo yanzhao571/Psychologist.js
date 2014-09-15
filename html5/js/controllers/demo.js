@@ -1,5 +1,5 @@
 var ctrls = findEverything();
-
+var PLAYER_HEIGHT = 6;
 var prog = new LoadingProgress(
     "manifest/js/controllers/demo.js",
     "js/psychologist.js",
@@ -31,7 +31,7 @@ function displayProgress(){
 
 function postScriptLoad(progress){
     ctrls.loading.style.display = "none";
-    var BG_COLOR = 0xafbfff, PLAYER_HEIGHT = 6, CLUSTER = 2,
+    var BG_COLOR = 0xafbfff, CLUSTER = 2,
         DRAW_DISTANCE = 100,
         TRACKING_SCALE = 0.5,
         TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
@@ -45,7 +45,7 @@ function postScriptLoad(progress){
         fps, dt, heightmap,
         buttonsTimeout = null,
         buttonsVisible = true,
-        key = null,
+        key = null, userName = null,
         isDebug = false,
         isLocal = document.location.hostname == "localhost",
         isHost = false,
@@ -54,7 +54,7 @@ function postScriptLoad(progress){
         socket,
         oceanSound = null,
         audio3d = new Audio3DOutput(),
-        bears = [];
+        bears = {};
     
     function msg(){
         if(!isDebug){
@@ -106,18 +106,18 @@ function postScriptLoad(progress){
                     + touch.getValue("drive");
                 if(tx != 0 || tz != 0){
                     len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
-                    for(var n = 0; n < bears.length; ++n){
-                        if(!bears[n].animation.isPlaying){
-                            bears[n].animation.play();
-                        }
+                    
+                    if(avatar && !avatar.animation.isPlaying){
+                        avatar.animation.play();
                     }
                 }
                 else{
                     len = 0;
-                    if(bears[0] && bears[0].animation){
-                        bears[0].animation.stop();
+                    if(avatar && avatar.animation.isPlaying){
+                        avatar.animation.stop();
                     }
                 }
+                
                 tx *= len;
                 tz *= len;
                 len = tx * Math.cos(heading) + tz * Math.sin(heading);
@@ -153,12 +153,12 @@ function postScriptLoad(progress){
         camera.translateY(vcy * dt);
         camera.translateZ(vcz * dt);
         camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
-        if(bears[0]){
-            bears[0].setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-            bears[0].rotateY(heading);
-            bears[0].position.x = camera.position.x;
-            bears[0].position.y = camera.position.y - PLAYER_HEIGHT;
-            bears[0].position.z = camera.position.z;
+        if(avatar){
+            avatar.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+            avatar.rotateY(heading);
+            avatar.position.x = camera.position.x;
+            avatar.position.y = camera.position.y - PLAYER_HEIGHT;
+            avatar.position.z = camera.position.z;
         }
         var x = camera.position.x / 10,
             y = camera.position.y / 10,
@@ -227,6 +227,21 @@ function postScriptLoad(progress){
         }
     }, false);
 
+    ctrls.userNameButton.addEventListener("click", function(){
+        console.log(socket && key);
+        if(socket){
+            if(!key){
+                msg("You need to set a secret key, first. I know, that sounds backwards, but it's correct.");
+            }
+            else{
+                userName = prompt("Enter user name");
+                if(userName){
+                    socket.emit("user", userName);
+                }
+            }
+        }
+    }, false);
+
     ctrls.startSpeechButton.addEventListener("click", function(){
         speech.start();
     }, false);
@@ -239,21 +254,6 @@ function postScriptLoad(progress){
 
     ctrls.fullScreenButton.addEventListener("click", function(){
         toggleFullScreen();
-    }, false);
-
-    ctrls.userNameButton.addEventListener("click"< function(){
-        if(socket){
-            if(!key){
-                alert("You need to set a secret key, first. I know, that sounds backwards, but it's correct.");
-            }
-            else{
-                var user = prompt("Enter user name");
-                if(user){
-                    socket.emit("user", user);
-                    ctrls.userNameButton.innerHTML = "Set User Name (current name: " + user + ")";
-                }
-            }
-        }
     }, false);
 
     ctrls.anaglyphRenderButton.addEventListener("click", function(){
@@ -287,26 +287,8 @@ function postScriptLoad(progress){
             onground = false;
         }
     }
-    var lastBear = null;
+
     function fire() {
-		var vector = new THREE.Vector3(0, 0, camera.near);
-		var projector = new THREE.Projector();
-		projector.unprojectVector(vector, camera);
-		var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
-		var intersects = raycaster.intersectObject(mainScene.Terrain.children[0]);
-        if(intersects.length > 0){
-            var intersect = intersects[0].point;
-            console.log(intersect);
-            var newBear = bearModel.clone();
-            newBear.position.x = intersect.x;
-            newBear.position.y = intersect.y;
-            newBear.position.z = intersect.z;
-            scene.add(newBear);
-            if(lastBear){
-                scene.remove(lastBear);
-            }
-            lastBear = newBear;
-        }
     }
 
     function reload() {
@@ -319,9 +301,7 @@ function postScriptLoad(progress){
         }
     }
 
-    renderer = new THREE.WebGLRenderer({
-        antialias: true
-    });
+    renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setClearColor(BG_COLOR);
 
     socket = io.connect(document.location.hostname, {
@@ -338,7 +318,19 @@ function postScriptLoad(progress){
         isHost = info.index == 0;
         isClient = info.index > 0;
         msg(fmt("You are device $1 of $2. If this is your first time entering your key, it means you've chosen a key someone else is already using, in which case you should reload the page and try another, less stupid key.", info.index + 1, info.total));
-    });    
+    });
+
+    socket.on("user", function(user, isOwn){
+        if(isOwn){
+            ctrls.userNameButton.innerHTML = fmt("Set User Name (current name: $1)", user);
+            userName = user;
+            bears[user] = bearModel.clone();
+        }
+        else{
+            bears[user] = bearModel.clone(user, socket);
+        }
+        scene.add(bears[user]);
+    });
 
     if(isDebug){
         key = "debug";
@@ -403,26 +395,15 @@ function postScriptLoad(progress){
 
     var mainScene = new ModelOutput("models/scene.dae", progress, function(object){
         scene.add(object);
-        console.log(mainScene);
         camera = mainScene.Camera.children[0];
         mainScene.Ocean.children[0].material.transparent = true;
         heightmap = ModelOutput.makeHeightMap(mainScene.Terrain, CLUSTER);
     });
 
     var bearModel = new ModelOutput("models/bear.dae", progress, function(object){
-        for (var i = 0; i < 10; i++) {
-            var obj = bearModel.clone();
-            bears.push(obj.mesh);
-
-            if(i > 0){
-                obj.position.x = Math.random() * 80 - 40;
-                obj.position.y = 0;
-                obj.position.z = Math.random() * 80 - 40;
-                obj.rotation.y = ( Math.random() * 2 ) * Math.PI;
-            }
-                
-            scene.add(obj);
-        }
+        var obj = bearModel.clone();
+        avatar = obj;
+        scene.add(obj);
     });
 
     audio3d.loadSound3D("music/ocean.mp3", true, 0, 0, 0, progress, function(snd){
