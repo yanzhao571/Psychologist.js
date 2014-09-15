@@ -26,6 +26,30 @@ module.exports = function (socket) {
             }
         }
     }
+    
+    socket.on("disconnect", disconnect);
+
+    socket.on("user", function(userName){
+        group.name = userName;
+        
+        for(var g in socketGroups){
+            var grp  = socketGroups[g];
+            for(var i = 0; i < grp.length; ++i){
+                grp[i].emit("user", userName, userName == grp.name);
+            }
+        }
+    });
+
+    socket.on("state", function(state){
+        for(var g in socketGroups){
+            var grp  = socketGroups[g];
+            if(grp.name != group.name){
+                for(var i = 0; i < grp.length; ++i){
+                    grp[i].emit("state", state);
+                }
+            }
+        }
+    });
 
     socket.on("key", function (key) {
         if(lastKey){
@@ -47,7 +71,6 @@ module.exports = function (socket) {
             socket.on(types[i], proxyCommand.bind(socket, key, types[i]));
         }
 
-        socket.on("disconnect", disconnect);
         socket.emit("good", {index: socket.index, total: group.length});
         for(var i = 0; i < group.length && i < socket.index; ++i){
             group[i].emit("open", {index: socket.index, total: group.length});
