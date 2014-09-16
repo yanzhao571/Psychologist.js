@@ -5,84 +5,63 @@ function User(userName, password, socket){
     this.devices = [socket];
     this.userName = userName;
     this.password = password;
+    socket.index = 0;
+    this.bindEvents(socket, this);
 }
 
 User.prototype.addDevice = function(socket){
-    var index = this.devices.length;
-    this.devices.push(socket);
+    socket.index = 0;
+    while(socket.index < this.devices.length && this.devices[socket.index]){
+        ++socket.index;
+    }
+    this.devices[socket.index] = socket;
+    this.bindEvents(socket, this);
+    this.emit(socket.index, "open");
     return index;
 };
 
-User.prototype.emit = function(){
+User.prototype.bindEvents = function(socket){
+    for(var i = 0; i < types.length; ++i) {
+        socket.on(types[i], this.emit.bind(this, socket.index));
+    }
+    socket.on("disconnect", this.disconnect.bind(this, socket.index));
+
+    socket.on("userState", function(state){
+        for(var userName in users){
+            var user  = users[userName];
+            user.emit(userName == this.userName ? socket.index : -1, "userState", state);
+        }
+    }.bind(this));
+    
+    socket.emit("good");
+};
+
+User.prototype.disconnect = function(index){
+    this.devices[index] = null;
+    this.emit(index, "close");
+};
+
+User.prototype.emit = function(skipIndex){
+    var args = Array.prototype.splice.call(arguments, 0, 1);
     for(var i = 0; i < this.devices.length; ++i){
-        this.devices[i].emit.apply(this.devices[i], arguments);
+        if(i != skipIndex && this.devices[i]){
+            this.devices[i].emit.apply(this.devices[i], args);
+        }
     }
 };
 
 module.exports = function (socket) {
-    var user, lastKey;
-
-    function disconnect(){
-        if(group){
-            group.splice(socket.index, 1);
-            for(var i = 0; i < group.length; ++i){
-                group[i].index = i;
-                group[i].emit("close", socket.index);
-            }
-            if(group.length == 0){
-                delete users[lastKey];
-                group = null;
-            }
-        }
-    }
-    
-    socket.on("disconnect", disconnect);
+    var user;
 
     socket.on("user", function(credentials){
-        if(user
-        
-        for(var g in users){
-            var grp  = users[g];
-            for(var i = 0; i < grp.length; ++i){
-                grp[i].emit("user", userName, userName == grp.name);
-            }
+        if(!users[credentials.userName]){
+            var user = new User(credentials.userName, credentials.password, socket);
         }
-    });
-
-    socket.on("state", function(state){
-        for(var g in users){
-            var grp  = users[g];
-            if(grp.name != group.name){
-                for(var i = 0; i < grp.length; ++i){
-                    grp[i].emit("state", state);
-                }
-            }
+        else if(users[credentials.userName].password == credentials.password){
+            sers[credentials.userName].addDevice(socket);
         }
-    });
-
-    socket.on("key", function (key) {
-        if(lastKey){
-            disconnect();
-            lastKey = null;
-        }
-
-        lastKey = key;
-        if(!users[key]){
-            users[key] = [];
-        }
-
-        group = users[key];
-
-        socket.index = group.length;
-        group.push(socket);
-
-        for(var i = 0; i < types.length; ++i) {
-            socket.on(types[i], proxyCommand.bind(socket, key, types[i]));
-        }
-
-        socket.emit("good", {index: socket.index, total: group.length});
-        for(var i = 0; i < group.length && i < socket.index; ++i){
-            group[i].emit("open", {index: socket.index, total: group.length});
+        else{
+            socket.emit("bad");
         }
     });
 }
