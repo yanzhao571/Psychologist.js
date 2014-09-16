@@ -6,7 +6,7 @@ section
     background-color: #ffffff;
 }
 
-td > .button
+td > .button, td > input
 {
     width: 100%;
     box-sizing:border-box;
