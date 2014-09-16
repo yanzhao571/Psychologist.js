@@ -1,17 +1,26 @@
 ﻿var types = ["gamepad", "keyboard", "mouse", "touch", "motion", "speech"],
-    socketGroups = {};
+    users = {};
 
-function proxyCommand(key, command, commandState){
-    for(var i = 0; i < socketGroups[key].length; ++i){
-        if(i != this.index){
-            socketGroups[key][i].emit(command, commandState);
-        }
-    }
+function User(userName, password, socket){
+    this.devices = [socket];
+    this.userName = userName;
+    this.password = password;
 }
 
+User.prototype.addDevice = function(socket){
+    var index = this.devices.length;
+    this.devices.push(socket);
+    return index;
+};
+
+User.prototype.emit = function(){
+    for(var i = 0; i < this.devices.length; ++i){
+        this.devices[i].emit.apply(this.devices[i], arguments);
+    }
+};
 
 module.exports = function (socket) {
-    var group, lastKey;
+    var user, lastKey;
 
     function disconnect(){
         if(group){
@@ -21,7 +30,7 @@ module.exports = function (socket) {
                 group[i].emit("close", socket.index);
             }
             if(group.length == 0){
-                delete socketGroups[lastKey];
+                delete users[lastKey];
                 group = null;
             }
         }
@@ -29,11 +38,11 @@ module.exports = function (socket) {
     
     socket.on("disconnect", disconnect);
 
-    socket.on("user", function(userName){
-        group.name = userName;
+    socket.on("user", function(credentials){
+        if(user
         
-        for(var g in socketGroups){
-            var grp  = socketGroups[g];
+        for(var g in users){
+            var grp  = users[g];
             for(var i = 0; i < grp.length; ++i){
                 grp[i].emit("user", userName, userName == grp.name);
             }
@@ -41,8 +50,8 @@ module.exports = function (socket) {
     });
 
     socket.on("state", function(state){
-        for(var g in socketGroups){
-            var grp  = socketGroups[g];
+        for(var g in users){
+            var grp  = users[g];
             if(grp.name != group.name){
                 for(var i = 0; i < grp.length; ++i){
                     grp[i].emit("state", state);
@@ -58,11 +67,11 @@ module.exports = function (socket) {
         }
 
         lastKey = key;
-        if(!socketGroups[key]){
-            socketGroups[key] = [];
+        if(!users[key]){
+            users[key] = [];
         }
 
-        group = socketGroups[key];
+        group = users[key];
 
         socket.index = group.length;
         group.push(socket);
