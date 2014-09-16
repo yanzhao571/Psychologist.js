@@ -20,6 +20,13 @@ User.prototype.addDevice = function(socket){
     return index;
 };
 
+function broadcast(thunk){
+    for(var userName in users){
+        var user = users[userName];
+        thunk(user);
+    }
+}
+
 User.prototype.bindEvents = function(socket){
     for(var i = 0; i < types.length; ++i) {
         socket.on(types[i], this.emit.bind(this, socket.index));
@@ -27,13 +34,17 @@ User.prototype.bindEvents = function(socket){
     socket.on("disconnect", this.disconnect.bind(this, socket.index));
 
     socket.on("userState", function(state){
-        for(var userName in users){
-            var user  = users[userName];
-            user.emit(userName == this.userName ? socket.index : -1, "userState", state);
-        }
+        state.userName = this.userName;
+        broadcast(function(user){
+            user.emit(user.userName == this.userName ? socket.index : -1, "userState", state);
+        }.bind(this));
     }.bind(this));
     
     socket.emit("good");
+    
+    broadcast(function(user){
+        user.emit(user.userName == this.userName ? socket.index : -1, "user", user.userName);
+    }.bind(this));
 };
 
 User.prototype.disconnect = function(index){
@@ -55,10 +66,10 @@ module.exports = function (socket) {
 
     socket.on("user", function(credentials){
         if(!users[credentials.userName]){
-            var user = new User(credentials.userName, credentials.password, socket);
+            users[credentials.userName] = new User(credentials.userName, credentials.password, socket);
         }
         else if(users[credentials.userName].password == credentials.password){
-            sers[credentials.userName].addDevice(socket);
+            users[credentials.userName].addDevice(socket);
         }
         else{
             socket.emit("bad");

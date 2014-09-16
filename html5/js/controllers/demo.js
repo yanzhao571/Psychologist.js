@@ -45,7 +45,7 @@ function postScriptLoad(progress){
         fps, dt, heightmap,
         buttonsTimeout = null,
         buttonsVisible = true,
-        key = null, userName = null,
+        userName = null, password = null,
         isDebug = false,
         isLocal = document.location.hostname == "localhost",
         isHost = false,
@@ -145,7 +145,7 @@ function postScriptLoad(progress){
             draw();
         }
     }
-
+    var frame = 0, dFrame = 250;
     function setCamera(dt) {
         camera.updateProjectionMatrix();
         camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
@@ -153,6 +153,17 @@ function postScriptLoad(progress){
         camera.translateY(vcy * dt);
         camera.translateZ(vcz * dt);
         camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
+        frame += dFrame;
+        if(frame > dFrame){
+            frame -= dFrame;
+            socket.emit("userState", {
+                x: camera.position.x,
+                y: camera.position.y,
+                z: camera.position.z,
+                heading: heading,
+                isRunning: vcx != 0 || vcy != 0 || vcz != 0
+            });
+        }
         if(avatar){
             avatar.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
             avatar.rotateY(heading);
@@ -216,29 +227,14 @@ function postScriptLoad(progress){
 
     ctrls.connectButton.addEventListener("click", function(){
         if(socket){
-            key = prompt("Enter a key.");
-            if(key){
-                socket.emit("key", key);
+            userName = ctrls.userNameField.value;
+            password = ctrls.passwordField.value;
+            if(userName && password){
+                socket.emit("user", {userName: userName, password: password});
             }
-            this.innerHTML = fmt("Connect to Device Server (current key: $1)", key);
         }
         else{
             msg("No socket available");
-        }
-    }, false);
-
-    ctrls.userNameButton.addEventListener("click", function(){
-        console.log(socket && key);
-        if(socket){
-            if(!key){
-                msg("You need to set a secret key, first. I know, that sounds backwards, but it's correct.");
-            }
-            else{
-                userName = prompt("Enter user name");
-                if(userName){
-                    socket.emit("user", userName);
-                }
-            }
         }
     }, false);
 
@@ -311,32 +307,32 @@ function postScriptLoad(progress){
     });
 
     socket.on("bad", function(){
-        msg("Key already in use! You're going to have to reload the page if you want to try again. Sorry. Try not to pick such a stupid key next time.");
+        msg("Incorrect user name or password!");
     });
 
-    socket.on("good", function(info){
-        isHost = info.index == 0;
-        isClient = info.index > 0;
-        msg(fmt("You are device $1 of $2. If this is your first time entering your key, it means you've chosen a key someone else is already using, in which case you should reload the page and try another, less stupid key.", info.index + 1, info.total));
+    socket.on("good", function(){
+        msg("You are now connected to the device server.");
     });
 
-    socket.on("user", function(user, isOwn){
-        if(isOwn){
-            ctrls.userNameButton.innerHTML = fmt("Set User Name (current name: $1)", user);
-            userName = user;
-            bears[user] = bearModel.clone();
-        }
-        else{
-            bears[user] = bearModel.clone(user, socket);
-        }
+    socket.on("user", function(user){
+        bears[user] = bearModel.clone(user, socket);
         scene.add(bears[user]);
     });
 
-    if(isDebug){
-        key = "debug";
-        ctrls.connectButton.innerHTML = fmt("Connect to Device Server (current key: $1)", key)
-        socket.emit("key", key);
-    }
+    socket.on("userState", function(userState){
+        var bear = bears[userState.userName];
+        bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+        bear.rotateY(userState.heading);
+        bear.position.x = userState.x;
+        bear.position.y = userState.y;
+        bear.position.z = userState.z;
+        if(!bear.animation.isPlaying && userState.isRunning){
+            bear.animation.play();
+        }
+        else if(bear.animation.isPlaying && !userState.isRunning){
+            bear.animation.stop();
+        }
+    });
 
     motion = new MotionInput([
         { name: "heading", axes: [-1] },
