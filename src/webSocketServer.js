@@ -1,12 +1,11 @@
 ﻿var types = ["gamepad", "keyboard", "mouse", "touch", "motion", "speech"],
-    users = {};
+    users = {},
+    fmt = require("./core.js").fmt;
 
-function User(userName, password, socket){
-    this.devices = [socket];
+function User(userName, password){
+    this.devices = [];
     this.userName = userName;
     this.password = password;
-    socket.index = 0;
-    this.bindEvents(socket, this);
 }
 
 User.prototype.addDevice = function(socket){
@@ -17,7 +16,6 @@ User.prototype.addDevice = function(socket){
     this.devices[socket.index] = socket;
     this.bindEvents(socket, this);
     this.emit(socket.index, "open");
-    return index;
 };
 
 function broadcast(thunk){
@@ -40,10 +38,14 @@ User.prototype.bindEvents = function(socket){
         }.bind(this));
     }.bind(this));
     
-    socket.emit("good");
+    var userList = [];
+    for(var userName in users){
+        userList.push(userName);
+    }
+    socket.emit("good", userList);
     
     broadcast(function(user){
-        user.emit(user.userName == this.userName ? socket.index : -1, "user", user.userName);
+        user.emit(user.userName == this.userName ? socket.index : -1, "user", this.userName);
     }.bind(this));
 };
 
@@ -53,7 +55,7 @@ User.prototype.disconnect = function(index){
 };
 
 User.prototype.emit = function(skipIndex){
-    var args = Array.prototype.splice.call(arguments, 0, 1);
+    var args = Array.prototype.slice.call(arguments, 1);
     for(var i = 0; i < this.devices.length; ++i){
         if(i != skipIndex && this.devices[i]){
             this.devices[i].emit.apply(this.devices[i], args);
@@ -66,9 +68,10 @@ module.exports = function (socket) {
 
     socket.on("user", function(credentials){
         if(!users[credentials.userName]){
-            users[credentials.userName] = new User(credentials.userName, credentials.password, socket);
+            users[credentials.userName] = new User(credentials.userName, credentials.password);
         }
-        else if(users[credentials.userName].password == credentials.password){
+        
+        if(users[credentials.userName].password == credentials.password){
             users[credentials.userName].addDevice(socket);
         }
         else{

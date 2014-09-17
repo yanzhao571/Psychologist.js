@@ -145,7 +145,7 @@ function postScriptLoad(progress){
             draw();
         }
     }
-    var frame = 0, dFrame = 250;
+    var frame = 0, dFrame = 2000;
     function setCamera(dt) {
         camera.updateProjectionMatrix();
         camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
@@ -213,9 +213,10 @@ function postScriptLoad(progress){
     for(var i = 0; i < closers.length; ++i){
         closers[i].addEventListener("click", function(){
             this.parentElement.style.display = "none";
-            if(this.parentElement.id == "instructions"){
-                toggleFullScreen();
-            }
+            //if(this.parentElement.id == "options"){
+            //    toggleFullScreen();
+            //    mouse.requestPointerLock();
+            //}
             ctrls.menuButton.style.display = "";
         }, false);
     }
@@ -310,8 +311,14 @@ function postScriptLoad(progress){
         msg("Incorrect user name or password!");
     });
 
-    socket.on("good", function(){
+    socket.on("good", function(users){
         msg("You are now connected to the device server.");
+        for(var i = 0; i < users.length; ++i){
+            if(users[i] != userName){
+                bears[users[i]] = bearModel.clone(users[i], socket);
+                scene.add(bears[users[i]]);
+            }
+        }
     });
 
     socket.on("user", function(user){
@@ -321,16 +328,18 @@ function postScriptLoad(progress){
 
     socket.on("userState", function(userState){
         var bear = bears[userState.userName];
-        bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-        bear.rotateY(userState.heading);
-        bear.position.x = userState.x;
-        bear.position.y = userState.y;
-        bear.position.z = userState.z;
-        if(!bear.animation.isPlaying && userState.isRunning){
-            bear.animation.play();
-        }
-        else if(bear.animation.isPlaying && !userState.isRunning){
-            bear.animation.stop();
+        if(bear){
+            bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+            bear.rotateY(userState.heading);
+            bear.position.x = userState.x;
+            bear.position.y = userState.y - PLAYER_HEIGHT;
+            bear.position.z = userState.z;
+            if(!bear.animation.isPlaying && userState.isRunning){
+                bear.animation.play();
+            }
+            else if(bear.animation.isPlaying && !userState.isRunning){
+                bear.animation.stop();
+            }
         }
     });
 
