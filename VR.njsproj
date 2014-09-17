@@ -39,6 +39,7 @@
     <Compile Include="html5\js\output\ModelOutput.js" />
     <Compile Include="html5\lib\Blob.min.js" />
     <Compile Include="html5\lib\canvas-toBlob.min.js" />
+    <Compile Include="html5\lib\droid_sans_regular.typeface.js" />
     <Compile Include="html5\lib\FileSaver.min.js" />
     <Compile Include="html5\lib\three\AnaglyphEffect.min.js" />
     <Compile Include="html5\lib\three\ColladaLoader.js" />
