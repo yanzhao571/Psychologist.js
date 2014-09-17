@@ -198,11 +198,11 @@
             commandState = cmdState
             fireCommands();
         });
-        socket.on("close", function(){
+        socket.on("deviceLost", function(){
             // will force the local event loop to take over and cancel out any lingering command activity
             inPhysicalUse = true;
         });
-        socket.on("open", function(){
+        socket.on("deviceAdded", function(){
             // local input activity could override this, but that is fine.
             inPhysicalUse = false;
         });

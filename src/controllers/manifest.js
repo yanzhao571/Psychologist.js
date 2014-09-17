@@ -18,7 +18,7 @@ function makeManifest(strings, done, index, accum){
 }
 
 module.exports = {
-    pattern: /^\/manifest\/(\w+(?:\/\w+)*\.js)$/,
+    pattern: /^\/manifest\/(\w+(?:\/\w+)*\.js)(?:\?)?/,
     handler: function(method, params, done, error){
         if(method != "GET"){
             error("This controller only supports GET requests");

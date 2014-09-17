@@ -9,12 +9,14 @@
 }
 
 Audio3DOutput.prototype.loadSound = function(src, loop, progress, success){
-    var func = progress;
-    var error = function(){ func("error", src); };
-    var progress = function(evt){ func("intermediate", src, evt.loaded); };
-    func("loading", src);
-    GET(src, "arraybuffer", progress, error, function(response) {
-        func("success", src);
+    var error = function(){ 
+        progress("error", src); 
+    };
+    progress("loading", src);
+    GET(src, "arraybuffer", function(evt){ 
+        progress("intermediate", src, evt.loaded); 
+    }, error, function(response) {
+        progress("success", src);
         this.audioContext.decodeAudioData(response, function(buffer) {
             var snd = {
                 volume: this.audioContext.createGain(),
