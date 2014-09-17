@@ -66,7 +66,7 @@ ModelOutput.prototype.clone = function(userName, socket){
     }.bind(this));
 
     if(socket){
-        socket.on("state", function(user, state){
+        socket.on("userState", function(user, state){
             if(user == userName){
                 obj.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
                 obj.rotateY(state.heading);

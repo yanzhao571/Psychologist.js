@@ -9,49 +9,66 @@ function User(userName, password){
 }
 
 User.prototype.addDevice = function(socket){
-    socket.index = 0;
-    while(socket.index < this.devices.length && this.devices[socket.index]){
-        ++socket.index;
+    var index = 0;
+    while(index < this.devices.length && this.devices[index]){
+        ++index;
     }
-    this.devices[socket.index] = socket;
-    this.bindEvents(socket, this);
-    this.emit(socket.index, "open");
+
+    this.devices[index] = socket;
+    this.bindEvents(index, this);
+
+    if(index > 0){
+        this.emit(index, "deviceAdded");
+    }
 };
 
-function broadcast(thunk){
+User.prototype.broadcast = function(skipIndex){
+    var args = Array.prototype.slice.call(arguments, 2);
     for(var userName in users){
-        var user = users[userName];
-        thunk(user);
+        var toUser = users[userName];
+        toUser.emit
+            .bind(toUser, (toUser.userName == this.userName) ? skipIndex : -1)
+            .apply(toUser, args);
     }
-}
+};
 
-User.prototype.bindEvents = function(socket){
+User.prototype.bindEvents = function(index){
     for(var i = 0; i < types.length; ++i) {
-        socket.on(types[i], this.emit.bind(this, socket.index));
+        this.devices[index].on(types[i], User.prototype.emit.bind(this, index));
     }
-    socket.on("disconnect", this.disconnect.bind(this, socket.index));
 
-    socket.on("userState", function(state){
+    this.devices[index].on("disconnect", User.prototype.disconnect.bind(this, index));
+
+    this.devices[index].on("userState", function(state){
         state.userName = this.userName;
-        broadcast(function(user){
-            user.emit(user.userName == this.userName ? socket.index : -1, "userState", state);
-        }.bind(this));
+        this.broadcast(index, "userState", state);
     }.bind(this));
     
     var userList = [];
     for(var userName in users){
         userList.push(userName);
     }
-    socket.emit("good", userList);
-    
-    broadcast(function(user){
-        user.emit(user.userName == this.userName ? socket.index : -1, "user", this.userName);
-    }.bind(this));
+    this.devices[index].emit("userList", userList);
+    if(index == 0){
+        this.broadcast(index, "userJoin", this.userName);
+    }
 };
 
-User.prototype.disconnect = function(index){
+User.prototype.disconnect = function(index, reason){
+    var devicesLeft = 0;
     this.devices[index] = null;
-    this.emit(index, "close");
+    for(var i = 0; i < this.devices.length; ++i){
+        if(this.devices[i]){
+            devicesLeft ++;
+        }
+    }
+    if(devicesLeft > 0){
+        this.emit(index, "deviceLost");
+    }
+    else{
+        this.broadcast(-1, "userLeft", this.userName);
+        this.devices.splice(0);
+    }
 };
 
 User.prototype.emit = function(skipIndex){
@@ -65,17 +82,20 @@ User.prototype.emit = function(skipIndex){
 
 module.exports = function (socket) {
     var user;
-
-    socket.on("user", function(credentials){
+    console.log("New connection!");
+    function login(credentials){
         if(!users[credentials.userName]){
             users[credentials.userName] = new User(credentials.userName, credentials.password);
         }
         
         if(users[credentials.userName].password == credentials.password){
             users[credentials.userName].addDevice(socket);
+            socket.removeListener("login", login);
         }
         else{
-            socket.emit("bad");
+            console.log("Failed to authenticate!", credentials.userName);
+            socket.emit("loginFailed");
         }
-    });
+    }
+    socket.on("login", login);
 }

@@ -1,14 +1,19 @@
 ﻿function GET(url, type, progress, error, success){
     type = type || "text";
     var xhr = new XMLHttpRequest();
-    xhr.open("GET", url);
     xhr.responseType = type;
     xhr.onerror = error;
     xhr.onabort = error;
     xhr.onprogress = progress;
     xhr.onload = function (){
-        success(xhr.response);
+        if(xhr.status < 400){
+            success(xhr.response);
+        }
+        else{
+            error();
+        }
     };
+    xhr.open("GET", url);
     xhr.send();
 }
 
@@ -98,6 +103,12 @@ function LoadingProgress(){
         include(version, paths, progress.bind(this), postScriptLoad);
     }.bind(this));
 }
+
+LoadingProgress.prototype.isDone = function(){
+    var done = this.sum(FileState.COMPLETE, "size");
+    var error = this.sum(FileState.ERRORED, "size")
+    return (done + error) == this.totalFileSize
+};
 
 LoadingProgress.prototype.sum = function(state, prop){
     return this.files.filter(function(f){

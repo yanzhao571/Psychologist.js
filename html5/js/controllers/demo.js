@@ -1,13 +1,14 @@
 var ctrls = findEverything();
 var PLAYER_HEIGHT = 6;
 var prog = new LoadingProgress(
-    "manifest/js/controllers/demo.js",
+    "manifest/js/controllers/demo.js?v2",
     "js/psychologist.js",
     "lib/three/three.min.js",
     "lib/three/StereoEffect.js",
     "lib/three/OculusRiftEffect.min.js",
     "lib/three/AnaglyphEffect.min.js",
     "lib/three/ColladaLoader.js",
+    "lib/droid_sans_regular.typeface.js",
     "/socket.io/socket.io.js",
     "js/input/NetworkedInput.js",
     "js/input/SpeechInput.js",
@@ -26,11 +27,13 @@ function displayProgress(){
     ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
     ctrls.processedSoFar.style.width = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
     ctrls.loadedSoFar.style.width = prog.makeSize(FileState.COMPLETE, "size");
-    ctrls.errorSoFar.style.width = prog.makeSize(FileState.ERRORED, "size");
+    ctrls.loadedSoFar.style.left = ctrls.errorSoFar.style.width = prog.makeSize(FileState.ERRORED, "size");
+    if(prog.isDone()){
+        ctrls.loading.style.display = "none";
+    }
 }
 
 function postScriptLoad(progress){
-    ctrls.loading.style.display = "none";
     var BG_COLOR = 0xafbfff, CLUSTER = 2,
         DRAW_DISTANCE = 100,
         TRACKING_SCALE = 0.5,
@@ -54,7 +57,11 @@ function postScriptLoad(progress){
         socket,
         oceanSound = null,
         audio3d = new Audio3DOutput(),
-        bears = {};
+        bears = {},
+        nameMaterial = new THREE.MeshLambertMaterial({
+            color: 0x7f7f00,
+            shading: THREE.FlatShading
+        });
     
     function msg(){
         if(!isDebug){
@@ -217,12 +224,12 @@ function postScriptLoad(progress){
         }, false);
     }
 
-    ctrls.options.querySelector(".closeSectionButton").addEventListener("click", function(){
-        if(this.parentElement.id == "options"){
-            toggleFullScreen();
-            mouse.requestPointerLock();
-        }
-    });
+    //ctrls.options.querySelector(".closeSectionButton").addEventListener("click", function(){
+    //    if(this.parentElement.id == "options"){
+    //        toggleFullScreen();
+    //        mouse.requestPointerLock();
+    //    }
+    //});
 
     ctrls.menuButton.addEventListener("click", function(){
         ctrls.options.style.display = "";
@@ -234,7 +241,7 @@ function postScriptLoad(progress){
             userName = ctrls.userNameField.value;
             password = ctrls.passwordField.value;
             if(userName && password){
-                socket.emit("user", {userName: userName, password: password});
+                socket.emit("login", {userName: userName, password: password});
             }
         }
         else{
@@ -310,23 +317,58 @@ function postScriptLoad(progress){
         "max reconnection attempts": 60
     });
 
-    socket.on("bad", function(){
+    socket.on("loginFailed", function(){
         msg("Incorrect user name or password!");
     });
 
-    socket.on("good", function(users){
+    function addUser(user){
+        bears[user] = bearModel.clone(user, socket);
+        scene.add(bears[user]);
+        var nameGeometry = new THREE.TextGeometry(user, {
+            size: 1,
+            height: 0.25,
+            curveSegments: 4,
+            font: "droid sans",
+            weight: "normal",
+            style: "normal",
+            bevelEnabled: true,
+            bevelThickness: 0.0625,
+            bevelSize: 0.0625
+        });
+        
+		nameGeometry.computeBoundingBox();
+		nameGeometry.computeVertexNormals();
+
+        var centerOffset = (nameGeometry.boundingBox.min.x - nameGeometry.boundingBox.max.x) * 0.5;
+		var nameMesh = new THREE.Mesh(nameGeometry, nameMaterial);
+        var name = new THREE.Object3D();
+        name.add(nameMesh);
+		bears[user].add(name);
+		name.position.x = centerOffset;
+		name.position.y = PLAYER_HEIGHT + 2;
+		name.position.z = 0;
+        name.rotateY(Math.PI);
+    }
+
+    socket.on("userList", function(users){
         msg("You are now connected to the device server.");
         for(var i = 0; i < users.length; ++i){
             if(users[i] != userName){
-                bears[users[i]] = bearModel.clone(users[i], socket);
-                scene.add(bears[users[i]]);
+                addUser(users[i]);
             }
         }
     });
 
-    socket.on("user", function(user){
-        bears[user] = bearModel.clone(user, socket);
-        scene.add(bears[user]);
+    socket.on("userJoin", addUser);
+
+    socket.on("disconnect", alert.bind(window));
+    
+    socket.on("userLeft", function(user){
+        console.log("user disconnected:", user);
+        if(bears[user]){
+            scene.remove(bears[user]);
+            delete bears[user];
+        }
     });
 
     socket.on("userState", function(userState){
