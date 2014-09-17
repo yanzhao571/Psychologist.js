@@ -213,13 +213,16 @@ function postScriptLoad(progress){
     for(var i = 0; i < closers.length; ++i){
         closers[i].addEventListener("click", function(){
             this.parentElement.style.display = "none";
-            //if(this.parentElement.id == "options"){
-            //    toggleFullScreen();
-            //    mouse.requestPointerLock();
-            //}
             ctrls.menuButton.style.display = "";
         }, false);
     }
+
+    ctrls.options.querySelector(".closeSectionButton").addEventListener("click", function(){
+        if(this.parentElement.id == "options"){
+            toggleFullScreen();
+            mouse.requestPointerLock();
+        }
+    });
 
     ctrls.menuButton.addEventListener("click", function(){
         ctrls.options.style.display = "";
