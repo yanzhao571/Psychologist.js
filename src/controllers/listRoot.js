@@ -5,7 +5,7 @@
 
 module.exports = {
     path: "",
-    pattern: /^\/$/,
+    pattern: /^\/(?:index.html)?$/,
     handler: function(method, params, done, error){
         if(method != "GET"){
             error("This controller only supports GET requests");
