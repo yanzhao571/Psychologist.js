@@ -33,14 +33,14 @@ function start(key, cert, ca){
     io = socketio.listen(app);
     io.sockets.on("connection", webSocketServer);
     
-    if(options.v !== "false"){
-        try{
-            starter(useSecure, port + (useSecure ? 1 : 0), startPage);
-        }
-        catch(exp){
-            console.error("couldn't start browser", exp.message);
-        }
-    }
+    //if(options.v !== "false"){
+    //    try{
+    //        starter(useSecure, port + (useSecure ? 1 : 0), startPage);
+    //    }
+    //    catch(exp){
+    //        console.error("couldn't start browser", exp.message);
+    //    }
+    //}
 }
 
 function readFiles(files, error, success, index, accum){
