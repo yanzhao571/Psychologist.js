@@ -12,7 +12,7 @@
     }),
 
     srcDir = "html5",
-    startPage = "demo.html",
+    startPage = "",
     port = 8080,
     app, redir, io;
 
