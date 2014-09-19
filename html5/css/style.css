@@ -34,13 +34,11 @@ td > .button, td > input
 
 .progressBar
 {
-    position: absolute;
     left:0;
     top:0;
     bottom:0;
     color:white;
     text-align:center;
-    vertical-align:middle;
     width:0;
 }
 
@@ -83,7 +81,7 @@ html, body, canvas, video, img
     border: 0;
 }
 
-canvas, video, .overlay
+canvas, video, .overlay, .progressBar
 {
     position: fixed;
 }

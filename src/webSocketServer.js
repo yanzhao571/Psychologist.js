@@ -51,7 +51,9 @@ User.prototype.bindEvents = function(index){
     
     var userList = [];
     for(var userName in users){
-        userList.push(userName);
+        if(users[userName].isConnected()){
+            userList.push(userName);
+        }
     }
     this.devices[index].emit("userList", userList);
     if(index == 0){
@@ -86,7 +88,12 @@ User.prototype.disconnect = function(index, reason){
             devicesLeft ++;
         }
     }
-    if(devicesLeft > 0){
+    return devicesLeft > 0;
+};
+
+User.prototype.disconnect = function(index, reason){
+    this.devices[index] = null;
+    if(this.isConnected()){
         this.emit(index, "deviceLost");
     }
     else{
