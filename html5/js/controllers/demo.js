@@ -43,17 +43,10 @@ function postScriptLoad(progress){
         dpitch = 0, droll = 0, dheading = 0, lt = 0,
         vcx = 0, vcz = 0, vcy = 0, tx, tz,
         onground = false,
-        camera, scene, effect, renderer, map,
         motion, keyboard, mouse, gamepad, 
-        fps, dt, heightmap,
-        buttonsTimeout = null,
-        buttonsVisible = true,
+        dt, frame = 0, dFrame = 0.125, heightmap,
         userName = null, password = null,
         isDebug = false,
-        isLocal = document.location.hostname == "localhost",
-        isHost = false,
-        isClient = false,
-        isWAN = /\d+\.\d+\.\d+\.\d+/.test(document.location.hostname),
         socket,
         oceanSound = null,
         audio3d = new Audio3DOutput(),
@@ -61,98 +54,116 @@ function postScriptLoad(progress){
         nameMaterial = new THREE.MeshLambertMaterial({
             color: 0x7f7f00,
             shading: THREE.FlatShading
-        });
+        }),
+        camera, effect,
+        scene = new THREE.Scene(),
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+    
+    renderer.setClearColor(BG_COLOR);
+    scene.fog = new THREE.Fog(BG_COLOR, 1, DRAW_DISTANCE);;
     
     function msg(){
-        if(!isDebug){
-            alert.apply(window, arguments);
+        if(isDebug){
+            console.log.apply(console, arguments);
+        }
+        else{
+            alert(Array.prototype.map.call(arguments, function(v){
+                return v ? v.toString() : ""
+            }).join(" "));
         }
     }
 
     function ask(txt, force){
-        return !isDebug && confirm(txt) || (isDebug && force);
+        if(isDebug){
+            return force;
+        }
+        else{
+            return confirm(txt);
+        }
+    }
+
+    function update(dt){vcy -= dt * GRAVITY;
+        var x = Math.floor((camera.position.x - heightmap.minX) / CLUSTER);
+        var z = Math.floor((camera.position.z - heightmap.minZ) / CLUSTER);
+        var y = PLAYER_HEIGHT;
+        if (heightmap 
+            && 0 <= z && z < heightmap.length
+            && 0 <= x && x < heightmap[z].length){
+            y += heightmap[z][x];
+        }
+
+        if(camera.position.y <= y && vcy <= 0) {
+            vcy = 0;
+            camera.position.y = camera.position.y * 0.75 + y * 0.25;
+            if(!onground){
+                navigator.vibrate(100);
+            }
+            onground = true;
+        }
+
+        if(onground){
+            tx = keyboard.getValue("strafeRight")
+                + keyboard.getValue("strafeLeft")
+                + gamepad.getValue("strafe");
+            tz = keyboard.getValue("driveBack")
+                + keyboard.getValue("driveForward")
+                + gamepad.getValue("drive")
+                + touch.getValue("drive");
+            if(tx || tz){
+                len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
+                    
+                if(bears[userName] && !bears[userName].animation.isPlaying){
+                    bears[userName].animation.play();
+                }
+            }
+            else{
+                len = 0;
+                if(bears[userName] && bears[userName].animation.isPlaying){
+                    bears[userName].animation.stop();
+                }
+            }
+                
+            tx *= len;
+            tz *= len;
+            len = tx * Math.cos(heading) + tz * Math.sin(heading);
+            tz = tz * Math.cos(heading) - tx * Math.sin(heading);
+            tx = len;
+            vcx = vcx * 0.9 + tx * 0.1;
+            vcz = vcz * 0.9 + tz * 0.1;
+        }
+
+        dheading += (gamepad.getValue("dheading") 
+            + mouse.getValue("dheading")
+            + touch.getValue("dheading")) * dt;
+        dpitch += mouse.getValue("dpitch") * dt;
+        droll += (gamepad.getValue("drollLeft") 
+            + gamepad.getValue("drollRight") 
+            + keyboard.getValue("drollLeft") 
+            + keyboard.getValue("drollRight")) * dt;
+
+        heading = heading * TRACKING_SCALE + (motion.getValue("heading") + dheading) * TRACKING_SCALE_COMP;
+        pitch = pitch * TRACKING_SCALE + (motion.getValue("pitch") + dpitch) * TRACKING_SCALE_COMP;
+        roll = roll * TRACKING_SCALE + (motion.getValue("roll") + droll) * TRACKING_SCALE_COMP;
     }
 
     function animate(t) {
         requestAnimationFrame(animate);
-        dt = (t - lt) / 1000;
-		THREE.AnimationHandler.update(dt);
+        dt = (t - lt) * 0.001;
         lt = t;
-        motion.update();
-        keyboard.update();
-        mouse.update();
-        gamepad.update();
-        touch.update();
+        
         if(camera && heightmap){
-            vcy -= dt * GRAVITY;
-            var x = Math.floor((camera.position.x - heightmap.minX) / CLUSTER);
-            var z = Math.floor((camera.position.z - heightmap.minZ) / CLUSTER);
-            var y = PLAYER_HEIGHT;
-            if (heightmap 
-                && 0 <= z && z < heightmap.length
-                && 0 <= x && x < heightmap[z].length){
-                y += heightmap[z][x];
-            }
-
-            if(camera.position.y <= y && vcy <= 0) {
-                vcy = 0;
-                camera.position.y = camera.position.y * 0.75 + y * 0.25;
-                if(!onground){
-                    navigator.vibrate(100);
-                }
-                onground = true;
-            }
-
-            if(onground){
-                tx = keyboard.getValue("strafeRight")
-                    + keyboard.getValue("strafeLeft")
-                    + gamepad.getValue("strafe");
-                tz = keyboard.getValue("driveBack")
-                    + keyboard.getValue("driveForward")
-                    + gamepad.getValue("drive")
-                    + touch.getValue("drive");
-                if(tx != 0 || tz != 0){
-                    len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
-                    
-                    if(bears[userName] && !bears[userName].animation.isPlaying){
-                        bears[userName].animation.play();
-                    }
-                }
-                else{
-                    len = 0;
-                    if(bears[userName] && bears[userName].animation.isPlaying){
-                        bears[userName].animation.stop();
-                    }
-                }
-                
-                tx *= len;
-                tz *= len;
-                len = tx * Math.cos(heading) + tz * Math.sin(heading);
-                tz = tz * Math.cos(heading) - tx * Math.sin(heading);
-                tx = len;
-                vcx = vcx * 0.9 + tx * 0.1;
-                vcz = vcz * 0.9 + tz * 0.1;
-            }
-
-            dheading += (gamepad.getValue("dheading") 
-                + mouse.getValue("dheading")
-                + touch.getValue("dheading")) * dt;
-            dpitch += mouse.getValue("dpitch") * dt;
-            droll += (gamepad.getValue("drollLeft") 
-                + gamepad.getValue("drollRight") 
-                + keyboard.getValue("drollLeft") 
-                + keyboard.getValue("drollRight")) * dt;
-
-            heading = heading * TRACKING_SCALE + (motion.getValue("heading") + dheading) * TRACKING_SCALE_COMP;
-            pitch = pitch * TRACKING_SCALE + (motion.getValue("pitch") + dpitch) * TRACKING_SCALE_COMP;
-            roll = roll * TRACKING_SCALE + (motion.getValue("roll") + droll) * TRACKING_SCALE_COMP;
-
-            fps = 1 / dt;
+		    THREE.AnimationHandler.update(dt);
+            motion.update();
+            keyboard.update();
+            mouse.update();
+            gamepad.update();
+            touch.update();
+            update(dt);
             setCamera(dt);
             draw();
         }
     }
-    var frame = 0, dFrame = 0.125;
+
     function setCamera(dt) {
         camera.updateProjectionMatrix();
         camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
@@ -214,9 +225,6 @@ function postScriptLoad(progress){
         }
     }
 
-    scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(BG_COLOR, 1, DRAW_DISTANCE);
-
     var closers = document.getElementsByClassName("closeSectionButton");
     for(var i = 0; i < closers.length; ++i){
         closers[i].addEventListener("click", function(){
@@ -225,10 +233,12 @@ function postScriptLoad(progress){
         }, false);
     }
 
-    //ctrls.options.querySelector(".closeSectionButton").addEventListener("click", function(){
-    //    toggleFullScreen();
-    //    mouse.requestPointerLock();
-    //});
+    if(!isDebug){
+        ctrls.options.querySelector(".closeSectionButton").addEventListener("click", function(){
+            toggleFullScreen();
+            mouse.requestPointerLock();
+        });
+    }
 
     ctrls.menuButton.addEventListener("click", function(){
         ctrls.options.style.display = "";
@@ -307,9 +317,6 @@ function postScriptLoad(progress){
         }
     }
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setClearColor(BG_COLOR);
-
     function addUser(user){
         bears[user] = bearModel.clone(user, socket);
         scene.add(bears[user]);
@@ -350,7 +357,7 @@ function postScriptLoad(progress){
     });
 
     socket.on("userList", function(users){
-        console.log("You are now connected to the device server.");
+        msg("You are now connected to the device server.");
         addUser(userName);
         for(var i = 0; i < users.length; ++i){
             if(users[i] != userName){
@@ -361,11 +368,11 @@ function postScriptLoad(progress){
 
     socket.on("userJoin", addUser);
 
-    socket.on("disconnect", alert.bind(window));
+    socket.on("disconnect", msg.bind(window));
     
     socket.on("userLeft", function(user){
-        console.log("user disconnected:", user);
         if(bears[user]){
+            msg("user disconnected:", user);
             scene.remove(bears[user]);
             delete bears[user];
         }
