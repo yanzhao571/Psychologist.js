@@ -30,7 +30,7 @@ I've so far only tested this with Google Chrome on Windows and Android, but ther
 
 # User Input
 
-The input system is is kind of interesting. I've built an API that allows one to define groups of commands that can be activated in different ways for different input systems. In other words, it provides options for different types of UI in parallel.
+I'm somewhat proud of the user input system. I've built an API that allows one to define groups of commands that can be activated in different ways for different input systems. In other words, it provides options for different types of UI in parallel.
 
 This is still a work in progress. Eventually, I'll have enumerations for each of the button and axis values. But basically, buttons and axes are 1-indexed, and you can reverse their meaning by negating their index (hence why it's 1-indexed, because negative 0 doesn't mean anything in Javascript).
 
