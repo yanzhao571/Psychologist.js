@@ -80,12 +80,11 @@ User.prototype.emit = function(skipIndex){
     }
 };
 
-User.prototype.disconnect = function(index, reason){
+User.prototype.isConnected = function(){
     var devicesLeft = 0;
-    this.devices[index] = null;
     for(var i = 0; i < this.devices.length; ++i){
         if(this.devices[i]){
-            devicesLeft ++;
+            ++devicesLeft;
         }
     }
     return devicesLeft > 0;
