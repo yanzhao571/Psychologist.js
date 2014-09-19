@@ -8,13 +8,21 @@ Looking past the low-hanging fruit of FPS games, there are currently no UI metap
 
 This project is about creating a template of a project and a workflow for rapidly prototyping VR experiences, accessible to both programmers with little 3D experience and 3D modellers with little programming experience. The goal is to be able to provide the tools necessary to experiment with and determine what those UI metaphors should be.
 
-# A Demo
+# Technology
 
-Here is a small scene, made in Blender, exported via Collada, running on WebGL in the browser thanks to Three.js.
+The software in this repository, the APIs it utilizes, the standards they implement, and the tools that the project uses are all open standards and Free, Open Source Software. I'm more interested in adoption and collaboration at this point than turning a buck on it. The project is released under the MIT license, to ensure it fits the most use cases. I intend to use the fruits of this project to develop content-laden, subscription-driven software, similar to the MMORPG model.
+
+ - Blender: All models used in the demo were created by me in Blender 2.7.
+ - Collada: an open standard, developed by the Khronos Group, for representing 3D model and scene data.
+ - WebGL: Another open standard from the Kronos Group. The client-side graphics are rendered with WebGL, a version of OpenGL for use in Web browsers.
+ - Three.js: The Three.js library provides a massive helping with its pre-built Collada importer.
+ - Node.js: the server is built with Node.js. I've found Node to be very easy to setup on the three major operating systems (Windows, Linux, OS X).
+
+# A Demo
 
 https://www.seanmcbeth.com:8081/demo.html
 
-Though it's best to set this up locally and use it over WiFi. Over the internet, it's quite laggy. So please don't complain to me about it making you sick. I know already. I have a bucket sitting next to my desk. But it's sufficient for making demos and trying things out before you decide to spend more money on an HMD.
+If you're going to use the input proxying feature, it's best to set this up locally and use it over WiFi. Over the internet, it's quite laggy. So please don't complain to me about it making you sick. I know already. I have a bucket sitting next to my desk. But it's sufficient for making demos and trying things out before you decide to spend more money on an HMD.
 
 ## A Few Things to Note
 
