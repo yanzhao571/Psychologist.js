@@ -1,4 +1,6 @@
-﻿function ModelOutput(src, progress, success){
+﻿var COLLADA = new THREE.ColladaLoader();
+COLLADA.options.convertUpAxis = true;
+function ModelOutput(src, progress, success){
     if(src){
         ModelOutput.loadCollada(src, progress, function(object){
             this.template = object;
@@ -16,10 +18,10 @@
 
 ModelOutput.loadCollada = function(src, progress, success){
     progress("loading", src);
-    var loader = new THREE.ColladaLoader();
-    loader.options.convertUpAxis = true;
-    loader.load(src, function(collada){
-        success(collada.scene);
+    COLLADA.load(src, function(collada){
+        if(success){
+            success(collada.scene);
+        }
         progress("success", src);
     }, function(prog){
         progress("intermediate", src, prog.loaded)
