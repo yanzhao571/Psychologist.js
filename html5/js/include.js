@@ -1,6 +1,7 @@
 ﻿function GET(url, type, progress, error, success){
     type = type || "text";
     var xhr = new XMLHttpRequest();
+    xhr.open("GET", url);
     xhr.responseType = type;
     xhr.onerror = error;
     xhr.onabort = error;
@@ -13,7 +14,6 @@
             error();
         }
     };
-    xhr.open("GET", url);
     xhr.send();
 }
 

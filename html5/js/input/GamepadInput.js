@@ -34,6 +34,7 @@
                 var pad = pads[i];
                 if(pad){
                     if(connectedGamepads.indexOf(pad.id) == -1){
+                        console.log(pads);
                         connectedGamepads.push(pad.id);
                         onConnected(pad.id);
                     }
@@ -107,10 +108,10 @@
     };
     
     this.addEventListener = function(event, handler, bubbles){
-        if(listeners[event]){
-            add(listeners[event], handler);
-        }
         if(event == "gamepadconnected"){
+            if(listeners[event]){
+                add(listeners[event], handler);
+            }
             connectedGamepads.forEach(onConnected);
         }
     };
