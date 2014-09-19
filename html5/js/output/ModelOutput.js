@@ -7,7 +7,9 @@
                     this[child.name] = child;
                 }
             }.bind(this));
-            success(object);
+            if(success){
+                success(object);
+            }
         }.bind(this));
     }
 }
@@ -51,6 +53,7 @@ ModelOutput.makeHeightMap = function(obj, CLUSTER){
 
 ModelOutput.prototype.clone = function(userName, socket){
     var obj = this.template.clone();
+    this.socket = socket;
                 
     obj.traverse(function(child){
         if (child instanceof THREE.SkinnedMesh ) {
@@ -64,24 +67,6 @@ ModelOutput.prototype.clone = function(userName, socket){
             }
 		}
     }.bind(this));
-
-    if(socket){
-        socket.on("userState", function(user, state){
-            if(user == userName){
-                obj.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-                obj.rotateY(state.heading);
-                obj.position.x = state.x;
-                obj.position.y = state.y;
-                obj.position.z = state.z;
-                if(state.isRunning && !obj.animation.isPlaying){
-                    obj.animation.play();
-                }
-                else if(!state.isRunning && obj.animation.isPlaying){
-                    obj.animation.stop();
-                }
-            }
-        });
-    }
 
     return obj;
 };

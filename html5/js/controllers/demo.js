@@ -114,14 +114,14 @@ function postScriptLoad(progress){
                 if(tx != 0 || tz != 0){
                     len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
                     
-                    if(avatar && !avatar.animation.isPlaying){
-                        avatar.animation.play();
+                    if(bears[userName] && !bears[userName].animation.isPlaying){
+                        bears[userName].animation.play();
                     }
                 }
                 else{
                     len = 0;
-                    if(avatar && avatar.animation.isPlaying){
-                        avatar.animation.stop();
+                    if(bears[userName] && bears[userName].animation.isPlaying){
+                        bears[userName].animation.stop();
                     }
                 }
                 
@@ -152,7 +152,7 @@ function postScriptLoad(progress){
             draw();
         }
     }
-    var frame = 0, dFrame = 2000;
+    var frame = 0, dFrame = 2;
     function setCamera(dt) {
         camera.updateProjectionMatrix();
         camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
@@ -160,23 +160,24 @@ function postScriptLoad(progress){
         camera.translateY(vcy * dt);
         camera.translateZ(vcz * dt);
         camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
-        frame += dFrame;
-        if(frame > dFrame){
+        frame += dt;
+        if(userName && frame > dFrame){
             frame -= dFrame;
-            socket.emit("userState", {
+            var state = {
                 x: camera.position.x,
                 y: camera.position.y,
                 z: camera.position.z,
                 heading: heading,
-                isRunning: vcx != 0 || vcy != 0 || vcz != 0
-            });
+                isRunning: Math.abs(vcx + vcy + vcz) > 1
+            };
+            socket.emit("userState", state);
         }
-        if(avatar){
-            avatar.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-            avatar.rotateY(heading);
-            avatar.position.x = camera.position.x;
-            avatar.position.y = camera.position.y - PLAYER_HEIGHT;
-            avatar.position.z = camera.position.z;
+        if(bears[userName]){
+            bears[userName].setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+            bears[userName].rotateY(heading);
+            bears[userName].position.x = camera.position.x;
+            bears[userName].position.y = camera.position.y - PLAYER_HEIGHT;
+            bears[userName].position.z = camera.position.z;
         }
         var x = camera.position.x / 10,
             y = camera.position.y / 10,
@@ -311,16 +312,6 @@ function postScriptLoad(progress){
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setClearColor(BG_COLOR);
 
-    socket = io.connect(document.location.hostname, {
-        "reconnect": true,
-        "reconnection delay": 1000,
-        "max reconnection attempts": 60
-    });
-
-    socket.on("loginFailed", function(){
-        msg("Incorrect user name or password!");
-    });
-
     function addUser(user){
         bears[user] = bearModel.clone(user, socket);
         scene.add(bears[user]);
@@ -350,8 +341,19 @@ function postScriptLoad(progress){
         name.rotateY(Math.PI);
     }
 
+    socket = io.connect(document.location.hostname, {
+        "reconnect": true,
+        "reconnection delay": 1000,
+        "max reconnection attempts": 60
+    });
+
+    socket.on("loginFailed", function(){
+        msg("Incorrect user name or password!");
+    });
+
     socket.on("userList", function(users){
-        msg("You are now connected to the device server.");
+        console.log("You are now connected to the device server.");
+        addUser(userName);
         for(var i = 0; i < users.length; ++i){
             if(users[i] != userName){
                 addUser(users[i]);
@@ -372,6 +374,7 @@ function postScriptLoad(progress){
     });
 
     socket.on("userState", function(userState){
+        console.log(userState);
         var bear = bears[userState.userName];
         if(bear){
             bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
@@ -450,11 +453,7 @@ function postScriptLoad(progress){
         heightmap = ModelOutput.makeHeightMap(mainScene.Terrain, CLUSTER);
     });
 
-    var bearModel = new ModelOutput("models/bear.dae", progress, function(object){
-        var obj = bearModel.clone();
-        avatar = obj;
-        scene.add(obj);
-    });
+    var bearModel = new ModelOutput("models/bear.dae", progress);
 
     audio3d.loadSound3D("music/ocean.mp3", true, 0, 0, 0, progress, function(snd){
         oceanSound = snd;

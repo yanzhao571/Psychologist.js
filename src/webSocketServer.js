@@ -4,7 +4,17 @@
 
 function User(userName, password){
     this.devices = [];
-    this.userName = userName;
+    this.state = {
+        x: 0,
+        y: 0,
+        z: 0,
+        dx: 0,
+        dy: 0,
+        dz: 0,
+        heading: 0,
+        isRunning: false,
+        userName: userName
+    };
     this.password = password;
 }
 
@@ -19,16 +29,7 @@ User.prototype.addDevice = function(socket){
 
     if(index > 0){
         this.emit(index, "deviceAdded");
-    }
-};
-
-User.prototype.broadcast = function(skipIndex){
-    var args = Array.prototype.slice.call(arguments, 2);
-    for(var userName in users){
-        var toUser = users[userName];
-        toUser.emit
-            .bind(toUser, (toUser.userName == this.userName) ? skipIndex : -1)
-            .apply(toUser, args);
+        this.devices[index].emit("userState", this.state);
     }
 };
 
@@ -40,8 +41,12 @@ User.prototype.bindEvents = function(index){
     this.devices[index].on("disconnect", User.prototype.disconnect.bind(this, index));
 
     this.devices[index].on("userState", function(state){
-        state.userName = this.userName;
-        this.broadcast(index, "userState", state);
+        this.state.x = state.x;
+        this.state.y = state.y;
+        this.state.z = state.z;
+        this.state.heading = state.heading;
+        this.state.isRunning = state.isRunning;
+        this.broadcast(index, "userState", this.state);
     }.bind(this));
     
     var userList = [];
@@ -50,7 +55,29 @@ User.prototype.bindEvents = function(index){
     }
     this.devices[index].emit("userList", userList);
     if(index == 0){
-        this.broadcast(index, "userJoin", this.userName);
+        this.broadcast(index, "userJoin", this.state.userName);
+    }
+};
+
+User.prototype.broadcast = function(skipIndex){
+    var args = Array.prototype.slice.call(arguments, 1);
+    if(args[0] == "userState"){
+        console.log(this.userName, this.devices.length, skipIndex, args[1]);
+    }
+    for(var userName in users){
+        var toUser = users[userName];
+        toUser.emit
+            .bind(toUser, (userName == this.state.userName) ? skipIndex : -1)
+            .apply(toUser, args);
+    }
+};
+
+User.prototype.emit = function(skipIndex){
+    var args = Array.prototype.slice.call(arguments, 1);
+    for(var i = 0; i < this.devices.length; ++i){
+        if(i != skipIndex && this.devices[i]){
+            this.devices[i].emit.apply(this.devices[i], args);
+        }
     }
 };
 
@@ -66,17 +93,8 @@ User.prototype.disconnect = function(index, reason){
         this.emit(index, "deviceLost");
     }
     else{
-        this.broadcast(-1, "userLeft", this.userName);
+        this.broadcast(-1, "userLeft", this.state.userName);
         this.devices.splice(0);
-    }
-};
-
-User.prototype.emit = function(skipIndex){
-    var args = Array.prototype.slice.call(arguments, 1);
-    for(var i = 0; i < this.devices.length; ++i){
-        if(i != skipIndex && this.devices[i]){
-            this.devices[i].emit.apply(this.devices[i], args);
-        }
     }
 };
 
