@@ -152,7 +152,7 @@ function postScriptLoad(progress){
             draw();
         }
     }
-    var frame = 0, dFrame = 2;
+    var frame = 0, dFrame = 0.125;
     function setCamera(dt) {
         camera.updateProjectionMatrix();
         camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
@@ -372,7 +372,6 @@ function postScriptLoad(progress){
     });
 
     socket.on("userState", function(userState){
-        console.log(userState);
         var bear = bears[userState.userName];
         if(bear){
             bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
@@ -448,6 +447,7 @@ function postScriptLoad(progress){
         scene.add(object);
         camera = mainScene.Camera.children[0];
         mainScene.Ocean.children[0].material.transparent = true;
+        mainScene.Ocean.children[0].material.opacity = 0.75;
         heightmap = ModelOutput.makeHeightMap(mainScene.Terrain, CLUSTER);
     });
 
