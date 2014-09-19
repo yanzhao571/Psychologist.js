@@ -34,6 +34,7 @@ td > .button, td > input
 
 .progressBar
 {
+    border-radius: 7px;
     position: absolute;
     left:0;
     top:0;

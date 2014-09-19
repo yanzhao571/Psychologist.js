@@ -1,28 +1,48 @@
-﻿# Google Cardboard VR stuffs
+# Rapid Prototyping of VR Experiences
 
-Here is a small scene, made in Blender, exported via Collada, running on WebGL in the browser thanks to Three.js.
+Everyone and their brother has a Kickstarter project to build "the first" 3D printed, or injection molded, or ivory-carved headset for mounting a cellphone and wearing it as a virtual reality head-mounted display. Google even got in on the deal at their most recent IO conference (2014), announcing a cardboard template and a set of APIs for making VR Android Apps.
 
-http://www.seanmcbeth.com:8080/demo.html
+Yet the design of good VR experiences escapes us. Take 15 minutes to an hour some day and peruse the offerings in the Google Play store for VR applications. They are universally bad. We tolerate them only insomuch as they are novel. As of this writing, I'm aware of only one actual game that is more than just a tech demo, and without VR it makes for an extremely dry experience. There is nothing in the running that stands on its own without the novelty of VR.
 
-Though it's best to set this up locally and use it over WiFi. Over the internet, it's quite laggy. So please don't complain to me about it making you sick. I know already. I have a bucket sitting next to my desk. But it's sufficient for making demos and trying things out before you decide to spend more money on an HMD.
+Looking past the low-hanging fruit of FPS games, there are currently no UI metaphors for handling the mundane aspects of managing applications: no window managers, no application launchers, no file browsers, no menu systems, no input textboxes and buttons and scroll lists. In short, VR throws away the last 50 years of well-worn human-computer interaction knowledge.
 
-A few things to note:
+This project is about creating a template of a project and a workflow for rapidly prototyping VR experiences, accessible to both programmers with little 3D experience and 3D modellers with little programming experience. The goal is to be able to provide the tools necessary to experiment with and determine what those UI metaphors should be.
 
-1. If you open a browsing session on your PC as well as your smartphone, you can choose your own secret key and enter it in both browsers, at which point any keyboard, mouse, or gamepad input you use on your PC will be proxied to your smartphone.
+# Technology
+
+The software in this repository, the APIs it utilizes, the standards they implement, and the tools that the project uses are all open standards and Free, Open Source Software. I'm more interested in adoption and collaboration at this point than turning a buck on it. The project is released under the MIT license, to ensure it fits the most use cases. I intend to use the fruits of this project to develop content-laden, subscription-driven software, similar to the MMORPG model.
+
+ - Blender: All models used in the demo were created by me in Blender 2.7.
+ - Collada: an open standard, developed by the Khronos Group, for representing 3D model and scene data.
+ - WebGL: Another open standard from the Kronos Group. The client-side graphics are rendered with WebGL, a version of OpenGL for use in Web browsers.
+ - Three.js: The Three.js library provides a massive helping with its pre-built Collada importer.
+ - Node.js: the server is built with Node.js. I've found Node to be very easy to setup on the three major operating systems (Windows, Linux, OS X).
+
+# A Demo
+
+https://www.seanmcbeth.com:8081/demo.html
+
+If you're going to use the input proxying feature, it's best to set this up locally and use it over WiFi. Over the internet, it's quite laggy. So please don't complain to me about it making you sick. I know already. I have a bucket sitting next to my desk. But it's sufficient for making demos and trying things out before you decide to spend more money on an HMD.
+
+## A Few Things to Note
+
+1. If you open a browsing session on your PC as well as your smartphone, you can choose your own username and password and enter them in both browsers, at which point any keyboard, mouse, or gamepad input you use on your PC will be proxied to your smartphone.
 2. You can choose stereo rendering with barrel distortion for use with Google Cardboard,
 3. Or choose red/cyan anaglyph rendering for use with glasses on any type of display,
 4. Or just skip it all and run around the really crappy landscape, viewing it with obsolete 2D display technology.
-5. The only speech command is "jump", and until I get SSL setup on the server, you'll have to continually re-enable it about once every 10 or 15 seconds.
+5. The only speech command is "jump".
 
-Note that this is extremely hacked together right now and picking a stupid key like "12345" or something equally asinine will have a high likelihood of colliding with someone else who has failed to be thoughtful in their secret key selection process. The responsibility of not giving someone else keyboard/mouse/gamepad access to your run of the demo lies with you. But don't worry, it's only this site, not your phone as a whole. This can't be used to attack your phone. 
+The input proxying is necessary for using a gamepad with the demo on a smartphone because the various browser vendors haven't yet implemented HTML5 Gamepad API. But whatevs. It also makes it much more convenient to use a keyboard and mouse with the game on the smartphone.
 
-The input proxying is necessary for using a gamepad with the demo on a smartphone because the various browser vendors haven't yet implemented HTML5 Gamepad API. But whatevs.
+I've so far only tested this with Google Chrome on Windows and Android, but there is no particular reason it should not work with Linux, OS X, iOS, Firefox, or Safari. There might be some browser-specific issues that need to be handled, but they should be easy to identify and overcome with testing. Also note that you don't necessarily have to match browsers on the PC with browsers on the smartphone. Mix and match to your heart's content.
 
-I've so far only tested this with Google Chrome on Windows and Android, but there is no particular reason it should not work with Linux, OS X, iOS, Firefox, or Safari. Also note that you don't necessarily have to match browsers on the PC with browsers on the smartphone. Mix and match to your heart's content.
+# User Input
 
-The input system is is kind of interesting. I've built an API that allows one to define groups of commands that can be activated in different ways for different input systems. In other words, it provides options for different types of UI in parallel.
+I'm somewhat proud of the user input system. I've built an API that allows one to define groups of commands that can be activated in different ways for different input systems. In other words, it provides options for different types of UI in parallel.
 
-# Example
+This is still a work in progress. Eventually, I'll have enumerations for each of the button and axis values. But basically, buttons and axes are 1-indexed, and you can reverse their meaning by negating their index (hence why it's 1-indexed, because negative 0 doesn't mean anything in Javascript).
+
+## Example
 
 ````javascript
     // given:
@@ -129,5 +149,3 @@ The input system is is kind of interesting. I've built an API that allows one to
     
     requestAnimationFrame(loop);
 ````
-
-This is still a work in progress. Eventually, I'll have enumerations for each of the button and axis values. But basically, buttons and axes are 1-indexed, and you can reverse their meaning by negating their index (hence why it's 1-indexed, because negative 0 doesn't mean anything in Javascript).
