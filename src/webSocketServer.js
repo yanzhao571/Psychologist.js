@@ -61,9 +61,6 @@ User.prototype.bindEvents = function(index){
 
 User.prototype.broadcast = function(skipIndex){
     var args = Array.prototype.slice.call(arguments, 1);
-    if(args[0] == "userState"){
-        console.log(this.userName, this.devices.length, skipIndex, args[1]);
-    }
     for(var userName in users){
         var toUser = users[userName];
         toUser.emit

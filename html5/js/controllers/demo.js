@@ -226,10 +226,8 @@ function postScriptLoad(progress){
     }
 
     //ctrls.options.querySelector(".closeSectionButton").addEventListener("click", function(){
-    //    if(this.parentElement.id == "options"){
-    //        toggleFullScreen();
-    //        mouse.requestPointerLock();
-    //    }
+    //    toggleFullScreen();
+    //    mouse.requestPointerLock();
     //});
 
     ctrls.menuButton.addEventListener("click", function(){
