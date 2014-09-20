@@ -48,7 +48,7 @@ td > .button, td > input
 
 #menuButton
 {
-    position: absolute;
+    position: fixed;
     left: 10px;
     bottom: 10px;
     width: 32px;

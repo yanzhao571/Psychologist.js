@@ -240,6 +240,9 @@ function postScriptLoad(progress){
             mouse.requestPointerLock();
         });
     }
+    else{
+		ctrls.instructions.style.display = "none";
+	}
 
     ctrls.menuButton.addEventListener("click", function(){
         ctrls.options.style.display = "";
