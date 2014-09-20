@@ -34,7 +34,8 @@ function displayProgress(){
 }
 
 function postScriptLoad(progress){
-    var BG_COLOR = 0xafbfff, CLUSTER = 2,
+    var isDebug = true,
+        BG_COLOR = 0xafbfff, CLUSTER = 2,
         DRAW_DISTANCE = 100,
         TRACKING_SCALE = 0.5,
         TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
@@ -46,7 +47,6 @@ function postScriptLoad(progress){
         motion, keyboard, mouse, gamepad, 
         dt, lt = 0, frame = 0, dFrame = 0.125,
         userName = null, password = null,
-        isDebug = false,
         audio3d = new Audio3DOutput(),
         oceanSound = null,
         socket, bears = {}, heightmap,
