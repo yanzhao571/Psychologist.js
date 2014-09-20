@@ -82,7 +82,8 @@ function postScriptLoad(progress){
         }
     }
 
-    function update(dt){vcy -= dt * GRAVITY;
+    function update(dt){
+		vcy -= dt * GRAVITY;
         var x = Math.floor((camera.position.x - heightmap.minX) / CLUSTER);
         var z = Math.floor((camera.position.z - heightmap.minZ) / CLUSTER);
         var y = PLAYER_HEIGHT;
@@ -164,7 +165,7 @@ function postScriptLoad(progress){
             draw();
         }
     }
-    var frame = 0, dFrame = 0.125;
+    
     function setCamera(dt) {
         camera.updateProjectionMatrix();
         camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
