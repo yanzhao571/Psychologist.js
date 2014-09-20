@@ -136,6 +136,7 @@ function postScriptLoad(progress){
             + mouse.getValue("dheading")
             + touch.getValue("dheading")) * dt;
         dpitch += mouse.getValue("dpitch") * dt;
+        dpitch = Math.max(-2, Math.min(1.3, dpitch));
         droll += (gamepad.getValue("drollLeft") 
             + gamepad.getValue("drollRight") 
             + keyboard.getValue("drollLeft") 

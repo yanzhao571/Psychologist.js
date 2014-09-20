@@ -135,8 +135,15 @@
                         }
                     }
 
-                    commandState[cmd.name].pressed = pressed;                
-                    commandState[cmd.name].value = value * cmd.scale;
+                    commandState[cmd.name].pressed = pressed;
+                    value *= cmd.scale;
+                    if(cmd.min != null){
+						value = Math.max(cmd.min, value);
+					}
+					if(cmd.max != null){
+						value = Math.min(cmd.max, value);
+					}
+                    commandState[cmd.name].value = value;
                 }
             }
 
@@ -181,7 +188,9 @@
             metaKeys: maybeClone(cmd.metaKeys),
             dt: cmd.dt,
             commandDown: cmd.commandDown,
-            commandUp: cmd.commandUp
+            commandUp: cmd.commandUp,
+            min: cmd.min,
+            max: cmd.max,
         };
 
         for(var k in newCmd){
