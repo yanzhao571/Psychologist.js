@@ -3,7 +3,15 @@ section
     border-radius: 7px;
     position: absolute;
     color: #2e2e2e;
-    background-color: #ffffff;
+    background-color: #fff;
+}
+
+th.selectedTab{
+	background-color: #fff;
+	border-top-left-radius: 7px;
+	border-top-right-radius: 7px;
+	border: outset 3px #c0c0c0;
+	border-bottom: none;
 }
 
 td > .button, td > input
@@ -19,6 +27,9 @@ td > .button, td > input
         top:1em;
         right:1em;
         left:1em;
+    }
+    input, a.button{
+		font-size: 24pt;
     }
 }
 
@@ -120,7 +131,7 @@ table
     border-spacing: 0;
 }
 
-    table > thead
+    table, table > thead
     {
         background-color: #ccc;
     }

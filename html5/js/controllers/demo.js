@@ -1,27 +1,30 @@
-var ctrls = findEverything();
-var PLAYER_HEIGHT = 6;
-var prog = new LoadingProgress(
-    "manifest/js/controllers/demo.js?v2",
-    "js/psychologist.js",
-    "lib/three/three.min.js",
-    "lib/three/StereoEffect.js",
-    "lib/three/OculusRiftEffect.min.js",
-    "lib/three/AnaglyphEffect.min.js",
-    "lib/three/ColladaLoader.js",
-    "lib/droid_sans_regular.typeface.js",
-    "/socket.io/socket.io.js",
-    "js/input/NetworkedInput.js",
-    "js/input/SpeechInput.js",
-    "js/input/GamepadInput.js",
-    "js/input/KeyboardInput.js",
-    "js/input/MotionInput.js",
-    "js/input/MouseInput.js",
-    "js/input/TouchInput.js",
-    "js/output/Audio3DOutput.js",
-    "js/output/SpeechOutput.js",
-    "js/output/ModelOutput.js",
-    displayProgress,
-    postScriptLoad);
+var isDebug = false,
+	ctrls = findEverything(),
+	PLAYER_HEIGHT = 6,
+	prog = new LoadingProgress(
+		"manifest/js/controllers/demo.js?v2",
+		"js/psychologist.js",
+		"lib/three/three.min.js",
+		"lib/three/StereoEffect.js",
+		"lib/three/OculusRiftEffect.min.js",
+		"lib/three/AnaglyphEffect.min.js",
+		"lib/three/ColladaLoader.js",
+		"lib/droid_sans_regular.typeface.js",
+		"/socket.io/socket.io.js",
+		"js/input/NetworkedInput.js",
+		"js/input/SpeechInput.js",
+		"js/input/GamepadInput.js",
+		"js/input/KeyboardInput.js",
+		"js/input/MotionInput.js",
+		"js/input/MouseInput.js",
+		"js/input/TouchInput.js",
+		"js/output/Audio3DOutput.js",
+		"js/output/SpeechOutput.js",
+		"js/output/ModelOutput.js",
+		displayProgress,
+		postScriptLoad);
+		
+ctrls.instructions.style.display = isDebug ? "none" : "";
 
 function displayProgress(){
     ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
@@ -34,8 +37,7 @@ function displayProgress(){
 }
 
 function postScriptLoad(progress){
-    var isDebug = true,
-        BG_COLOR = 0xafbfff, CLUSTER = 2,
+    var BG_COLOR = 0xafbfff, CLUSTER = 2,
         DRAW_DISTANCE = 100,
         TRACKING_SCALE = 0.5,
         TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
@@ -56,8 +58,9 @@ function postScriptLoad(progress){
         }),
         camera, effect,
         scene = new THREE.Scene(),
-        renderer = new THREE.WebGLRenderer({ antialias: true });
-    
+        renderer = new THREE.WebGLRenderer({ antialias: true }),
+        tabs = makeTabSet(ctrls.options);
+    tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
     scene.fog = new THREE.Fog(BG_COLOR, 1, DRAW_DISTANCE);;
     
@@ -240,9 +243,6 @@ function postScriptLoad(progress){
             mouse.requestPointerLock();
         });
     }
-    else{
-		ctrls.instructions.style.display = "none";
-	}
 
     ctrls.menuButton.addEventListener("click", function(){
         ctrls.options.style.display = "";
