@@ -38,7 +38,6 @@ function displayProgress(){
 
 function postScriptLoad(progress){
     var BG_COLOR = 0xafbfff, CLUSTER = 2,
-        DRAW_DISTANCE = 100,
         TRACKING_SCALE = 0.5,
         TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
         GRAVITY = 9.8, SPEED = 15,
@@ -56,13 +55,12 @@ function postScriptLoad(progress){
             color: 0x7f7f00,
             shading: THREE.FlatShading
         }),
-        camera, effect,
+        camera, effect, drawDistance = 250,
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
         tabs = makeTabSet(ctrls.options);
     tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
-    scene.fog = new THREE.Fog(BG_COLOR, 1, DRAW_DISTANCE);;
     
     function msg(){
         if(isDebug){
@@ -175,6 +173,9 @@ function postScriptLoad(progress){
         camera.translateY(vcy * dt);
         camera.translateZ(vcz * dt);
         camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
+        mainScene.Skybox.position.x = camera.position.x;
+        mainScene.Skybox.position.y = camera.position.y;
+        mainScene.Skybox.position.z = camera.position.z;
         frame += dt;
         if(userName && frame > dFrame){
             frame -= dFrame;
@@ -485,10 +486,15 @@ function postScriptLoad(progress){
 
     var mainScene = new ModelOutput("models/scene.dae", progress, function(object){
         scene.add(object);
-        camera = mainScene.Camera.children[0];
+        var cam = mainScene.Camera.children[0];
+        camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, drawDistance);
         mainScene.Ocean.children[0].material.transparent = true;
         mainScene.Ocean.children[0].material.opacity = 0.75;
         heightmap = ModelOutput.makeHeightMap(mainScene.Terrain, CLUSTER);
+        mainScene.Skybox.scale.x
+            = mainScene.Skybox.scale.y
+            = mainScene.Skybox.scale.z = 0.55 * drawDistance;
+        scene.fog = new THREE.Fog(BG_COLOR, 1, drawDistance * 0.6);
     });
 
     var bearModel = new ModelOutput("models/bear.dae", progress);

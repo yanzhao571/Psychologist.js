@@ -45,7 +45,6 @@ function makeTabSet(elem){
 			content = children[i+1];
 		if(title.tagName == "H1" && content.tagName == "TABLE"){
 			var headerCell = document.createElement("th");
-			console.log(title.innerHTML);
 			headerRow.appendChild(headerCell);
 			title.parentElement.removeChild(title);
 			headerCell.appendChild(title);
