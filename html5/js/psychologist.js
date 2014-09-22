@@ -43,7 +43,7 @@ function makeTabSet(elem){
 	for(var i = 0; i < children.length; i += 2){
 		var title = children[i],
 			content = children[i+1];
-		if(/H\d/.test(title.tagName)){
+		if(/(H\d|LABEL)/.test(title.tagName)){
 			var headerCell = document.createElement("th");
 			headerRow.appendChild(headerCell);
 			title.parentElement.removeChild(title);

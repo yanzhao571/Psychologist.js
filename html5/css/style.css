@@ -28,10 +28,9 @@ td > .button, td > input
         right:1em;
         left:1em;
     }
-    input, a.button{
-		font-size: 24pt;
-    }
 }
+
+
 
 @media(min-width:640px){
     section{

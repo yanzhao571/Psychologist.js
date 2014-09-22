@@ -512,7 +512,7 @@ function postScriptLoad(progress){
         snd.source.start(0);
     });
         
-    audio3d.loadSoundFixed("music/game1.ogg.break", true, progress, function(snd){
+    audio3d.loadSoundFixed("music/game1.ogg", true, progress, function(snd){
         snd.volume.gain.value = 0.5;
         snd.source.start(0);
     });
