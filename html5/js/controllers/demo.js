@@ -24,7 +24,11 @@ var isDebug = false,
 		displayProgress,
 		postScriptLoad);
 		
-ctrls.instructions.style.display = isDebug ? "none" : "";
+ctrls.instructions.style.display 
+    = ctrls.options.style.display
+    = isDebug ? "none" : "";
+ctrls.userNameField.value = isDebug ? "TestUser" : "";
+ctrls.passwordField.value = isDebug ? "test" : "";
 
 function displayProgress(){
     ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
@@ -50,7 +54,12 @@ function postScriptLoad(progress){
         userName = null, password = null,
         audio3d = new Audio3DOutput(),
         oceanSound = null,
-        socket, bears = {}, heightmap,
+        socket = io.connect(document.location.hostname, {
+            "reconnect": true,
+            "reconnection delay": 1000,
+            "max reconnection attempts": 60
+        }), 
+        bears = {}, heightmap,
         nameMaterial = new THREE.MeshLambertMaterial({
             color: 0x7f7f00,
             shading: THREE.FlatShading
@@ -110,7 +119,7 @@ function postScriptLoad(progress){
                 + keyboard.getValue("driveForward")
                 + gamepad.getValue("drive")
                 + touch.getValue("drive");
-            if(tx || tz){
+            if(tx != 0 || tz != 0){
                 len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
                     
                 if(bears[userName] && !bears[userName].animation.isPlaying){
@@ -229,6 +238,19 @@ function postScriptLoad(progress){
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
     }
+    
+    function login(){
+        if(socket){
+            userName = ctrls.userNameField.value;
+            password = ctrls.passwordField.value;
+            if(userName && password){
+                socket.emit("login", {userName: userName, password: password});
+            }
+        }
+        else{
+            msg("No socket available");
+        }
+    }
 
     var closers = document.getElementsByClassName("closeSectionButton");
     for(var i = 0; i < closers.length; ++i){
@@ -240,9 +262,12 @@ function postScriptLoad(progress){
 
     if(!isDebug){
         ctrls.options.querySelector(".closeSectionButton").addEventListener("click", function(){
-            toggleFullScreen();
+            requestFullScreen();
             mouse.requestPointerLock();
         });
+    }
+    else{
+        login();
     }
 
     ctrls.menuButton.addEventListener("click", function(){
@@ -250,18 +275,7 @@ function postScriptLoad(progress){
         ctrls.menuButton.style.display = "none";
     }, false);
 
-    ctrls.connectButton.addEventListener("click", function(){
-        if(socket){
-            userName = ctrls.userNameField.value;
-            password = ctrls.passwordField.value;
-            if(userName && password){
-                socket.emit("login", {userName: userName, password: password});
-            }
-        }
-        else{
-            msg("No socket available");
-        }
-    }, false);
+    ctrls.connectButton.addEventListener("click", login, false);
 
     ctrls.startSpeechButton.addEventListener("click", function(){
         speech.start();
@@ -379,12 +393,6 @@ function postScriptLoad(progress){
 		name.position.z = 0;
         name.rotateY(Math.PI);
     }
-
-    socket = io.connect(document.location.hostname, {
-        "reconnect": true,
-        "reconnection delay": 1000,
-        "max reconnection attempts": 60
-    });
 
     socket.on("loginFailed", function(){
         msg("Incorrect user name or password!");

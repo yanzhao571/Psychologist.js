@@ -193,19 +193,31 @@ function isFullScreenMode(){
             || document.msFullscreenElement);
 }
 
+function requestFullScreen(){
+    if(!isFullScreenMode()){
+        document.documentElement.requestFullscreen();
+        var interval = setInterval(function(){
+            if(isFullScreenMode()){
+                clearInterval(interval);
+                screen.lockOrientation("landscape-primary");
+            }
+        }, 1000);
+    }
+}
+
+function exitFullScreen(){
+    if(isFullScreenMode()){
+        document.exitFullscreen();
+    }
+}
+
 function toggleFullScreen(){
     if (document.documentElement.requestFullscreen){
         if(isFullScreenMode()){
-            document.exitFullscreen();
+            exitFullScreen();
         }
         else{
-            document.documentElement.requestFullscreen();
-            var interval = setInterval(function(){
-                if(isFullScreenMode()){
-                    clearInterval(interval);
-                    screen.lockOrientation("landscape-primary");
-                }
-            }, 1000);
+            requestFullScreen();
         }
     }
 }
