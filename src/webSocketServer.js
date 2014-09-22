@@ -35,7 +35,7 @@ User.prototype.addDevice = function(socket){
 
 User.prototype.bindEvents = function(index){
     for(var i = 0; i < types.length; ++i) {
-        this.devices[index].on(types[i], User.prototype.emit.bind(this, index));
+        this.devices[index].on(types[i], User.prototype.emit.bind(this, index, types[i]));
     }
 
     this.devices[index].on("disconnect", User.prototype.disconnect.bind(this, index));

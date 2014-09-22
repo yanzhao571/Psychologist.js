@@ -204,6 +204,7 @@
 
     if(socket){
         socket.on(name, function(cmdState){
+            inPhysicalUse = false;
             commandState = cmdState
             fireCommands();
         });
