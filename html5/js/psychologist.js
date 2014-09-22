@@ -43,7 +43,7 @@ function makeTabSet(elem){
 	for(var i = 0; i < children.length; i += 2){
 		var title = children[i],
 			content = children[i+1];
-		if(title.tagName == "H1" && content.tagName == "TABLE"){
+		if(/H\d/.test(title.tagName)){
 			var headerCell = document.createElement("th");
 			headerRow.appendChild(headerCell);
 			title.parentElement.removeChild(title);
@@ -63,6 +63,7 @@ function makeTabSet(elem){
 					headerRow.children[n].className = (n == index) ? "selectedTab" : "";
 				}
 			}.bind(title, i / 2));
+            title.style.cursor = "pointer";
 		}
 	}
 	bodyCell.colSpan = headerRow.children.length;
