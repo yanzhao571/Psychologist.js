@@ -21,7 +21,7 @@
 
     "main": "./server.js",
     "scripts": {
-        "desktop": "node server -v:true",
-        "server": "node server -v:false"
+        "desktop": "node server -v:true -h:localhost",
+        "server": "node server -v:false -h:seanmcbeth.com"
     }
 }

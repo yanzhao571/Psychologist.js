@@ -14,7 +14,7 @@
     srcDir = "html5",
     startPage = "",
     port = 8080,
-    host = "localhost",
+    host = options.h || "localhost",
     app, redir, io;
 
 function start(key, cert, ca){
