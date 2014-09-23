@@ -96,20 +96,24 @@ User.prototype.disconnect = function(index, reason){
         this.emit(index, "deviceLost");
     }
     else{
+        console.log("disconnect", this.state.userName);
         this.broadcast(-1, "userLeft", this.state.userName);
         this.devices.splice(0);
     }
 };
 
 module.exports = function (socket) {
-    var user;
     console.log("New connection!");
     function login(credentials){
         if(!users[credentials.userName]){
+            console.log("new user", credentials.userName);
             users[credentials.userName] = new User(credentials.userName, credentials.password);
         }
         
         if(users[credentials.userName].password == credentials.password){
+            if(!users[credentials.userName].isConnected()){
+                console.log("user login", credentials.userName);
+            }
             users[credentials.userName].addDevice(socket);
             socket.removeListener("login", login);
         }

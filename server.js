@@ -14,20 +14,21 @@
     srcDir = "html5",
     startPage = "",
     port = 8080,
+    host = "localhost",
     app, redir, io;
 
 function start(key, cert, ca){
     var useSecure = !!(key && cert && ca);
     if(useSecure){
         console.log("secure");
-        app = https.createServer({key: key, cert: cert, ca: ca}, webServer(srcDir));
-        redir = http.createServer(webServer(port + 1));
+        app = https.createServer({key: key, cert: cert, ca: ca}, webServer(host, srcDir));
+        redir = http.createServer(webServer(host, port + 1));
         redir.listen(port);
         app.listen(port + 1);
     }
     else{
         console.log("insecure");
-        app = http.createServer(webServer(srcDir));
+        app = http.createServer(webServer(host, srcDir));
         app.listen(port);
     }
     io = socketio.listen(app);

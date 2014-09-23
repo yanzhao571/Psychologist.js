@@ -27,8 +27,14 @@ function matchController(res, url, method) {
             found = true;
             matches.shift();
             routes[i].handler.call(this, method, matches, function (mimeType, data) {
-                res.writeHead(200, { "Content-Type": mimeType, "Content-Length": data.length });
-                res.end(data);
+                if(!mimeType){
+                    res.writeHead(415);
+                    res.end();
+                }
+                else{
+                    res.writeHead(200, { "Content-Type": mimeType, "Content-Length": data.length });
+                    res.end(data);
+                }
             }, serverError.bind(this, res, 500, core.fmt("Server error [$1]", url)));
         }
     }
@@ -47,41 +53,69 @@ function sendStaticFile(res, url, path) {
     });
 }
 
+function serveRequest(target, req, res){
+    if (!matchController(res, req.url, req.method) && req.method == "GET") {
+        if(req.url.indexOf("..") == -1){
+            var path = target + req.url,
+            file = path.match(filePattern)[1];
+            fs.exists(file, function (yes) {
+                if (yes) {
+                    sendStaticFile(res, req.url, file);
+                }
+                else {
+                    serverError(res, 404, core.fmt("File not found [$1]", path));
+                }
+            });
+        }
+        else{
+            serverError(res, 403, core.fmt("Permission denied [$1]", req.url));
+        }
+    }
+}
+
+function redirectPort(host, target, req, res){
+    var reqHost = req.headers.host.replace(/(:\d+|$)/, ":" + target);
+    console.log(host, reqHost);
+    if(reqHost == host && !/https?:/.test(req.url)){
+        var url = "https://" + validHost + req.url;
+        console.log("redirecting to", url);
+        res.writeHead(307, { "Location": url });
+    }
+    else{
+        serverError(res, 400, core.fmt("Request not understood [$1/$2]", req.headers.host, req.url));
+    }
+    res.end();
+}
+
+function isString(v){
+    return typeof(v) === "string" || v instanceof String;
+}
+
+function isNumber(v){
+    return isFinite(v) && !isNaN(v);
+}
+
 /*
     Creates a callback function that listens for requests and either redirects them
     to the port specified by `target` (if `target` is a number) or serves applications
     and static files from the directory named by `target` (if `target` is a string).
     
-    target: a number or a string.
+    `host`: the name of the host to validate against the HTTP header on request.
+    `target`: a number or a string.
         - number: the port number to redirect to, keeping the request the same, otherwise.
         - string: the directory from which to serve static files.
 */
-module.exports = function (target) {
-    if(typeof(target) === "number" || target instanceof Number){
-        return function (req, res) {
-            var url = "https://" + req.headers.host.replace(/(:\d+|$)/, ":" + target) + req.url;
-            console.log("redirecting to", url);
-            res.writeHead(307, { "Location": url });
-            res.end();
-        }
+module.exports = function (host, target) {
+    if(!isString(host)){
+        throw new Error("`host` parameter not a supported type. Excpected string. Given: " + host + ", type: " + typeof(host));
     }
-    else if(typeof(target) === "string" || target instanceof String){
-        return function(req, res){
-            if (!matchController(res, req.url, req.method) && req.method == "GET") {
-                var path = target + req.url,
-                file = path.match(filePattern)[1];
-                fs.exists(file, function (yes) {
-                    if (yes) {
-                        sendStaticFile(res, req.url, file);
-                    }
-                    else {
-                        serverError(res, 404, core.fmt("File not found [$1]", path));
-                    }
-                });
-            }
-        }
+    else if(!isString(target) && !isNumber(target)){
+        throw new Error("`target` parameter not a supported type. Excpected number or string. Given: " + target + ", type: " + typeof(target));
+    }
+    else if(isString(target)){
+        return serveRequest.bind(this, target);
     }
     else{
-        throw new Error("`target` parameter not a supported type. Excpected number or string. Given: " + target + ", type: " + typeof(target));
+        return redirectPort.bind(this, host + ":" + target, target);
     }
 };
