@@ -221,7 +221,7 @@
 
     if(socket){
         socket.on(name, function(cmdState){
-            if(enabled && receiving){
+            if(receiving){
                 inPhysicalUse = false;
                 commandState = cmdState
                 fireCommands();

@@ -231,14 +231,12 @@ function postScriptLoad(progress){
             camera.aspect = w / h;
             camera.updateProjectionMatrix();
         }
+
+        chooseRenderingEffect(getSetting("renderingEffect"));
+        
+        renderer.setSize(w, h);
         if (effect) {
-            effect.setSize(window.innerWidth, window.innerHeight);
-        }
-        else if (effect) {
-            effect.setSize(window.innerWidth, window.innerHeight);
-        }
-        else {
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            effect.setSize(w, h);
         }
     }
     
@@ -313,12 +311,11 @@ function postScriptLoad(progress){
 
         setSetting("renderingEffect", type);
     }
-
+    
+    ctrls.riftRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "rift"), false);
     ctrls.anaglyphRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "anaglyph"), false);
     ctrls.stereoRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "stereo"), false);
-    ctrls.riftRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "rift"), false);
-
-    chooseRenderingEffect(getSetting("renderingEffect"));
+    ctrls.regularRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "regular"), false);
 
     window.addEventListener("beforeunload", function(){
         var state = readForm(ctrls);
@@ -503,6 +500,10 @@ function postScriptLoad(progress){
             r = ctrls[name + "Receive"];
         e.addEventListener("change", function(){
             module.enable(e.checked);
+            t.disabled = !e.checked;
+            if(t.checked && t.disabled){
+                t.checked = false;
+            }
         });
         t.addEventListener("change", function(){
             module.transmit(t.checked);
@@ -513,6 +514,10 @@ function postScriptLoad(progress){
         module.enable(e.checked);
         module.transmit(t.checked);
         module.receive(r.checked);
+        t.disabled = !e.checked;
+        if(t.checked && t.disabled){
+            t.checked = false;
+        }
     }
 
     setupModuleEvents(gamepad, "gamepad");

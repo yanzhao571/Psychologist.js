@@ -62,7 +62,7 @@ function SpeechInput(commands, socket, stopAfterEnd){
         return false;
     }
 
-    function check(){
+    this.check = function(){
         if(enabled && transmitting && !running){
             this.start();
         }
@@ -73,12 +73,12 @@ function SpeechInput(commands, socket, stopAfterEnd){
 
     this.enable = function(v){
         enabled = v;
-        check();
+        this.check();
     };
 
     this.transmit = function(v){
         transmitting = v;
-        check();
+        this.check();
     };
 
     this.receive = function(v){
@@ -134,7 +134,7 @@ function SpeechInput(commands, socket, stopAfterEnd){
 
     if(socket){
         socket.on("speech", function(command){
-            if(enabled && receiving){
+            if(receiving){
                 executeCommand(command);
             }
         });
