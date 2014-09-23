@@ -2,7 +2,8 @@
     spawn = require("child_process").spawn,
     startProc = {
         linux: "xdg-open",
-        win32: "explorer"
+        win32: "explorer",
+        darwin: "open"
     }[os.platform()];
 
 module.exports = function(secure, port, startPage){
