@@ -1,6 +1,6 @@
 {
     "name": "VR",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "license": "MIT License",
     "readme": "./README.txt",
     "dependencies": {
@@ -11,7 +11,7 @@
     "description": "HTML 5 VR system for phones and cardboard viewers.",
     "keywords": ["virtual reality"],
 
-    "homepage": "http://www.justwritedammit.com/vr1",
+    "homepage": "https://www.seanmcbeth.com:8081/VR",
     "repository": {
         "type": "git",
         "url": "https://github.com/capnmidnight/VR"
