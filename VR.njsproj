@@ -63,6 +63,9 @@
     <Compile Include="html5\test\testing.js" />
     <Compile Include="html5\test\MotionInput.js" />
     <Compile Include="server.js" />
+    <Compile Include="src\game\User.js" />
+    <Compile Include="src\requireDirectory.js" />
+    <Compile Include="src\socketControllers.js" />
     <Compile Include="src\controllers.js" />
     <Compile Include="src\controllers\demo.js" />
     <Compile Include="src\controllers\manifest.js" />
@@ -70,6 +73,7 @@
     <Compile Include="src\core.js" />
     <Compile Include="src\master.js" />
     <Compile Include="src\options.js" />
+    <Compile Include="src\socketControllers\demo.js" />
     <Compile Include="src\starter.js" />
     <Compile Include="src\webServer.js" />
     <Compile Include="src\webSocketServer.js" />
@@ -121,6 +125,8 @@
     <Folder Include="html5\test\" />
     <Folder Include="src\" />
     <Folder Include="src\controllers\" />
+    <Folder Include="src\game\" />
+    <Folder Include="src\socketControllers\" />
     <Folder Include="src\templates\" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\Node.js Tools\Microsoft.NodejsTools.targets" />

@@ -68,6 +68,9 @@ function postScriptLoad(progress){
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
         tabs = makeTabSet(ctrls.options);
+    
+    socket.on("handshakeFailed", console.warn.bind(console));
+    socket.emit("handshake", "demo");
     tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
     
