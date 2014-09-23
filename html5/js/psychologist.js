@@ -6,13 +6,15 @@ function inherit(classType, parentType) {
 
 function getSetting(name, defValue) {
     var val = window.localStorage.getItem(name);
-    try{
-        return (window.localStorage && JSON.parse(val)) || defValue;
+    if(val){
+        try{
+            return (window.localStorage && JSON.parse(val)) || defValue;
+        }
+        catch(exp){
+            console.error(val, exp);
+        }
     }
-    catch(exp){
-        console.error(val, exp);
-        return defValue;
-    }
+    return defValue;
 }
 
 function setSetting(name, value) {
