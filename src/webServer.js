@@ -14,7 +14,6 @@ function serverError(res, code) {
         res.end("Error" + msg);
     }
     else{
-        console.warn("Warning", rest);
         res.end("Warning" + msg);
     }
 }
@@ -81,7 +80,6 @@ function redirectPort(host, target, req, res){
         res.writeHead(307, { "Location": url });
     }
     else{
-        console.log(reqHost);
         serverError(res, 400, core.fmt("Request not understood [$1/$2]", req.headers.host, req.url));
     }
     res.end();
