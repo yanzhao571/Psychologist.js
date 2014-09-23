@@ -27,8 +27,6 @@ var isDebug = false,
 ctrls.instructions.style.display 
     = ctrls.options.style.display
     = isDebug ? "none" : "";
-ctrls.userNameField.value = isDebug ? "TestUser" : "";
-ctrls.passwordField.value = isDebug ? "test" : "";
 
 function displayProgress(){
     ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
@@ -67,19 +65,21 @@ function postScriptLoad(progress){
         camera, effect, drawDistance = 250,
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
-        tabs = makeTabSet(ctrls.options);
-    
+        tabs = makeTabSet(ctrls.options),
+        formState = getSetting("formState", {});
+
     socket.on("handshakeFailed", console.warn.bind(console));
     socket.emit("handshake", "demo");
     tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
+    writeForm(ctrls, formState);
     
     function msg(){
         if(isDebug){
             console.log.apply(console, arguments);
         }
         else{
-            alert(Array.prototype.map.call(arguments, function(v){
+            alert(map(arguments, function(v){
                 return v ? v.toString() : ""
             }).join(" "));
         }
@@ -280,10 +280,6 @@ function postScriptLoad(progress){
 
     ctrls.connectButton.addEventListener("click", login, false);
 
-    ctrls.startSpeechButton.addEventListener("click", function(){
-        speech.start();
-    }, false);
-
     ctrls.pointerLockButton.addEventListener("click", function(){
         mouse.togglePointerLock();
         ctrls.options.style.display = "none";
@@ -317,6 +313,11 @@ function postScriptLoad(progress){
                 chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
             }
         });
+    }, false);
+
+    window.addEventListener("beforeunload", function(){
+        var state = readForm(ctrls);
+        setSetting("formState", state);
     }, false);
 
     function jump() {
@@ -491,6 +492,32 @@ function postScriptLoad(progress){
         }
     }, false);
 
+    function setupModuleEvents(module, name){
+        var e = ctrls[name + "Enable"],
+            t = ctrls[name + "Transmit"],
+            r = ctrls[name + "Receive"];
+        e.addEventListener("change", function(){
+            module.enable(e.checked);
+        });
+        t.addEventListener("change", function(){
+            module.transmit(t.checked);
+        });
+        r.addEventListener("change", function(){
+            module.receive(r.checked);
+        });
+        module.enable(e.checked);
+        module.transmit(t.checked);
+        module.receive(r.checked);
+    }
+
+    setupModuleEvents(gamepad, "gamepad");
+    setupModuleEvents(keyboard, "keyboard");
+    setupModuleEvents(mouse, "mouse");
+    setupModuleEvents(touch, "touch");
+    setupModuleEvents(motion, "motion");
+    setupModuleEvents(speech, "speech");
+
+
     window.addEventListener("resize", function () {
         setSize(window.innerWidth, window.innerHeight);
     }, false);
@@ -515,7 +542,7 @@ function postScriptLoad(progress){
         snd.source.start(0);
     });
         
-    audio3d.loadSoundFixed("music/game1.ogg", true, progress, function(snd){
+    audio3d.loadSoundFixed("music/game1.ogg.break", true, progress, function(snd){
         snd.volume.gain.value = 0.5;
         snd.source.start(0);
     });

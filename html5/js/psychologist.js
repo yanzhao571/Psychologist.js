@@ -5,18 +5,52 @@ function inherit(classType, parentType) {
 }
 
 function getSetting(name, defValue) {
-    return (window.localStorage && window.localStorage.getItem(name)) || defValue;
+    return (window.localStorage && JSON.parse(window.localStorage.getItem(name))) || defValue;
 }
 
 function setSetting(name, value) {
     if (window.localStorage) {
-        window.localStorage.setItem(name, value);
+        window.localStorage.setItem(name, JSON.stringify(value));
     }
 }
 
 function deleteSetting(name) {
     if (window.localStorage) {
         window.localStorage.removeItem(name);
+    }
+}
+
+function readForm(ctrls){
+    var state = {};
+    if(ctrls){
+        for(var name in ctrls){
+            var c = ctrls[name];
+            if(c.tagName == "INPUT"){
+                if(c.type == "text" || c.type == "password"){
+                    state[name] = c.value;
+                }
+                else if(c.type == "checkbox" || c.type == "radio"){
+                    state[name] = c.checked;
+                }
+            }
+        }
+    }
+    return state;
+}
+
+function writeForm(ctrls, state){
+    if(state){
+        for(var name in ctrls){
+            var c = ctrls[name];
+            if(state[name] != null && c.tagName == "INPUT"){
+                if(c.type == "text" || c.type == "password"){
+                    c.value = state[name];
+                }
+                else if(c.type == "checkbox" || c.type == "radio"){
+                    c.checked = state[name];
+                }
+            }
+        } 
     }
 }
 
@@ -39,7 +73,7 @@ function makeTabSet(elem){
 	header.appendChild(headerRow);
 	body.appendChild(bodyRow);
 	bodyRow.appendChild(bodyCell);
-	var children = Array.prototype.slice.call(elem.children);
+	var children = arr(elem.children);
 	for(var i = 0; i < children.length; i += 2){
 		var title = children[i],
 			content = children[i+1];
@@ -85,13 +119,6 @@ var isMobile = (function (a) { return /(android|bb\d+|meego).+mobile|avantgo|bad
     isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0,
     isChrome = !!window.chrome && !isOpera,
     isIE = /*@cc_on!@*/false || !!document.documentMode;
-
-// Applying Array's slice method to array-like objects. Called with
-// no parameters, this function converts array-like objects into
-// JavaScript Arrays.
-function arr(arg, a, b) {
-    return Array.prototype.slice.call(arg, a, b);
-}
 
 function add(a, b) { return a + b; }
 

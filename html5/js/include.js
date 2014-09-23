@@ -55,6 +55,17 @@ FileState.prototype.toString = function(){
     return fmt("$1 ($2.00KB of $3.00KB): $4", this.name, this.progress/1000, this.size/1000, FileState.STATE_NAMES[this.state]);
 };
 
+// Applying Array's slice method to array-like objects. Called with
+// no parameters, this function converts array-like objects into
+// JavaScript Arrays.
+function arr(arg, a, b) {
+    return Array.prototype.slice.call(arg, a, b);
+}
+
+function map(arr, fun){
+    return Array.prototype.map.call(arr, fun);
+}
+
 FileState.STATE_NAMES = ["none", "started", "error", null, "success"]
 FileState.NONE = 0;
 FileState.STARTED = 1;
@@ -62,7 +73,7 @@ FileState.ERRORED = 2;
 FileState.COMPLETE = 4;
 
 function LoadingProgress(){
-    var args = Array.prototype.slice.call(arguments),
+    var args = arr(arguments),
         version = ofType(args, "number").reduce(function(a, b){ return b; }, 0),
         paths = ofType(args, "string"),
         callbacks = ofType(args, "function"),

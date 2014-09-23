@@ -1,5 +1,8 @@
 ﻿function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
-    var numAxes = 0;
+    var numAxes = 0,
+        enabled = true,
+        transmitting = true,
+        receiving = true;
     if(typeof(deltaTrackedAxes) == "number"){
         numAxes = deltaTrackedAxes;
         deltaTrackedAxes = null;
@@ -67,6 +70,18 @@
         };
     }
 
+    this.enable = function(v){
+        enabled = v;
+    };
+
+    this.transmit = function(v){
+        transmitting = v;
+    };
+
+    this.receive = function(v){
+        receiving = v;
+    };
+
     this.setButton = function(index, pressed){
         inPhysicalUse = true;
         deviceState.buttons[index] = pressed;
@@ -85,9 +100,9 @@
     };
 
     this.update = function(){
-        if(inPhysicalUse){
+        if(inPhysicalUse && enabled){
             var prevState = "", finalState = "", t = Date.now();
-            if(socket){
+            if(transmitting && socket){
                 prevState = JSON.stringify(commandState);
             }
 
@@ -147,11 +162,13 @@
                 }
             }
 
-            if(socket){
-                finalState = JSON.stringify(commandState);
-            }
-            if(finalState != prevState){
-                socket.emit(name, commandState);
+            if(transmitting){
+                if(socket){
+                    finalState = JSON.stringify(commandState);
+                }
+                if(finalState != prevState){
+                    socket.emit(name, commandState);
+                }
             }
 
             fireCommands();
@@ -204,9 +221,11 @@
 
     if(socket){
         socket.on(name, function(cmdState){
-            inPhysicalUse = false;
-            commandState = cmdState
-            fireCommands();
+            if(enabled && receiving){
+                inPhysicalUse = false;
+                commandState = cmdState
+                fireCommands();
+            }
         });
         socket.on("deviceLost", function(){
             // will force the local event loop to take over and cancel out any lingering command activity

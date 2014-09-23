@@ -16,121 +16,159 @@
     </div>
     <section id="options">
         <h1>Options</h1>
-		<div class="tabSet">
-			<label>Server</label>
-			<table>
-				<tbody>
-					<tr><td><input type="text" id="userNameField" placeholder="<user name>"></td></tr>
-					<tr><td><input type="password" id="passwordField" placeholder="<password>"></td></tr>
-					<tr><td><a class="button" id="connectButton">Connect to Server</a></td></tr>
-				</tbody>
-			</table>
-			
+        <div class="tabSet">
+            <label>Server</label>
+            <table>
+                <tbody>
+                    <tr><td><input type="text" id="userNameField" placeholder="<user name>"></td></tr>
+                    <tr><td><input type="password" id="passwordField" placeholder="<password>"></td></tr>
+                    <tr><td><a class="button" id="connectButton">Connect to Server</a></td></tr>
+                </tbody>
+            </table>
+
             <label>Graphics</label>
-			<table>
-				<tbody>
-					<tr><td><a class="button" id="riftRenderButton">Use Stereo Rendering with Barrel Distortion</a></td></tr>
+            <table>
+                <tbody>
+                    <tr><td><a class="button" id="riftRenderButton">Use Stereo Rendering with Barrel Distortion</a></td></tr>
                     <tr><td><a class="button" id="anaglyphRenderButton">Use Cyan/Red Anaglyph Rendering</a></td></tr>
                     <tr><td><a class="button" id="stereoRenderButton">Use Basic Stereo Rendering</a></td></tr>
-					<tr><td><a class="button" id="fullScreenButton">Toggle Full Screen</a></td></tr>
-					<tr><td><a class="button" id="pointerLockButton">Set Pointer Lock (and close options window)</a></td></tr>
-				</tbody>
-			</table>
-			
+                    <tr><td><a class="button" id="fullScreenButton">Toggle Full Screen</a></td></tr>
+                    <tr><td><a class="button" id="pointerLockButton">Set Pointer Lock (and close options window)</a></td></tr>
+                </tbody>
+            </table>
+
             <label>Input</label>
-			<table>
-				<tbody>
-					<tr><td><a class="button" id="startSpeechButton">Start Speech Recognition</a></td></tr>
-				</tbody>
-			</table>
-			
+            <table>
+                <thead>
+                    <tr><th>Input Type</th><th>Enable</th><th>Transmit</th><th>Receive</th></tr>
+                </thead>
+                <tbody id="inputOptions">
+                    <tr>
+                        <td>Gamepad</td>
+                        <td><input type="checkbox" id="gamepadEnable" checked/></td>
+                        <td><input type="checkbox" id="gamepadTransmit" checked /></td>
+                        <td><input type="checkbox" id="gamepadReceive" checked /></td>
+                    </tr>
+                    <tr>
+                        <td>Keyboard</td>
+                        <td><input type="checkbox" id="keyboardEnable" checked /></td>
+                        <td><input type="checkbox" id="keyboardTransmit" checked /></td>
+                        <td><input type="checkbox" id="keyboardReceive" checked /></td>
+                    </tr>
+                    <tr>
+                        <td>Mouse</td>
+                        <td><input type="checkbox" id="mouseEnable" checked /></td>
+                        <td><input type="checkbox" id="mouseTransmit" checked /></td>
+                        <td><input type="checkbox" id="mouseReceive" checked /></td>
+                    </tr>
+                    <tr>
+                        <td>Touch</td>
+                        <td><input type="checkbox" id="touchEnable" checked /></td>
+                        <td><input type="checkbox" id="touchTransmit" checked /></td>
+                        <td><input type="checkbox" id="touchReceive" checked /></td>
+                    </tr>
+                    <tr>
+                        <td>Motion</td>
+                        <td><input type="checkbox" id="motionEnable" checked /></td>
+                        <td><input type="checkbox" id="motionTransmit" checked /></td>
+                        <td><input type="checkbox" id="motionReceive" checked /></td>
+                    </tr>
+                    <tr>
+                        <td>Speech</td>
+                        <td><input type="checkbox" id="speechEnable" /></td>
+                        <td><input type="checkbox" id="speechTransmit" /></td>
+                        <td><input type="checkbox" id="speechReceive" /></td>
+                    </tr>
+                </tbody>
+            </table>
+
             <label>Controls</label>
-			<table>
-				<thead>
-					<tr>
-						<th>Command</th>
-						<th>Keyboard</th>
-						<th>Mouse</th>
-						<th>Touch</th>
-						<th>Gamepad</th>
-						<th>Speech</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td>Move forward</td>
-						<td>W</td>
-						<td>--</td>
-						<td>touch-drag down</td>
-						<td>left-stick up</td>
-						<td>--</td>
-					</tr>
-					<tr class="alternateRow">
-						<td>Move backward</td>
-						<td>A</td>
-						<td>--</td>
-						<td>touch-drag up</td>
-						<td>left-stick down</td>
-						<td>--</td>
-					</tr>
-					<tr>
-						<td>Strafe left</td>
-						<td>A</td>
-						<td>--</td>
-						<td>--</td>
-						<td>left-stick left</td>
-						<td>--</td>
-					</tr>
-					<tr class="alternateRow">
-						<td>Strafe right</td>
-						<td>E</td>
-						<td>--</td>
-						<td>--</td>
-						<td>left-stick right</td>
-						<td>--</td>
-					</tr>
-					<tr>
-						<td>Turn left</td>
-						<td>--</td>
-						<td>move left</td>
-						<td>touch-drag right</td>
-						<td>right-stick left</td>
-						<td>--</td>
-					</tr>
-					<tr class="alternateRow">
-						<td>Turn right</td>
-						<td>--</td>
-						<td>move right</td>
-						<td>touch-drag left</td>
-						<td>right-stick right</td>
-						<td>--</td>
-					</tr>
-					<tr>
-						<td>Look up</td>
-						<td>--</td>
-						<td>move down</td>
-						<td>--</td>
-						<td>right-stick down</td>
-						<td>--</td>
-					</tr>
-					<tr class="alternateRow">
-						<td>Look down</td>
-						<td>--</td>
-						<td>move up</td>
-						<td>--</td>
-						<td>right-stick up</td>
-						<td>--</td>
-					</tr>
-					<tr>
-						<td>Jump</td>
-						<td>spacebar</td>
-						<td>middle-click</td>
-						<td>--</td>
-						<td>A-button</td>
-						<td>say "jump"</td>
-					</tr>
-				</tbody>
-			</table>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Command</th>
+                        <th>Keyboard</th>
+                        <th>Mouse</th>
+                        <th>Touch</th>
+                        <th>Gamepad</th>
+                        <th>Speech</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Move forward</td>
+                        <td>W</td>
+                        <td>--</td>
+                        <td>touch-drag down</td>
+                        <td>left-stick up</td>
+                        <td>--</td>
+                    </tr>
+                    <tr class="alternateRow">
+                        <td>Move backward</td>
+                        <td>A</td>
+                        <td>--</td>
+                        <td>touch-drag up</td>
+                        <td>left-stick down</td>
+                        <td>--</td>
+                    </tr>
+                    <tr>
+                        <td>Strafe left</td>
+                        <td>A</td>
+                        <td>--</td>
+                        <td>--</td>
+                        <td>left-stick left</td>
+                        <td>--</td>
+                    </tr>
+                    <tr class="alternateRow">
+                        <td>Strafe right</td>
+                        <td>E</td>
+                        <td>--</td>
+                        <td>--</td>
+                        <td>left-stick right</td>
+                        <td>--</td>
+                    </tr>
+                    <tr>
+                        <td>Turn left</td>
+                        <td>--</td>
+                        <td>move left</td>
+                        <td>touch-drag right</td>
+                        <td>right-stick left</td>
+                        <td>--</td>
+                    </tr>
+                    <tr class="alternateRow">
+                        <td>Turn right</td>
+                        <td>--</td>
+                        <td>move right</td>
+                        <td>touch-drag left</td>
+                        <td>right-stick right</td>
+                        <td>--</td>
+                    </tr>
+                    <tr>
+                        <td>Look up</td>
+                        <td>--</td>
+                        <td>move down</td>
+                        <td>--</td>
+                        <td>right-stick down</td>
+                        <td>--</td>
+                    </tr>
+                    <tr class="alternateRow">
+                        <td>Look down</td>
+                        <td>--</td>
+                        <td>move up</td>
+                        <td>--</td>
+                        <td>right-stick up</td>
+                        <td>--</td>
+                    </tr>
+                    <tr>
+                        <td>Jump</td>
+                        <td>spacebar</td>
+                        <td>middle-click</td>
+                        <td>--</td>
+                        <td>A-button</td>
+                        <td>say "jump"</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         <a class="button closeSectionButton">Close</a>
     </section>

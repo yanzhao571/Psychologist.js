@@ -51,13 +51,34 @@ function SpeechInput(commands, socket, stopAfterEnd){
         restart = !stopAfterEnd,
         recognition = null,
         available = null,
-        errorMessage = null;
+        errorMessage = null,
+        enable = true,
+        transmitting = true,
+        receiving = true;
 
     function warn(){
         var msg = fmt("Failed to initialize speech engine. Reason: $1", err.message);
         console.error(msg);
         return false;
     }
+
+    this.enable = function(v){
+        enabled = v;
+        if(enabled && !running){
+            this.start();
+        }
+        else if(!enabled && running){
+            this.stop();
+        }
+    };
+
+    this.transmit = function(v){
+        transmitting = v;
+    };
+
+    this.receive = function(v){
+        receiving = v;
+    };
 
     this.start = function(){
         if(!available){
@@ -107,7 +128,11 @@ function SpeechInput(commands, socket, stopAfterEnd){
     }
 
     if(socket){
-        socket.on("speech", executeCommand);
+        socket.on("speech", function(command){
+            if(receiving){
+                executeCommand(command);
+            }
+        });
     }
 
     // clone the arrays, so the consumer can't add elements to it in their own code.
@@ -151,8 +176,8 @@ function SpeechInput(commands, socket, stopAfterEnd){
 
             var newCommand = "";
             for(var i = 0; i < event.results.length; ++i){
-                if(i >= event.resultIndex){
-                    newCommand += event.results[i].evt[0].transcript.trim() + " ";
+                if(i >= event.resultIndex && event.results[i].length > 0){
+                    newCommand += event.results[i][0].transcript.trim() + " ";
                 }
             }
 
@@ -161,7 +186,7 @@ function SpeechInput(commands, socket, stopAfterEnd){
             if(newCommand != command){
                 command = newCommand;
                 executeCommand(command);
-                if(socket){
+                if(transmitting && socket){
                     socket.emit("speech", command);
                 }
             }
