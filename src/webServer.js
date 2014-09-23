@@ -76,7 +76,7 @@ function serveRequest(target, req, res){
 function redirectPort(host, target, req, res){
     var reqHost = req.headers.host.replace(/(:\d+|$)/, ":" + target);
     if(reqHost == host && !/https?:/.test(req.url)){
-        var url = "https://" + validHost + req.url;
+        var url = "https://" + host + req.url;
         console.log("redirecting to", url);
         res.writeHead(307, { "Location": url });
     }

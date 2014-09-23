@@ -290,30 +290,35 @@ function postScriptLoad(progress){
         toggleFullScreen();
     }, false);
 
-    ctrls.anaglyphRenderButton.addEventListener("click", function(){
-        effect = new THREE.AnaglyphEffect(renderer, 5, window.innerWidth, window.innerHeight);
-    }, false);
+    function chooseRenderingEffect(type){
+        switch(type){
+            case "anaglyph": effect = new THREE.AnaglyphEffect(renderer, 5, window.innerWidth, window.innerHeight); break;
+            case "stereo": effect = new THREE.StereoEffect(renderer); break;
+            case "rift": effect = new THREE.OculusRiftEffect(renderer, {
+                worldFactor: 1,
+                HMD: {
+                    hResolution: screen.availWidth,
+                    vResolution: screen.availHeight,
+                    hScreenSize: 0.126,
+                    vScreenSize: 0.075,
+                    interpupillaryDistance: 0.064,
+                    lensSeparationDistance: 0.064,
+                    eyeToScreenDistance: 0.051,
+                    distortionK: [1, 0.22, 0.06, 0.0],
+                    chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
+                }
+            }); break;
+            default: effect = null;
+        }
 
-    ctrls.stereoRenderButton.addEventListener("click", function(){
-        effect = new THREE.StereoEffect(renderer);
-    }, false);
+        setSetting("renderingEffect", type);
+    }
 
-    ctrls.riftRenderButton.addEventListener("click", function(){
-        effect = new THREE.OculusRiftEffect(renderer, {
-            worldFactor: 1,
-            HMD: {
-                hResolution: screen.availWidth,
-                vResolution: screen.availHeight,
-                hScreenSize: 0.126,
-                vScreenSize: 0.075,
-                interpupillaryDistance: 0.064,
-                lensSeparationDistance: 0.064,
-                eyeToScreenDistance: 0.051,
-                distortionK: [1, 0.22, 0.06, 0.0],
-                chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
-            }
-        });
-    }, false);
+    ctrls.anaglyphRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "anaglyph"), false);
+    ctrls.stereoRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "stereo"), false);
+    ctrls.riftRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "rift"), false);
+
+    chooseRenderingEffect(getSetting("renderingEffect"));
 
     window.addEventListener("beforeunload", function(){
         var state = readForm(ctrls);
