@@ -120,6 +120,12 @@ a.button
         background-color: #1b2c63;
     }
 
+.altClose
+{
+    position: absolute;
+    right: 0;
+    top: 0;
+}
 
 table
 {

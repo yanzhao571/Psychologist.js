@@ -11,7 +11,7 @@ function getSetting(name, defValue) {
             return (window.localStorage && JSON.parse(val)) || defValue;
         }
         catch(exp){
-            console.error(val, exp);
+            console.error(name, val, typeof(val), exp);
         }
     }
     return defValue;
