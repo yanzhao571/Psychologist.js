@@ -75,13 +75,13 @@ function serveRequest(target, req, res){
 
 function redirectPort(host, target, req, res){
     var reqHost = req.headers.host.replace(/(:\d+|$)/, ":" + target);
-    console.log(host, reqHost);
     if(reqHost == host && !/https?:/.test(req.url)){
         var url = "https://" + validHost + req.url;
         console.log("redirecting to", url);
         res.writeHead(307, { "Location": url });
     }
     else{
+        console.log(reqHost);
         serverError(res, 400, core.fmt("Request not understood [$1/$2]", req.headers.host, req.url));
     }
     res.end();
