@@ -1,4 +1,4 @@
-﻿function TouchInput(buttonBounds, commands, socket, DOMElement){
+﻿function TouchInput(buttonBounds, axisConstraints, commands, socket, DOMElement){
     buttonBounds = buttonBounds || [];
     for(var i = buttonBounds.length - 1; i >= 0; --i){
         var b = buttonBounds[i];
@@ -14,7 +14,7 @@
         }
     }
 
-    NetworkedInput.call(this, "touch", commands, socket, 1, TouchInput.AXES);
+    NetworkedInput.call(this, "touch", axisConstraints, commands, socket, 1, TouchInput.AXES);
 
     function setState (stateChange, setAxis, event){
         var touches = stateChange ? event.touches : event.changedTouches;

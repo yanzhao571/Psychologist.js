@@ -20,7 +20,7 @@ function motionTest() {
             {name: "ipitch", axes: [MotionInput.IPITCH]},
             {name: "iroll", axes: [MotionInput.IROLL]},
         ],
-        motion = new MotionInput(commands);
+        motion = new MotionInput(null, commands);
 
     function loop(dt){
         requestAnimationFrame(loop);

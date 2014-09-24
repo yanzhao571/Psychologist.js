@@ -33,7 +33,7 @@ function gamepadTest() {
             { name: "irhoriz", axes: [GamepadInput.IRSX] },
             { name: "irvert", axes: [GamepadInput.IRSY] }
         ],
-        gamepad = new GamepadInput(0.1, commands);
+        gamepad = new GamepadInput(null, commands);
 
     function jump(id) {
         console.log(id, "jumped");

@@ -1,14 +1,16 @@
-﻿function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes, integrateOnly){
+﻿function NetworkedInput(name, axisConstraints, commands, socket, offset, deltaTrackedAxes, integrateOnly){
     var numAxes = 0,
         enabled = true,
         transmitting = true,
         receiving = true,
         socketReady = false;
+
     
     if(deltaTrackedAxes instanceof Array){
         numAxes = deltaTrackedAxes.length;
     }
-
+    
+    axisConstraints = axisConstraints || [];
     deltaTrackedAxes = deltaTrackedAxes || [];
     offset = offset || 0;
 
@@ -28,6 +30,16 @@
             }
         }
     }
+
+    axisConstraints = axisConstraints.reduce(function(m, o){
+        m[o.axis - 1] = {
+            scale: o.scale,
+            min: o.min,
+            max: o.max,
+            deadzone: o.deadzone
+        }
+        return m;
+    }, {});
 
     function readMetaKeys(event){ 
         for(var i = 0; i < metaKeys.length; ++i){
@@ -50,14 +62,34 @@
         }
     }
 
+    function getAxis (name){
+        return deviceState.axes[axisNames.indexOf(name)] || 0;
+    }
+
     this.setAxis = function(name, value){
+        var axisIndex = axisNames.indexOf(name);
+        var con = axisConstraints[axisIndex];
         inPhysicalUse = true;
-        deviceState.axes[axisNames.indexOf(name)] = value;
+        if(con){
+            if(con.scale != null){
+                value *= con.scale;
+            }
+            if(con.min != null){
+                value = Math.max(con.min, value);
+            }
+            if(con.max != null){
+                value = Math.min(con.max, value);
+            }
+            if(con.deadzone != null && Math.abs(value) < con.deadzone){
+                value = 0;
+            }
+        }
+        deviceState.axes[axisIndex] = value;
     };
 
     this.incAxis = function(name, value){
         inPhysicalUse = true;
-        deviceState.axes[axisNames.indexOf(name)] += value;
+        this.setAxis(name, getAxis(name) + value);
     };
 
     this.enable = function(v){
@@ -88,10 +120,6 @@
     this.getValue = function(name){
         return (enabled || receiving) && commandState[name] && commandState[name].value || 0;
     };
-    
-    var iSpace = NetworkedInput.AXES_MODIFIERS.indexOf("I");
-    var dSpace = NetworkedInput.AXES_MODIFIERS.indexOf("D");
-    var lSpace = NetworkedInput.AXES_MODIFIERS.indexOf("L");
 
     this.update = function(dt){
         if(inPhysicalUse && enabled){
@@ -101,20 +129,25 @@
             }
 
             for(var n = 0; n < deltaTrackedAxes.length; ++n){
-                var i = n + deltaTrackedAxes.length * iSpace;
+                var a = deltaTrackedAxes[n];
+                var av = getAxis(a);
+                var i = "I" + a;
+                var iv = getAxis(i);
                 if(integrateOnly){
-                    deviceState.axes[i] = (deviceState.axes[i] || 0) + deviceState.axes[n] * dt;
+                    this.setAxis(i, iv + av * dt);
                 }
                 else{
-                    var d = n + deltaTrackedAxes.length * dSpace;
-                    var l = n + deltaTrackedAxes.length * lSpace;
-                    if(deviceState.axes[l] != null){
-                        deviceState.axes[d] = deviceState.axes[n] - deviceState.axes[l];
+                    var d = "D" + a;
+                    var dv = getAxis(d);
+                    var l = "L" + a;
+                    var lv = getAxis(l);
+                    if(lv){
+                        this.setAxis(d, av - lv);
                     }
-                    if(deviceState.axes[d] != null){
-                        deviceState.axes[i] = (deviceState.axes[i] || 0) + deviceState.axes[d] * dt;
+                    if(dv){
+                        this.setAxis(i, iv + dv * dt);
                     }
-                    deviceState.axes[l] = deviceState.axes[n];
+                    this.setAxis(l, av);
                 }
             }
             
@@ -155,13 +188,9 @@
                     }
 
                     commandState[cmd.name].pressed = pressed;
-                    value *= cmd.scale;
-                    if(cmd.min != null){
-						value = Math.max(cmd.min, value);
-					}
-					if(cmd.max != null){
-						value = Math.min(cmd.max, value);
-					}
+                    if(cmd.scale != null){
+                        value *= cmd.scale;
+                    }
                     commandState[cmd.name].value = value;
                 }
             }
@@ -175,18 +204,7 @@
 
             fireCommands(false);
         }
-    };   
-    
-
-    function maybeClone(arr){ 
-        return ((arr && arr.slice()) || []).map(function(i){
-            return {
-                index: Math.abs(i) - offset,
-                toggle: i < 0,
-                sign: (i < 0) ? -1: 1
-            }
-        }); 
-    }
+    };
 
     function makeStateSnapshot(){
         var state = name;
@@ -198,6 +216,16 @@
             }
         }
         return state;
+    }    
+
+    function maybeClone(arr){ 
+        return ((arr && arr.slice()) || []).map(function(i){
+            return {
+                index: Math.abs(i) - offset,
+                toggle: i < 0,
+                sign: (i < 0) ? -1: 1
+            }
+        }); 
     }
 
     // clone the arrays, so the consumer can't add elements to it in their own code.
@@ -214,14 +242,12 @@
             name: cmd.name,
             deadzone: cmd.deadzone,
             axes: maybeClone(cmd.axes),
-            scale: cmd.scale || 1,
+            scale: cmd.scale,
             buttons: maybeClone(cmd.buttons),
             metaKeys: maybeClone(cmd.metaKeys),
             dt: cmd.dt * 0.001,
             commandDown: cmd.commandDown,
             commandUp: cmd.commandUp,
-            min: cmd.min,
-            max: cmd.max,
         };
 
         for(var k in newCmd){

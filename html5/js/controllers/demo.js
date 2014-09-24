@@ -52,7 +52,6 @@ function postScriptLoad(progress){
         TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
         GRAVITY = 9.8, SPEED = 15,
         pitch = 0, roll = 0, heading = 0,
-        dpitch = 0, droll = 0, dheading = 0,
         vcx = 0, vcz = 0, vcy = 0, tx, tz,
         onground = false,
         motion, keyboard, mouse, gamepad, 
@@ -151,12 +150,10 @@ function postScriptLoad(progress){
             vcz = vcz * 0.9 + tz * 0.1;
         }
 
-        dpitch += mouse.getValue("dpitch") * dt;
-        dpitch = Math.max(-2, Math.min(1.3, dpitch));
         pitch = pitch * TRACKING_SCALE + (
             motion.getValue("pitch")
-            + gamepad.getValue("pitch")
-            + dpitch) * TRACKING_SCALE_COMP;
+            + mouse.getValue("pitch")
+            + gamepad.getValue("pitch")) * TRACKING_SCALE_COMP;
 
         heading = heading * TRACKING_SCALE + (
             motion.getValue("heading") 
@@ -444,39 +441,49 @@ function postScriptLoad(progress){
         }
     });
 
-    motion = new MotionInput([
+    motion = new MotionInput(null, [
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] }
     ], socket);
 
     mouse = new MouseInput([
-        { name: "heading", axes: [-MouseInput.IX], scale: 0.4 },
-        { name: "dpitch", axes: [-MouseInput.DY], scale: 0.4 },
+        { axis: MouseInput.DX, scale: 0.4 },
+        { axis: MouseInput.DY, scale: 0.4 },
+        { axis: MouseInput.IY, min: -2, max: 1.3 }
+    ], [
+        { name: "heading", axes: [-MouseInput.IX] },
+        { name: "pitch", axes: [-MouseInput.IY]},
         { name: "fire", buttons: [1], commandDown: fire, dt: 125 },
         { name: "jump", buttons: [2], commandDown: jump, dt: 250 },
     ], socket, renderer.domElement);
 
-    touch = new TouchInput(null, [
+    touch = new TouchInput(null, null, [
         { name: "heading", axes: [TouchInput.IX0] },
-        { name: "drive", axes: [-TouchInput.DY0], scale: 1.5 },
+        { name: "drive", axes: [-TouchInput.DY0] },
     ], socket, renderer.domElement);
 
     keyboard = new KeyboardInput([
-        { name: "strafeLeft", buttons: [-65] },
-        { name: "strafeRight", buttons: [68] },
-        { name: "driveForward", buttons: [-87] },
-        { name: "driveBack", buttons: [83] },
+        { name: "strafeLeft", buttons: [-65, -37] },
+        { name: "strafeRight", buttons: [68, 39] },
+        { name: "driveForward", buttons: [-87, -38] },
+        { name: "driveBack", buttons: [83, 40] },
         { name: "jump", buttons: [32], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [17], commandDown: fire, dt: 125 },
         { name: "reload", buttons: [70], commandDown: reload, dt: 125 },
     ], socket);
 
-    gamepad = new GamepadInput(0.1, [
-        { name: "strafe", axes: [GamepadInput.LSX], deadzone: 0.1 },
-        { name: "drive", axes: [GamepadInput.LSY], deadzone: 0.1 },
-        { name: "heading", axes: [-GamepadInput.IRSX], deadzone: 0.1 },
-        { name: "pitch", axes: [GamepadInput.IRSY], deadzone: 0.1 },
+    gamepad = new GamepadInput([
+        { axis: GamepadInput.LSX, deadzone: 0.1},
+        { axis: GamepadInput.LSY, deadzone: 0.1},
+        { axis: GamepadInput.RSX, deadzone: 0.1, scale: 1.5},
+        { axis: GamepadInput.RSY, deadzone: 0.1, scale: 1.5},
+        { axis: GamepadInput.IRSY, min: -2, max: 1.3 }
+    ], [
+        { name: "strafe", axes: [GamepadInput.LSX]},
+        { name: "drive", axes: [GamepadInput.LSY]},
+        { name: "heading", axes: [-GamepadInput.IRSX]},
+        { name: "pitch", axes: [GamepadInput.IRSY]},
         { name: "jump", buttons: [1], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [2], commandDown: fire, dt: 125 },
     ], socket);

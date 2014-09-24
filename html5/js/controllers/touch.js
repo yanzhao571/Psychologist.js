@@ -31,7 +31,7 @@ function touchTest() {
             { name: "dx0", axes: [TouchInput.DX0] },
             { name: "iy1", axes: [TouchInput.IY1] },
         ],
-        touch = new TouchInput(buttons, commands, null, document.documentElement);
+        touch = new TouchInput(buttons, null, commands, null, document.documentElement);
 
     for(var i = 0; i < buttons.length; ++i) {
         var b = buttons[i];

@@ -1,5 +1,5 @@
-﻿function GamepadInput(precision, commands, socket, gpid){
-    NetworkedInput.call(this, "gamepad", commands, socket, 1, GamepadInput.AXES, true);
+﻿function GamepadInput(axisConstraints, commands, socket, gpid){
+    NetworkedInput.call(this, "gamepad", axisConstraints, commands, socket, 1, GamepadInput.AXES, true);
     var connectedGamepads = [],
         listeners = {
             gamepadconnected: [],
@@ -13,7 +13,7 @@
             this.setButton(i, pad.buttons[i].pressed);
         }
         for(var i = 0; i < pad.axes.length; ++i){
-            this.setAxis(GamepadInput.AXES[i], Math.round(pad.axes[i] / precision) * precision);
+            this.setAxis(GamepadInput.AXES[i], pad.axes[i]);
         }
     }
     

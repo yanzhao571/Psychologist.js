@@ -36,14 +36,18 @@ function postScriptLoad() {
             { name: "dx", axes: [MouseInput.DX] },
             { name: "ix", axes: [MouseInput.IX] }
         ],
-        mouse = new MouseInput(commands);
+        mouse = new MouseInput([
+            {axis: MouseInput.IX, min: -1, max: 1 }
+        ], commands);
 
-    function loop(dt) {
+    var lt = 0;
+    function loop(t) {
         requestAnimationFrame(loop);
-        mouse.update(dt);
+        mouse.update((t - lt) * 0.001);
         output.innerHTML = "<ul>"
             + commands.map(function (c) { return "<li>" + c.name + ": " + mouse.isDown(c.name) + ", " + mouse.getValue(c.name) + "</li>"; }).join("")
             + "</ul>";
+        lt = t;
     }
 
     requestAnimationFrame(loop);

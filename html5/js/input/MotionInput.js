@@ -258,8 +258,8 @@
     }
 }
 
-function MotionInput(commands, socket){
-    NetworkedInput.call(this, "motion", commands, socket, 1, MotionInput.AXES);
+function MotionInput(axisConstraints, commands, socket){
+    NetworkedInput.call(this, "motion", axisConstraints, commands, socket, 1, MotionInput.AXES);
 
     LandscapeMotion.addEventListener("deviceorientation", function (evt) {
         for(var i = 0; i < MotionInput.AXES.length; ++i){
