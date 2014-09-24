@@ -25,8 +25,7 @@ var isDebug = false,
 		displayProgress,
 		postScriptLoad);
 		
-ctrls.instructions.style.display 
-    = ctrls.options.style.display
+ctrls.options.style.display
     = (isDebug || formState) ? "none" : "";
 
 function displayProgress(){
