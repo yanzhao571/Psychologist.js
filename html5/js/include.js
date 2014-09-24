@@ -143,7 +143,7 @@ LoadingProgress.prototype.sum = function(state, prop){
 };
 
 LoadingProgress.prototype.makeSize = function(state, prop){
-    return pct(100 * this.sum(state, prop) / this.totalFileSize);
+    return pct(sigfig(100 * this.sum(state, prop) / this.totalFileSize, 1));
 };
 
 /*
@@ -292,6 +292,64 @@ var include = (function () {
 
     return include;
 })();
+
+
+function makeTabSet(elem){
+	if(!/\btabSet\b/.test(elem.className)){
+		elem = elem.querySelector(".tabSet");
+	}
+	var table = document.createElement("table"),
+		header = document.createElement("thead"),
+		body = document.createElement("tbody"),
+		headerRow = document.createElement("tr"),
+		bodyRow = document.createElement("tr"),
+		bodyCell = document.createElement("td"),
+		maxWidth = 0;
+	
+	elem.parentElement.insertBefore(table, elem);
+	elem.parentElement.removeChild(elem);
+	table.appendChild(header);
+	table.appendChild(body);
+	header.appendChild(headerRow);
+	body.appendChild(bodyRow);
+	bodyRow.appendChild(bodyCell);
+	var children = arr(elem.children);
+	for(var i = 0; i < children.length; i += 2){
+		var title = children[i],
+			content = children[i+1];
+		if(/(H\d|LABEL)/.test(title.tagName)){
+			var headerCell = document.createElement("th");
+			headerRow.appendChild(headerCell);
+			title.parentElement.removeChild(title);
+			headerCell.appendChild(title);
+			content.style.width = "100%";
+			content.parentElement.removeChild(content);
+			bodyCell.appendChild(content);
+			if(i > 0){
+				content.style.display = "none";
+			}
+			else{
+				headerCell.className = "selectedTab";
+			}
+			title.addEventListener("click", function(index){
+				for(var n = 0; n < bodyCell.children.length; ++n){
+					bodyCell.children[n].style.display = (n == index) ? "" : "none";
+					headerRow.children[n].className = (n == index) ? "selectedTab" : "";
+				}
+			}.bind(title, i / 2));
+            title.style.cursor = "pointer";
+		}
+	}
+	bodyCell.colSpan = headerRow.children.length;
+	return table;
+}
+
+function makeTabSets(){
+	var sets = document.querySelectorAll(".tabSet");
+	for(var i = 0; i < sets.length; ++i){
+		makeTabSet(sets[i]);
+	}
+}
 
 /*
 https://www.github.com/capnmidnight/VR

@@ -1,7 +1,9 @@
 var isDebug = false,
 	ctrls = findEverything(),
+    tabs = makeTabSet(ctrls.options),
 	PLAYER_HEIGHT = 6,
     formState = getSetting("formState"),
+    login,
 	prog = new LoadingProgress(
 		"manifest/js/controllers/demo.js?v2",
 		"js/psychologist.js",
@@ -24,17 +26,23 @@ var isDebug = false,
 		"js/output/ModelOutput.js",
 		displayProgress,
 		postScriptLoad);
-		
-ctrls.options.style.display
-    = (isDebug || formState) ? "none" : "";
 
 function displayProgress(){
     ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
     ctrls.processedSoFar.style.width = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
     ctrls.loadedSoFar.style.width = prog.makeSize(FileState.COMPLETE, "size");
+    ctrls.loadingMessage.innerHTML 
+        = ctrls.connectButton.innerHTML 
+        = "Loading, please wait... " + ctrls.loadedSoFar.style.width;
     ctrls.loadedSoFar.style.left = ctrls.errorSoFar.style.width = prog.makeSize(FileState.ERRORED, "size");
     if(prog.isDone()){
         ctrls.loading.style.display = "none";
+        ctrls.connectButton.addEventListener("click", login, false);
+        ctrls.connectButton.innerHTML = "Connect";
+        ctrls.loadingMessage.innerHTML = "Loading complete!";
+        setTimeout(function(){
+            ctrls.loadingMessage.style.visibility = "hidden";
+        }, 2000);
     }
 }
 
@@ -64,8 +72,7 @@ function postScriptLoad(progress){
         }),
         camera, effect, drawDistance = 250,
         scene = new THREE.Scene(),
-        renderer = new THREE.WebGLRenderer({ antialias: true }),
-        tabs = makeTabSet(ctrls.options);
+        renderer = new THREE.WebGLRenderer({ antialias: true });
 
     socket.on("handshakeFailed", console.warn.bind(console));
     socket.emit("handshake", "demo");
@@ -240,7 +247,7 @@ function postScriptLoad(progress){
         }
     }
     
-    function login(){
+    login = function(){
         if(socket){
             userName = ctrls.userNameField.value;
             password = ctrls.passwordField.value;
@@ -271,8 +278,6 @@ function postScriptLoad(progress){
         ctrls.options.style.display = "";
         ctrls.menuButton.style.display = "none";
     }, false);
-
-    ctrls.connectButton.addEventListener("click", login, false);
 
     ctrls.pointerLockButton.addEventListener("click", function(){
         mouse.togglePointerLock();
