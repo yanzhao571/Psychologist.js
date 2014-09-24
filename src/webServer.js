@@ -73,11 +73,11 @@ function serveRequest(target, req, res){
 }
 
 function redirectPort(host, target, req, res){
-    var reqHost = req.headers.host.replace(/(:\d+|$)/, ":" + target);
-    if((host == "localhost" || reqHost == host + ":" + target) && !/https?:/.test(req.url)){
-        var url = "https://" + reqHost + req.url;
-        console.log("redirecting to", url);
-        res.writeHead(307, { "Location": url });
+    var reqHost = req.headers.host && req.headers.host.replace(/(:\d+|$)/, ":" + target);
+    if(reqHost
+        && (host == "localhost" || reqHost == host + ":" + target)
+        && !/https?:/.test(req.url)){
+        res.writeHead(307, { "Location": "https://" + reqHost + req.url });
     }
     else{
         serverError(res, 400, core.fmt("Request not understood [$1/$2]", req.headers.host, req.url));
@@ -85,13 +85,8 @@ function redirectPort(host, target, req, res){
     res.end();
 }
 
-function isString(v){
-    return typeof(v) === "string" || v instanceof String;
-}
-
-function isNumber(v){
-    return isFinite(v) && !isNaN(v);
-}
+function isString(v){ return typeof(v) === "string" || v instanceof String; }
+function isNumber(v){ return isFinite(v) && !isNaN(v); }
 
 /*
     Creates a callback function that listens for requests and either redirects them
