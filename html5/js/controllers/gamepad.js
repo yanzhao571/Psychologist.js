@@ -1,14 +1,13 @@
 ﻿include(0,
-    "js/psychologist.js",
+    ["js/psychologist.js",
     "js/input/NetworkedInput.js",
-    "js/input/GamepadInput.js",
-    function () {
+    "js/input/GamepadInput.js"],
+    gamepadTest);
+function gamepadTest() {
     "use strict";
     var output = document.getElementById("output"),
         frame = 0,
-        buttons = ["a", "b", "x", "y", "lb", "rb", "lt", "rt", "dl", "dd", "dr", "du", "select", "start", "ls", "rs"],
-        axis = ["lvert", "lhoriz", "rvert", "rhoriz"],
-        gamepad = new GamepadInput([
+        commands = [
             { name: "a", buttons: [1] },
             { name: "b", buttons: [2] },
             { name: "x", buttons: [3] },
@@ -25,11 +24,16 @@
             { name: "dd", buttons: [14] },
             { name: "dl", buttons: [15] },
             { name: "dr", buttons: [16] },
-            { name: "lhoriz", axes: [1] },
-            { name: "lvert", axes: [2] },
-            { name: "rhoriz", axes: [3] },
-            { name: "rvert", axes: [4] }
-        ]);
+            { name: "lhoriz", axes: [GamepadInput.LSX] },
+            { name: "lvert", axes: [GamepadInput.LSY] },
+            { name: "rhoriz", axes: [GamepadInput.RSX] },
+            { name: "rvert", axes: [GamepadInput.RSY] },
+            { name: "ilhoriz", axes: [GamepadInput.ILSX] },
+            { name: "ilvert", axes: [GamepadInput.ILSY] },
+            { name: "irhoriz", axes: [GamepadInput.IRSX] },
+            { name: "irvert", axes: [GamepadInput.IRSY] }
+        ],
+        gamepad = new GamepadInput(0.1, commands);
 
     function jump(id) {
         console.log(id, "jumped");
@@ -40,24 +44,23 @@
     }
 
     gamepad.addEventListener("gamepadconnected", function (id) {
-        if (confirm(id)) {
+        //if (confirm(id)) {
             gamepad.setGamepad(id);
             console.log("connected", id);
-        }
+        //}
     });
+
     gamepad.addEventListener("gamepaddisconnected", console.log.bind(console, "disconnected"));
 
     function loop(dt) {
         requestAnimationFrame(loop);
-        gamepad.update();
+        gamepad.update(dt / 1000);
         if(gamepad.isGamepadSet()){
-            output.innerHTML = "<ul><li>"
-                + buttons.map(function(b){ return b + ": " + gamepad.isDown(b) + " -> " + gamepad.getValue(b); }).join("</li><li>")
-                + "</li><li>"
-                + axis.map(function(a){ return a + " -> " + gamepad.getValue(a); }).join("</li><li>")
-                + "</li></ul>";
+            output.innerHTML = "<ul>"
+            + commands.map(function (c) { return "<li>" + c.name + ": " + gamepad.isDown(c.name) + ", " + gamepad.getValue(c.name) + "</li>"; }).join("")
+            + "</ul>";
         }
     }
 
     requestAnimationFrame(loop);
-});
+}

@@ -223,13 +223,12 @@
                 pitch.setDegrees(corrector.getPitch());
                 roll.setDegrees(corrector.getRoll());
                 callback({
-                    heading: heading.getRadians(),
-                    pitch: pitch.getRadians(),
-                    roll: roll.getRadians(),
-                    accelx: a.x,
-                    accely: a.y,
-                    accelz: a.z,
-                    alpha: o.alpha,
+                    HEADING: heading.getRadians(),
+                    PITCH: pitch.getRadians(),
+                    ROLL: roll.getRadians(),
+                    ACCELX: a.x,
+                    ACCELY: a.y,
+                    ACCELZ: a.z,
                     original: o,
                 });
             }
@@ -260,18 +259,19 @@
 }
 
 function MotionInput(commands, socket){
-    var axes = ["heading", "pitch", "roll", "accelx", "accely", "accelz", "alpha"];
-    NetworkedInput.call(this, "motion", commands, socket, 1, axes);
+    NetworkedInput.call(this, "motion", commands, socket, 1, MotionInput.AXES);
 
     LandscapeMotion.addEventListener("deviceorientation", function (evt) {
-        for(var i = 0; i < axes.length; ++i){
-            var k = axes[i];
+        for(var i = 0; i < MotionInput.AXES.length; ++i){
+            var k = MotionInput.AXES[i];
             this.setAxis(k, evt[k]);
         }
     }.bind(this));
 }
 
 inherit(MotionInput, NetworkedInput);
+MotionInput.AXES = ["HEADING", "PITCH", "ROLL", "ACCELX", "ACCELY", "ACCELZ"];
+NetworkedInput.fillAxes(MotionInput);
 
 /*
 https://www.github.com/capnmidnight/VR

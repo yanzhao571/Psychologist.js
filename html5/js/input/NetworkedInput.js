@@ -1,14 +1,11 @@
-﻿function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes){
+﻿function NetworkedInput(name, commands, socket, offset, deltaTrackedAxes, integrateOnly){
     var numAxes = 0,
         enabled = true,
         transmitting = true,
         receiving = true,
-        start = Date.now();
-    if(typeof(deltaTrackedAxes) == "number"){
-        numAxes = deltaTrackedAxes;
-        deltaTrackedAxes = null;
-    }
-    else if(deltaTrackedAxes instanceof Array){
+        socketReady = false;
+    
+    if(deltaTrackedAxes instanceof Array){
         numAxes = deltaTrackedAxes.length;
     }
 
@@ -21,12 +18,17 @@
             axes: [],
         },
         metaKeys = ["ctrl", "shift", "alt", "metaKeys"],
-        axisNames = deltaTrackedAxes
-            .concat(deltaTrackedAxes.map(function(v){return "d" + v;}))
-            .concat(deltaTrackedAxes.map(function(v){return "l" + v;}))
-            .concat(deltaTrackedAxes.map(function(v){return "i" + v;})),
+        axisNames = [];
         inPhysicalUse = false;
     
+    for(var y = 0; y < NetworkedInput.AXES_MODIFIERS.length; ++y){
+        if(!(integrateOnly && NetworkedInput.AXES_MODIFIERS[y] == "D")){
+            for(var x = 0; x < deltaTrackedAxes.length; ++x){
+                axisNames.push(NetworkedInput.AXES_MODIFIERS[y] + deltaTrackedAxes[x]);
+            }
+        }
+    }
+
     function readMetaKeys(event){ 
         for(var i = 0; i < metaKeys.length; ++i){
             var m = metaKeys[i];
@@ -34,11 +36,11 @@
         }
     }
 
-    function fireCommands(){
+    function fireCommands(fromNetwork){
         for(var i = 0; i < commands.length; ++i){
             var cmd = commands[i];
             if(cmd.commandDown && commandState[cmd.name].pressed && commandState[cmd.name].fireAgain){
-                commandState[cmd.name].lt = Date.now() - start;
+                commandState[cmd.name].lt -= cmd.dt;
                 cmd.commandDown();
             }
 
@@ -48,28 +50,15 @@
         }
     }
 
-    if(deltaTrackedAxes.length > 0){
-        this.setAxis = function(name, value){
-            inPhysicalUse = true;
-            deviceState.axes[axisNames.indexOf(name)] = value;
-        };
+    this.setAxis = function(name, value){
+        inPhysicalUse = true;
+        deviceState.axes[axisNames.indexOf(name)] = value;
+    };
 
-        this.incAxis = function(name, value){
-            inPhysicalUse = true;
-            deviceState.axes[axisNames.indexOf(name)] += value;
-        };
-    }
-    else{
-        this.setAxis = function(index, value){
-            inPhysicalUse = true;
-            deviceState.axes[index] = value;
-        };
-
-        this.incAxis = function(index, value){
-            inPhysicalUse = true;
-            deviceState.axes[index] += value;
-        };
-    }
+    this.incAxis = function(name, value){
+        inPhysicalUse = true;
+        deviceState.axes[axisNames.indexOf(name)] += value;
+    };
 
     this.enable = function(v){
         enabled = v;
@@ -89,37 +78,51 @@
     };    
 
     this.isDown = function(name){
-        return commandState[name] && commandState[name].pressed;
+        return (enabled || receiving) && commandState[name] && commandState[name].pressed;
     };
 
     this.isUp = function(name){
-        return commandState[name] && !commandState[name].pressed;
+        return (enabled || receiving) && commandState[name] && !commandState[name].pressed;
     };
 
     this.getValue = function(name){
-        return commandState[name] && commandState[name].value || 0;
+        return (enabled || receiving) && commandState[name] && commandState[name].value || 0;
     };
+    
+    var iSpace = NetworkedInput.AXES_MODIFIERS.indexOf("I");
+    var dSpace = NetworkedInput.AXES_MODIFIERS.indexOf("D");
+    var lSpace = NetworkedInput.AXES_MODIFIERS.indexOf("L");
 
-    this.update = function(t){
+    this.update = function(dt){
         if(inPhysicalUse && enabled){
             var prevState = "", finalState = "";
-            if(transmitting && socket){
-                prevState = JSON.stringify(commandState);
+            if(socketReady && transmitting){
+                prevState = makeStateSnapshot();
             }
 
-            for(var i = 0; i < deltaTrackedAxes.length; ++i){
-                var d = i + deltaTrackedAxes.length;
-                var l = i + deltaTrackedAxes.length * 2;
-                if(deviceState.axes[l]){
-                    deviceState.axes[d] = deviceState.axes[i] - deviceState.axes[l];
+            for(var n = 0; n < deltaTrackedAxes.length; ++n){
+                var i = n + deltaTrackedAxes.length * iSpace;
+                if(integrateOnly){
+                    deviceState.axes[i] = (deviceState.axes[i] || 0) + deviceState.axes[n] * dt;
                 }
-                deviceState.axes[l] = deviceState.axes[i];
+                else{
+                    var d = n + deltaTrackedAxes.length * dSpace;
+                    var l = n + deltaTrackedAxes.length * lSpace;
+                    if(deviceState.axes[l] != null){
+                        deviceState.axes[d] = deviceState.axes[n] - deviceState.axes[l];
+                    }
+                    if(deviceState.axes[d] != null){
+                        deviceState.axes[i] = (deviceState.axes[i] || 0) + deviceState.axes[d] * dt;
+                    }
+                    deviceState.axes[l] = deviceState.axes[n];
+                }
             }
             
             for(var c = 0; c < commands.length; ++c){
                 var cmd = commands[c];
                 commandState[cmd.name].wasPressed = commandState[cmd.name].pressed;
-                commandState[cmd.name].fireAgain = (t - commandState[cmd.name].lt) >= cmd.dt;
+                commandState[cmd.name].lt += dt;
+                commandState[cmd.name].fireAgain = commandState[cmd.name].lt >= cmd.dt;
                 var metaKeysSet = true, pressed, value;
                 
                 for(var n = 0; n < cmd.metaKeys.length && metaKeysSet; ++n){
@@ -163,16 +166,14 @@
                 }
             }
 
-            if(transmitting){
-                if(socket){
-                    finalState = JSON.stringify(commandState);
-                }
+            if(socketReady && transmitting){
+                finalState = makeStateSnapshot();
                 if(finalState != prevState){
                     socket.emit(name, commandState);
                 }
             }
 
-            fireCommands();
+            fireCommands(false);
         }
     };   
     
@@ -185,6 +186,18 @@
                 sign: (i < 0) ? -1: 1
             }
         }); 
+    }
+
+    function makeStateSnapshot(){
+        var state = name;
+        for(var i = 0; i < commands.length; ++i){
+            var cmd = commands[i];
+            var stt = commandState[cmd.name];
+            if(stt){
+                state += fmt("[$1:$2:$3:$4]", cmd.name, stt.value, stt.pressed, stt.wasPressed, stt.fireAgain);
+            }
+        }
+        return state;
     }
 
     // clone the arrays, so the consumer can't add elements to it in their own code.
@@ -204,7 +217,7 @@
             scale: cmd.scale || 1,
             buttons: maybeClone(cmd.buttons),
             metaKeys: maybeClone(cmd.metaKeys),
-            dt: cmd.dt,
+            dt: cmd.dt * 0.001,
             commandDown: cmd.commandDown,
             commandUp: cmd.commandUp,
             min: cmd.min,
@@ -221,21 +234,27 @@
     });
 
     if(socket){
+        socket.on("userList", function(){
+            socketReady = true;
+        }.bind(this));
         socket.on(name, function(cmdState){
             if(receiving){
                 inPhysicalUse = false;
                 commandState = cmdState
-                fireCommands();
+                fireCommands(true);
+                if(name == "motion"){
+                    console.log("pitch", this.getValue("pitch"), commandState["pitch"].value);
+                }
             }
-        });
+        }.bind(this));
         socket.on("deviceLost", function(){
             // will force the local event loop to take over and cancel out any lingering command activity
             inPhysicalUse = true;
-        });
+        }.bind(this));
         socket.on("deviceAdded", function(){
             // local input activity could override this, but that is fine.
             inPhysicalUse = false;
-        });
+        }.bind(this));
     }
 
     for(var i = 0; i < numAxes; ++i){
@@ -246,6 +265,18 @@
     window.addEventListener("keydown", readMetaKeys, false);
     window.addEventListener("keyup", readMetaKeys, false);
 }
+
+NetworkedInput.AXES_MODIFIERS = ["", "I", "L", "D"];
+NetworkedInput.fillAxes = function(classFunc){
+    if(classFunc.AXES){
+        for(var y = 0; y < this.AXES_MODIFIERS.length; ++y){
+            for(var x = 0; x < classFunc.AXES.length; ++x){
+                var name = (this.AXES_MODIFIERS[y] + classFunc.AXES[x]).toLocaleUpperCase();
+                classFunc[name] = y * classFunc.AXES.length + x + 1;
+            }
+        }
+    }
+};
 
 /*
 https://www.github.com/capnmidnight/VR

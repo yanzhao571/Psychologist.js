@@ -1,9 +1,4 @@
-﻿function TouchInput(numFingers, buttonBounds, commands, socket, DOMElement){
-    var axes = [], last = [];
-    for(var i = 0; i < numFingers; ++i){
-        axes.push("x" + i);
-        axes.push("y" + i);
-    }
+﻿function TouchInput(buttonBounds, commands, socket, DOMElement){
     buttonBounds = buttonBounds || [];
     for(var i = buttonBounds.length - 1; i >= 0; --i){
         var b = buttonBounds[i];
@@ -19,11 +14,11 @@
         }
     }
 
-    NetworkedInput.call(this, "touch", commands, socket, 1, axes);
+    NetworkedInput.call(this, "touch", commands, socket, 1, TouchInput.AXES);
 
     function setState (stateChange, setAxis, event){
         var touches = stateChange ? event.touches : event.changedTouches;
-        for(var i = 0; i < touches.length && i < numFingers; ++i){
+        for(var i = 0; i < touches.length && i < TouchInput.NUM_FINGERS; ++i){
             var t = touches[i];
             if(setAxis){
                 for(var j = 0; j < buttonBounds.length; ++j){
@@ -34,12 +29,13 @@
                         this.setButton(j, stateChange);
                     }
                 }
-                if(last[t.identifier]){
-                    this.incAxis("x" + i, last[t.identifier].pageX - t.pageX);
-                    this.incAxis("y" + i, last[t.identifier].pageY - t.pageY);
-                }
+                this.setAxis("X" + i, t.pageX);
+                this.setAxis("Y" + i, t.pageY);
             }
-            last[t.identifier] = t;
+            else{
+                this.setAxis("LX" + i, t.pageX);
+                this.setAxis("LY" + i, t.pageY);
+            }
         }
         event.preventDefault();
     }
@@ -50,6 +46,13 @@
 }
 
 inherit(TouchInput, NetworkedInput);
+TouchInput.NUM_FINGERS = 10;
+TouchInput.AXES = [];
+for(var i = 0; i < TouchInput.NUM_FINGERS; ++i){
+    TouchInput.AXES.push("X" + i);
+    TouchInput.AXES.push("Y" + i);
+}
+NetworkedInput.fillAxes(TouchInput);
 
 /*
 https://www.github.com/capnmidnight/VR

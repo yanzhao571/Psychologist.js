@@ -19,28 +19,20 @@ function User(userName, password){
 
 User.prototype.addDevice = function(users, socket){
     var index = 0;
-    while(index < this.devices.length && this.devices[index] != null){
+    while(index < this.devices.length && this.devices[index]){
         ++index;
     }
 
     log("Device added for $1", this.state.userName);
     this.devices[index] = socket;
-    this.bindEvents(users, index);
-
-    if(index > 0){
-        this.emit(index, "deviceAdded");
-        this.devices[index].emit("userState", this.state);
-    }
-};
-
-User.prototype.bindEvents = function(users, index){
+    
     for(var i = 0; i < types.length; ++i) {
-        this.devices[index].on(types[i], User.prototype.emit.bind(this, index, types[i]));
+        socket.on(types[i], User.prototype.emit.bind(this, index, types[i]));
     }
 
-    this.devices[index].on("disconnect", User.prototype.disconnect.bind(this, users, index));
+    socket.on("disconnect", User.prototype.disconnect.bind(this, users, index));
 
-    this.devices[index].on("userState", function(state){
+    socket.on("userState", function(state){
         this.state.x = state.x;
         this.state.y = state.y;
         this.state.z = state.z;
@@ -55,14 +47,19 @@ User.prototype.bindEvents = function(users, index){
             userList.push(userName);
         }
     }
-    this.devices[index].emit("userList", userList);
+    socket.emit("userList", userList);
     if(index == 0){
         this.broadcast(users, index, "userJoin", this.state.userName);
+    }
+
+    if(index > 0){
+        this.emit(index, "deviceAdded");
+        socket.emit("userState", this.state);
     }
 };
 
 User.prototype.broadcast = function(users, skipIndex){
-    var args = Array.prototype.slice.call(arguments, 1);
+    var args = Array.prototype.slice.call(arguments, 2);
     for(var userName in users){
         var toUser = users[userName];
         toUser.emit
@@ -93,6 +90,7 @@ User.prototype.isConnected = function(){
 User.prototype.disconnect = function(users, index, reason){
     this.devices[index] = null;
     if(this.isConnected()){
+        log("Device #$1 lost for $2.", index, this.state.userName);
         this.emit(index, "deviceLost");
     }
     else{

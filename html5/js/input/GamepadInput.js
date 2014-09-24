@@ -1,5 +1,5 @@
-﻿function GamepadInput(commands, socket, gpid){
-    NetworkedInput.call(this, "gamepad", commands, socket, 1, 6);
+﻿function GamepadInput(precision, commands, socket, gpid){
+    NetworkedInput.call(this, "gamepad", commands, socket, 1, GamepadInput.AXES, true);
     var connectedGamepads = [],
         listeners = {
             gamepadconnected: [],
@@ -13,12 +13,11 @@
             this.setButton(i, pad.buttons[i].pressed);
         }
         for(var i = 0; i < pad.axes.length; ++i){
-            this.setAxis(i, pad.axes[i]);
+            this.setAxis(GamepadInput.AXES[i], Math.round(pad.axes[i] / precision) * precision);
         }
-        this.superUpdate();
     }
     
-    this.update = function(){
+    this.update = function(dt){
         var pads,
             currentPads = [];
 
@@ -34,7 +33,6 @@
                 var pad = pads[i];
                 if(pad){
                     if(connectedGamepads.indexOf(pad.id) == -1){
-                        console.log(pads);
                         connectedGamepads.push(pad.id);
                         onConnected(pad.id);
                     }
@@ -52,6 +50,8 @@
                 connectedGamepads.splice(i, 1);
             }
         }
+        
+        this.superUpdate(dt);
     };
 
     function add(arr, val){
@@ -124,7 +124,7 @@
 
 
     try{
-        this.update();
+        this.update(0);
         available = true;
     }
     catch(err){
@@ -134,6 +134,8 @@
 }
 
 inherit(GamepadInput, NetworkedInput);
+GamepadInput.AXES = ["LSX", "LSY", "RSX", "RSY"];
+NetworkedInput.fillAxes(GamepadInput);
 
 /*
 https://www.github.com/capnmidnight/VR

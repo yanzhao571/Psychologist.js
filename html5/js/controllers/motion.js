@@ -1,51 +1,40 @@
 ﻿include(0,
-    "js/psychologist.js",
+    ["js/psychologist.js",
     "js/input/NetworkedInput.js",
-    "js/input/MotionInput.js",
-//    "test/MotionInput.js",
-    function() {
-        var output = document.getElementById("output"),
-            commands = [
-                {name: "heading", axes: [1]},
-                {name: "pitch", axes: [2]},
-                {name: "roll", axes: [3]},
-                {name: "x", axes: [4]},
-                {name: "y", axes: [5]},
-                {name: "z", axes: [6]},
-                {name: "alpha", axes: [7]},
-                {name: "dheading", axes: [8]},
-                {name: "dpitch", axes: [9]},
-                {name: "droll", axes: [10]},
-            ],
-            h, p, r,
-            motion = new MotionInput(commands);
-        setInterval(function(){
-            motion.update();
-            if(!h){
-                h = motion.getValue("heading");
-                p = motion.getValue("pitch");
-                r = motion.getValue("roll");
-            }
-            else{
-                h += motion.getValue("dheading");
-                p += motion.getValue("dpitch");
-                r += motion.getValue("droll");
-            }
-            var arr = [h, p, r];
-            output.innerHTML = "";
+    "js/input/MotionInput.js"],
+    motionTest);
+
+function motionTest() {
+    var output = document.getElementById("output"),
+        commands = [
+            {name: "heading", axes: [MotionInput.HEADING]},
+            {name: "pitch", axes: [MotionInput.PITCH]},
+            {name: "roll", axes: [MotionInput.ROLL]},
+            {name: "x", axes: [MotionInput.ACCELX]},
+            {name: "y", axes: [MotionInput.ACCELY]},
+            {name: "z", axes: [MotionInput.ACCELZ]},
+            {name: "dheading", axes: [MotionInput.DHEADING]},
+            {name: "dpitch", axes: [MotionInput.DPITCH]},
+            {name: "droll", axes: [MotionInput.DROLL]},
+            {name: "iheading", axes: [MotionInput.IHEADING]},
+            {name: "ipitch", axes: [MotionInput.IPITCH]},
+            {name: "iroll", axes: [MotionInput.IROLL]},
+        ],
+        motion = new MotionInput(commands);
+
+    function loop(dt){
+        requestAnimationFrame(loop);
+        motion.update(dt);
+        output.innerHTML = "";
             
-            for(var i = 0; i < commands.length; ++i) {
-                var cmd = commands[i];
-                var li = document.createElement("li");
-                var v = motion.getValue(cmd.name);
-                if(i < 3){
-                    li.innerHTML = fmt("$1: $2.000, $3.000 ($4)", cmd.name, v, arr[i], v - arr[i]);
-                }
-                else{
-                    li.innerHTML = fmt("$1: $2.000", cmd.name, v);
-                }
-                output.appendChild(li);
-            }
-        }, 16);
+        for(var i = 0; i < commands.length; ++i) {
+            var cmd = commands[i];
+            var li = document.createElement("li");
+            var v = motion.getValue(cmd.name);
+            li.innerHTML = fmt("$1: $2.000", cmd.name, v);
+            output.appendChild(li);
+        }
     }
-);
+    
+    requestAnimationFrame(loop);
+}

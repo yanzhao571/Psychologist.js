@@ -1,8 +1,9 @@
 ﻿include(0,
-    "js/psychologist.js",
+    ["js/psychologist.js",
     "js/input/NetworkedInput.js",
-    "js/input/TouchInput.js",
-    function mouseTest() {
+    "js/input/TouchInput.js"],
+    touchTest);
+function touchTest() {
     "use strict";
     var output = document.getElementById("output"),
         frame = 0,
@@ -10,8 +11,7 @@
             {name: "fire", x: 100, y: 240, w: 100, h: 100 },
             {name: "jump", x: 100, y: 350, w: 100, h: 100 }
         ],
-        axes = ["x0", "y0", "x1", "y1", "x2", "y2", "dx0"],
-        touch = new TouchInput(3, buttons, [
+        commands = [
             { name: "fire", buttons: [1], commandDown: function(){
                 document.getElementById("fire").style.backgroundColor = "blue";
             }, commandUp: function(){
@@ -22,14 +22,16 @@
             }, commandUp: function(){
                 document.getElementById("jump").style.backgroundColor = "#c0c0c0";
             }, dt: 250 },
-            { name: "x0", axes: [1] },
-            { name: "y0", axes: [2] },
-            { name: "x1", axes: [3] },
-            { name: "y1", axes: [4] },
-            { name: "x2", axes: [5] },
-            { name: "y2", axes: [6] },
-            { name: "dx0", axes: [7] },
-        ], null, document.documentElement);
+            { name: "x0", axes: [TouchInput.X0] },
+            { name: "y0", axes: [TouchInput.Y0] },
+            { name: "x1", axes: [TouchInput.X1] },
+            { name: "y1", axes: [TouchInput.Y1] },
+            { name: "x2", axes: [TouchInput.X2] },
+            { name: "y2", axes: [TouchInput.Y2] },
+            { name: "dx0", axes: [TouchInput.DX0] },
+            { name: "iy1", axes: [TouchInput.IY1] },
+        ],
+        touch = new TouchInput(buttons, commands, null, document.documentElement);
 
     for(var i = 0; i < buttons.length; ++i) {
         var b = buttons[i];
@@ -46,12 +48,11 @@
     }
     function loop(dt) {
         requestAnimationFrame(loop);
-        touch.update();
+        touch.update(dt);
         output.innerHTML = "<ul>"
-            + buttons.map(function (b) { return "<li>" + b.name + ": " + touch.isDown(b.name) + "</li>"; }).join("")
-            + axes.map(function (a) { return "<li>" +a + " -> " + touch.getValue(a)+ "</li>"; }).join("")
+            + commands.map(function (c) { return "<li>" + c.name + ": " + touch.isDown(c.name) + ", " + touch.getValue(c.name) + "</li>"; }).join("")
             + "</ul>";
     }
 
     requestAnimationFrame(loop);
-});
+}

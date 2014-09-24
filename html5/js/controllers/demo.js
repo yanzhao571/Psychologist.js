@@ -23,7 +23,7 @@ var isDebug = false,
 		"js/output/SpeechOutput.js",
 		"js/output/ModelOutput.js",
 		displayProgress,
-		postScriptLoad);    
+		postScriptLoad);
 		
 ctrls.instructions.style.display 
     = ctrls.options.style.display
@@ -145,19 +145,20 @@ function postScriptLoad(progress){
             vcz = vcz * 0.9 + tz * 0.1;
         }
 
-        dheading += (gamepad.getValue("dheading") 
-            + mouse.getValue("dheading")
-            + touch.getValue("dheading")) * dt;
         dpitch += mouse.getValue("dpitch") * dt;
         dpitch = Math.max(-2, Math.min(1.3, dpitch));
-        droll += (gamepad.getValue("drollLeft") 
-            + gamepad.getValue("drollRight") 
-            + keyboard.getValue("drollLeft") 
-            + keyboard.getValue("drollRight")) * dt;
+        pitch = pitch * TRACKING_SCALE + (
+            motion.getValue("pitch")
+            + gamepad.getValue("pitch")
+            + dpitch) * TRACKING_SCALE_COMP;
 
-        heading = heading * TRACKING_SCALE + (motion.getValue("heading") + dheading) * TRACKING_SCALE_COMP;
-        pitch = pitch * TRACKING_SCALE + (motion.getValue("pitch") + dpitch) * TRACKING_SCALE_COMP;
-        roll = roll * TRACKING_SCALE + (motion.getValue("roll") + droll) * TRACKING_SCALE_COMP;
+        heading = heading * TRACKING_SCALE + (
+            motion.getValue("heading") 
+            + touch.getValue("heading") 
+            + mouse.getValue("heading")
+            + gamepad.getValue("heading")) * TRACKING_SCALE_COMP;
+
+        roll = roll * TRACKING_SCALE + motion.getValue("roll") * TRACKING_SCALE_COMP;
     }
 
     function animate(t) {
@@ -167,11 +168,11 @@ function postScriptLoad(progress){
         
         if(camera && heightmap){
 		    THREE.AnimationHandler.update(dt);
-            motion.update(t);
-            keyboard.update(t);
-            mouse.update(t);
-            gamepad.update(t);
-            touch.update(t);
+            motion.update(dt);
+            keyboard.update(dt);
+            mouse.update(dt);
+            gamepad.update(dt);
+            touch.update(dt);
             update(dt);
             setCamera(dt);
             draw();
@@ -259,16 +260,12 @@ function postScriptLoad(progress){
             this.parentElement.style.display = "none";
             ctrls.menuButton.style.display = "";
         }, false);
-    }
-
-    if(!isDebug){
-        ctrls.options.querySelector(".closeSectionButton").addEventListener("click", function(){
-            requestFullScreen();
-            mouse.requestPointerLock();
-        });
-    }
-    else{
-        login();
+        if(!isDebug && closers[i].parentElement == ctrls.options){
+            closers[i].addEventListener("click", function(){
+                requestFullScreen();
+                mouse.requestPointerLock();
+            });
+        }
     }
 
     ctrls.menuButton.addEventListener("click", function(){
@@ -444,21 +441,21 @@ function postScriptLoad(progress){
     });
 
     motion = new MotionInput([
-        { name: "heading", axes: [-1] },
-        { name: "pitch", axes: [2] },
-        { name: "roll", axes: [-3] }
+        { name: "heading", axes: [-MotionInput.HEADING] },
+        { name: "pitch", axes: [MotionInput.PITCH] },
+        { name: "roll", axes: [-MotionInput.ROLL] }
     ], socket);
 
     mouse = new MouseInput([
-        { name: "dheading", axes: [-4], scale: 0.4 },
-        { name: "dpitch", axes: [-5], scale: 0.4 },
+        { name: "heading", axes: [-MouseInput.IX], scale: 0.4 },
+        { name: "dpitch", axes: [-MouseInput.DY], scale: 0.4 },
         { name: "fire", buttons: [1], commandDown: fire, dt: 125 },
         { name: "jump", buttons: [2], commandDown: jump, dt: 250 },
     ], socket, renderer.domElement);
 
-    touch = new TouchInput(1, null, [
-        { name: "dheading", axes: [-3] },
-        { name: "drive", axes: [4], scale: 1.5 },
+    touch = new TouchInput(null, [
+        { name: "heading", axes: [TouchInput.IX0] },
+        { name: "drive", axes: [-TouchInput.DY0], scale: 1.5 },
     ], socket, renderer.domElement);
 
     keyboard = new KeyboardInput([
@@ -466,20 +463,16 @@ function postScriptLoad(progress){
         { name: "strafeRight", buttons: [68] },
         { name: "driveForward", buttons: [-87] },
         { name: "driveBack", buttons: [83] },
-        { name: "drollLeft", buttons: [81] },
-        { name: "drollRight", buttons: [-69] },
         { name: "jump", buttons: [32], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [17], commandDown: fire, dt: 125 },
         { name: "reload", buttons: [70], commandDown: reload, dt: 125 },
     ], socket);
 
-    gamepad = new GamepadInput([
-        { name: "strafe", axes: [1], deadzone: 0.1 },
-        { name: "drive", axes: [2], deadzone: 0.1 },
-        { name: "dheading", axes: [-3], deadzone: 0.1 },
-        { name: "dpitch", axes: [4], deadzone: 0.1 },
-        { name: "drollRight", buttons: [5] },
-        { name: "drollLeft", buttons: [-6] },
+    gamepad = new GamepadInput(0.1, [
+        { name: "strafe", axes: [GamepadInput.LSX], deadzone: 0.1 },
+        { name: "drive", axes: [GamepadInput.LSY], deadzone: 0.1 },
+        { name: "heading", axes: [-GamepadInput.IRSX], deadzone: 0.1 },
+        { name: "pitch", axes: [GamepadInput.IRSY], deadzone: 0.1 },
         { name: "jump", buttons: [1], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [2], commandDown: fire, dt: 125 },
     ], socket);

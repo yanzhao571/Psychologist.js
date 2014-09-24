@@ -130,11 +130,11 @@ This is still a work in progress. Eventually, I'll have enumerations for each of
         requestAnimationFrame(loop);
         // call update once a frame to make it read each device state and execute any
         // event-based commands.
-        motion.update();
-        keyboard.update();
-        mouse.update();
-        gamepad.update();
-        touch.update();
+        motion.update(dt);
+        keyboard.update(dt);
+        mouse.update(dt);
+        gamepad.update(dt);
+        touch.update(dt);
         
         // motion is an absolute change, whereas the others have to be scaled to
         // the frame time. Adding them in this way works because a user would rarely

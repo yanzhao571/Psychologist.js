@@ -1,15 +1,15 @@
 ﻿function MouseInput(commands, socket, DOMElement){
     DOMElement = DOMElement || document.documentElement;
-    NetworkedInput.call(this, "mouse", commands, socket, 1, ["x", "y", "z"]);
+    NetworkedInput.call(this, "mouse", commands, socket, 1, MouseInput.AXES);
 
     this.setLocation = function(x, y){
-        this.setAxis("x", x);
-        this.setAxis("y", y);
+        this.setAxis("X", x);
+        this.setAxis("Y", y);
     }
 
     this.setMovement = function(dx, dy){
-        this.incAxis("x", dx);
-        this.incAxis("y", dy);
+        this.incAxis("X", dx);
+        this.incAxis("Y", dy);
     }
 
     this.readEvent = function(event){
@@ -36,7 +36,7 @@
     DOMElement.addEventListener("mousemove", this.readEvent.bind(this), false);
 
     DOMElement.addEventListener("mousewheel", function(event){
-        this.incAxis("z", event.wheelDelta);
+        this.incAxis("Z", event.wheelDelta);
         this.readEvent(event);
     }.bind(this), false);
 
@@ -94,6 +94,8 @@
 }
 
 inherit(MouseInput, NetworkedInput);
+MouseInput.AXES = ["X", "Y", "Z"];
+NetworkedInput.fillAxes(MouseInput);
 
 /*
 https://www.github.com/capnmidnight/VR
