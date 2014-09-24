@@ -409,7 +409,7 @@ function postScriptLoad(progress){
         msg("You are now connected to the device server.");
         addUser(userName);
         for(var i = 0; i < users.length; ++i){
-            if(users[i] != userName){
+            if(users[i].toLocaleUpperCase() != userName.toLocaleUpperCase()){
                 addUser(users[i]);
             }
         }

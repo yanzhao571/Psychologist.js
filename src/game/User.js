@@ -42,9 +42,9 @@ User.prototype.addDevice = function(users, socket){
     }.bind(this));
     
     var userList = [];
-    for(var userName in users){
-        if(users[userName].isConnected()){
-            userList.push(userName);
+    for(var key in users){
+        if(users[key].isConnected()){
+            userList.push(users[key].state.userName);
         }
     }
     socket.emit("userList", userList);
@@ -60,10 +60,10 @@ User.prototype.addDevice = function(users, socket){
 
 User.prototype.broadcast = function(users, skipIndex){
     var args = Array.prototype.slice.call(arguments, 2);
-    for(var userName in users){
-        var toUser = users[userName];
+    for(var key in users){
+        var toUser = users[key];
         toUser.emit
-            .bind(toUser, (userName == this.state.userName) ? skipIndex : -1)
+            .bind(toUser, (toUser.state.userName == this.state.userName) ? skipIndex : -1)
             .apply(toUser, args);
     }
 };
