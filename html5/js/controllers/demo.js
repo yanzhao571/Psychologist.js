@@ -167,11 +167,11 @@ function postScriptLoad(progress){
         
         if(camera && heightmap){
 		    THREE.AnimationHandler.update(dt);
-            motion.update();
-            keyboard.update();
-            mouse.update();
-            gamepad.update();
-            touch.update();
+            motion.update(t);
+            keyboard.update(t);
+            mouse.update(t);
+            gamepad.update(t);
+            touch.update(t);
             update(dt);
             setCamera(dt);
             draw();

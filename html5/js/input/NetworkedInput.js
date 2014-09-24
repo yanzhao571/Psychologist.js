@@ -2,7 +2,8 @@
     var numAxes = 0,
         enabled = true,
         transmitting = true,
-        receiving = true;
+        receiving = true,
+        start = Date.now();
     if(typeof(deltaTrackedAxes) == "number"){
         numAxes = deltaTrackedAxes;
         deltaTrackedAxes = null;
@@ -37,7 +38,7 @@
         for(var i = 0; i < commands.length; ++i){
             var cmd = commands[i];
             if(cmd.commandDown && commandState[cmd.name].pressed && commandState[cmd.name].fireAgain){
-                commandState[cmd.name].lt = Date.now();
+                commandState[cmd.name].lt = Date.now() - start;
                 cmd.commandDown();
             }
 
@@ -99,9 +100,9 @@
         return commandState[name] && commandState[name].value || 0;
     };
 
-    this.update = function(){
+    this.update = function(t){
         if(inPhysicalUse && enabled){
-            var prevState = "", finalState = "", t = Date.now();
+            var prevState = "", finalState = "";
             if(transmitting && socket){
                 prevState = JSON.stringify(commandState);
             }
@@ -193,7 +194,7 @@
             pressed: false,
             wasPressed: false,
             fireAgain: false,
-            lt: Date.now()
+            lt: 0
         };
 
         var newCmd = {
