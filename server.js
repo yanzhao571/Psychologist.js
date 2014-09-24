@@ -4,6 +4,7 @@
     https = require("https"),
     path = require("path"),
     socketio = require("socket.io"),
+    log = require("./src/core").log,
     starter = require("./src/starter"),
     webServer = require("./src/webServer"),
     webSocketServer = require("./src/webSocketServer"),
@@ -20,14 +21,14 @@
 function start(key, cert, ca){
     var useSecure = !!(key && cert && ca);
     if(useSecure){
-        console.log("secure");
+        log("secure");
         app = https.createServer({key: key, cert: cert, ca: ca}, webServer(host, srcDir));
         redir = http.createServer(webServer(host, port + 1));
         redir.listen(port);
         app.listen(port + 1);
     }
     else{
-        console.log("insecure");
+        log("insecure");
         app = http.createServer(webServer(host, srcDir));
         app.listen(port);
     }

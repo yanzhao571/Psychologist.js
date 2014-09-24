@@ -1,25 +1,26 @@
 ﻿var users = {},
-    User = require("../game/User");
+    User = require("../game/User"),
+    log = require("../core").log;
 
 module.exports = {
     handshake: "demo",
     bindSocket: function(socket){
-        console.log("Elected demo!");
+        log("starting demo for new user.");
         function login(credentials){
             if(!users[credentials.userName]){
-                console.log("new user", credentials.userName);
+                log("new user = $1.", credentials.userName);
                 users[credentials.userName] = new User(credentials.userName, credentials.password);
             }
         
             if(users[credentials.userName].password == credentials.password){
                 if(!users[credentials.userName].isConnected()){
-                    console.log("user login", credentials.userName);
+                    log("user login = $1.", credentials.userName);
                 }
                 users[credentials.userName].addDevice(users, socket);
                 socket.removeListener("login", login);
             }
             else{
-                console.log("Failed to authenticate!", credentials.userName);
+                log("failed to authenticate = $1.", credentials.userName);
                 socket.emit("loginFailed");
             }
         }

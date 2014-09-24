@@ -3,7 +3,6 @@
 module.exports = function requireDirectory(path, mod){
     mod.exports = [];
     fs.readdir("./src/" + path, function(err, files){
-        console.log(path, files);
         if(!err){
             var directories = [];
             for(var i = 0; i < files.length; ++i) {

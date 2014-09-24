@@ -1,7 +1,8 @@
-﻿var socketControllers = require("./socketControllers");
+﻿var socketControllers = require("./socketControllers"),
+    log = require("./core").log;
 
 module.exports = function (socket) {
-    console.log("New connection!");
+    log("New connection!");
     function handshake(controllerName){
         var found = false;
         for(var i = 0; i < socketControllers.length; ++i){
@@ -12,7 +13,7 @@ module.exports = function (socket) {
             }
         }
         if(!found){
-            console.log("unknown web socket controller type", controllerName);
+            log("unknown web socket controller type [$1]", controllerName);
             socket.emit("handshakeFailed", socketControllers.map(function(o){ return o.handshake; }));
         }
     }

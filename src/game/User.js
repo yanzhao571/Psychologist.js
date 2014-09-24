@@ -1,4 +1,5 @@
-﻿var types = ["gamepad", "keyboard", "mouse", "touch", "motion", "speech"];
+﻿var types = ["gamepad", "keyboard", "mouse", "touch", "motion", "speech"],
+    log = require("../core").log;
 
 function User(userName, password){
     this.devices = [];
@@ -18,10 +19,11 @@ function User(userName, password){
 
 User.prototype.addDevice = function(users, socket){
     var index = 0;
-    while(index < this.devices.length && this.devices[index]){
+    while(index < this.devices.length && this.devices[index] != null){
         ++index;
     }
 
+    log("Device added for $1", this.state.userName);
     this.devices[index] = socket;
     this.bindEvents(users, index);
 
@@ -94,7 +96,7 @@ User.prototype.disconnect = function(users, index, reason){
         this.emit(index, "deviceLost");
     }
     else{
-        console.log("disconnect", this.state.userName);
+        log("disconnect = $1.", this.state.userName);
         this.broadcast(users, -1, "userLeft", this.state.userName);
         this.devices.splice(0);
     }

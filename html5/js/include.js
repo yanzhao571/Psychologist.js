@@ -172,29 +172,50 @@ function fmt(template) {
     //      the first of these digits be at least one).
     // - (optional) then a period (.) literally
     // -            then one or more zero digit (0) characters
-    var regex = /\$(0*)(\d+)(\.(0+))?/g;
+    var paramRegex = /\$(0*)(\d+)(?:\.(0+))?/g;
     var args = arguments;
-    return template.replace(regex, function (m, pad, index, _, precision) {
+    return template.replace(paramRegex, function (m, pad, index, precision) {
         index = parseInt(index, 10);
         if (0 <= index && index < args.length) {
             var val = args[index];
-            if (val != undefined) {
-                val = val.toString();
-                var regex2;
-                if (precision && precision.length > 0) {
-                    val = sigfig(parseFloat(val, 10), precision.length);
+            if (val != null) {
+                if(val instanceof Date && precision){
+                    switch (precision.length) {
+                        case 1: val = val.getYear(); break;
+                        case 2: val = val.getMonth() + "/" + val.getYear(); break;
+                        case 3: val = val.toLocaleDateString(); break;
+                        case 4: val = fmt.addMillis(val, val.toLocaleTimeString()); break;
+                        case 5: case 6: val = val.toLocaleString(); break;
+                        default: val = fmt.addMillis(val, val.toLocaleString()); break;
+                    }
+                    return val;
                 }
-                if (pad && pad.length > 0) {
-                    regex2 = new RegExp("^\\d{" + (pad.length + 1) + "}(\\.\\d+)?");
-                    while (!val.match(regex2))
-                        val = "0" + val;
+                else{
+                    if (precision && precision.length > 0) {
+                        val = sigfig(val, precision.length);
+                    }
+                    else{
+                        val = val.toString();
+                    }
+                    if (pad && pad.length > 0) {
+                        var paddingRegex = new RegExp("^\\d{" + (pad.length + 1) + "}(\\.\\d+)?");
+                        while (!paddingRegex.test(val)){
+                            val = "0" + val;
+                        }
+                    }
+                    return val;
                 }
-                return val;
             }
         }
         return undefined;
     });
 }
+
+fmt.addMillis = function(val, txt) {
+    return txt.replace(/( AM| PM|$)/, function (match, g1) {
+        return (val.getMilliseconds() / 1000).toString().substring(1) + g1;
+    });
+};
 
 function sigfig(x, y) {
     var p = Math.pow(10, y);
@@ -240,12 +261,20 @@ function ofType(arr, t){
 var include = (function () {
     function loadLibs(version, libs, progress, postScriptLoad, libIndex) {
         libIndex = libIndex || 0;
+        if(!postScriptLoad && progress){
+            postScriptLoad = progress;
+            progress = null;
+        }
         if (libIndex < libs.length) {
             var thunk = function (type) {
-                progress(type, libs[libIndex], libIndex + 1, libs.length);
+                if(progress){
+                    progress(type, libs[libIndex], libIndex + 1, libs.length);
+                }
                 setTimeout(loadLibs, 0, version, libs, progress, postScriptLoad, libIndex + 1);
             };
-            progress("loading", libs[libIndex], libIndex, libs.length);
+            if(progress){
+                progress("loading", libs[libIndex], libIndex, libs.length);
+            }
             var file = libs[libIndex];
             if(!(/http(s):/.test(file)) && version > 0){
                 file += "?v" + version; 
