@@ -42,6 +42,19 @@ function getScript(src, success, error) {
     }
 }
 
+function getSetting(name, defValue) {
+    var val = window.localStorage.getItem(name);
+    if(val){
+        try{
+            return (window.localStorage && JSON.parse(val)) || defValue;
+        }
+        catch(exp){
+            console.error(name, val, typeof(val), exp);
+        }
+    }
+    return defValue;
+}
+
 function FileState(obj){
     this.name = obj.name;
     this.size = obj.size;

@@ -1,6 +1,7 @@
 var isDebug = false,
 	ctrls = findEverything(),
 	PLAYER_HEIGHT = 6,
+    formState = getSetting("formState"),
 	prog = new LoadingProgress(
 		"manifest/js/controllers/demo.js?v2",
 		"js/psychologist.js",
@@ -22,11 +23,11 @@ var isDebug = false,
 		"js/output/SpeechOutput.js",
 		"js/output/ModelOutput.js",
 		displayProgress,
-		postScriptLoad);
+		postScriptLoad);    
 		
 ctrls.instructions.style.display 
     = ctrls.options.style.display
-    = isDebug ? "none" : "";
+    = (isDebug || formState) ? "none" : "";
 
 function displayProgress(){
     ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
@@ -65,8 +66,7 @@ function postScriptLoad(progress){
         camera, effect, drawDistance = 250,
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
-        tabs = makeTabSet(ctrls.options),
-        formState = getSetting("formState", {});
+        tabs = makeTabSet(ctrls.options);
 
     socket.on("handshakeFailed", console.warn.bind(console));
     socket.emit("handshake", "demo");

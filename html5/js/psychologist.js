@@ -4,19 +4,6 @@ function inherit(classType, parentType) {
     classType.prototype.constructor = classType;
 }
 
-function getSetting(name, defValue) {
-    var val = window.localStorage.getItem(name);
-    if(val){
-        try{
-            return (window.localStorage && JSON.parse(val)) || defValue;
-        }
-        catch(exp){
-            console.error(name, val, typeof(val), exp);
-        }
-    }
-    return defValue;
-}
-
 function setSetting(name, value) {
     if (window.localStorage) {
         window.localStorage.setItem(name, JSON.stringify(value));
