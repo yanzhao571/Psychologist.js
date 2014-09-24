@@ -46,9 +46,11 @@ function touchTest() {
         d.id = b.name;
         document.body.appendChild(d);
     }
-    function loop(dt) {
+    var lt = 0;
+    function loop(t) {
         requestAnimationFrame(loop);
-        touch.update(dt);
+        touch.update((t - lt) * 0.001);
+        lt = t;
         output.innerHTML = "<ul>"
             + commands.map(function (c) { return "<li>" + c.name + ": " + touch.isDown(c.name) + ", " + touch.getValue(c.name) + "</li>"; }).join("")
             + "</ul>";

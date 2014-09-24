@@ -21,10 +21,12 @@ function motionTest() {
             {name: "iroll", axes: [MotionInput.IROLL]},
         ],
         motion = new MotionInput(null, commands);
-
-    function loop(dt){
+        
+    var lt = 0;
+    function loop(t) {
         requestAnimationFrame(loop);
-        motion.update(dt);
+        motion.update((t - lt) * 0.001);
+        lt = t;
         output.innerHTML = "";
             
         for(var i = 0; i < commands.length; ++i) {

@@ -44,10 +44,10 @@ function postScriptLoad() {
     function loop(t) {
         requestAnimationFrame(loop);
         mouse.update((t - lt) * 0.001);
+        lt = t;
         output.innerHTML = "<ul>"
             + commands.map(function (c) { return "<li>" + c.name + ": " + mouse.isDown(c.name) + ", " + mouse.getValue(c.name) + "</li>"; }).join("")
             + "</ul>";
-        lt = t;
     }
 
     requestAnimationFrame(loop);

@@ -51,10 +51,11 @@ function gamepadTest() {
     });
 
     gamepad.addEventListener("gamepaddisconnected", console.log.bind(console, "disconnected"));
-
-    function loop(dt) {
+    var lt = 0;
+    function loop(t) {
         requestAnimationFrame(loop);
-        gamepad.update(dt / 1000);
+        gamepad.update((t - lt) * 0.001);
+        lt = t;
         if(gamepad.isGamepadSet()){
             output.innerHTML = "<ul>"
             + commands.map(function (c) { return "<li>" + c.name + ": " + gamepad.isDown(c.name) + ", " + gamepad.getValue(c.name) + "</li>"; }).join("")
