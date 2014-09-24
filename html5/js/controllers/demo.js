@@ -52,7 +52,7 @@ function postScriptLoad(progress){
         TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
         GRAVITY = 9.8, SPEED = 15,
         pitch = 0, roll = 0, heading = 0,
-        vcx = 0, vcz = 0, vcy = 0, tx, tz,
+        vcx = 0, vcz = 0, vcy = 0,
         onground = false,
         motion, keyboard, mouse, gamepad, 
         dt, lt = 0, frame = 0, dFrame = 0.125,
@@ -120,10 +120,10 @@ function postScriptLoad(progress){
         }
 
         if(onground){
-            tx = keyboard.getValue("strafeRight")
+            var tx = keyboard.getValue("strafeRight")
                 + keyboard.getValue("strafeLeft")
                 + gamepad.getValue("strafe");
-            tz = keyboard.getValue("driveBack")
+            var tz = keyboard.getValue("driveBack")
                 + keyboard.getValue("driveForward")
                 + gamepad.getValue("drive")
                 + touch.getValue("drive");

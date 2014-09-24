@@ -1,6 +1,37 @@
-﻿var users = {},
+﻿var fs = require("fs"),
     User = require("../game/User"),
-    log = require("../core").log;
+    log = require("../core").log,
+
+    users = {};
+
+fs.readFile("users.json", "utf8", function(err, file){
+    if(err){
+        log("No users file");
+    }
+    else{
+        log("Reading users from disk.");
+        var userList = JSON.parse(file);
+        for(var i = 0; i < userList.length; ++i){
+            var userName = userList[i].name;
+            var password = userList[i].password;
+            users[userName.toLocaleUpperCase()] = new User(userName, password);
+        }
+    }
+});
+
+process.on("SIGINT", function(code){
+    log("Writing users to disk.");
+    var userList = [];
+    for(var key in users){
+        var user = users[key];
+        userList.push({
+            name: user.state.userName,
+            password: user.password
+        });
+    }
+    fs.writeFileSync("users.json", JSON.stringify(userList));
+    process.kill();
+});
 
 module.exports = {
     handshake: "demo",
@@ -27,4 +58,4 @@ module.exports = {
         }
         socket.on("login", login);
     }
-}
+};
