@@ -3,7 +3,7 @@
     "js/input/NetworkedInput.js",
     "js/input/TouchInput.js"],
     touchTest);
-function touchTest() {
+function touchTest(){
     "use strict";
     var output = document.getElementById("output"),
         frame = 0,
@@ -31,9 +31,9 @@ function touchTest() {
             { name: "dx0", axes: [TouchInput.DX0] },
             { name: "iy1", axes: [TouchInput.IY1] },
         ],
-        touch = new TouchInput(buttons, null, commands, null, document.documentElement);
+        touch = new TouchInput("touch", buttons, null, commands, null, document.documentElement);
 
-    for(var i = 0; i < buttons.length; ++i) {
+    for(var i = 0; i < buttons.length; ++i){
         var b = buttons[i];
         var d = document.createElement("div");
         d.style.position = "absolute";
@@ -47,12 +47,12 @@ function touchTest() {
         document.body.appendChild(d);
     }
     var lt = 0;
-    function loop(t) {
+    function loop(t){
         requestAnimationFrame(loop);
         touch.update((t - lt) * 0.001);
         lt = t;
         output.innerHTML = "<ul>"
-            + commands.map(function (c) { return "<li>" + c.name + ": " + touch.isDown(c.name) + ", " + touch.getValue(c.name) + "</li>"; }).join("")
+            + commands.map(function (c){ return "<li>" + c.name + ": " + touch.isDown(c.name) + ", " + touch.getValue(c.name) + "</li>"; }).join("")
             + "</ul>";
     }
 

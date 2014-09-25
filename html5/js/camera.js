@@ -2,7 +2,7 @@
     var streaming = false;
     vid.autoplay = 1;
     function getUserMediaFallthrough(vidOpt, success, err){
-        navigator.getUserMedia({video: vidOpt}, function (stream) {
+        navigator.getUserMedia({video: vidOpt}, function (stream){
             var stream = window.URL.createObjectURL(stream);
             vid.src = stream;
             success();
@@ -36,17 +36,17 @@
     }
 
 
-    function connect(source) {
+    function connect(source){
         try {
-            if (streaming) {
-                if (window.stream) {
+            if (streaming){
+                if (window.stream){
                     window.stream.stop();
                 }
                 vid.src = null;
                 streaming = false;
             }
         }
-        catch (err) {
+        catch (err){
             console.error("While stopping", err);
         }
 
@@ -58,8 +58,8 @@
         });
     }
 
-    vid.addEventListener("canplay", function (ev) {
-        if (!streaming) {
+    vid.addEventListener("canplay", function (ev){
+        if (!streaming){
             streaming = true;
         }
     }, false);
@@ -68,7 +68,7 @@
         vid.addEventListener("playing", onPlay, false);
     }
     
-    MediaStreamTrack.getVideoTracks(function (infos) {
+    MediaStreamTrack.getVideoTracks(function (infos){
 
         //the last one is most likely to be the back camera of the phone
         //TODO: setup this up to be configurable.

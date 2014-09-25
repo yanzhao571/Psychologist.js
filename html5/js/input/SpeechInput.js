@@ -6,7 +6,10 @@
         API requires a network connection, as the processing is done on an external
         server.
 
-    Constructor: new SpeechInput(commands);
+    Constructor: new SpeechInput(name, commands, socket);
+
+        The `name` parameter is used when transmitting the commands through the command
+        proxy server.
 
         The `commands` parameter specifies a collection of keywords tied to callbacks
         that will be called when one of the keywords are heard. Each callback can
@@ -31,6 +34,9 @@
             command listening should restart automatically after the browser  automatically
             ends it from the user not speaking any commands. It defaults to false.
 
+        The `socket` (optional) parameter is a WebSocket connecting back to the command
+        proxy server.
+
     Methods:
         `start()`: starts the command unrecognition, unless it's not available, in which
             case it prints a message to the console error log. Returns true if the running 
@@ -44,7 +50,7 @@
             null if setup was successful.
 
 */
-function SpeechInput(commands, socket, stopAfterEnd){
+function SpeechInput(name, commands, socket, stopAfterEnd){
     var command = "",
         commandTimeout,
         running = false,
@@ -133,7 +139,7 @@ function SpeechInput(commands, socket, stopAfterEnd){
     }
 
     if(socket){
-        socket.on("speech", function(command){
+        socket.on(name, function(command){
             if(receiving){
                 executeCommand(command);
             }
@@ -156,17 +162,17 @@ function SpeechInput(commands, socket, stopAfterEnd){
         recognition.interimResults = true;
         recognition.lang = "en-US";
 
-        recognition.addEventListener("start", function() {
+        recognition.addEventListener("start", function(){
             running = true;
             command = ""; 
         }, true);
 
-        recognition.addEventListener("error", function(event) {
+        recognition.addEventListener("error", function(event){
             running = false;
             command = "speech error";
         }, true);
 
-        recognition.addEventListener("end", function() {
+        recognition.addEventListener("end", function(){
             running = false;
             command = "speech ended";
             if(restart){
@@ -174,7 +180,7 @@ function SpeechInput(commands, socket, stopAfterEnd){
             }
         }, true);
 
-        recognition.addEventListener("result", function(event) { 
+        recognition.addEventListener("result", function(event){ 
             if(commandTimeout){
                 clearTimeout(commandTimeout);
             }
@@ -192,7 +198,7 @@ function SpeechInput(commands, socket, stopAfterEnd){
                 command = newCommand;
                 executeCommand(command);
                 if(transmitting && socket){
-                    socket.emit("speech", command);
+                    socket.emit(name, command);
                 }
             }
 

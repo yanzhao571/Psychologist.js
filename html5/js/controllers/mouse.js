@@ -4,14 +4,14 @@
      "js/input/MouseInput.js"],
 	postScriptLoad);
 
-function postScriptLoad() {
+function postScriptLoad(){
     var output = document.getElementById("output"),
         frame = 0,
         commands = [
             { name: "fire", buttons: [1], meta: [-1], commandDown: console.log.bind(console, "Fire"), dt: 250 },
             { name: "alternate fire", buttons: [1], meta: [1], commandDown: console.log.bind(console, "Alternate fire"), dt: 250 },
-            { name: "middle", buttons: [2], commandUp: function () {
-                    if (mouse.isPointerLocked()) {
+            { name: "middle", buttons: [2], commandUp: function (){
+                    if (mouse.isPointerLocked()){
                         mouse.exitPointerLock();
                     }
                     else {
@@ -36,17 +36,17 @@ function postScriptLoad() {
             { name: "dx", axes: [MouseInput.DX] },
             { name: "ix", axes: [MouseInput.IX] }
         ],
-        mouse = new MouseInput([
+        mouse = new MouseInput("mouse", [
             {axis: MouseInput.IX, min: -1, max: 1 }
         ], commands);
 
     var lt = 0;
-    function loop(t) {
+    function loop(t){
         requestAnimationFrame(loop);
         mouse.update((t - lt) * 0.001);
         lt = t;
         output.innerHTML = "<ul>"
-            + commands.map(function (c) { return "<li>" + c.name + ": " + mouse.isDown(c.name) + ", " + mouse.getValue(c.name) + "</li>"; }).join("")
+            + commands.map(function (c){ return "<li>" + c.name + ": " + mouse.isDown(c.name) + ", " + mouse.getValue(c.name) + "</li>"; }).join("")
             + "</ul>";
     }
 

@@ -201,7 +201,7 @@
             [bubbles]: set to true if the events should be captured in the bubbling phase. Defaults to false. The 
                 non-default behavior is rarely needed, but it is included for completeness.
     */
-    addEventListener: function(type, callback, bubbles) {
+    addEventListener: function(type, callback, bubbles){
         if(type != "deviceorientation"){
             throw new Error("The only event type that is supported is \"deviceorientation\". Type parameter was: " + type);
         }
@@ -229,17 +229,19 @@
                     ACCELX: a.x,
                     ACCELY: a.y,
                     ACCELZ: a.z,
-                    original: o,
+                    ALPHA: o.alpha,
+                    BETA: o.beta,
+                    GAMMA: o.gamma
                 });
             }
         }
 
-        function checkOrientation(event) {
+        function checkOrientation(event){
             corrector.setOrientation(event.alpha !== null && event);
             onChange();
         }
 
-        function checkMotion(event) {
+        function checkMotion(event){
             if(event && event.accelerationIncludingGravity && event.accelerationIncludingGravity.x){
                 corrector.setAcceleration(event.accelerationIncludingGravity);
             }
@@ -258,10 +260,10 @@
     }
 }
 
-function MotionInput(axisConstraints, commands, socket){
-    NetworkedInput.call(this, "motion", axisConstraints, commands, socket, 1, MotionInput.AXES);
+function MotionInput(name, axisConstraints, commands, socket){
+    NetworkedInput.call(this, name, axisConstraints, commands, socket, 1, MotionInput.AXES);
 
-    LandscapeMotion.addEventListener("deviceorientation", function (evt) {
+    LandscapeMotion.addEventListener("deviceorientation", function (evt){
         for(var i = 0; i < MotionInput.AXES.length; ++i){
             var k = MotionInput.AXES[i];
             this.setAxis(k, evt[k]);
@@ -270,7 +272,7 @@ function MotionInput(axisConstraints, commands, socket){
 }
 
 inherit(MotionInput, NetworkedInput);
-MotionInput.AXES = ["HEADING", "PITCH", "ROLL", "ACCELX", "ACCELY", "ACCELZ"];
+MotionInput.AXES = ["HEADING", "PITCH", "ROLL", "ACCELX", "ACCELY", "ACCELZ", "ALPHA", "BETA", "GAMMA"];
 NetworkedInput.fillAxes(MotionInput);
 
 /*

@@ -1,5 +1,5 @@
-﻿function KeyboardInput(commands, socket, DOMElement){
-    NetworkedInput.call(this, "keyboard", null, commands, socket, 0, 0);
+﻿function KeyboardInput(name, commands, socket, DOMElement){
+    NetworkedInput.call(this, name, null, commands, socket, 0, 0);
     
     function execute(stateChange, event){
         this.setButton(event.keyCode, stateChange);

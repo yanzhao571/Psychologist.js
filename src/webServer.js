@@ -5,7 +5,7 @@ var fs = require("fs"),
     routes = require("./controllers.js"),
     filePattern = /([^?]+)(\?([^?]+))?/;
 
-function serverError(res, code) {
+function serverError(res, code){
     var rest = Array.prototype.slice.call(arguments, 2),
         msg = rest.length == 0 ? "" : core.fmt(" -> [$1]", rest.join("], ["));
     res.writeHead(code);
@@ -18,14 +18,14 @@ function serverError(res, code) {
     }
 }
 
-function matchController(res, url, method) {
+function matchController(res, url, method){
     var found = false;
-    for (var i = 0; i < routes.length && !found; ++i) {
+    for (var i = 0; i < routes.length && !found; ++i){
         var matches = url.match(routes[i].pattern);
-        if (matches) {
+        if (matches){
             found = true;
             matches.shift();
-            routes[i].handler.call(this, method, matches, function (mimeType, data) {
+            routes[i].handler.call(this, method, matches, function (mimeType, data){
                 if(!mimeType){
                     res.writeHead(415);
                     res.end();
@@ -40,9 +40,9 @@ function matchController(res, url, method) {
     return found;
 }
 
-function sendStaticFile(res, url, path) {
-    fs.readFile(path, function (err, data) {
-        if (err) {
+function sendStaticFile(res, url, path){
+    fs.readFile(path, function (err, data){
+        if (err){
             serverError(res, 403, core.fmt("Permission denied [$1]", url));
         }
         else {
@@ -53,12 +53,12 @@ function sendStaticFile(res, url, path) {
 }
 
 function serveRequest(target, req, res){
-    if (!matchController(res, req.url, req.method) && req.method == "GET") {
+    if (!matchController(res, req.url, req.method) && req.method == "GET"){
         if(req.url.indexOf("..") == -1){
             var path = target + req.url,
             file = path.match(filePattern)[1];
-            fs.exists(file, function (yes) {
-                if (yes) {
+            fs.exists(file, function (yes){
+                if (yes){
                     sendStaticFile(res, req.url, file);
                 }
                 else {
@@ -98,7 +98,7 @@ function isNumber(v){ return isFinite(v) && !isNaN(v); }
         - number: the port number to redirect to, keeping the request the same, otherwise.
         - string: the directory from which to serve static files.
 */
-module.exports = function (host, target) {
+module.exports = function (host, target){
     if(!isString(host)){
         throw new Error("`host` parameter not a supported type. Excpected string. Given: " + host + ", type: " + typeof(host));
     }

@@ -1,5 +1,5 @@
 ﻿include(0,
-    "lib/three/three.min.js",
+    ["lib/three/three.min.js",
     "lib/three/OculusRiftEffect.min.js",
     "lib/Blob.min.js",
     "lib/canvas-toBlob.min.js",
@@ -8,7 +8,7 @@
     "js/input/NetworkedInput.js",
     "js/input/MotionInput.js",
     "js/input/SpeechInput.js",
-    "js/camera.js",
+    "js/camera.js"],
     function (){
     var picture = document.getElementById("picture"),
         reticle = document.getElementById("reticle"),
@@ -29,13 +29,11 @@
         gfx = picture.getContext("2d"),
         frameIndex = 0,
         size = 0,
-        rotation = 0,
-        pitch = 0,
-        dPitch = 0,
         n = 0,
         menuVisible = false,
         buttonsVisible = true,
         speech = null,
+        motion = null,
         buttonsTimeout = null,
         modes = ["anaglyph", "stereoscope", "crosseye"],
         modeIndex = localStorage.getItem("mode"),
@@ -189,7 +187,7 @@
         else if(frameIndex == 2){
             var data = picture.toDataURL();
 
-            picture.toBlob(function(blob) {
+            picture.toBlob(function(blob){
                 var date = new Date().toLocaleString().replace(/\//g, "-");
 		        saveAs(blob, fmt("$1-$2.jpg", modes[modeIndex], date));
             }, "image/jpg");
@@ -203,8 +201,10 @@
         for(var i = 0; i < 2; ++i){
             if(i >= frameIndex){                
                 fxs[i].save();
-                fxs[i].translate(0.5 * size, 0.5 * camera.height - Math.sin(dPitch) * camera.height);
-                fxs[i].rotate(rotation);
+                if(motion){
+                    fxs[i].translate(0.5 * size, 0.5 * camera.height - Math.sin(motion.getValue("pitch")) * camera.height);
+                    fxs[i].rotate(motion.getValue("roll"));
+                }
                 fxs[i].translate(-0.5 * size, -0.5 * camera.height);
                 fxs[i].drawImage(camera, (camera.width - size) * 0.5, 0, size, camera.height, 
                                          0, 0, size, camera.height);
@@ -246,14 +246,6 @@
         toggleFullScreen();
         reset();
     };
-
-    LandscapeMotion.addEventListener("deviceorientation", function(evt){
-        rotation = evt.roll;
-        if(frameIndex == 0){
-            pitch = evt.pitch;
-        }
-        dPitch = evt.pitch - pitch;
-    });
     
     function reset(){
         size = camera.videoWidth * (modes[modeIndex] == "anaglyph" ? 1 : 0.5);
@@ -288,7 +280,13 @@
     speechButton.addEventListener("click", toggleSpeech, false);
     fullScreenButton.addEventListener("click", goFullscreen, false);
 
-    speech = new SpeechInput([{
+    motion = new MotionInput("motion", null, [
+        { name: "heading", axes: [-MotionInput.HEADING] },
+        { name: "pitch", axes: [MotionInput.PITCH] },
+        { name: "roll", axes: [-MotionInput.ROLL] }
+    ]);
+
+    speech = new SpeechInput("speech", [{
         keywords: ["capture", "save", "safe", "save picture", "shoot", "shit", "snap", "take", "take picture"],
         command: capture
     },{

@@ -24,7 +24,7 @@ function getObject(url, progress, error, success){
         success || error || progress);
 }
 
-function getScript(src, success, error) {
+function getScript(src, success, error){
     // make sure the script hasn't already been loaded into the page
     var s = document.querySelector("script[src='"+src+"']");
     if(s){
@@ -42,7 +42,7 @@ function getScript(src, success, error) {
     }
 }
 
-function getSetting(name, defValue) {
+function getSetting(name, defValue){
     var val = window.localStorage.getItem(name);
     if(val){
         try{
@@ -71,7 +71,7 @@ FileState.prototype.toString = function(){
 // Applying Array's slice method to array-like objects. Called with
 // no parameters, this function converts array-like objects into
 // JavaScript Arrays.
-function arr(arg, a, b) {
+function arr(arg, a, b){
     return Array.prototype.slice.call(arg, a, b);
 }
 
@@ -115,7 +115,7 @@ function LoadingProgress(){
                         this.fileMap[file].progress = this.fileMap[file].size;
                         this.fileMap[file].state = FileState.COMPLETE;
                     }
-                    else if(op == "error") {
+                    else if(op == "error"){
                         this.fileMap[file].state = FileState.ERRORED;
                     }
                 }
@@ -165,7 +165,7 @@ LoadingProgress.prototype.makeSize = function(state, prop){
            => "1.41 + 3.14 = 9001.00"
         fmt("$001.000", Math.PI) => 003.142
 */
-function fmt(template) {
+function fmt(template){
     // - match a dollar sign ($) literally, 
     // - (optional) then zero or more zero digit (0) characters, greedily
     // - then one or more digits (the previous rule would necessitate that
@@ -174,13 +174,13 @@ function fmt(template) {
     // -            then one or more zero digit (0) characters
     var paramRegex = /\$(0*)(\d+)(?:\.(0+))?/g;
     var args = arguments;
-    return template.replace(paramRegex, function (m, pad, index, precision) {
+    return template.replace(paramRegex, function (m, pad, index, precision){
         index = parseInt(index, 10);
-        if (0 <= index && index < args.length) {
+        if (0 <= index && index < args.length){
             var val = args[index];
-            if (val != null) {
+            if (val != null){
                 if(val instanceof Date && precision){
-                    switch (precision.length) {
+                    switch (precision.length){
                         case 1: val = val.getYear(); break;
                         case 2: val = val.getMonth() + "/" + val.getYear(); break;
                         case 3: val = val.toLocaleDateString(); break;
@@ -191,13 +191,13 @@ function fmt(template) {
                     return val;
                 }
                 else{
-                    if (precision && precision.length > 0) {
+                    if (precision && precision.length > 0){
                         val = sigfig(val, precision.length);
                     }
                     else{
                         val = val.toString();
                     }
-                    if (pad && pad.length > 0) {
+                    if (pad && pad.length > 0){
                         var paddingRegex = new RegExp("^\\d{" + (pad.length + 1) + "}(\\.\\d+)?");
                         while (!paddingRegex.test(val)){
                             val = "0" + val;
@@ -211,18 +211,18 @@ function fmt(template) {
     });
 }
 
-fmt.addMillis = function(val, txt) {
-    return txt.replace(/( AM| PM|$)/, function (match, g1) {
+fmt.addMillis = function(val, txt){
+    return txt.replace(/( AM| PM|$)/, function (match, g1){
         return (val.getMilliseconds() / 1000).toString().substring(1) + g1;
     });
 };
 
-function sigfig(x, y) {
+function sigfig(x, y){
     var p = Math.pow(10, y);
     var v = (Math.round(x * p) / p).toString();
-    if (y > 0) {
+    if (y > 0){
         var i = v.indexOf(".");
-        if (i == -1) {
+        if (i == -1){
             v += ".";
             i = v.length - 1;
         }
@@ -258,15 +258,15 @@ function ofType(arr, t){
     }
 }
 
-var include = (function () {
-    function loadLibs(version, libs, progress, postScriptLoad, libIndex) {
+var include = (function (){
+    function loadLibs(version, libs, progress, postScriptLoad, libIndex){
         libIndex = libIndex || 0;
         if(!postScriptLoad && progress){
             postScriptLoad = progress;
             progress = null;
         }
-        if (libIndex < libs.length) {
-            var thunk = function (type) {
+        if (libIndex < libs.length){
+            var thunk = function (type){
                 if(progress){
                     progress(type, libs[libIndex], libIndex + 1, libs.length);
                 }
@@ -286,7 +286,7 @@ var include = (function () {
         }
     }
 
-    function include(version, libs, progress, postScriptLoad) {
+    function include(version, libs, progress, postScriptLoad){
         setTimeout(loadLibs, 0, version, libs, progress, postScriptLoad);
     }
 

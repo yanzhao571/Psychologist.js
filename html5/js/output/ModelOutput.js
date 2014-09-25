@@ -58,7 +58,7 @@ ModelOutput.prototype.clone = function(userName, socket){
     this.socket = socket;
                 
     obj.traverse(function(child){
-        if (child instanceof THREE.SkinnedMesh ) {
+        if (child instanceof THREE.SkinnedMesh ){
             obj.mesh = child;
 			obj.animation = new THREE.Animation(child, child.geometry.animation);
             if(!this.template.originalAnimationData && obj.animation.data){

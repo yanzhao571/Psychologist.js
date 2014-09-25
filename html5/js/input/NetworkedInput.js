@@ -34,12 +34,19 @@
     axisConstraints = axisConstraints.reduce(function(m, o){
         m[o.axis - 1] = {
             scale: o.scale,
+            offset: o.offset,
             min: o.min,
             max: o.max,
             deadzone: o.deadzone
         }
         return m;
-    }, {});
+    }, new Array(axisNames.length));
+
+    axisNames.forEach(function(axis, index){
+        if(!axisConstraints[index]){
+            axisConstraints[index] = {};
+        }
+    });
 
     function readMetaKeys(event){ 
         for(var i = 0; i < metaKeys.length; ++i){
@@ -62,17 +69,16 @@
         }
     }
 
-    function getAxis (name){
-        return deviceState.axes[axisNames.indexOf(name)] || 0;
-    }
-
-    this.setAxis = function(name, value){
-        var axisIndex = axisNames.indexOf(name);
-        var con = axisConstraints[axisIndex];
-        inPhysicalUse = true;
+    function getAxis(name){
+        var index = axisNames.indexOf(name),
+            value = deviceState.axes[index] || 0,
+            con = axisConstraints[index];
         if(con){
             if(con.scale != null){
                 value *= con.scale;
+            }
+            if(con.offset != null){
+                value -= con.offset;
             }
             if(con.min != null){
                 value = Math.max(con.min, value);
@@ -84,24 +90,47 @@
                 value = 0;
             }
         }
-        deviceState.axes[axisIndex] = value;
+        return value;
+    }
+
+    this.zeroAxes = function(){
+        for(var i = 0; i < axisNames.length; ++i){
+            axisConstraints[i].offset = deviceState.axes[i];
+        }
+    };
+
+    this.setAxis = function(name, value){
+        inPhysicalUse = true;
+        deviceState.axes[axisNames.indexOf(name)] = value;
     };
 
     this.incAxis = function(name, value){
         inPhysicalUse = true;
-        this.setAxis(name, getAxis(name) + value);
+        deviceState.axes[axisNames.indexOf(name)] += value;
     };
 
     this.enable = function(v){
         enabled = v;
     };
 
+    this.isEnabled = function(){
+        return enabled;
+    };
+
     this.transmit = function(v){
         transmitting = v;
     };
 
+    this.isTransmitting = function(){
+        return transmitting;
+    };
+
     this.receive = function(v){
         receiving = v;
+    };
+
+    this.isReceiving = function(){
+        return receiving;
     };
 
     this.setButton = function(index, pressed){
@@ -178,7 +207,7 @@
 
                     for(var n = 0; n < cmd.axes.length; ++n){
                         var a = cmd.axes[n];
-                        var v = a.sign * deviceState.axes[a.index];
+                        var v = a.sign * getAxis(axisNames[a.index]);
                         if(cmd.deadzone && Math.abs(v) < cmd.deadzone){
                             v = 0;
                         }
@@ -268,9 +297,6 @@
                 inPhysicalUse = false;
                 commandState = cmdState
                 fireCommands(true);
-                if(name == "motion"){
-                    console.log("pitch", this.getValue("pitch"), commandState["pitch"].value);
-                }
             }
         }.bind(this));
         socket.on("deviceLost", function(){

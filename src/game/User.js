@@ -1,4 +1,4 @@
-﻿var types = ["gamepad", "keyboard", "mouse", "touch", "motion", "speech"],
+﻿var types = ["gamepad", "keyboard", "mouse", "touch", "head", "arm", "speech"],
     log = require("../core").log;
 
 function User(userName, password){
@@ -26,7 +26,7 @@ User.prototype.addDevice = function(users, socket){
     log("Device added for $1", this.state.userName);
     this.devices[index] = socket;
     
-    for(var i = 0; i < types.length; ++i) {
+    for(var i = 0; i < types.length; ++i){
         socket.on(types[i], User.prototype.emit.bind(this, index, types[i]));
     }
 

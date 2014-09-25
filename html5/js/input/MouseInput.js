@@ -1,6 +1,6 @@
-﻿function MouseInput(axisConstraints, commands, socket, DOMElement){
+﻿function MouseInput(name, axisConstraints, commands, socket, DOMElement){
     DOMElement = DOMElement || document.documentElement;
-    NetworkedInput.call(this, "mouse", axisConstraints, commands, socket, 1, MouseInput.AXES);
+    NetworkedInput.call(this, name, axisConstraints, commands, socket, 1, MouseInput.AXES);
 
     this.setLocation = function(x, y){
         this.setAxis("X", x);

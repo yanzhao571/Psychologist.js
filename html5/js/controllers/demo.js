@@ -48,13 +48,13 @@ function displayProgress(){
 
 function postScriptLoad(progress){
     var BG_COLOR = 0xafbfff, CLUSTER = 2,
-        TRACKING_SCALE = 0.5,
+        TRACKING_SCALE = 0,
         TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
         GRAVITY = 9.8, SPEED = 15,
         pitch = 0, roll = 0, heading = 0,
         vcx = 0, vcz = 0, vcy = 0,
         onground = false,
-        motion, keyboard, mouse, gamepad, 
+        head, arm, keyboard, mouse, gamepad, touch, speech,
         dt, lt = 0, frame = 0, dFrame = 0.125,
         userName = null, password = null,
         audio3d = new Audio3DOutput(),
@@ -64,7 +64,7 @@ function postScriptLoad(progress){
             "reconnection delay": 1000,
             "max reconnection attempts": 60
         }), 
-        bears = {}, heightmap,
+        bears = {}, pointer, heightmap,
         nameMaterial = new THREE.MeshLambertMaterial({
             color: 0x7f7f00,
             shading: THREE.FlatShading
@@ -110,7 +110,7 @@ function postScriptLoad(progress){
             y += heightmap[z][x];
         }
 
-        if(camera.position.y <= y && vcy <= 0) {
+        if(camera.position.y <= y && vcy <= 0){
             vcy = 0;
             camera.position.y = camera.position.y * 0.75 + y * 0.25;
             if(!onground){
@@ -151,27 +151,28 @@ function postScriptLoad(progress){
         }
 
         pitch = pitch * TRACKING_SCALE + (
-            motion.getValue("pitch")
+            head.getValue("pitch")
             + mouse.getValue("pitch")
             + gamepad.getValue("pitch")) * TRACKING_SCALE_COMP;
 
         heading = heading * TRACKING_SCALE + (
-            motion.getValue("heading") 
+            head.getValue("heading") 
             + touch.getValue("heading") 
             + mouse.getValue("heading")
             + gamepad.getValue("heading")) * TRACKING_SCALE_COMP;
 
-        roll = roll * TRACKING_SCALE + motion.getValue("roll") * TRACKING_SCALE_COMP;
+        roll = roll * TRACKING_SCALE + head.getValue("roll") * TRACKING_SCALE_COMP;
     }
 
-    function animate(t) {
+    function animate(t){
         requestAnimationFrame(animate);
         dt = (t - lt) * 0.001;
         lt = t;
         
         if(camera && heightmap){
 		    THREE.AnimationHandler.update(dt);
-            motion.update(dt);
+            head.update(dt);
+            arm.update(dt);
             keyboard.update(dt);
             mouse.update(dt);
             gamepad.update(dt);
@@ -182,17 +183,16 @@ function postScriptLoad(progress){
         }
     }
     
-    function setCamera(dt) {
+    function setCamera(dt){
         camera.updateProjectionMatrix();
         camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
         camera.translateX(vcx * dt);
         camera.translateY(vcy * dt);
         camera.translateZ(vcz * dt);
         camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
-        mainScene.Skybox.position.x = camera.position.x;
-        mainScene.Skybox.position.y = camera.position.y;
-        mainScene.Skybox.position.z = camera.position.z;
+        mainScene.Skybox.position.set(camera.position.x, camera.position.y, camera.position.z);
         frame += dt;
+
         if(userName && frame > dFrame){
             frame -= dFrame;
             var state = {
@@ -204,13 +204,20 @@ function postScriptLoad(progress){
             };
             socket.emit("userState", state);
         }
+
         if(bears[userName]){
             bears[userName].setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
             bears[userName].rotateY(heading);
-            bears[userName].position.x = camera.position.x;
-            bears[userName].position.y = camera.position.y - PLAYER_HEIGHT;
-            bears[userName].position.z = camera.position.z;
+            bears[userName].position.set(camera.position.x, camera.position.y - PLAYER_HEIGHT, camera.position.z);
         }
+
+        if(pointer){
+            var ph = arm.getValue("heading") - heading + Math.PI / 2;
+            var pr = arm.getValue("roll");
+            var pp = arm.getValue("pitch");
+            pointer.position.set(-10 * Math.sin(ph) * Math.cos(pr),  -10 * Math.sin(pr), -10 * Math.cos(ph) * Math.cos(pr));
+        }
+
         var x = camera.position.x / 10,
             y = camera.position.y / 10,
             z = camera.position.z / 10;
@@ -221,8 +228,8 @@ function postScriptLoad(progress){
         audio3d.setOrientation(x / len, y / len, z / len, 0, 1, 0);
     }
 
-    function draw() {
-        if (effect) {
+    function draw(){
+        if (effect){
             effect.render(scene, camera);
         }
         else {
@@ -230,7 +237,7 @@ function postScriptLoad(progress){
         }
     }
 
-    function setSize(w, h) {
+    function setSize(w, h){
         if(camera){
             camera.aspect = w / h;
             camera.updateProjectionMatrix();
@@ -239,7 +246,7 @@ function postScriptLoad(progress){
         chooseRenderingEffect(getSetting("renderingEffect"));
         
         renderer.setSize(w, h);
-        if (effect) {
+        if (effect){
             effect.setSize(w, h);
         }
     }
@@ -263,12 +270,12 @@ function postScriptLoad(progress){
             this.parentElement.style.display = "none";
             ctrls.menuButton.style.display = "";
         }, false);
-        if(!isDebug && closers[i].parentElement == ctrls.options){
-            closers[i].addEventListener("click", function(){
-                requestFullScreen();
-                mouse.requestPointerLock();
-            });
-        }
+        //if(!isDebug && closers[i].parentElement == ctrls.options){
+        //    closers[i].addEventListener("click", function(){
+        //        requestFullScreen();
+        //        mouse.requestPointerLock();
+        //    });
+        //}
     }
 
     ctrls.menuButton.addEventListener("click", function(){
@@ -320,18 +327,18 @@ function postScriptLoad(progress){
         setSetting("formState", state);
     }, false);
 
-    function jump() {
-        if (onground) {
+    function jump(){
+        if (onground){
             vcy = 10;
             onground = false;
         }
     }
 
-    function fire() {
+    function fire(){
     }
 
-    function reload() {
-        if (isFullScreenMode()) {
+    function reload(){
+        if (isFullScreenMode()){
             document.location = document.location.href;
         }
         else {
@@ -358,7 +365,7 @@ function postScriptLoad(progress){
 		nameGeometry.computeBoundingBox();
 		nameGeometry.computeVertexNormals();
 
-        var centerOffset = (nameGeometry.boundingBox.min.x - nameGeometry.boundingBox.max.x) * 0.5;
+        var centerOffset = (nameGeometry.boundingBox.max.x - nameGeometry.boundingBox.min.x) * 0.5;
 		var nameMesh = new THREE.Mesh(nameGeometry, nameMaterial);
         var name = new THREE.Object3D();
         name.add(nameMesh);
@@ -367,35 +374,19 @@ function postScriptLoad(progress){
 		name.position.y = PLAYER_HEIGHT + 2;
 		name.position.z = 0;
         name.rotateY(Math.PI);
-    }
 
-    function addUser(user){
-        bears[user] = bearModel.clone(user, socket);
-        scene.add(bears[user]);
-        var nameGeometry = new THREE.TextGeometry(user, {
-            size: 1,
-            height: 0.25,
-            curveSegments: 4,
-            font: "droid sans",
-            weight: "normal",
-            style: "normal",
-            bevelEnabled: true,
-            bevelThickness: 0.0625,
-            bevelSize: 0.0625
-        });
-        
-		nameGeometry.computeBoundingBox();
-		nameGeometry.computeVertexNormals();
-
-        var centerOffset = (nameGeometry.boundingBox.min.x - nameGeometry.boundingBox.max.x) * 0.5;
-		var nameMesh = new THREE.Mesh(nameGeometry, nameMaterial);
-        var name = new THREE.Object3D();
-        name.add(nameMesh);
-		bears[user].add(name);
-		name.position.x = centerOffset;
-		name.position.y = PLAYER_HEIGHT + 2;
-		name.position.z = 0;
-        name.rotateY(Math.PI);
+        if(user == userName){
+            if(arm.isEnabled() || arm.isReceiving()){
+                var sphere = new THREE.SphereGeometry(0.5, 4, 2);
+                var spine = new THREE.Object3D();
+                spine.position.x = 0;
+                spine.position.y = PLAYER_HEIGHT;
+                spine.position.z = 0;
+                pointer = new THREE.Mesh(sphere, nameMaterial);
+                spine.add(pointer);
+                bears[user].add(spine);
+            }
+        }
     }
 
     socket.on("loginFailed", function(){
@@ -441,13 +432,19 @@ function postScriptLoad(progress){
         }
     });
 
-    motion = new MotionInput(null, [
+    head = new MotionInput("head", null, [
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] }
     ], socket);
 
-    mouse = new MouseInput([
+    arm = new MotionInput("arm", null, [
+        { name: "heading", axes: [-MotionInput.HEADING] },
+        { name: "pitch", axes: [MotionInput.PITCH] },
+        { name: "roll", axes: [-MotionInput.ROLL] }
+    ], socket);
+
+    mouse = new MouseInput("mouse", [
         { axis: MouseInput.DX, scale: 0.4 },
         { axis: MouseInput.DY, scale: 0.4 },
         { axis: MouseInput.IY, min: -2, max: 1.3 }
@@ -458,12 +455,12 @@ function postScriptLoad(progress){
         { name: "jump", buttons: [2], commandDown: jump, dt: 250 },
     ], socket, renderer.domElement);
 
-    touch = new TouchInput(null, null, [
+    touch = new TouchInput("touch", null, null, [
         { name: "heading", axes: [TouchInput.IX0] },
         { name: "drive", axes: [-TouchInput.DY0] },
     ], socket, renderer.domElement);
 
-    keyboard = new KeyboardInput([
+    keyboard = new KeyboardInput("keyboard", [
         { name: "strafeLeft", buttons: [-65, -37] },
         { name: "strafeRight", buttons: [68, 39] },
         { name: "driveForward", buttons: [-87, -38] },
@@ -473,7 +470,7 @@ function postScriptLoad(progress){
         { name: "reload", buttons: [70], commandDown: reload, dt: 125 },
     ], socket);
 
-    gamepad = new GamepadInput([
+    gamepad = new GamepadInput("gamepad", [
         { axis: GamepadInput.LSX, deadzone: 0.1},
         { axis: GamepadInput.LSY, deadzone: 0.1},
         { axis: GamepadInput.RSX, deadzone: 0.1, scale: 1.5},
@@ -488,12 +485,12 @@ function postScriptLoad(progress){
         { name: "fire", buttons: [2], commandDown: fire, dt: 125 },
     ], socket);
 
-    speech = new SpeechInput([
+    speech = new SpeechInput("speech", [
         { keywords: ["jump"], command: jump }
     ], socket);
 
-    gamepad.addEventListener("gamepadconnected", function (id) {
-        if (!gamepad.isGamepadSet() && ask(fmt("Would you like to use this gamepad? \"$1\"", id), true)) {
+    gamepad.addEventListener("gamepadconnected", function (id){
+        if (!gamepad.isGamepadSet() && ask(fmt("Would you like to use this gamepad? \"$1\"", id), true)){
             gamepad.setGamepad(id);
         }
     }, false);
@@ -502,6 +499,7 @@ function postScriptLoad(progress){
         var e = ctrls[name + "Enable"],
             t = ctrls[name + "Transmit"],
             r = ctrls[name + "Receive"];
+            z = ctrls[name + "Zero"];
         e.addEventListener("change", function(){
             module.enable(e.checked);
             t.disabled = !e.checked;
@@ -515,6 +513,10 @@ function postScriptLoad(progress){
         r.addEventListener("change", function(){
             module.receive(r.checked);
         });
+        if(z){
+            z.addEventListener("click", module.zeroAxes.bind(module), false);
+        }
+
         module.enable(e.checked);
         module.transmit(t.checked);
         module.receive(r.checked);
@@ -524,15 +526,16 @@ function postScriptLoad(progress){
         }
     }
 
-    setupModuleEvents(gamepad, "gamepad");
-    setupModuleEvents(keyboard, "keyboard");
+    setupModuleEvents(head, "head");
+    setupModuleEvents(arm, "arm");
     setupModuleEvents(mouse, "mouse");
     setupModuleEvents(touch, "touch");
-    setupModuleEvents(motion, "motion");
+    setupModuleEvents(keyboard, "keyboard");
+    setupModuleEvents(gamepad, "gamepad");
     setupModuleEvents(speech, "speech");
 
 
-    window.addEventListener("resize", function () {
+    window.addEventListener("resize", function (){
         setSize(window.innerWidth, window.innerHeight);
     }, false);
 

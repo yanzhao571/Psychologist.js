@@ -1,7 +1,7 @@
 ﻿var socketControllers = require("./socketControllers"),
     log = require("./core").log;
 
-module.exports = function (socket) {
+module.exports = function (socket){
     log("New connection!");
     function handshake(controllerName){
         var found = false;

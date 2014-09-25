@@ -4,8 +4,9 @@
     "js/input/MotionInput.js"],
     motionTest);
 
-function motionTest() {
+function motionTest(){
     var output = document.getElementById("output"),
+        zeroButton = document.getElementById("zeroButton"),
         commands = [
             {name: "heading", axes: [MotionInput.HEADING]},
             {name: "pitch", axes: [MotionInput.PITCH]},
@@ -13,23 +14,22 @@ function motionTest() {
             {name: "x", axes: [MotionInput.ACCELX]},
             {name: "y", axes: [MotionInput.ACCELY]},
             {name: "z", axes: [MotionInput.ACCELZ]},
-            {name: "dheading", axes: [MotionInput.DHEADING]},
-            {name: "dpitch", axes: [MotionInput.DPITCH]},
-            {name: "droll", axes: [MotionInput.DROLL]},
-            {name: "iheading", axes: [MotionInput.IHEADING]},
-            {name: "ipitch", axes: [MotionInput.IPITCH]},
-            {name: "iroll", axes: [MotionInput.IROLL]},
+            {name: "alpha", axes: [MotionInput.ALPHA]},
+            {name: "beta", axes: [MotionInput.BETA]},
+            {name: "gamma", axes: [MotionInput.GAMMA]},
         ],
-        motion = new MotionInput(null, commands);
-        
+        motion = new MotionInput("motion", null, commands);
+
+    zeroButton.addEventListener("click", motion.zeroAxes.bind(motion), false);
+
     var lt = 0;
-    function loop(t) {
+    function loop(t){
         requestAnimationFrame(loop);
         motion.update((t - lt) * 0.001);
         lt = t;
         output.innerHTML = "";
             
-        for(var i = 0; i < commands.length; ++i) {
+        for(var i = 0; i < commands.length; ++i){
             var cmd = commands[i];
             var li = document.createElement("li");
             var v = motion.getValue(cmd.name);

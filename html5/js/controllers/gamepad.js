@@ -3,7 +3,7 @@
     "js/input/NetworkedInput.js",
     "js/input/GamepadInput.js"],
     gamepadTest);
-function gamepadTest() {
+function gamepadTest(){
     "use strict";
     var output = document.getElementById("output"),
         frame = 0,
@@ -33,18 +33,18 @@ function gamepadTest() {
             { name: "irhoriz", axes: [GamepadInput.IRSX] },
             { name: "irvert", axes: [GamepadInput.IRSY] }
         ],
-        gamepad = new GamepadInput(null, commands);
+        gamepad = new GamepadInput("gamepad", null, commands);
 
-    function jump(id) {
+    function jump(id){
         console.log(id, "jumped");
     }
 
-    function fire(id) {
+    function fire(id){
         console.log(id, "fired");
     }
 
-    gamepad.addEventListener("gamepadconnected", function (id) {
-        //if (confirm(id)) {
+    gamepad.addEventListener("gamepadconnected", function (id){
+        //if (confirm(id)){
             gamepad.setGamepad(id);
             console.log("connected", id);
         //}
@@ -52,13 +52,13 @@ function gamepadTest() {
 
     gamepad.addEventListener("gamepaddisconnected", console.log.bind(console, "disconnected"));
     var lt = 0;
-    function loop(t) {
+    function loop(t){
         requestAnimationFrame(loop);
         gamepad.update((t - lt) * 0.001);
         lt = t;
         if(gamepad.isGamepadSet()){
             output.innerHTML = "<ul>"
-            + commands.map(function (c) { return "<li>" + c.name + ": " + gamepad.isDown(c.name) + ", " + gamepad.getValue(c.name) + "</li>"; }).join("")
+            + commands.map(function (c){ return "<li>" + c.name + ": " + gamepad.isDown(c.name) + ", " + gamepad.getValue(c.name) + "</li>"; }).join("")
             + "</ul>";
         }
     }

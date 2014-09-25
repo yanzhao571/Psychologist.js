@@ -52,7 +52,7 @@ This is still a work in progress. Eventually, I'll have enumerations for each of
 
     // MouseInput can do buttons and three axes, 1 = mouse pointer x, 2 = mouse pointer
     // y, 3 = mouse wheel
-    var mouse = new MouseInput([
+    var mouse = new MouseInput("mouse", null, [
         // the name parameter allows us to look up the command state by name with isDown, 
         // isUp, and getValue
         { name: "yaw", axes: [-4] },
@@ -67,7 +67,7 @@ This is still a work in progress. Eventually, I'll have enumerations for each of
     // second finger's X is axis 3, etc.
     //
     // Areas of the screen can be defined as "buttons". Tap them or slide in out of them.
-    var touch = new TouchInput(1, [
+    var touch = new TouchInput("touch", null, [
         { name: "jumpButton", x: 0, y: 0, w: 50, h: 50},
         { name: "fireButton", x: 60, y: 0, w: 50, h: 50},
     ], [
@@ -82,7 +82,7 @@ This is still a work in progress. Eventually, I'll have enumerations for each of
     // phone's gyroscope returns confusing values), device acceleration, including gravity
     // (with x, y, and z compenents at axes 4, 5, and 6), and deltas of each value in the
     // next 6 axes thereafter. 
-    var motion = new MotionInput([
+    var motion = new MotionInput("motion", null, [
         { name: "yaw", axes: [-7] },
         { name: "pitch", axes: [8] },
         { name: "roll", axes: [-9] }
@@ -91,7 +91,7 @@ This is still a work in progress. Eventually, I'll have enumerations for each of
 
     // This one should be obvious. But note that these button values are keyCodes directly
     // and are not 1-based indices.
-    var keyboard = new KeyboardInput([
+    var keyboard = new KeyboardInput("keyboard", [
         { name: "strafeLeft", buttons: [-65] },
         { name: "strafeRight", buttons: [68] },
         { name: "driveForward", buttons: [-87] },
@@ -107,7 +107,7 @@ This is still a work in progress. Eventually, I'll have enumerations for each of
     // are familiar with it, you should understand what the axes and buttons mean. Also,
     // the axes can have deadzone ranges set, where values at +- the deadzone value are
     // registered as 0.
-    var gamepad = new GamepadInput([
+    var gamepad = new GamepadInput("gamepad", null, [
         { name: "strafe", axes: [1], deadzone: 0.1 },
         { name: "drive", axes: [2], deadzone: 0.1 },
         { name: "yaw", axes: [-3], deadzone: 0.1 },
@@ -122,7 +122,7 @@ This is still a work in progress. Eventually, I'll have enumerations for each of
     // sentences that activate the command. Use multiple entries in the array to be able
     // to have multiple phrases execute the command. Useful when the phrase can be
     // misheard by the speech recognition engine.
-    var speech = new SpeechInput([
+    var speech = new SpeechInput("speech", [
         { keywords: ["jump"], command: jump }
     ], socket);
 
