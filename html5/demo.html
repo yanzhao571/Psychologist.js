@@ -67,11 +67,11 @@
                 </thead>
                 <tbody id="inputOptions">
                     <tr>
-                        <td>Gamepad</td>
-                        <td><input type="checkbox" id="gamepadEnable" checked/></td>
-                        <td><input type="checkbox" id="gamepadTransmit" checked /></td>
-                        <td><input type="checkbox" id="gamepadReceive" checked /></td>
-                        <td><a class="button" id="gamepadZero">Zero</a></td>
+                        <td>Speech</td>
+                        <td><input type="checkbox" id="speechEnable" /></td>
+                        <td><input type="checkbox" id="speechTransmit" /></td>
+                        <td><input type="checkbox" id="speechReceive" /></td>
+                        <td></td>
                     </tr>
                     <tr>
                         <td>Keyboard</td>
@@ -95,6 +95,13 @@
                         <td><a class="button" id="touchZero">Zero</a></td>
                     </tr>
                     <tr>
+                        <td>Gamepad</td>
+                        <td><input type="checkbox" id="gamepadEnable" checked /></td>
+                        <td><input type="checkbox" id="gamepadTransmit" checked /></td>
+                        <td><input type="checkbox" id="gamepadReceive" checked /></td>
+                        <td><a class="button" id="gamepadZero">Zero</a></td>
+                    </tr>
+                    <tr>
                         <td>Head</td>
                         <td><input type="checkbox" id="headEnable" checked /></td>
                         <td><input type="checkbox" id="headTransmit" checked /></td>
@@ -107,13 +114,6 @@
                         <td><input type="checkbox" id="armTransmit" checked /></td>
                         <td><input type="checkbox" id="armReceive" checked /></td>
                         <td><a class="button" id="armZero">Zero</a></td>
-                    </tr>
-                    <tr>
-                        <td>Speech</td>
-                        <td><input type="checkbox" id="speechEnable" /></td>
-                        <td><input type="checkbox" id="speechTransmit" /></td>
-                        <td><input type="checkbox" id="speechReceive" /></td>
-                        <td></td>
                     </tr>
                 </tbody>
             </table>
@@ -208,7 +208,7 @@
         </div>
         <a class="button closeSectionButton">Close</a>
     </section>
-    <script type="text/javascript" src="js/include.js"></script>
+    <script type="text/javascript" src="js/psychologist.js"></script>
     <script type="text/javascript" src="js/controllers/demo.js"></script>
 </body>
 </html>
