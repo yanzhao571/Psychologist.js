@@ -3,6 +3,7 @@ var fs = require("fs"),
     mime = require("mime"),
     url = require("url"),
     stream = require("stream"),
+    zlib = require("zlib"),
     core = require("./core.js"),
     routes = require("./controllers.js"),
     filePattern = /([^?]+)(\?([^?]+))?/;
@@ -25,7 +26,7 @@ function serverError(res, url, code) {
     res.end(msg);
 }
 
-function matchController(res, url, method) {
+function matchController(req, res, url, method) {
     var found = false;
     for (var i = 0; i < routes.length && !found; ++i) {
         var matches = url.match(routes[i].pattern);
@@ -39,8 +40,8 @@ function matchController(res, url, method) {
             else{
                 handler(
                     matches,
-                    sendData.bind(this, res),
-                    sendStaticFile.bind(this, res, url),
+                    sendData.bind(this, req, res),
+                    sendStaticFile.bind(this, req, res, url),
                     serverError.bind(this, res, url)
                 );
             }
@@ -49,21 +50,37 @@ function matchController(res, url, method) {
     return found;
 }
 
-function sendStaticFile(res, url, path) {    
+function sendStaticFile(req, res, url, path) {
+    var useGZIP = req && req.headers && req.headers["accept-encoding"].indexOf("gzip") > -1;
+    var mimeType = mime.lookup(path);
+    var send = function(p){
+        fs.stat(p, function(err, stats){
+            if(err){
+                serverError(res, url, 500, err);
+            }
+            else{
+                sendData(req, res, mimeType, fs.createReadStream(p), stats.size);
+            }
+        });
+    };
     fs.exists(path, function (yes) {
         if (yes) {
-            try{                
-                fs.stat(path, function(err, stats){
-                    if(err){
-                        serverError(res, url, 500, err);
+            if(useGZIP){
+                var t = path + ".gz";
+                fs.exists(t, function(yes){
+                    if(yes){
+                        send(t);
                     }
                     else{
-                        sendData(res, mime.lookup(path), fs.createReadStream(path), stats.size);
+                        var f = fs.createReadStream(path);
+                        var z = zlib.createGzip();
+                        var g = fs.createWriteStream(t);
+                        f.pipe(z).pipe(g).on("finish", send.bind(this, t)).on("error", serverError.bind(this, res, url, 500, path));
                     }
                 });
-            }
-            catch(exp){
-                serverError(res, url, 403, exp);
+            }             
+            else{
+                send(path);
             }
         }
         else {
@@ -72,32 +89,57 @@ function sendStaticFile(res, url, path) {
     });
 }
 
-function sendData(res, mimeType, data, length) {
+function sendData(req, res, mimeType, data, length) {
+    var useGZIP = req && req.headers && req.headers["accept-encoding"].indexOf("gzip") > -1;
     if (!mimeType) {
         res.writeHead(415);
         res.end();
     }
     else {
-        res.writeHead(200, {
-            "Content-Type": mimeType,
-            "Content-Length": length,
-            "Connection": "keep-alive"
-        });
+        var headers = {
+            "content-type": mimeType,
+            "connection": "keep-alive"
+        };
+
+        if(useGZIP){
+            headers["content-encoding"] = "gzip";
+        }
+
         if(data instanceof stream.Readable){
+            headers["content-length"] = length;
+            res.writeHead(200, headers);
             data.pipe(res);
         }
         else{
-            res.end(data);
+            var send = function(d){
+                headers["content-length"] = d.length;
+                res.writeHead(200, headers);
+                res.end(d);
+            }
+            if(useGZIP){
+                core.log("static gzip");
+                zlib.gzip(data, function(err, data){
+                    if(err){
+                        serverError(res, req.url, 500);
+                    }
+                    else{
+                        send(data);
+                    }
+                });
+            }
+            else{
+                send(data);
+            }
         }
     }
 }
 
 function serveRequest(target, req, res) {
-    if (!matchController(res, req.url, req.method) && req.method == "GET") {
+    if (!matchController(req, res, req.url, req.method) && req.method == "GET") {
         if (req.url.indexOf("..") == -1) {
             var path = target + req.url,
                 file = path.match(filePattern)[1];
-            sendStaticFile(res, req.url, file);
+            sendStaticFile(req, res, req.url, file);
         }
         else {
             serverError(res, req.url, 403);
