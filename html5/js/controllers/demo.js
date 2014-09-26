@@ -71,7 +71,8 @@ function postScriptLoad(progress){
         }),
         camera, effect, drawDistance = 250,
         scene = new THREE.Scene(),
-        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer = new THREE.WebGLRenderer({ antialias: true }),
+        repeater = new SpeechOutput.Character();
 
     socket.on("handshakeFailed", console.warn.bind(console));
     socket.emit("handshake", "demo");
@@ -486,7 +487,8 @@ function postScriptLoad(progress){
     ], socket);
 
     speech = new SpeechInput("speech", [
-        { keywords: ["jump"], command: jump }
+        { keywords: ["jump"], command: jump },
+        { preamble: true, keywords: ["say"], command: repeater.speak.bind(repeater) }
     ], socket);
 
     gamepad.addEventListener("gamepadconnected", function (id){

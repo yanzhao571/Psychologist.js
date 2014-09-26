@@ -25,10 +25,10 @@
     Character: function(options){
         var msg = new SpeechSynthesisUtterance();
         options = options || {};
-        msg.voice = this.voices[Math.floor(pickRandomOption(options, "voice", 0, this.voices.length))];
-        msg.volume = pickRandomOption(options, "volume", 0, 1);
-        msg.rate = pickRandomOption(options, "rate", 0.1, 10);
-        msg.pitch = pickRandomOption(options, "pitch", 0, 2);
+        msg.voice = SpeechOutput.voices[Math.floor(SpeechOutput.pickRandomOption(options, "voice", 0, SpeechOutput.voices.length))];
+        msg.volume = SpeechOutput.pickRandomOption(options, "volume", 0.5, 1);
+        msg.rate = SpeechOutput.pickRandomOption(options, "rate", 0.1, 5);
+        msg.pitch = SpeechOutput.pickRandomOption(options, "pitch", 0, 2);
 
         this.speak = function(txt, callback){
             msg.text = txt;

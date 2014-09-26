@@ -69,10 +69,10 @@ function SpeechInput(name, commands, socket, stopAfterEnd){
     }
 
     this.check = function(){
-        if(enabled && transmitting && !running){
+        if((enabled || transmitting) && !running){
             this.start();
         }
-        else if((!enabled || !transmitting) && running){
+        else if(!enabled && !transmitting && running){
             this.stop();
         }
     }
@@ -124,17 +124,19 @@ function SpeechInput(name, commands, socket, stopAfterEnd){
     };
 
     function executeCommand(command){
-        var candidates = commands.filter(function(cmd){ 
-            return cmd 
-                && cmd.keywords 
-                && cmd.keywords.indexOf 
-                && cmd.keywords.indexOf(command) > -1;
-        });
-        if(candidates.length == 0){
-            console.log("Unknown command: " + command);
+        var found = false;
+        for(var i = 0; i < commands.length && !found; ++i){
+            var cmd = commands[i];
+            for(var j = 0; j < cmd.keywords.length && !found; ++j){
+                if(cmd.preamble && command.indexOf(cmd.keywords[j]) == 0
+                    || cmd.keywords[j] == command){
+                    found = true;
+                    cmd.command(cmd.preamble && command.substring(cmd.keywords[j].length));
+                }
+            }
         }
-        else{
-            candidates[0].command();
+        if(!found){
+            console.log("Unknown command: " + command);
         }
     }
 
