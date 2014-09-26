@@ -52,13 +52,20 @@ function readFiles(files, error, success, index, accum){
         success(accum);
     }
     else{
-        fs.readFile(files[index], {encoding: "utf8"}, function(err, file){
-            if(err){
-                error(err);
+        fs.exists(files[index], function(yes){
+            if(yes){
+                fs.readFile(files[index], {encoding: "utf8"}, function(err, file){
+                    if(err){
+                        error(err);
+                    }
+                    else{
+                        accum.push(file);
+                        setImmediate(readFiles, files, error, success, index + 1, accum);
+                    }
+                });
             }
             else{
-                accum.push(file);
-                setImmediate(readFiles, files, error, success, index + 1, accum);
+                error(files[index] + " does not exist");
             }
         });
     }
