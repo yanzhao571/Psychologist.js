@@ -2,19 +2,33 @@
     fs = require("fs");
 
 module.exports = {
-    build: function(done, error, templateFile){
+    build: function(done, serverError, templateFile){
         var rest = Array.prototype.slice.call(arguments, 3);
-        this.dump(templateFile, done, error, function(file){
+        this.dump(templateFile, done, null, serverError, function(file){
             return fmt.bind(global, file).apply(global, rest);
         });
     },
-    dump: function(src, done, error, format){
-        fs.readFile(src, {encoding: "utf8"}, function (err, file){
-            if (err){
-                error(fmt("Couldn't find template file [$1]", src), err);
+    dump: function(path, sendData, sendStaticFile, serverError, format){
+        fs.exists(path, function(yes){
+            if(!yes){
+                serverError(404);
+            }
+            else if(format){
+                fs.readFile(path, {encoding: "utf8"}, function (err, file){
+                    if (err){
+                        serverError(500, err);
+                    }
+                    else{
+                        var data = format(file);
+                        sendData("text/html", data, data.length);
+                    }
+                });
+            }
+            else if(sendStaticFile){
+                sendStaticFile(path);
             }
             else{
-                done("text/html", format ? format(file) : file);
+                serverError(500, "no output function");
             }
         });
     }
