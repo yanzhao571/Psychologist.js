@@ -461,13 +461,13 @@ function postScriptLoad(progress){
     ], socket, renderer.domElement);
 
     keyboard = new KeyboardInput("keyboard", [
-        { name: "strafeLeft", buttons: [-65, -37] },
-        { name: "strafeRight", buttons: [68, 39] },
-        { name: "driveForward", buttons: [-87, -38] },
-        { name: "driveBack", buttons: [83, 40] },
-        { name: "jump", buttons: [32], commandDown: jump, dt: 250 },
-        { name: "fire", buttons: [17], commandDown: fire, dt: 125 },
-        { name: "reload", buttons: [70], commandDown: reload, dt: 125 },
+        { name: "strafeLeft", buttons: [-KeyboardInput.A, -KeyboardInput.LEFTARROW] },
+        { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHTARROW] },
+        { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
+        { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
+        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 250 },
+        { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 125 },
+        { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 125 },
     ], socket);
 
     gamepad = new GamepadInput("gamepad", [
