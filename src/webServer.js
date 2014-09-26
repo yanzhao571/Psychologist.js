@@ -20,7 +20,10 @@ function serverError(res, url, code) {
         console.error("Error", msg);
     }
     else{
-        console.warn("Warning", msg);
+        // so many of these are just bots trying to exploit open proxies
+        // that it will fill up the logs with junk and before long we won't
+        // have any disk space left.
+        // console.warn("Warning", msg);
     }
 
     res.writeHead(code);
