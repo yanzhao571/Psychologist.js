@@ -4,6 +4,7 @@
     https = require("https"),
     path = require("path"),
     socketio = require("socket.io"),
+    zlib = require("zlib"),
     log = require("./src/core").log,
     starter = require("./src/starter"),
     webServer = require("./src/webServer"),
@@ -17,6 +18,34 @@
     port = 8080,
     host = options.h || "localhost",
     app, redir, io;
+
+var files = fs.readdirSync(srcDir).map(function(f){ return srcDir + "/" + f; });
+var toZip = [];
+while(files.length > 0){
+    var file = files.shift();
+    var stat = fs.statSync(file);
+    if(stat.isDirectory()){
+        var nextfiles = fs.readdirSync(file);
+        for(var i = 0; i < nextfiles.length; ++i){
+            files.push(file + "/" + nextfiles[i]);
+        }
+    }
+    else if(stat.isFile()){
+        if(/\.gz$/.test(file)){
+            fs.unlinkSync(file);
+        }
+        else{
+            toZip.push(file);
+        }
+    }
+}
+
+toZip.forEach(function(file){
+    console.log("zipping file", file);
+    zlib.gzip(fs.readFileSync(file), function(err, zip){
+        fs.writeFileSync(file + ".gz", zip)
+    });
+});
 
 function start(key, cert, ca){
     var useSecure = !!(key && cert && ca);

@@ -1,4 +1,5 @@
 var isDebug = false,
+    isLocal = document.location.hostname == "localhost",
 	ctrls = findEverything(),
     tabs = makeTabSet(ctrls.options),
 	PLAYER_HEIGHT = 6,
@@ -6,10 +7,10 @@ var isDebug = false,
     login,
 	prog = new LoadingProgress(
 		"manifest/js/controllers/demo.js?v2",
-		"lib/three/three.min.js",
+		"lib/three/three.js",
 		"lib/three/StereoEffect.js",
-		"lib/three/OculusRiftEffect.min.js",
-		"lib/three/AnaglyphEffect.min.js",
+		"lib/three/OculusRiftEffect.js",
+		"lib/three/AnaglyphEffect.js",
 		"lib/three/ColladaLoader.js",
 		"lib/droid_sans_regular.typeface.js",
 		"/socket.io/socket.io.js",
@@ -269,12 +270,12 @@ function postScriptLoad(progress){
             this.parentElement.style.display = "none";
             ctrls.menuButton.style.display = "";
         }, false);
-        //if(!isDebug && closers[i].parentElement == ctrls.options){
-        //    closers[i].addEventListener("click", function(){
-        //        requestFullScreen();
-        //        mouse.requestPointerLock();
-        //    });
-        //}
+        if(!isDebug && !isLocal && closers[i].parentElement == ctrls.options){
+            closers[i].addEventListener("click", function(){
+                requestFullScreen();
+                mouse.requestPointerLock();
+            });
+        }
     }
 
     ctrls.menuButton.addEventListener("click", function(){

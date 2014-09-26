@@ -6,7 +6,8 @@ var fs = require("fs"),
     zlib = require("zlib"),
     core = require("./core.js"),
     routes = require("./controllers.js"),
-    filePattern = /([^?]+)(\?([^?]+))?/;
+    filePattern = /([^?]+)(\?([^?]+))?/,
+    IS_LOCAL = false;
 
 function serverError(res, url, code) {
     var rest = Array.prototype.slice.call(arguments, 3),
@@ -68,7 +69,7 @@ function sendStaticFile(req, res, url, path) {
             if(useGZIP){
                 var t = path + ".gz";
                 fs.exists(t, function(yes){
-                    if(yes){
+                    if(!IS_LOCAL && yes){
                         send(t);
                     }
                     else{
@@ -174,7 +175,8 @@ function isNumber(v) { return isFinite(v) && !isNaN(v); }
         - number: the port number to redirect to, keeping the request the same, otherwise.
         - string: the directory from which to serve static files.
 */
-module.exports = function (host, target) {
+module.exports = function webServer(host, target) {
+    IS_LOCAL = host == "localhost";
     if (!isString(host)) {
         throw new Error("`host` parameter not a supported type. Excpected string. Given: " + host + ", type: " + typeof (host));
     }
