@@ -2,10 +2,10 @@
     buttonBounds = buttonBounds || [];
     for(var i = buttonBounds.length - 1; i >= 0; --i){
         var b = buttonBounds[i];
-        if(b["x"] == null
-            || b["y"] == null
-            || b["w"] == null
-            || b["h"] == null){
+        if(b.x == null
+            || b.y == null
+            || b.w == null
+            || b.h == null){
             throw new Error("button bounds need to be defined as {x, y, w, h} objects. Object index " + i + " is not one.");
         }
         else{

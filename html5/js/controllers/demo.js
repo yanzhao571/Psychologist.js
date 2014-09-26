@@ -6,7 +6,6 @@ var isDebug = false,
     login,
 	prog = new LoadingProgress(
 		"manifest/js/controllers/demo.js?v2",
-		"js/psychologist.js",
 		"lib/three/three.min.js",
 		"lib/three/StereoEffect.js",
 		"lib/three/OculusRiftEffect.min.js",

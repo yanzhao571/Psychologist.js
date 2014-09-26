@@ -4,7 +4,6 @@
     "lib/Blob.min.js",
     "lib/canvas-toBlob.min.js",
     "lib/FileSaver.min.js",
-    "js/psychologist.js",
     "js/input/NetworkedInput.js",
     "js/input/MotionInput.js",
     "js/input/SpeechInput.js",

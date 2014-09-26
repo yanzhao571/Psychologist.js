@@ -1,8 +1,7 @@
 ﻿include(0,
-    "js/psychologist.js",
-    "js/input/NetworkedInput.js",
+    ["js/input/NetworkedInput.js",
     "js/input/KeyboardInput.js",
-    "js/camera.js",
+    "js/camera.js"],
     function (){
         var ball = document.getElementById("ball"),
             picture = document.getElementById("picture"),

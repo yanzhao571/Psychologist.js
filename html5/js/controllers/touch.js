@@ -1,6 +1,5 @@
 ﻿include(0,
-    ["js/psychologist.js",
-    "js/input/NetworkedInput.js",
+    ["js/input/NetworkedInput.js",
     "js/input/TouchInput.js"],
     touchTest);
 function touchTest(){
