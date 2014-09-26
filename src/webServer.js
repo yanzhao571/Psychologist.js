@@ -51,8 +51,14 @@ function matchController(req, res, url, method) {
     return found;
 }
 
+function useGZIP(req){
+    return req 
+        && req.headers 
+        && req.headers["accept-encoding"] 
+        && req.headers["accept-encoding"].indexOf("gzip") > -1;
+}
+
 function sendStaticFile(req, res, url, path) {
-    var useGZIP = req && req.headers && req.headers["accept-encoding"].indexOf("gzip") > -1;
     var mimeType = mime.lookup(path);
     var send = function(p){
         fs.stat(p, function(err, stats){
@@ -66,7 +72,7 @@ function sendStaticFile(req, res, url, path) {
     };
     fs.exists(path, function (yes) {
         if (yes) {
-            if(useGZIP){
+            if(useGZIP(req)){
                 var t = path + ".gz";
                 fs.exists(t, function(yes){
                     if(!IS_LOCAL && yes){
@@ -91,7 +97,6 @@ function sendStaticFile(req, res, url, path) {
 }
 
 function sendData(req, res, mimeType, data, length) {
-    var useGZIP = req && req.headers && req.headers["accept-encoding"].indexOf("gzip") > -1;
     if (!mimeType) {
         res.writeHead(415);
         res.end();
@@ -102,7 +107,7 @@ function sendData(req, res, mimeType, data, length) {
             "connection": "keep-alive"
         };
 
-        if(useGZIP){
+        if(useGZIP(req)){
             headers["content-encoding"] = "gzip";
         }
 
@@ -117,7 +122,7 @@ function sendData(req, res, mimeType, data, length) {
                 res.writeHead(200, headers);
                 res.end(d);
             }
-            if(useGZIP){
+            if(useGZIP(req)){
                 core.log("static gzip");
                 zlib.gzip(data, function(err, data){
                     if(err){
