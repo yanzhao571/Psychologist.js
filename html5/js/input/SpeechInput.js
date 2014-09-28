@@ -30,10 +30,6 @@
         The `command` property is the callback function that will be executed. It takes no
             parameters.
 
-        The optional `stopAfterEnd` parameter is a boolean indicating whether or not the
-            command listening should restart automatically after the browser  automatically
-            ends it from the user not speaking any commands. It defaults to false.
-
         The `socket` (optional) parameter is a WebSocket connecting back to the command
         proxy server.
 
@@ -50,11 +46,10 @@
             null if setup was successful.
 
 */
-function SpeechInput(name, commands, socket, stopAfterEnd){
+function SpeechInput(name, commands, socket){
     var command = "",
         commandTimeout,
         running = false,
-        restart = !stopAfterEnd,
         recognition = null,
         available = null,
         errorMessage = null,
@@ -69,10 +64,10 @@ function SpeechInput(name, commands, socket, stopAfterEnd){
     }
 
     this.check = function(){
-        if((enabled || transmitting) && !running){
+        if(enabled && !running){
             this.start();
         }
-        else if(!enabled && !transmitting && running){
+        else if(!enabled && running){
             this.stop();
         }
     }
@@ -96,7 +91,8 @@ function SpeechInput(name, commands, socket, stopAfterEnd){
             return warn();
         }
         else if(!running){
-            restart = !stopAfterEnd;
+            running = true;
+            console.log("starting");
             recognition.start();
             return true;
         }
@@ -108,7 +104,6 @@ function SpeechInput(name, commands, socket, stopAfterEnd){
             return warn();
         }
         if(running){
-            restart = false;
             recognition.stop();
             return true;
         }
@@ -165,21 +160,20 @@ function SpeechInput(name, commands, socket, stopAfterEnd){
         recognition.lang = "en-US";
 
         recognition.addEventListener("start", function(){
-            running = true;
+            console.log("started");
             command = ""; 
         }, true);
 
         recognition.addEventListener("error", function(event){
             running = false;
+            console.log("error", event);
             command = "speech error";
         }, true);
 
         recognition.addEventListener("end", function(){
             running = false;
+            console.log("end", event);
             command = "speech ended";
-            if(restart){
-                recognition.start();
-            }
         }, true);
 
         recognition.addEventListener("result", function(event){ 
