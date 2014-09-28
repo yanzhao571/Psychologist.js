@@ -338,10 +338,25 @@ function postScriptLoad(progress){
     function fire(){
     }
 
+    var lastText;
+
     function chat(text, isDone){
-        console.log(text, isDone);
-        if(isDone){
-            repeater.speak(text);
+        if(bears[userName]){
+            if(lastText){
+                bears[userName].remove(lastText);
+            }
+            if(isDone){
+                repeater.speak(text);
+                lastText = null;
+            }
+            else{
+                var textObj= makeText(text, 0.125);
+                lastText = textObj;
+		        bears[userName].add(textObj);
+		        textObj.position.x = textObj.children[0].geometry.boundingBox.min.x - textObj.children[0].geometry.boundingBox.max.x + 0.75;
+		        textObj.position.y = PLAYER_HEIGHT;
+		        textObj.position.z = -2;
+            }
         }
     }
 
@@ -355,29 +370,34 @@ function postScriptLoad(progress){
         }
     }
 
-    function addUser(user){
-        bears[user] = bearModel.clone(user, socket);
-        scene.add(bears[user]);
-        var nameGeometry = new THREE.TextGeometry(user, {
-            size: 1,
-            height: 0.25,
+    function makeText(text, size){       
+        var textGeometry = new THREE.TextGeometry(text, {
+            size: size,
+            height: size * 0.25,
             curveSegments: 4,
             font: "droid sans",
             weight: "normal",
             style: "normal",
             bevelEnabled: true,
-            bevelThickness: 0.0625,
-            bevelSize: 0.0625
+            bevelThickness: size * 0.0625,
+            bevelSize: size * 0.0625
         });
         
-		nameGeometry.computeBoundingBox();
-		nameGeometry.computeVertexNormals();
+		textGeometry.computeBoundingBox();
+		textGeometry.computeVertexNormals();
 
-        var centerOffset = (nameGeometry.boundingBox.max.x - nameGeometry.boundingBox.min.x) * 0.5;
-		var nameMesh = new THREE.Mesh(nameGeometry, nameMaterial);
-        var name = new THREE.Object3D();
-        name.add(nameMesh);
+		var textMesh = new THREE.Mesh(textGeometry, nameMaterial);
+        var textObj = new THREE.Object3D();
+        textObj.add(textMesh);
+        return textObj;
+    }
+
+    function addUser(user){
+        bears[user] = bearModel.clone(user, socket);
+        scene.add(bears[user]);
+        var name = makeText(user, 1);
 		bears[user].add(name);
+        var centerOffset = (name.children[0].geometry.boundingBox.max.x - name.children[0].geometry.boundingBox.min.x) * 0.5;
 		name.position.x = centerOffset;
 		name.position.y = PLAYER_HEIGHT + 2;
 		name.position.z = 0;
