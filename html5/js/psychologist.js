@@ -345,6 +345,9 @@ function makeTabSet(elem){
             headerCell.addEventListener("click", selectTab);
 		}
 	}
+    for(var i = 0; i < headerRow.children.length; ++i){
+        headerRow.children[i].style.width = pct(100 / headerRow.children.length);
+    }
 	bodyCell.colSpan = headerRow.children.length;
 	return table;
 }
