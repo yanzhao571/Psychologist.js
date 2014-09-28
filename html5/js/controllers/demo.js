@@ -338,13 +338,11 @@ function postScriptLoad(progress){
     function fire(){
     }
 
-    function chat(){
-        keyboard.doTextEntry(function(text, intermediate){
-            console.log(text, intermediate);
-            if(!intermediate){
-                repeater.speak(text);
-            }
-        });
+    function chat(text, isDone){
+        console.log(text, isDone);
+        if(isDone){
+            repeater.speak(text);
+        }
     }
 
     function reload(){
@@ -477,7 +475,7 @@ function postScriptLoad(progress){
         { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 125 },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 125 },
-        { name: "chat", buttons: [KeyboardInput.T], commandDown: chat, dt: 1000 },
+        { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: chat, dt: 1000 },
     ], socket);
 
     gamepad = new GamepadInput("gamepad", [

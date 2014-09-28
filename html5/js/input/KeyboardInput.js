@@ -1,4 +1,18 @@
 ﻿function KeyboardInput(name, commands, socket, DOMElement){
+
+    for(var i = 0; i < commands.length; ++i){
+        var cmd = commands[i];
+        if(cmd.preamble){
+            cmd.commandUp = function(thunk){
+                textEntry = true;
+                text = "";
+                insertionPoint = 0;
+                onTextEntryComplete = thunk;
+                this.enable(false);
+            }.bind(this, cmd.commandUp);
+        }
+    }
+
     NetworkedInput.call(this, name, null, commands, socket, 0, 0);
 
     var textEntry = false,
@@ -10,7 +24,7 @@
         if(textEntry && stateChange){
             if(event.keyCode == KeyboardInput.ENTER){
                 textEntry = false;
-                onTextEntryComplete(text, false);
+                onTextEntryComplete(text, true);
                 this.enable(true);
             }
             else{
@@ -22,7 +36,6 @@
                 if(key == KeyboardInput.BACKSPACE){
                     text = text.substring(0, insertionPoint - 1) + text.substring(insertionPoint);
                     --insertionPoint;
-                    event.preventDefault();
                 }
                 else if(key == KeyboardInput.DELETE){
                     text = text.substring(0, insertionPoint) + text.substring(insertionPoint + 1);
@@ -49,21 +62,14 @@
                 }
 
                 insertionPoint = Math.max(0, Math.min(text.length, insertionPoint));
-                onTextEntryComplete(text, true);
+                onTextEntryComplete(text, false);
+                event.preventDefault();
             }
         }
         else{
             this.setButton(event.keyCode, stateChange);
         }
     }
-
-    this.doTextEntry = function(thunk){
-        textEntry = true;
-        text = "";
-        insertionPoint = 0;
-        onTextEntryComplete = thunk;
-        this.enable(false);
-    };
 
     DOMElement = DOMElement || document;
     DOMElement.addEventListener("keydown", execute.bind(this, true), false);
