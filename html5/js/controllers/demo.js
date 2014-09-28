@@ -216,7 +216,7 @@ function postScriptLoad(progress){
             var ph = arm.getValue("heading") - heading + Math.PI / 2;
             var pr = arm.getValue("roll");
             var pp = arm.getValue("pitch");
-            pointer.position.set(-10 * Math.sin(ph) * Math.cos(pr),  -10 * Math.sin(pr), -10 * Math.cos(ph) * Math.cos(pr));
+            pointer.setRotationFromEuler(new THREE.Euler(0, ph, 0, "YZX"));
         }
 
         var x = camera.position.x / 10,
@@ -338,6 +338,15 @@ function postScriptLoad(progress){
     function fire(){
     }
 
+    function chat(){
+        keyboard.doTextEntry(function(text, intermediate){
+            console.log(text, intermediate);
+            if(!intermediate){
+                repeater.speak(text);
+            }
+        });
+    }
+
     function reload(){
         if (isFullScreenMode()){
             document.location = document.location.href;
@@ -376,17 +385,16 @@ function postScriptLoad(progress){
 		name.position.z = 0;
         name.rotateY(Math.PI);
 
-        if(user == userName){
-            if(arm.isEnabled() || arm.isReceiving()){
-                var sphere = new THREE.SphereGeometry(0.5, 4, 2);
-                var spine = new THREE.Object3D();
-                spine.position.x = 0;
-                spine.position.y = PLAYER_HEIGHT;
-                spine.position.z = 0;
-                pointer = new THREE.Mesh(sphere, nameMaterial);
-                spine.add(pointer);
-                bears[user].add(spine);
-            }
+        if(user == userName && (arm.isEnabled() || arm.isReceiving())){
+            var sphere = new THREE.SphereGeometry(0.5, 4, 2);
+            var spine = new THREE.Object3D();
+            spine.position.x = 0;
+            spine.position.y = PLAYER_HEIGHT;
+            spine.position.z = 0;
+            pointer = new THREE.Mesh(sphere, nameMaterial);
+            spine.add(pointer);
+            bears[user].add(spine);
+            pointer = spine;
         }
     }
 
@@ -469,6 +477,7 @@ function postScriptLoad(progress){
         { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 125 },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 125 },
+        { name: "chat", buttons: [KeyboardInput.T], commandDown: chat, dt: 1000 },
     ], socket);
 
     gamepad = new GamepadInput("gamepad", [

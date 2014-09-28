@@ -1,9 +1,69 @@
 ﻿function KeyboardInput(name, commands, socket, DOMElement){
     NetworkedInput.call(this, name, null, commands, socket, 0, 0);
+
+    var textEntry = false,
+        onTextEntryComplete = null,
+        text = null,
+        insertionPoint = null;
     
     function execute(stateChange, event){
-        this.setButton(event.keyCode, stateChange);
+        if(textEntry && stateChange){
+            if(event.keyCode == KeyboardInput.ENTER){
+                textEntry = false;
+                onTextEntryComplete(text, false);
+                this.enable(true);
+            }
+            else{
+                var key = event.keyCode;
+                if(KeyboardInput.NUMPAD0 <= key && key <= KeyboardInput.NUMPAD9){
+                    key += KeyboardInput.NUMBER0 - KeyboardInput.NUMPAD0;
+                }
+
+                if(key == KeyboardInput.BACKSPACE){
+                    text = text.substring(0, insertionPoint - 1) + text.substring(insertionPoint);
+                    --insertionPoint;
+                    event.preventDefault();
+                }
+                else if(key == KeyboardInput.DELETE){
+                    text = text.substring(0, insertionPoint) + text.substring(insertionPoint + 1);
+                }
+                else if(key == KeyboardInput.LEFTARROW){
+                    --insertionPoint;
+                }
+                else if(key == KeyboardInput.RIGHTARROW){
+                    ++insertionPoint;
+                }
+                else if(key == KeyboardInput.HOME){
+                    insertionPoint = 0;
+                }
+                else if(key == KeyboardInput.END){
+                    insertionPoint = text.length;
+                }
+                else if(event.shiftKey && KeyboardInput.UPPERCASE[key]){
+                    text = text.substring(0, insertionPoint) + KeyboardInput.UPPERCASE[key] + text.substring(insertionPoint);
+                    ++insertionPoint;
+                }
+                else if(!event.shiftKey && KeyboardInput.LOWERCASE[key]){
+                    text = text.substring(0, insertionPoint) + KeyboardInput.LOWERCASE[key] + text.substring(insertionPoint);
+                    ++insertionPoint;
+                }
+
+                insertionPoint = Math.max(0, Math.min(text.length, insertionPoint));
+                onTextEntryComplete(text, true);
+            }
+        }
+        else{
+            this.setButton(event.keyCode, stateChange);
+        }
     }
+
+    this.doTextEntry = function(thunk){
+        textEntry = true;
+        text = "";
+        insertionPoint = 0;
+        onTextEntryComplete = thunk;
+        this.enable(false);
+    };
 
     DOMElement = DOMElement || document;
     DOMElement.addEventListener("keydown", execute.bind(this, true), false);
@@ -21,8 +81,8 @@ KeyboardInput.ALT = 18;
 KeyboardInput.PAUSEBREAK = 19;
 KeyboardInput.CAPSLOCK = 20;
 KeyboardInput.ESCAPE = 27;
-KeyboardInput.PAGEUP = 33;
 KeyboardInput.SPACEBAR = 32;
+KeyboardInput.PAGEUP = 33;
 KeyboardInput.PAGEDOWN = 34;
 KeyboardInput.END = 35;
 KeyboardInput.HOME = 36;
@@ -112,6 +172,115 @@ KeyboardInput.BACKSLASH = 220;
 KeyboardInput.CLOSEBRACKET = 221;
 KeyboardInput.SINGLEQUOTE = 222;
 
+KeyboardInput.LOWERCASE = {};
+KeyboardInput.LOWERCASE[KeyboardInput.A] = "a";
+KeyboardInput.LOWERCASE[KeyboardInput.B] = "b";
+KeyboardInput.LOWERCASE[KeyboardInput.C] = "c";
+KeyboardInput.LOWERCASE[KeyboardInput.D] = "d";
+KeyboardInput.LOWERCASE[KeyboardInput.E] = "e";
+KeyboardInput.LOWERCASE[KeyboardInput.F] = "f";
+KeyboardInput.LOWERCASE[KeyboardInput.G] = "g";
+KeyboardInput.LOWERCASE[KeyboardInput.H] = "h";
+KeyboardInput.LOWERCASE[KeyboardInput.I] = "i";
+KeyboardInput.LOWERCASE[KeyboardInput.J] = "j";
+KeyboardInput.LOWERCASE[KeyboardInput.K] = "k";
+KeyboardInput.LOWERCASE[KeyboardInput.L] = "l";
+KeyboardInput.LOWERCASE[KeyboardInput.M] = "m";
+KeyboardInput.LOWERCASE[KeyboardInput.N] = "n";
+KeyboardInput.LOWERCASE[KeyboardInput.O] = "o";
+KeyboardInput.LOWERCASE[KeyboardInput.P] = "p";
+KeyboardInput.LOWERCASE[KeyboardInput.Q] = "q";
+KeyboardInput.LOWERCASE[KeyboardInput.R] = "r";
+KeyboardInput.LOWERCASE[KeyboardInput.S] = "s";
+KeyboardInput.LOWERCASE[KeyboardInput.T] = "t";
+KeyboardInput.LOWERCASE[KeyboardInput.U] = "u";
+KeyboardInput.LOWERCASE[KeyboardInput.V] = "v";
+KeyboardInput.LOWERCASE[KeyboardInput.W] = "w";
+KeyboardInput.LOWERCASE[KeyboardInput.X] = "x";
+KeyboardInput.LOWERCASE[KeyboardInput.Y] = "y";
+KeyboardInput.LOWERCASE[KeyboardInput.Z] = "z";
+KeyboardInput.LOWERCASE[KeyboardInput.SPACEBAR] = " ";
+KeyboardInput.LOWERCASE[KeyboardInput.NUMBER0] = "0";
+KeyboardInput.LOWERCASE[KeyboardInput.NUMBER1] = "1";
+KeyboardInput.LOWERCASE[KeyboardInput.NUMBER2] = "2";
+KeyboardInput.LOWERCASE[KeyboardInput.NUMBER3] = "3";
+KeyboardInput.LOWERCASE[KeyboardInput.NUMBER4] = "4";
+KeyboardInput.LOWERCASE[KeyboardInput.NUMBER5] = "5";
+KeyboardInput.LOWERCASE[KeyboardInput.NUMBER6] = "6";
+KeyboardInput.LOWERCASE[KeyboardInput.NUMBER7] = "7";
+KeyboardInput.LOWERCASE[KeyboardInput.NUMBER8] = "8";
+KeyboardInput.LOWERCASE[KeyboardInput.NUMBER9] = "9";
+KeyboardInput.LOWERCASE[KeyboardInput.MULTIPLY] = "*";
+KeyboardInput.LOWERCASE[KeyboardInput.ADD] = "+";
+KeyboardInput.LOWERCASE[KeyboardInput.SUBTRACT] = "-";
+KeyboardInput.LOWERCASE[KeyboardInput.DECIMALPOINT] = ".";
+KeyboardInput.LOWERCASE[KeyboardInput.DIVIDE] = "/";
+KeyboardInput.LOWERCASE[KeyboardInput.SEMICOLON] = ";";
+KeyboardInput.LOWERCASE[KeyboardInput.EQUALSIGN] = "=";
+KeyboardInput.LOWERCASE[KeyboardInput.COMMA] = ",";
+KeyboardInput.LOWERCASE[KeyboardInput.DASH] = "-";
+KeyboardInput.LOWERCASE[KeyboardInput.PERIOD] = ".";
+KeyboardInput.LOWERCASE[KeyboardInput.FORWARDSLASH] = "/";
+KeyboardInput.LOWERCASE[KeyboardInput.GRAVEACCENT] = "`";
+KeyboardInput.LOWERCASE[KeyboardInput.OPENBRACKET] = "[";
+KeyboardInput.LOWERCASE[KeyboardInput.BACKSLASH] = "\\";
+KeyboardInput.LOWERCASE[KeyboardInput.CLOSEBRACKET] = "]";
+KeyboardInput.LOWERCASE[KeyboardInput.SINGLEQUOTE] = "'";
+
+KeyboardInput.UPPERCASE = {};
+KeyboardInput.UPPERCASE[KeyboardInput.A] = "A";
+KeyboardInput.UPPERCASE[KeyboardInput.B] = "B";
+KeyboardInput.UPPERCASE[KeyboardInput.C] = "C";
+KeyboardInput.UPPERCASE[KeyboardInput.D] = "D";
+KeyboardInput.UPPERCASE[KeyboardInput.E] = "E";
+KeyboardInput.UPPERCASE[KeyboardInput.F] = "F";
+KeyboardInput.UPPERCASE[KeyboardInput.G] = "G";
+KeyboardInput.UPPERCASE[KeyboardInput.H] = "H";
+KeyboardInput.UPPERCASE[KeyboardInput.I] = "I";
+KeyboardInput.UPPERCASE[KeyboardInput.J] = "J";
+KeyboardInput.UPPERCASE[KeyboardInput.K] = "K";
+KeyboardInput.UPPERCASE[KeyboardInput.L] = "L";
+KeyboardInput.UPPERCASE[KeyboardInput.M] = "M";
+KeyboardInput.UPPERCASE[KeyboardInput.N] = "N";
+KeyboardInput.UPPERCASE[KeyboardInput.O] = "O";
+KeyboardInput.UPPERCASE[KeyboardInput.P] = "P";
+KeyboardInput.UPPERCASE[KeyboardInput.Q] = "Q";
+KeyboardInput.UPPERCASE[KeyboardInput.R] = "R";
+KeyboardInput.UPPERCASE[KeyboardInput.S] = "S";
+KeyboardInput.UPPERCASE[KeyboardInput.T] = "T";
+KeyboardInput.UPPERCASE[KeyboardInput.U] = "U";
+KeyboardInput.UPPERCASE[KeyboardInput.V] = "V";
+KeyboardInput.UPPERCASE[KeyboardInput.W] = "W";
+KeyboardInput.UPPERCASE[KeyboardInput.X] = "X";
+KeyboardInput.UPPERCASE[KeyboardInput.Y] = "Y";
+KeyboardInput.UPPERCASE[KeyboardInput.Z] = "Z";
+KeyboardInput.UPPERCASE[KeyboardInput.SPACEBAR] = " ";
+KeyboardInput.UPPERCASE[KeyboardInput.NUMBER0] = ")";
+KeyboardInput.UPPERCASE[KeyboardInput.NUMBER1] = "!";
+KeyboardInput.UPPERCASE[KeyboardInput.NUMBER2] = "@";
+KeyboardInput.UPPERCASE[KeyboardInput.NUMBER3] = "#";
+KeyboardInput.UPPERCASE[KeyboardInput.NUMBER4] = "$";
+KeyboardInput.UPPERCASE[KeyboardInput.NUMBER5] = "%";
+KeyboardInput.UPPERCASE[KeyboardInput.NUMBER6] = "^";
+KeyboardInput.UPPERCASE[KeyboardInput.NUMBER7] = "&";
+KeyboardInput.UPPERCASE[KeyboardInput.NUMBER8] = "*";
+KeyboardInput.UPPERCASE[KeyboardInput.NUMBER9] = "(";
+KeyboardInput.UPPERCASE[KeyboardInput.MULTIPLY] = "*";
+KeyboardInput.UPPERCASE[KeyboardInput.ADD] = "+";
+KeyboardInput.UPPERCASE[KeyboardInput.SUBTRACT] = "-";
+KeyboardInput.UPPERCASE[KeyboardInput.DECIMALPOINT] = ".";
+KeyboardInput.UPPERCASE[KeyboardInput.DIVIDE] = "/";
+KeyboardInput.UPPERCASE[KeyboardInput.SEMICOLON] = ":";
+KeyboardInput.UPPERCASE[KeyboardInput.EQUALSIGN] = "+";
+KeyboardInput.UPPERCASE[KeyboardInput.COMMA] = "<";
+KeyboardInput.UPPERCASE[KeyboardInput.DASH] = "_";
+KeyboardInput.UPPERCASE[KeyboardInput.PERIOD] = ">";
+KeyboardInput.UPPERCASE[KeyboardInput.FORWARDSLASH] = "?";
+KeyboardInput.UPPERCASE[KeyboardInput.GRAVEACCENT] = "~";
+KeyboardInput.UPPERCASE[KeyboardInput.OPENBRACKET] = "{";
+KeyboardInput.UPPERCASE[KeyboardInput.BACKSLASH] = "|";
+KeyboardInput.UPPERCASE[KeyboardInput.CLOSEBRACKET] = "}";
+KeyboardInput.UPPERCASE[KeyboardInput.SINGLEQUOTE] = "\"";
 /*
 https://www.github.com/capnmidnight/VR
 Copyright (c) 2014 Sean T. McBeth
