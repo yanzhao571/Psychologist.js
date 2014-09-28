@@ -30,8 +30,6 @@ User.prototype.addDevice = function(users, socket){
         socket.on(types[i], User.prototype.emit.bind(this, index, types[i]));
     }
 
-    socket.on("disconnect", User.prototype.disconnect.bind(this, users, index));
-
     socket.on("userState", function(state){
         this.state.x = state.x;
         this.state.y = state.y;
@@ -40,6 +38,10 @@ User.prototype.addDevice = function(users, socket){
         this.state.isRunning = state.isRunning;
         this.broadcast(users, index, "userState", this.state);
     }.bind(this));
+
+    socket.on("chat", User.prototype.chat.bind(this, users, index));
+
+    socket.on("disconnect", User.prototype.disconnect.bind(this, users, index));
     
     var userList = [];
     for(var key in users){
@@ -87,7 +89,15 @@ User.prototype.isConnected = function(){
     return devicesLeft > 0;
 };
 
-User.prototype.disconnect = function(users, index, reason){
+User.prototype.chat = function(users, index, text){
+    log("[$1]: $2", this.state.userName, text);
+    this.broadcast(users, -1, "chat", {
+        userName: this.state.userName,
+        text: text
+    });
+};
+
+User.prototype.disconnect = function(users, index){
     this.devices[index] = null;
     if(this.isConnected()){
         log("Device #$1 lost for $2.", index, this.state.userName);

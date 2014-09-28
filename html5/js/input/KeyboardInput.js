@@ -29,7 +29,7 @@
             if(event.keyCode == KeyboardInput.ENTER
                 || event.keyCode == KeyboardInput.ESCAPE){
                 textEntry = false;
-                if(event.keyCode == event.keyCode == KeyboardInput.ENTER){
+                if(event.keyCode == KeyboardInput.ENTER){
                     onTextEntryComplete(text, true);
                 }
                 else{

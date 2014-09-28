@@ -57,6 +57,7 @@ function postScriptLoad(progress){
         head, arm, keyboard, mouse, gamepad, touch, speech,
         dt, lt = 0, frame = 0, dFrame = 0.125,
         userName = null, password = null,
+        chatLines = [],
         audio3d = new Audio3DOutput(),
         oceanSound = null,
         socket = io.connect(document.location.hostname, {
@@ -341,12 +342,14 @@ function postScriptLoad(progress){
     var lastText;
 
     function chat(update, text, isDone){
+        console.log("debug chat", update, text, isDone);
         if(bears[userName]){
             if(lastText){
                 bears[userName].remove(lastText);
             }
             if(isDone){
-                repeater.speak(text);
+                console.log("sending chat", text);
+                socket.emit("chat", text);
                 lastText = null;
             }
             else if(update){
@@ -357,6 +360,25 @@ function postScriptLoad(progress){
 		        textObj.position.y = PLAYER_HEIGHT;
 		        textObj.position.z = -4;
             }
+        }
+    }
+
+    function showChat(msg){
+        console.log("Chat message", msg);
+        if(bears[userName]){
+            var textObj= makeText(fmt("[$1]: $2", msg.userName, msg.text), 0.125);
+		    bears[userName].add(textObj);
+		    textObj.position.x = 0;
+		    textObj.position.y = PLAYER_HEIGHT - chatLines.length * 0.125;
+		    textObj.position.z = -5;
+            chatLines.push(textObj);
+            setTimeout(function(){
+                bears[userName].remove(textObj);
+                chatLines.shift();
+                for(var i = 0; i < chatLines.length; ++i){
+                    chatLines[i].position.y = PLAYER_HEIGHT - i * 0.125;
+                }
+            }, 3000);
         }
     }
 
@@ -432,16 +454,6 @@ function postScriptLoad(progress){
 
     socket.on("userJoin", addUser);
 
-    socket.on("disconnect", msg.bind(window));
-    
-    socket.on("userLeft", function(user){
-        if(bears[user]){
-            msg("user disconnected:", user);
-            scene.remove(bears[user]);
-            delete bears[user];
-        }
-    });
-
     socket.on("userState", function(userState){
         var bear = bears[userState.userName];
         if(bear){
@@ -458,6 +470,18 @@ function postScriptLoad(progress){
             }
         }
     });
+
+    socket.on("chat", showChat);
+    
+    socket.on("userLeft", function(user){
+        if(bears[user]){
+            msg("user disconnected:", user);
+            scene.remove(bears[user]);
+            delete bears[user];
+        }
+    });
+
+    socket.on("disconnect", msg.bind(window));
 
     head = new MotionInput("head", null, [
         { name: "heading", axes: [-MotionInput.HEADING] },
@@ -574,6 +598,17 @@ function postScriptLoad(progress){
         camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, drawDistance);
         mainScene.Ocean.children[0].material.transparent = true;
         mainScene.Ocean.children[0].material.opacity = 0.75;
+        audio3d.loadSound3D(
+            "music/ocean.mp3.break", true, 
+            mainScene.Campfire.position.x, 
+            mainScene.Campfire.position.y, 
+            mainScene.Campfire.position.z, 
+            progress, 
+            function(snd){
+                oceanSound = snd;
+                snd.source.start(0);
+            }
+        );
         heightmap = ModelOutput.makeHeightMap(mainScene.Terrain, CLUSTER);
         mainScene.Skybox.scale.x
             = mainScene.Skybox.scale.y
@@ -583,10 +618,6 @@ function postScriptLoad(progress){
 
     var bearModel = new ModelOutput("models/bear.dae", progress);
 
-    audio3d.loadSound3D("music/ocean.mp3", true, 0, 0, 0, progress, function(snd){
-        oceanSound = snd;
-        snd.source.start(0);
-    });
         
     audio3d.loadSoundFixed("music/game1.ogg.break", true, progress, function(snd){
         snd.volume.gain.value = 0.5;
