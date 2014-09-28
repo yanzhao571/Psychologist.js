@@ -3,13 +3,16 @@
     for(var i = 0; i < commands.length; ++i){
         var cmd = commands[i];
         if(cmd.preamble){
-            cmd.commandUp = function(thunk){
+            cmd.commandDown = function(update, cancel){
                 textEntry = true;
                 text = "";
                 insertionPoint = 0;
-                onTextEntryComplete = thunk;
+                onTextEntryComplete = update;
+                onTextEntryComplete("|", false);
+                onTextEntryCancel = cancel;
                 this.enable(false);
-            }.bind(this, cmd.commandUp);
+            }.bind(this, cmd.commandDown, cmd.commandUp);
+            cmd.commandUp = null;
         }
     }
 
@@ -17,14 +20,21 @@
 
     var textEntry = false,
         onTextEntryComplete = null,
+        onTextEntryCancel = null,
         text = null,
         insertionPoint = null;
     
     function execute(stateChange, event){
         if(textEntry && stateChange){
-            if(event.keyCode == KeyboardInput.ENTER){
+            if(event.keyCode == KeyboardInput.ENTER
+                || event.keyCode == KeyboardInput.ESCAPE){
                 textEntry = false;
-                onTextEntryComplete(text, true);
+                if(event.keyCode == event.keyCode == KeyboardInput.ENTER){
+                    onTextEntryComplete(text, true);
+                }
+                else{
+                    onTextEntryCancel();
+                }
                 this.enable(true);
             }
             else{
@@ -62,7 +72,7 @@
                 }
 
                 insertionPoint = Math.max(0, Math.min(text.length, insertionPoint));
-                onTextEntryComplete(text, false);
+                onTextEntryComplete(text.substring(0, insertionPoint) + "|" + text.substring(insertionPoint), false);
                 event.preventDefault();
             }
         }

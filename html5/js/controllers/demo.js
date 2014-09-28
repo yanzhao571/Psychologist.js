@@ -66,7 +66,7 @@ function postScriptLoad(progress){
         }), 
         bears = {}, pointer, heightmap,
         nameMaterial = new THREE.MeshLambertMaterial({
-            color: 0x7f7f00,
+            color: 0xdfdf7f,
             shading: THREE.FlatShading
         }),
         camera, effect, drawDistance = 250,
@@ -324,6 +324,7 @@ function postScriptLoad(progress){
     ctrls.regularRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "regular"), false);
 
     window.addEventListener("beforeunload", function(){
+        speech.stop();
         var state = readForm(ctrls);
         setSetting("formState", state);
     }, false);
@@ -340,7 +341,7 @@ function postScriptLoad(progress){
 
     var lastText;
 
-    function chat(text, isDone){
+    function chat(update, text, isDone){
         if(bears[userName]){
             if(lastText){
                 bears[userName].remove(lastText);
@@ -349,13 +350,13 @@ function postScriptLoad(progress){
                 repeater.speak(text);
                 lastText = null;
             }
-            else{
+            else if(update){
                 var textObj= makeText(text, 0.125);
                 lastText = textObj;
 		        bears[userName].add(textObj);
 		        textObj.position.x = textObj.children[0].geometry.boundingBox.min.x - textObj.children[0].geometry.boundingBox.max.x + 0.75;
 		        textObj.position.y = PLAYER_HEIGHT;
-		        textObj.position.z = -2;
+		        textObj.position.z = -4;
             }
         }
     }
@@ -495,7 +496,7 @@ function postScriptLoad(progress){
         { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 125 },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 125 },
-        { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: chat, dt: 1000 },
+        { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandDown: chat.bind(window, true), commandUp: chat.bind(window, false), dt: 1000 },
     ], socket);
 
     gamepad = new GamepadInput("gamepad", [
