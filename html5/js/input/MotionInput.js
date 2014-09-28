@@ -219,9 +219,9 @@ function MotionCorrector(isChrome){
             o = this.getOrientation();
             a = this.getAcceleration();
             if(o && a){
-                heading.setDegrees(corrector.getHeading());
-                pitch.setDegrees(corrector.getPitch());
-                roll.setDegrees(corrector.getRoll());
+                heading.setDegrees(this.getHeading());
+                pitch.setDegrees(this.getPitch());
+                roll.setDegrees(this.getRoll());
                 callback({
                     HEADING: heading.getRadians(),
                     PITCH: pitch.getRadians(),
@@ -282,10 +282,7 @@ function MotionInput(name, axisConstraints, commands, socket){
         }
     }.bind(this));
 
-    this.zeroAxes = function(){
-        console.log("corrector");
-        corrector.zeroAxes();
-    };
+    this.zeroAxes = corrector.zeroAxes.bind(corrector);
 }
 
 inherit(MotionInput, NetworkedInput);
