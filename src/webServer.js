@@ -82,10 +82,11 @@ function sendStaticFile(req, res, url, path) {
                         send(t);
                     }
                     else{
-                        var f = fs.createReadStream(path);
-                        var z = zlib.createGzip();
-                        var g = fs.createWriteStream(t);
-                        f.pipe(z).pipe(g).on("finish", send.bind(this, t)).on("error", serverError.bind(this, res, url, 500, path));
+                        fs.createReadStream(path)
+                            .pipe(zlib.createGzip())
+                            .pipe(fs.createWriteStream(t))
+                            .on("finish", send.bind(this, t))
+                            .on("error", serverError.bind(this, res, url, 500, path));
                     }
                 });
             }             
@@ -126,7 +127,6 @@ function sendData(req, res, mimeType, data, length) {
                 res.end(d);
             }
             if(useGZIP(req)){
-                core.log("static gzip");
                 zlib.gzip(data, function(err, data){
                     if(err){
                         serverError(res, req.url, 500);
