@@ -269,7 +269,7 @@ function postScriptLoad(progress){
     for(var i = 0; i < closers.length; ++i){
         closers[i].addEventListener("click", function(){
             this.parentElement.style.display = "none";
-            ctrls.menuButton.style.display = "";
+            renderer.domElement.focus();
         }, false);
         if(!isDebug && !isLocal && closers[i].parentElement == ctrls.options){
             closers[i].addEventListener("click", function(){
@@ -281,7 +281,6 @@ function postScriptLoad(progress){
 
     ctrls.menuButton.addEventListener("click", function(){
         ctrls.options.style.display = "";
-        ctrls.menuButton.style.display = "none";
     }, false);
 
     ctrls.pointerLockButton.addEventListener("click", function(){
@@ -497,7 +496,7 @@ function postScriptLoad(progress){
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 125 },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 125 },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandDown: chat.bind(window, true), commandUp: chat.bind(window, false), dt: 1000 },
-    ], socket);
+    ], socket, renderer.domElement);
 
     gamepad = new GamepadInput("gamepad", [
         { axis: GamepadInput.LSX, deadzone: 0.1},
@@ -595,6 +594,7 @@ function postScriptLoad(progress){
     });
 
     document.body.insertBefore(renderer.domElement, document.body.firstChild);
+    renderer.domElement.setAttribute("tabindex", 0);
     setSize(window.innerWidth, window.innerHeight);
 
     requestAnimationFrame(animate);
