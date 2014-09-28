@@ -133,6 +133,7 @@ function SpeechInput(name, commands, socket){
         if(!found){
             console.log("Unknown command: " + command);
         }
+        return found;
     }
 
     if(socket){
@@ -192,8 +193,7 @@ function SpeechInput(name, commands, socket){
 
             if(newCommand != command){
                 command = newCommand;
-                executeCommand(command);
-                if(transmitting && socket){
+                if(executeCommand(command) && transmitting && socket){
                     socket.emit(name, command);
                 }
             }
