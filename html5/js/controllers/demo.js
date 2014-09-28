@@ -342,13 +342,11 @@ function postScriptLoad(progress){
     var lastText;
 
     function chat(update, text, isDone){
-        console.log("debug chat", update, text, isDone);
         if(bears[userName]){
             if(lastText){
                 bears[userName].remove(lastText);
             }
             if(isDone){
-                console.log("sending chat", text);
                 socket.emit("chat", text);
                 lastText = null;
             }
@@ -364,7 +362,6 @@ function postScriptLoad(progress){
     }
 
     function showChat(msg){
-        console.log("Chat message", msg);
         if(bears[userName]){
             var textObj= makeText(fmt("[$1]: $2", msg.userName, msg.text), 0.125);
 		    bears[userName].add(textObj);
@@ -539,7 +536,7 @@ function postScriptLoad(progress){
 
     speech = new SpeechInput("speech", [
         { keywords: ["jump"], command: jump },
-        { preamble: true, keywords: ["say"], command: repeater.speak.bind(repeater) }
+        { preamble: true, keywords: ["say"], command: socket.emit.bind(socket, "chat") }
     ], socket);
 
     gamepad.addEventListener("gamepadconnected", function (id){

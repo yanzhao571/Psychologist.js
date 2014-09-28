@@ -92,7 +92,6 @@ function SpeechInput(name, commands, socket){
         }
         else if(!running){
             running = true;
-            console.log("starting");
             recognition.start();
             return true;
         }
@@ -119,6 +118,7 @@ function SpeechInput(name, commands, socket){
     };
 
     function executeCommand(command){
+        console.log(command);
         var found = false;
         for(var i = 0; i < commands.length && !found; ++i){
             var cmd = commands[i];
@@ -161,19 +161,17 @@ function SpeechInput(name, commands, socket){
         recognition.lang = "en-US";
 
         recognition.addEventListener("start", function(){
-            console.log("started");
+            console.log("speech started");
             command = ""; 
         }, true);
 
         recognition.addEventListener("error", function(event){
             running = false;
-            console.log("error", event);
             command = "speech error";
         }, true);
 
         recognition.addEventListener("end", function(){
             running = false;
-            console.log("end", event);
             command = "speech ended";
         }, true);
 
