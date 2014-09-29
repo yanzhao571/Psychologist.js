@@ -628,7 +628,7 @@ function postScriptLoad(progress){
         mainScene.Ocean.children[0].material.transparent = true;
         mainScene.Ocean.children[0].material.opacity = 0.75;
         audio3d.loadSound3D(
-            "music/ocean.mp3.break", true, 
+            "music/ocean.mp3", true, 
             mainScene.Campfire.position.x, 
             mainScene.Campfire.position.y, 
             mainScene.Campfire.position.z, 
@@ -648,7 +648,7 @@ function postScriptLoad(progress){
     var bearModel = new ModelOutput("models/bear.dae", progress);
 
         
-    audio3d.loadSoundFixed("music/game1.ogg.break", true, progress, function(snd){
+    audio3d.loadSoundFixed("music/game1.ogg", true, progress, function(snd){
         snd.volume.gain.value = 0.5;
         snd.source.start(0);
     });
