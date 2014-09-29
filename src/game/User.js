@@ -11,6 +11,7 @@ function User(info){
         dy: 0,
         dz: 0,
         heading: 0,
+        dheading: 0,
         isRunning: false,
         userName: info.userName
     };
@@ -56,7 +57,7 @@ User.prototype.addDevice = function(users, socket){
     var userList = [];
     for(var key in users){
         if(users[key].isConnected()){
-            userList.push(users[key].state.userName);
+            userList.push(users[key].state);
         }
     }
     socket.emit("userList", userList);
@@ -65,7 +66,7 @@ User.prototype.addDevice = function(users, socket){
         //
         // notify all of the users of a new user
         //
-        this.broadcast(users, index, "userJoin", this.state.userName);
+        this.broadcast(users, index, "userJoin", this.state);
     }
     else{
         //

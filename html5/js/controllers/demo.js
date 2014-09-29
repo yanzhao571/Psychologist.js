@@ -59,7 +59,7 @@ function postScriptLoad(progress){
         TRACKING_SCALE = 0,
         TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
         GRAVITY = 9.8, SPEED = 15,
-        pitch = 0, roll = 0, heading = 0,
+        pitch = 0, roll = 0, heading = 0, lastHeading = 0, dheading = 0,
         vcx = 0, vcz = 0, vcy = 0,
         onground = false,
         head, arm, keyboard, mouse, gamepad, touch, speech,
@@ -89,13 +89,17 @@ function postScriptLoad(progress){
     renderer.setClearColor(BG_COLOR);
     
     function msg(){
+        var txt = map(arguments, function(v){
+            return v ? v.toString() : ""
+        }).join(" ");
         if(isDebug){
             console.log.apply(console, arguments);
         }
-        else{
-            alert(map(arguments, function(v){
-                return v ? v.toString() : ""
-            }).join(" "));
+        else if(bears[userName]){
+            showChat(txt);
+        }
+        else {
+            alert(txt);
         }
     }
 
@@ -158,6 +162,12 @@ function postScriptLoad(progress){
             vcx = vcx * 0.9 + tx * 0.1;
             vcz = vcz * 0.9 + tz * 0.1;
         }
+        
+        camera.updateProjectionMatrix();
+        camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+        camera.translateX(vcx * dt);
+        camera.translateY(vcy * dt);
+        camera.translateZ(vcz * dt);
 
         pitch = pitch * TRACKING_SCALE + (
             head.getValue("pitch")
@@ -170,7 +180,41 @@ function postScriptLoad(progress){
             + mouse.getValue("heading")
             + gamepad.getValue("heading")) * TRACKING_SCALE_COMP;
 
-        roll = roll * TRACKING_SCALE + head.getValue("roll") * TRACKING_SCALE_COMP;
+        if(userName && frame > dFrame){
+            frame -= dFrame;
+            var state = {
+                x: camera.position.x,
+                y: camera.position.y,
+                z: camera.position.z,
+                dx: vcx,
+                dy: vcy,
+                dz: vcz,
+                heading: heading,
+                dheading: (heading - lastHeading) / dFrame,
+                isRunning: Math.abs(vcx + vcy + vcz) > 1
+            };
+            lastHeading = heading;
+            socket.emit("userState", state);
+        }
+
+        roll = roll * TRACKING_SCALE + head.getValue("roll") * TRACKING_SCALE_COMP;        
+
+        for(var key in bears){
+            var bear = bears[key];
+            bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+            if(key == userName){
+                bear.rotateY(heading);
+                bear.position.copy(camera.position);
+                bear.position.y -= PLAYER_HEIGHT;
+            }
+            else if(bear.dx || bear.dx || bear.dz){
+                bear.position.x += bear.dx * dt;
+                bear.position.y += bear.dy * dt;
+                bear.position.z += bear.dz * dt;
+                bear.heading += bear.dheading * dt;
+                bear.rotateY(bear.heading);
+            }
+        }
     }
 
     function animate(t){
@@ -193,36 +237,10 @@ function postScriptLoad(progress){
     }
     
     function setCamera(dt){
-        camera.updateProjectionMatrix();
-        camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-        camera.translateX(vcx * dt);
-        camera.translateY(vcy * dt);
-        camera.translateZ(vcz * dt);
 
         camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
         mainScene.Skybox.position.set(camera.position.x, camera.position.y, camera.position.z);
         frame += dt;
-
-        if(userName && frame > dFrame){
-            frame -= dFrame;
-            var state = {
-                x: camera.position.x,
-                y: camera.position.y,
-                z: camera.position.z,
-                dx: vcx,
-                dy: vcy,
-                dz: vcz,
-                heading: heading,
-                isRunning: Math.abs(vcx + vcy + vcz) > 1
-            };
-            socket.emit("userState", state);
-        }
-
-        if(bears[userName]){
-            bears[userName].setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-            bears[userName].rotateY(heading);
-            bears[userName].position.set(camera.position.x, camera.position.y - PLAYER_HEIGHT, camera.position.z);
-        }
 
         if(pointer){
             var ph = arm.getValue("heading") + head.getValue("heading") - heading + Math.PI / 2;
@@ -403,11 +421,12 @@ function postScriptLoad(progress){
     }
 
     function showChat(msg){
+        msg = typeof(msg) == "string" ? msg : fmt("[$1]: $2", msg.userName, msg.text);
         if(bears[userName]){
             if(userName == msg.userName){
                 showTyping(true, false, null);
             }
-            var textObj= makeText(fmt("[$1]: $2", msg.userName, msg.text), 0.125);
+            var textObj= makeText(msg, 0.125);
 		    bears[userName].add(textObj);
 		    textObj.position.set(0, 0, -5);
             chatLines.push(textObj);
@@ -424,9 +443,10 @@ function postScriptLoad(progress){
         var bear = bears[userState.userName];
         if(bear){
             bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-            bear.rotateY(userState.heading);
-            bear.position.copy(userState);
-            bear.position.y -= PLAYER_HEIGHT;
+            bear.dx = ((userState.x + userState.dx * dFrame) - bear.position.x) / dFrame;
+            bear.dy = ((userState.y - PLAYER_HEIGHT + userState.dy * dFrame) - bear.position.y) / dFrame;
+            bear.dz = ((userState.z + userState.dz * dFrame) - bear.position.z) / dFrame;
+            bear.dheading = ((userState.heading + userState.dheading * dFrame) - bear.heading) / dFrame;
             if(!bear.animation.isPlaying && userState.isRunning){
                 bear.animation.play();
             }
@@ -468,23 +488,30 @@ function postScriptLoad(progress){
         return textObj;
     }
 
-    function addUser(user){
-        bears[user] = bearModel.clone(user, socket);
-        scene.add(bears[user]);
-        var name = makeText(user, 1);
-		bears[user].add(name);
+    function addUser(userState){
+        console.log(userState);
+        var bear = bearModel.clone(userState.userName, socket);
+        bears[userState.userName] = bear;
+        bear.heading = userState.heading;
+        updateUserState(userState);
+        scene.add(bear);
+        var name = makeText(userState.userName, 1);
+		bear.add(name);
         var centerOffset = (name.children[0].geometry.boundingBox.max.x - name.children[0].geometry.boundingBox.min.x) * 0.5;
 		name.position.set(centerOffset, PLAYER_HEIGHT + 2, 0);
         name.rotateY(Math.PI);
 
-        if(user == userName && (arm.isEnabled() || arm.isReceiving())){
+        if(userState.userName == userName && (arm.isEnabled() || arm.isReceiving())){
             var sphere = new THREE.SphereGeometry(0.5, 4, 2);
             var spine = new THREE.Object3D();
             spine.position.set(0, PLAYER_HEIGHT, 0);
             pointer = new THREE.Mesh(sphere, nameMaterial);
             spine.add(pointer);
-            bears[user].add(spine);
+            bear.add(spine);
             pointer = spine;
+        }
+        else{
+            msg("user joined: " + userState.userName);
         }
     }
 
@@ -493,13 +520,24 @@ function postScriptLoad(progress){
     });
 
     socket.on("userList", function(users){
-        msg("You are now connected to the device server.");
-        addUser(userName);
+        addUser({
+            userName: userName,
+            x: camera.position.x,
+            y: camera.position.y,
+            z: camera.position.z,
+            dx: vcx,
+            dy: vcy,
+            dz: vcz,
+            heading: heading,
+            dheading: dheading,
+            isRunning: !!Math.abs(vcx + vcy + vcz)
+        });
         for(var i = 0; i < users.length; ++i){
-            if(users[i].toLocaleUpperCase() != userName.toLocaleUpperCase()){
+            if(users[i].userName != userName){
                 addUser(users[i]);
             }
         }
+        msg("You are now connected to the device server.");
     });
 
     socket.on("userJoin", addUser);
