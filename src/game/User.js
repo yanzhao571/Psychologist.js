@@ -1,7 +1,7 @@
 ﻿var types = ["gamepad", "keyboard", "mouse", "touch", "head", "arm", "speech", "typing"],
     log = require("../core").log;
 
-function User(userName, password){
+function User(info){
     this.devices = [];
     this.state = {
         x: 0,
@@ -12,9 +12,10 @@ function User(userName, password){
         dz: 0,
         heading: 0,
         isRunning: false,
-        userName: userName
+        userName: info.userName
     };
-    this.password = password;
+    this.password = info.password;
+    this.email = info.email;
 }
 
 User.prototype.addDevice = function(users, socket){

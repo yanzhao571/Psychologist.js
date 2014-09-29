@@ -64,7 +64,7 @@ function postScriptLoad(progress){
         onground = false,
         head, arm, keyboard, mouse, gamepad, touch, speech,
         dt, lt = 0, frame = 0, dFrame = 0.125,
-        userName = null, password = null,
+        userName = null,
         chatLines = [],
         audio3d = new Audio3DOutput(),
         oceanSound = null,
@@ -263,9 +263,16 @@ function postScriptLoad(progress){
     login = function(){
         if(socket){
             userName = ctrls.userNameField.value;
-            password = ctrls.passwordField.value;
+            var password = ctrls.passwordField.value;
             if(userName && password){
-                socket.emit("login", {userName: userName, password: password});
+                socket.emit("login", {
+                    userName: userName, 
+                    password: password,
+                    email: ctrls.emailField.value
+                });
+            }
+            else{
+                msg("Please complete the form");
             }
         }
         else{
