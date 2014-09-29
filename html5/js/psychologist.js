@@ -324,7 +324,7 @@ function makeTabSet(elem){
 			var headerCell = document.createElement("th");
 			headerRow.appendChild(headerCell);
 			title.parentElement.removeChild(title);
-			headerCell.appendChild(title);
+			headerCell.innerHTML = title.innerHTML;
 			content.style.width = "100%";
 			content.parentElement.removeChild(content);
 			bodyCell.appendChild(content);
@@ -341,7 +341,6 @@ function makeTabSet(elem){
 					headerRow.children[n].className = (n == index) ? "tab selectedTab" : "tab";
 				}
 			}.bind(title, i / 2);
-			title.addEventListener("click", selectTab);
             headerCell.addEventListener("click", selectTab);
 		}
 	}

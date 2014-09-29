@@ -20,10 +20,10 @@ th.tab, th.tab > *
 th.tab
 {
  	background-color: #eee;
-	border: solid 5px #ccc;
+	border: solid 3px #ccc;
     border-bottom: solid 1px #000;
-    padding-top: 0.5em;
-    padding-bottom: 0.5em;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
 }
 
 th.selectedTab{
@@ -45,6 +45,10 @@ td > .button, td > input
         right:1em;
         left:1em;
     }
+    th.tab
+    {
+        font-size:80%;
+    }
 }
 
 
@@ -56,6 +60,10 @@ td > .button, td > input
         top:3em;
         right:3em;
         left:3em;
+    }    
+    th.tab
+    {
+        font-size:100%;
     }
 }
 
