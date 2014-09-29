@@ -37,6 +37,9 @@
     <Compile Include="html5\js\input\NetworkedInput.js" />
     <Compile Include="html5\js\input\GamepadInput.js" />
     <Compile Include="html5\js\output\ModelOutput.js" />
+    <Compile Include="html5\lib\physics\ammo.js" />
+    <Compile Include="html5\lib\physics\physi.js" />
+    <Compile Include="html5\lib\physics\physijs_worker.js" />
     <Compile Include="html5\lib\Blob.js" />
     <Compile Include="html5\lib\canvas-toBlob.js" />
     <Compile Include="html5\lib\droid_sans_regular.typeface.js" />
@@ -59,6 +62,7 @@
     <Compile Include="html5\js\input\SpeechInput.js" />
     <Compile Include="html5\js\controllers\cam3d.js" />
     <Compile Include="html5\lib\three\three.js" />
+    <Compile Include="html5\lib\tween.min.js" />
     <Compile Include="html5\test\testing.js" />
     <Compile Include="html5\test\MotionInput.js" />
     <Compile Include="server.js" />
@@ -115,6 +119,7 @@
     <Folder Include="html5\img\" />
     <Folder Include="html5\js\output\" />
     <Folder Include="html5\lib\" />
+    <Folder Include="html5\lib\physics\" />
     <Folder Include="html5\lib\three\" />
     <Folder Include="html5\js\input\" />
     <Folder Include="html5\js\controllers\" />

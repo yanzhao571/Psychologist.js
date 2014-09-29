@@ -198,6 +198,7 @@ function postScriptLoad(progress){
         camera.translateX(vcx * dt);
         camera.translateY(vcy * dt);
         camera.translateZ(vcz * dt);
+
         camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
         mainScene.Skybox.position.set(camera.position.x, camera.position.y, camera.position.z);
         frame += dt;
@@ -208,6 +209,9 @@ function postScriptLoad(progress){
                 x: camera.position.x,
                 y: camera.position.y,
                 z: camera.position.z,
+                dx: vcx,
+                dy: vcy,
+                dz: vcz,
                 heading: heading,
                 isRunning: Math.abs(vcx + vcy + vcz) > 1
             };
@@ -380,9 +384,11 @@ function postScriptLoad(progress){
                 var textObj= makeText(text, 0.125);
                 lastText = textObj;
 		        bears[userName].add(textObj);
-		        textObj.position.x = textObj.children[0].geometry.boundingBox.min.x - textObj.children[0].geometry.boundingBox.max.x + 0.75;
-		        textObj.position.y = PLAYER_HEIGHT;
-		        textObj.position.z = -4;
+		        textObj.position.set(
+                    textObj.children[0].geometry.boundingBox.min.x - textObj.children[0].geometry.boundingBox.max.x + 0.75,
+                    PLAYER_HEIGHT,
+		            -4
+                );
                 if(isLocal){
                     socket.emit("typing", text);
                 }
@@ -403,8 +409,7 @@ function postScriptLoad(progress){
             }
             var textObj= makeText(fmt("[$1]: $2", msg.userName, msg.text), 0.125);
 		    bears[userName].add(textObj);
-		    textObj.position.x = 0;
-		    textObj.position.z = -5;
+		    textObj.position.set(0, 0, -5);
             chatLines.push(textObj);
             shiftLines();
             setTimeout(function(){
@@ -420,9 +425,8 @@ function postScriptLoad(progress){
         if(bear){
             bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
             bear.rotateY(userState.heading);
-            bear.position.x = userState.x;
-            bear.position.y = userState.y - PLAYER_HEIGHT;
-            bear.position.z = userState.z;
+            bear.position.copy(userState);
+            bear.position.y -= PLAYER_HEIGHT;
             if(!bear.animation.isPlaying && userState.isRunning){
                 bear.animation.play();
             }
@@ -470,17 +474,13 @@ function postScriptLoad(progress){
         var name = makeText(user, 1);
 		bears[user].add(name);
         var centerOffset = (name.children[0].geometry.boundingBox.max.x - name.children[0].geometry.boundingBox.min.x) * 0.5;
-		name.position.x = centerOffset;
-		name.position.y = PLAYER_HEIGHT + 2;
-		name.position.z = 0;
+		name.position.set(centerOffset, PLAYER_HEIGHT + 2, 0);
         name.rotateY(Math.PI);
 
         if(user == userName && (arm.isEnabled() || arm.isReceiving())){
             var sphere = new THREE.SphereGeometry(0.5, 4, 2);
             var spine = new THREE.Object3D();
-            spine.position.x = 0;
-            spine.position.y = PLAYER_HEIGHT;
-            spine.position.z = 0;
+            spine.position.set(0, PLAYER_HEIGHT, 0);
             pointer = new THREE.Mesh(sphere, nameMaterial);
             spine.add(pointer);
             bears[user].add(spine);
@@ -653,9 +653,8 @@ function postScriptLoad(progress){
             }
         );
         heightmap = ModelOutput.makeHeightMap(mainScene.Terrain, CLUSTER);
-        mainScene.Skybox.scale.x
-            = mainScene.Skybox.scale.y
-            = mainScene.Skybox.scale.z = 0.55 * drawDistance;
+        var v = 0.55 * drawDistance;
+        mainScene.Skybox.scale.set(v, v, v);
         scene.fog = new THREE.Fog(BG_COLOR, 1, drawDistance * 0.6);
     });
 
