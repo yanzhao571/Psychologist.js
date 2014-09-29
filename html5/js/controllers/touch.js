@@ -15,12 +15,12 @@ function touchTest(){
                 document.getElementById("fire").style.backgroundColor = "blue";
             }, commandUp: function(){
                 document.getElementById("fire").style.backgroundColor = "#c0c0c0";
-            }, dt: 250 },
+            }, dt: 0.250 },
             { name: "jump", buttons: [2], commandDown: function(){
                 document.getElementById("jump").style.backgroundColor = "blue";
             }, commandUp: function(){
                 document.getElementById("jump").style.backgroundColor = "#c0c0c0";
-            }, dt: 250 },
+            }, dt: 0.250 },
             { name: "x0", axes: [TouchInput.X0] },
             { name: "y0", axes: [TouchInput.Y0] },
             { name: "x1", axes: [TouchInput.X1] },

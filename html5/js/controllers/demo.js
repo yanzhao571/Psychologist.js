@@ -33,7 +33,7 @@ function displayProgress(){
     ctrls.loadedSoFar.style.width = prog.makeSize(FileState.COMPLETE, "size");
     ctrls.loadingMessage.innerHTML 
         = ctrls.connectButton.innerHTML 
-        = "Loading, please wait... " + ctrls.loadedSoFar.style.width;
+        = "Loading, please wait... " + ctrls.processedSoFar.style.width;
     ctrls.loadedSoFar.style.left = ctrls.errorSoFar.style.width = prog.makeSize(FileState.ERRORED, "size");
     if(prog.isDone()){
         ctrls.loading.style.display = "none";
@@ -214,7 +214,7 @@ function postScriptLoad(progress){
         }
 
         if(pointer){
-            var ph = arm.getValue("heading") - heading + Math.PI / 2;
+            var ph = arm.getValue("heading") + head.getHeading("heading") - heading + Math.PI / 2;
             var pr = arm.getValue("roll");
             var pp = arm.getValue("pitch");
             pointer.setRotationFromEuler(new THREE.Euler(0, ph, 0, "YZX"));
@@ -525,8 +525,8 @@ function postScriptLoad(progress){
     ], [
         { name: "heading", axes: [-MouseInput.IX] },
         { name: "pitch", axes: [-MouseInput.IY]},
-        { name: "fire", buttons: [1], commandDown: fire, dt: 125 },
-        { name: "jump", buttons: [2], commandDown: jump, dt: 250 },
+        { name: "fire", buttons: [1], commandDown: fire, dt: 0.125 },
+        { name: "jump", buttons: [2], commandDown: jump, dt: 0.250 },
     ], socket, renderer.domElement);
 
     touch = new TouchInput("touch", null, null, [
@@ -539,15 +539,15 @@ function postScriptLoad(progress){
         { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHTARROW] },
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
-        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 250 },
-        { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 125 },
-        { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 125 },
+        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 0.250 },
+        { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 0.125 },
+        { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 0.125 },
         { 
             name: "chat", 
             preamble: true, 
             buttons: [KeyboardInput.T], 
             commandDown: showTyping.bind(window, true),
-            dt: 125 
+            dt: 0.125 
         },
     ], socket, renderer.domElement);
 
@@ -562,8 +562,8 @@ function postScriptLoad(progress){
         { name: "drive", axes: [GamepadInput.LSY]},
         { name: "heading", axes: [-GamepadInput.IRSX]},
         { name: "pitch", axes: [GamepadInput.IRSY]},
-        { name: "jump", buttons: [1], commandDown: jump, dt: 250 },
-        { name: "fire", buttons: [2], commandDown: fire, dt: 125 },
+        { name: "jump", buttons: [1], commandDown: jump, dt: 0.250 },
+        { name: "fire", buttons: [2], commandDown: fire, dt: 0.125 },
     ], socket);
 
     speech = new SpeechInput("speech", [
@@ -648,7 +648,7 @@ function postScriptLoad(progress){
     var bearModel = new ModelOutput("models/bear.dae", progress);
 
         
-    audio3d.loadSoundFixed("music/game1.ogg", true, progress, function(snd){
+    audio3d.loadSoundFixed("music/game1.ogg.break", true, progress, function(snd){
         snd.volume.gain.value = 0.5;
         snd.source.start(0);
     });

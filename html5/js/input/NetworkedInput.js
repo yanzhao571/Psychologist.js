@@ -109,12 +109,37 @@
         deviceState.axes[axisNames.indexOf(name)] += value;
     };
 
-    this.enable = function(v){
-        enabled = v;
+    this.enable = function(k, v){
+        if(v == null){
+            v = k;
+            k = null;
+        }
+
+        if(k){
+            for(var i = 0; i < commands.length; ++i){
+                if(commands[i].name == k){
+                    commands[i].disabled = !v;
+                    break;
+                }
+            }
+        }
+        else{
+            enabled = v;
+        }
     };
 
-    this.isEnabled = function(){
-        return enabled;
+    this.isEnabled = function(k){
+        if(k){
+            for(var i = 0; i < commands.length; ++i){
+                if(commands[i].name == k){
+                    return !commands[i].disabled;
+                }
+            }
+            return false;
+        }
+        else{
+            return enabled;
+        }
     };
 
     this.transmit = function(v){
@@ -182,45 +207,47 @@
             
             for(var c = 0; c < commands.length; ++c){
                 var cmd = commands[c];
-                commandState[cmd.name].wasPressed = commandState[cmd.name].pressed;
-                commandState[cmd.name].lt += dt;
-                commandState[cmd.name].fireAgain = commandState[cmd.name].lt >= cmd.dt;
-                var metaKeysSet = true, pressed, value;
+                if(!cmd.disabled){
+                    commandState[cmd.name].wasPressed = commandState[cmd.name].pressed;
+                    commandState[cmd.name].lt += dt;
+                    commandState[cmd.name].fireAgain = commandState[cmd.name].lt >= cmd.dt;
+                    var metaKeysSet = true, pressed, value;
                 
-                for(var n = 0; n < cmd.metaKeys.length && metaKeysSet; ++n){
-                    var m = cmd.metaKeys[n];
-                    metaKeysSet = metaKeysSet && (deviceState[metaKeys[m.index]] && m.toggle || !deviceState[metaKeys[m.index]] && !m.toggle);
-                }
-
-                commandState[cmd.name].pressed = pressed = metaKeysSet;
-                commandState[cmd.name].value = value = 0;
-                if(metaKeysSet){
-                    for(var n = 0; n < cmd.buttons.length; ++n){
-                        var b = cmd.buttons[n];
-                        var p = !!deviceState.buttons[b.index];
-                        var v = p ? b.sign : 0;
-                        pressed = pressed && (p && !b.toggle || !p && b.toggle);
-                        if(Math.abs(v) > Math.abs(value)){
-                            value = v;
-                        }
+                    for(var n = 0; n < cmd.metaKeys.length && metaKeysSet; ++n){
+                        var m = cmd.metaKeys[n];
+                        metaKeysSet = metaKeysSet && (deviceState[metaKeys[m.index]] && m.toggle || !deviceState[metaKeys[m.index]] && !m.toggle);
                     }
 
-                    for(var n = 0; n < cmd.axes.length; ++n){
-                        var a = cmd.axes[n];
-                        var v = a.sign * getAxis(axisNames[a.index]);
-                        if(cmd.deadzone && Math.abs(v) < cmd.deadzone){
-                            v = 0;
+                    commandState[cmd.name].pressed = pressed = metaKeysSet;
+                    commandState[cmd.name].value = value = 0;
+                    if(metaKeysSet){
+                        for(var n = 0; n < cmd.buttons.length; ++n){
+                            var b = cmd.buttons[n];
+                            var p = !!deviceState.buttons[b.index];
+                            var v = p ? b.sign : 0;
+                            pressed = pressed && (p && !b.toggle || !p && b.toggle);
+                            if(Math.abs(v) > Math.abs(value)){
+                                value = v;
+                            }
                         }
-                        else if(Math.abs(v) > Math.abs(value)){
-                            value = v;
-                        }
-                    }
 
-                    commandState[cmd.name].pressed = pressed;
-                    if(cmd.scale != null){
-                        value *= cmd.scale;
+                        for(var n = 0; n < cmd.axes.length; ++n){
+                            var a = cmd.axes[n];
+                            var v = a.sign * getAxis(axisNames[a.index]);
+                            if(cmd.deadzone && Math.abs(v) < cmd.deadzone){
+                                v = 0;
+                            }
+                            else if(Math.abs(v) > Math.abs(value)){
+                                value = v;
+                            }
+                        }
+
+                        commandState[cmd.name].pressed = pressed;
+                        if(cmd.scale != null){
+                            value *= cmd.scale;
+                        }
+                        commandState[cmd.name].value = value;
                     }
-                    commandState[cmd.name].value = value;
                 }
             }
 
@@ -257,8 +284,7 @@
         }); 
     }
 
-    // clone the arrays, so the consumer can't add elements to it in their own code.
-    commands = commands.map(function(cmd){
+    function cloneCommand(cmd){
         commandState[cmd.name] = {
             value: 0,
             pressed: false,
@@ -274,9 +300,10 @@
             scale: cmd.scale,
             buttons: maybeClone(cmd.buttons),
             metaKeys: maybeClone(cmd.metaKeys),
-            dt: cmd.dt * 0.001,
+            dt: cmd.dt,
             commandDown: cmd.commandDown,
             commandUp: cmd.commandUp,
+            disabled: cmd.disabled
         };
 
         for(var k in newCmd){
@@ -286,7 +313,72 @@
         }
 
         return newCmd;
-    });
+    }
+
+    this.addCommand = function(cmd){
+        commands.push(cloneCommand(cmd));
+    };
+
+    this.setProperty = function(key, name, value){
+        for(var i = 0; i < commands.length; ++i){
+            if(commands[i].name == name){
+                commands[i][key] = value;
+                break;
+            }
+        }
+    }
+
+    this.addArray = function(key, name, value){
+        for(var i = 0; i < commands.length; ++i){
+            if(commands[i].name == name){
+                commands[i][key].push(value);
+                break;
+            }
+        }
+    };
+    
+    this.removeArray = function(key, name, value){
+        var n = -1;
+        for(var i = 0; i < commands.length; ++i){
+            var cmd = commands[i];
+            var arr = cmd[key];
+            if(cmd.name == name && (n = arr.indexOf(value)) > -1){
+                arr.splice(n, 1);
+                break;
+            }
+        }
+    };
+    
+    this.invertArray = function(key, name, value){
+        var n = -1;
+        for(var i = 0; i < commands.length; ++i){
+            var cmd = commands[i];
+            var arr = cmd[key];
+            if(cmd.name == name && (n = arr.indexOf(value)) > -1){
+                arr[n] *= -1;
+                break;
+            }
+        }
+    };
+
+    this.setDeadzone = this.setProperty.bind(this, "deadzone");
+    this.setScale = this.setProperty.bind(this, "scale");
+    this.setDT = this.setProperty.bind(this, "dt");
+            
+    this.addMetaKey = this.addArray.bind(this, "metaKeys");
+    this.addAxis = this.addArray.bind(this, "axes");
+    this.addButton = this.addArray.bind(this, "buttons");       
+    
+    this.removeMetaKey = this.removeArray.bind(this, "metaKeys");
+    this.removeAxis = this.removeArray.bind(this, "axes");
+    this.removeButton = this.removeArray.bind(this, "buttons");
+
+    this.invertAxis = this.invertArray.bind(this, "axes");
+    this.invertButton = this.invertArray.bind(this, "buttons");
+    this.invertMetaKey = this.invertArray.bind(this, "metaKeys");
+
+    // clone the arrays, so the consumer can't add elements to it in their own code.
+    commands = commands.map(cloneCommand);
 
     if(socket){
         socket.on("userList", function(){

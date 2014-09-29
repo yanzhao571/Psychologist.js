@@ -7,8 +7,8 @@ function postScriptLoad(){
     var output = document.getElementById("output"),
         frame = 0,
         commands = [
-            { name: "fire", buttons: [1], meta: [-1], commandDown: console.log.bind(console, "Fire"), dt: 250 },
-            { name: "alternate fire", buttons: [1], meta: [1], commandDown: console.log.bind(console, "Alternate fire"), dt: 250 },
+            { name: "fire", buttons: [1], meta: [-1], commandDown: console.log.bind(console, "Fire"), dt: 0.250 },
+            { name: "alternate fire", buttons: [1], meta: [1], commandDown: console.log.bind(console, "Alternate fire"), dt: 0.250 },
             { name: "middle", buttons: [2], commandUp: function (){
                     if (mouse.isPointerLocked()){
                         mouse.exitPointerLock();

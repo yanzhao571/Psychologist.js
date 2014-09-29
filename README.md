@@ -58,8 +58,8 @@ This is still a work in progress. Eventually, I'll have enumerations for each of
         { name: "yaw", axes: [-4] },
         { name: "pitch", axes: [5] },
         // callback functions can have a cool-down time set
-        { name: "jump", buttons: [2], commandDown: jump, dt: 250 },
-        { name: "fire", buttons: [1], commandDown: fire, dt: 125 },
+        { name: "jump", buttons: [2], commandDown: jump, dt: 0.250 },
+        { name: "fire", buttons: [1], commandDown: fire, dt: 0.125 },
     ], socket, canvas);
 
     // TouchInput can track multiple points (you specify how many with the first parameter),
@@ -73,8 +73,8 @@ This is still a work in progress. Eventually, I'll have enumerations for each of
     ], [
         { name: "yaw", axes: [-3] },
         { name: "drive", axes: [4] },
-        { name: "jump", buttons: [1], commandDown: jump, dt: 250 },
-        { name: "fire", buttons: [2], commandDown: fire, dt: 125 },
+        { name: "jump", buttons: [1], commandDown: jump, dt: 0.250 },
+        { name: "fire", buttons: [2], commandDown: fire, dt: 0.125 },
     ], socket, canvas);
 
     // MotionInput can keep track of absolute heading, pitch, and roll (axes 1, 2, and 3,
@@ -98,9 +98,9 @@ This is still a work in progress. Eventually, I'll have enumerations for each of
         { name: "driveBack", buttons: [83] },
         { name: "rollLeft", buttons: [81] },
         { name: "rollRight", buttons: [-69] },
-        { name: "jump", buttons: [32], commandDown: jump, dt: 250 },
-        { name: "fire", buttons: [17], commandDown: fire, dt: 125 },
-        { name: "reload", buttons: [70], commandDown: reload, dt: 125 },
+        { name: "jump", buttons: [32], commandDown: jump, dt: 0.250 },
+        { name: "fire", buttons: [17], commandDown: fire, dt: 0.125 },
+        { name: "reload", buttons: [70], commandDown: reload, dt: 0.125 },
     ], socket);
 
     // GamepadInput wraps the HTML5 Gampead API and is fairly strait-forward, and if you
@@ -114,8 +114,8 @@ This is still a work in progress. Eventually, I'll have enumerations for each of
         { name: "pitch", axes: [4], deadzone: 0.1 },
         { name: "rollRight", buttons: [5] },
         { name: "rollLeft", buttons: [-6] },
-        { name: "jump", buttons: [1], commandDown: jump, dt: 250 },
-        { name: "fire", buttons: [2], commandDown: fire, dt: 125 },
+        { name: "jump", buttons: [1], commandDown: jump, dt: 0.250 },
+        { name: "fire", buttons: [2], commandDown: fire, dt: 0.125 },
     ], socket);
 
     // SpeechInput is much simpler. The keywords array can be a series of words or
