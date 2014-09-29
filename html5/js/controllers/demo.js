@@ -26,6 +26,8 @@ var isDebug = false,
 		"js/output/ModelOutput.js",
 		displayProgress,
 		postScriptLoad);
+    
+    writeForm(ctrls, formState);
 
 function displayProgress(){
     ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
@@ -43,6 +45,12 @@ function displayProgress(){
         setTimeout(function(){
             ctrls.loadingMessage.style.visibility = "hidden";
         }, 2000);
+
+        if(ctrls.autoLogin.checked
+            && ctrls.userNameField.value.length > 0
+            && ctrls.passwordField.value.length > 0){
+            login();
+        }
     }
 }
 
@@ -79,7 +87,6 @@ function postScriptLoad(progress){
     socket.emit("handshake", "demo");
     tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
-    writeForm(ctrls, formState);
     
     function msg(){
         if(isDebug){
@@ -214,7 +221,7 @@ function postScriptLoad(progress){
         }
 
         if(pointer){
-            var ph = arm.getValue("heading") + head.getHeading("heading") - heading + Math.PI / 2;
+            var ph = arm.getValue("heading") + head.getValue("heading") - heading + Math.PI / 2;
             var pr = arm.getValue("roll");
             var pp = arm.getValue("pitch");
             pointer.setRotationFromEuler(new THREE.Euler(0, ph, 0, "YZX"));
