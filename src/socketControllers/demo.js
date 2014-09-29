@@ -26,7 +26,7 @@ module.exports = {
 
             var key = credentials 
                 && credentials.userName 
-                && credentials.userName.toLocaleUpperCase();
+                && credentials.userName.toLocaleUpperCase().trim();
 
             if(key && !users[key]){
                 log("[$1] > new user", credentials.userName);
