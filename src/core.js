@@ -95,7 +95,7 @@
     };
 
     function makeDateString(val){
-        return exports.fmt("$1/$02/$03", (val.getFullYear(), val.getMonth() + 1, val.getDate());
+        return exports.fmt("$1/$02/$03", val.getFullYear(), val.getMonth() + 1, val.getDate());
     }
 
     function makeDateTimeString(val){
