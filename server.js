@@ -41,7 +41,6 @@ while(files.length > 0){
 }
 
 toZip.forEach(function(file){
-    console.log("zipping file", file);
     zlib.gzip(fs.readFileSync(file), function(err, zip){
         fs.writeFileSync(file + ".gz", zip)
     });

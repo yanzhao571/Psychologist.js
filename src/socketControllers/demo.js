@@ -19,20 +19,6 @@ fs.readFile("users.json", "utf8", function(err, file){
     }
 });
 
-process.on("SIGINT", function(code){
-    log("Writing users to disk.");
-    var userList = [];
-    for(var key in users){
-        var user = users[key];
-        userList.push({
-            name: user.state.userName,
-            password: user.password
-        });
-    }
-    fs.writeFileSync("users.json", JSON.stringify(userList));
-    process.kill();
-});
-
 module.exports = {
     handshake: "demo",
     bindSocket: function(socket){
@@ -42,6 +28,16 @@ module.exports = {
             if(key && !users[key]){
                 log("new user = $1.", key);
                 users[key] = new User(credentials.userName, credentials.password);
+                log("Writing users to disk.");
+                var userList = [];
+                for(var key in users){
+                    var user = users[key];
+                    userList.push({
+                        name: user.state.userName,
+                        password: user.password
+                    });
+                }
+                fs.writeFile("users.json", JSON.stringify(userList));
             }
         
             if(key && users[key].password == credentials.password){
