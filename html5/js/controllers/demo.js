@@ -489,7 +489,6 @@ function postScriptLoad(progress){
     }
 
     function addUser(userState){
-        console.log(userState);
         var bear = bearModel.clone(userState.userName, socket);
         bears[userState.userName] = bear;
         bear.heading = userState.heading;

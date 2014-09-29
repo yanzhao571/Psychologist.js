@@ -58,7 +58,7 @@
                     if(val instanceof Date && precision){
                         switch (precision.length){
                             case 1: val = val.getYear() + 1900; break;
-                            case 2: val = exports.fmt("$01/$2", val.getMonth(), (val.getYear() + 1900)); break;
+                            case 2: val = exports.fmt("$01/$2", val.getMonth() + 1, (val.getYear() + 1900)); break;
                             case 3: val = makeDateString(val); break;
                             case 4: val = addMillis(val, val.toLocaleTimeString()); break;
                             case 5: case 6: val = makeDateTimeString(val); break;
@@ -95,7 +95,7 @@
     };
 
     function makeDateString(val){
-        return exports.fmt("$1/$02/$03", (val.getYear() + 1900), val.getMonth(), val.getDate());
+        return exports.fmt("$1/$02/$03", (val.getYear() + 1900), val.getMonth() + 1, val.getDate());
     }
 
     function makeDateTimeString(val){

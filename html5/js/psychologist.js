@@ -184,7 +184,7 @@ function fmt(template){
                 if(val instanceof Date && precision){
                     switch (precision.length){
                         case 1: val = val.getYear(); break;
-                        case 2: val = val.getMonth() + "/" + val.getYear(); break;
+                        case 2: val = (val.getMonth() + 1) + "/" + val.getYear(); break;
                         case 3: val = val.toLocaleDateString(); break;
                         case 4: val = fmt.addMillis(val, val.toLocaleTimeString()); break;
                         case 5: case 6: val = val.toLocaleString(); break;
