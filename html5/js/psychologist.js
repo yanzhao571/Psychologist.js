@@ -382,7 +382,8 @@ function readForm(ctrls){
     if(ctrls){
         for(var name in ctrls){
             var c = ctrls[name];
-            if(c.tagName == "INPUT"){
+            console.log(c);
+            if(c.tagName == "INPUT" && (!c.dataset || !c.dataset.skipcache)){
                 if(c.type == "text" || c.type == "password"){
                     state[name] = c.value;
                 }
@@ -399,7 +400,7 @@ function writeForm(ctrls, state){
     if(state){
         for(var name in ctrls){
             var c = ctrls[name];
-            if(state[name] != null && c.tagName == "INPUT"){
+            if(state[name] != null && c.tagName == "INPUT" && (!c.dataset || !c.dataset.skipcache)){
                 if(c.type == "text" || c.type == "password"){
                     c.value = state[name];
                 }

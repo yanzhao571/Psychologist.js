@@ -69,18 +69,33 @@ td > .button, td > input
     width:0;
 }
 
-#instructions
+#menuButton, #talkButton
 {
+    position: fixed;
+    bottom: 10px;
+    width: 32px;
+    height: 32px;
 }
 
 #menuButton
 {
-    position: fixed;
     left: 10px;
-    bottom: 10px;
-    width: 32px;
-    height: 32px;
     background-image:url(../ico/menu.png);
+}
+
+#talkButton
+{
+    left: 52px;
+    background-image:url(../ico/chat.png);
+}
+
+#textEntry
+{
+    position:fixed;
+    top:0px;
+    left:0px;
+    width:90%;
+    margin:10px;
 }
 
 body

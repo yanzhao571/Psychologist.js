@@ -284,6 +284,17 @@ function postScriptLoad(progress){
         ctrls.options.style.display = "";
     }, false);
 
+    ctrls.talkButton.addEventListener("click", function(){
+        ctrls.textEntry.style.display = "";
+        ctrls.textEntry.focus();
+    }, false);
+
+    ctrls.textEntry.addEventListener("change", function(){
+        ctrls.textEntry.style.display = "none";
+        showTyping(true, true, this.value);
+        this.value = "";
+    }, false);
+
     ctrls.pointerLockButton.addEventListener("click", function(){
         mouse.togglePointerLock();
         ctrls.options.style.display = "none";
