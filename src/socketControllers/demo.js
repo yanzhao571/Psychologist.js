@@ -48,7 +48,7 @@ module.exports = {
         
             if(key && users[key].password == credentials.password){
                 if(!users[key].isConnected()){
-                    log("[#1] > user login", key);
+                    log("[$1] > user login", key);
                 }
                 users[key].email = credentials.email || users[key].email;
                 users[key].addDevice(users, socket);
