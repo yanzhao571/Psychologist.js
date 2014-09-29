@@ -12,8 +12,8 @@ fs.readFile("users.json", "utf8", function(err, file){
         log("Reading users from disk.");
         var userList = JSON.parse(file);
         for(var i = 0; i < userList.length; ++i){
-            var name = userList[i].userName || name; 
-            users[name.toLocaleUpperCase()] = new User(userList[i]);
+            userList[i].userName = userList[i].userName || userList[i].name; 
+            users[userList[i].userName.toLocaleUpperCase()] = new User(userList[i]);
         }
     }
 });
