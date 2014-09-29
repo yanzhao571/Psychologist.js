@@ -568,7 +568,7 @@ function postScriptLoad(progress){
 
     speech = new SpeechInput("speech", [
         { keywords: ["jump"], command: jump },
-        { preamble: true, keywords: ["say"], command: socket.emit.bind(socket, "chat") }
+        { preamble: true, keywords: ["message"], command: socket.emit.bind(socket, "chat") }
     ], socket);
 
     gamepad.addEventListener("gamepadconnected", function (id){

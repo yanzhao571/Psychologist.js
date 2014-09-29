@@ -382,7 +382,6 @@ function readForm(ctrls){
     if(ctrls){
         for(var name in ctrls){
             var c = ctrls[name];
-            console.log(c);
             if(c.tagName == "INPUT" && (!c.dataset || !c.dataset.skipcache)){
                 if(c.type == "text" || c.type == "password"){
                     state[name] = c.value;

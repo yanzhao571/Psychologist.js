@@ -126,7 +126,10 @@ function SpeechInput(name, commands, socket){
                 if(cmd.preamble && command.indexOf(cmd.keywords[j]) == 0
                     || cmd.keywords[j] == command){
                     found = true;
-                    cmd.command(cmd.preamble && command.substring(cmd.keywords[j].length));
+                    if(cmd.preamble){
+                        command = command.substring(cmd.keywords[j].length);
+                    }
+                    cmd.command(command);
                 }
             }
         }
@@ -159,20 +162,27 @@ function SpeechInput(name, commands, socket){
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = "en-US";
-
+        var restart = false;
         recognition.addEventListener("start", function(){
             console.log("speech started");
             command = ""; 
         }, true);
 
         recognition.addEventListener("error", function(event){
+            restart = true;
+            console.log("speech error", event);
             running = false;
             command = "speech error";
         }, true);
 
         recognition.addEventListener("end", function(){
+            console.log("speech ended", arguments);
             running = false;
             command = "speech ended";
+            if(restart){
+                restart = false;
+                this.start();
+            }
         }, true);
 
         recognition.addEventListener("result", function(event){ 
