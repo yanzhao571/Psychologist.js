@@ -3,14 +3,14 @@
     for(var i = 0; i < commands.length; ++i){
         var cmd = commands[i];
         if(cmd.preamble){
-            cmd.commandDown = function(update){
+            cmd.commandUp = function(update){
                 textEntry = true;
                 text = "";
                 insertionPoint = 0;
                 onTextEntry = update;
                 onTextEntry(false, "|");
                 this.enable(false);
-            }.bind(this, cmd.commandDown);
+            }.bind(this, cmd.commandUp);
         }
     }
 

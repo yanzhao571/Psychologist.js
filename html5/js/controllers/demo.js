@@ -302,6 +302,10 @@ function postScriptLoad(progress){
         }
     }
 
+    function toggleOptions(){
+        ctrls.options.style.display = (ctrls.options.style.display == "") ? "none" : "";
+    }
+
     var closers = document.getElementsByClassName("closeSectionButton");
     for(var i = 0; i < closers.length; ++i){
         closers[i].addEventListener("click", function(){
@@ -316,9 +320,13 @@ function postScriptLoad(progress){
         }
     }
 
-    ctrls.menuButton.addEventListener("click", function(){
-        ctrls.options.style.display = "";
+    window.addEventListener("keyup", function(evt){
+        if(evt.keyCode == KeyboardInput.GRAVEACCENT){
+            toggleOptions();
+        }
     }, false);
+
+    ctrls.menuButton.addEventListener("click", toggleOptions, false);
 
     ctrls.talkButton.addEventListener("click", function(){
         ctrls.textEntry.style.display = "";
@@ -593,12 +601,12 @@ function postScriptLoad(progress){
         { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 0.250 },
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 0.125 },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 0.125 },
+        { name: "options", buttons: [KeyboardInput.GRAVEACCENT], commandUp: toggleOptions },
         { 
             name: "chat", 
             preamble: true, 
             buttons: [KeyboardInput.T], 
-            commandDown: showTyping.bind(window, true),
-            dt: 0.125 
+            commandUp: showTyping.bind(window, true)
         },
     ], socket, renderer.domElement);
 
@@ -615,10 +623,12 @@ function postScriptLoad(progress){
         { name: "pitch", axes: [GamepadInput.IRSY]},
         { name: "jump", buttons: [1], commandDown: jump, dt: 0.250 },
         { name: "fire", buttons: [2], commandDown: fire, dt: 0.125 },
+        { name: "options", buttons: [9], commandUp: toggleOptions },
     ], socket);
 
     speech = new SpeechInput("speech", [
         { keywords: ["jump"], command: jump },
+        { keywords: ["options"], command: toggleOptions },
         { preamble: true, keywords: ["message"], command: socket.emit.bind(socket, "chat") }
     ], socket);
 
