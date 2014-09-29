@@ -3,24 +3,21 @@
     for(var i = 0; i < commands.length; ++i){
         var cmd = commands[i];
         if(cmd.preamble){
-            cmd.commandDown = function(update, cancel){
+            cmd.commandDown = function(update){
                 textEntry = true;
                 text = "";
                 insertionPoint = 0;
-                onTextEntryComplete = update;
-                onTextEntryComplete("|", false);
-                onTextEntryCancel = cancel;
+                onTextEntry = update;
+                onTextEntry(false, "|");
                 this.enable(false);
-            }.bind(this, cmd.commandDown, cmd.commandUp);
-            cmd.commandUp = null;
+            }.bind(this, cmd.commandDown);
         }
     }
 
     NetworkedInput.call(this, name, null, commands, socket, 0, 0);
 
     var textEntry = false,
-        onTextEntryComplete = null,
-        onTextEntryCancel = null,
+        onTextEntry = null,
         text = null,
         insertionPoint = null;
     
@@ -30,10 +27,10 @@
                 || event.keyCode == KeyboardInput.ESCAPE){
                 textEntry = false;
                 if(event.keyCode == KeyboardInput.ENTER){
-                    onTextEntryComplete(text, true);
+                    onTextEntry(true, text);
                 }
                 else{
-                    onTextEntryCancel();
+                    onTextEntry(false, null);
                 }
                 this.enable(true);
             }
@@ -72,7 +69,7 @@
                 }
 
                 insertionPoint = Math.max(0, Math.min(text.length, insertionPoint));
-                onTextEntryComplete(text.substring(0, insertionPoint) + "|" + text.substring(insertionPoint), false);
+                onTextEntry(false, text.substring(0, insertionPoint) + "|" + text.substring(insertionPoint));
                 event.preventDefault();
             }
         }

@@ -1,4 +1,4 @@
-﻿var types = ["gamepad", "keyboard", "mouse", "touch", "head", "arm", "speech"],
+﻿var types = ["gamepad", "keyboard", "mouse", "touch", "head", "arm", "speech", "typing"],
     log = require("../core").log;
 
 function User(userName, password){
@@ -18,6 +18,9 @@ function User(userName, password){
 }
 
 User.prototype.addDevice = function(users, socket){
+    //
+    // find a slot in which to put the socket
+    //
     var index = 0;
     while(index < this.devices.length && this.devices[index]){
         ++index;
@@ -26,6 +29,9 @@ User.prototype.addDevice = function(users, socket){
     log("Device added for $1", this.state.userName);
     this.devices[index] = socket;
     
+    //
+    // bind the events
+    //
     for(var i = 0; i < types.length; ++i){
         socket.on(types[i], User.prototype.emit.bind(this, index, types[i]));
     }
@@ -43,6 +49,9 @@ User.prototype.addDevice = function(users, socket){
 
     socket.on("disconnect", User.prototype.disconnect.bind(this, users, index));
     
+    //
+    // notify the new client of all of the users currently logged in
+    //
     var userList = [];
     for(var key in users){
         if(users[key].isConnected()){
@@ -50,11 +59,18 @@ User.prototype.addDevice = function(users, socket){
         }
     }
     socket.emit("userList", userList);
+
     if(index == 0){
+        //
+        // notify all of the users of a new user
+        //
         this.broadcast(users, index, "userJoin", this.state.userName);
     }
-
-    if(index > 0){
+    else{
+        //
+        // notify all of the user's devices that a new device was connected,
+        // then update them on the user's current state.
+        //
         this.emit(index, "deviceAdded");
         socket.emit("userState", this.state);
     }

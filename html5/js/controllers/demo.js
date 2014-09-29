@@ -341,41 +341,69 @@ function postScriptLoad(progress){
 
     var lastText;
 
-    function chat(update, text, isDone){
+    function showTyping(isLocal, isComplete, text){
         if(bears[userName]){
             if(lastText){
                 bears[userName].remove(lastText);
-            }
-            if(isDone){
-                socket.emit("chat", text);
                 lastText = null;
             }
-            else if(update){
+
+            if(isComplete){
+                socket.emit("chat", text);
+            }
+            else if(text != null){
                 var textObj= makeText(text, 0.125);
                 lastText = textObj;
 		        bears[userName].add(textObj);
 		        textObj.position.x = textObj.children[0].geometry.boundingBox.min.x - textObj.children[0].geometry.boundingBox.max.x + 0.75;
 		        textObj.position.y = PLAYER_HEIGHT;
 		        textObj.position.z = -4;
+                if(isLocal){
+                    socket.emit("typing", text);
+                }
             }
+        }
+    }
+
+    function shiftLines(){
+        for(var i = 0; i < chatLines.length; ++i){
+            chatLines[i].position.y = PLAYER_HEIGHT + (chatLines.length - i) * 0.17;
         }
     }
 
     function showChat(msg){
         if(bears[userName]){
+            if(userName == msg.userName){
+                showTyping(true, false, null);
+            }
             var textObj= makeText(fmt("[$1]: $2", msg.userName, msg.text), 0.125);
 		    bears[userName].add(textObj);
 		    textObj.position.x = 0;
-		    textObj.position.y = PLAYER_HEIGHT - chatLines.length * 0.125;
 		    textObj.position.z = -5;
             chatLines.push(textObj);
+            shiftLines();
             setTimeout(function(){
                 bears[userName].remove(textObj);
                 chatLines.shift();
-                for(var i = 0; i < chatLines.length; ++i){
-                    chatLines[i].position.y = PLAYER_HEIGHT - i * 0.125;
-                }
+                shiftLines();
             }, 3000);
+        }
+    }
+
+    function updateUserState(userState){
+        var bear = bears[userState.userName];
+        if(bear){
+            bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+            bear.rotateY(userState.heading);
+            bear.position.x = userState.x;
+            bear.position.y = userState.y - PLAYER_HEIGHT;
+            bear.position.z = userState.z;
+            if(!bear.animation.isPlaying && userState.isRunning){
+                bear.animation.play();
+            }
+            else if(bear.animation.isPlaying && !userState.isRunning){
+                bear.animation.stop();
+            }
         }
     }
 
@@ -451,22 +479,9 @@ function postScriptLoad(progress){
 
     socket.on("userJoin", addUser);
 
-    socket.on("userState", function(userState){
-        var bear = bears[userState.userName];
-        if(bear){
-            bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-            bear.rotateY(userState.heading);
-            bear.position.x = userState.x;
-            bear.position.y = userState.y - PLAYER_HEIGHT;
-            bear.position.z = userState.z;
-            if(!bear.animation.isPlaying && userState.isRunning){
-                bear.animation.play();
-            }
-            else if(bear.animation.isPlaying && !userState.isRunning){
-                bear.animation.stop();
-            }
-        }
-    });
+    socket.on("userState", updateUserState);
+
+    socket.on("typing", showTyping.bind(window, false, false));
 
     socket.on("chat", showChat);
     
@@ -516,7 +531,13 @@ function postScriptLoad(progress){
         { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 250 },
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 125 },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 125 },
-        { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandDown: chat.bind(window, true), commandUp: chat.bind(window, false), dt: 1000 },
+        { 
+            name: "chat", 
+            preamble: true, 
+            buttons: [KeyboardInput.T], 
+            commandDown: showTyping.bind(window, true),
+            dt: 125 
+        },
     ], socket, renderer.domElement);
 
     gamepad = new GamepadInput("gamepad", [
