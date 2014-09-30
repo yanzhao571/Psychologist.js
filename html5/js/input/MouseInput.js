@@ -1,6 +1,6 @@
 ﻿function MouseInput(name, axisConstraints, commands, socket, DOMElement){
     DOMElement = DOMElement || document.documentElement;
-    NetworkedInput.call(this, name, axisConstraints, commands, socket, 1, MouseInput.AXES);
+    ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, 1, MouseInput.AXES);
 
     this.setLocation = function(x, y){
         this.setAxis("X", x);
@@ -95,9 +95,9 @@
     };
 }
 
-inherit(MouseInput, NetworkedInput);
+inherit(MouseInput, ButtonAndAxisInput);
 MouseInput.AXES = ["X", "Y", "Z"];
-NetworkedInput.fillAxes(MouseInput);
+ButtonAndAxisInput.fillAxes(MouseInput);
 
 /*
 https://www.github.com/capnmidnight/VR

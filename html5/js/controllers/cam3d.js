@@ -4,7 +4,7 @@
     "lib/Blob.js",
     "lib/canvas-toBlob.js",
     "lib/FileSaver.js",
-    "js/input/NetworkedInput.js",
+    "js/input/ButtonAndAxisInput.js",
     "js/input/MotionInput.js",
     "js/input/SpeechInput.js",
     "js/camera.js"],
@@ -287,34 +287,34 @@
 
     speech = new SpeechInput("speech", [{
         keywords: ["capture", "save", "safe", "save picture", "shoot", "shit", "snap", "take", "take picture"],
-        command: capture
+        commandUp: capture
     },{
         keywords: ["reset"],
-        command: reset
+        commandUp: reset
     },{
         keywords: ["menu", "options"], 
-        command: toggleMenu
+        commandUp: toggleMenu
     },{
         keywords: ["show menu", "show options", "show option", "open menu", "open options", "open option"], 
-        command:  showMenu
+        commandUp:  showMenu
     },{
         keywords: ["hide menu", "hide options", "hide option", "close menu", "close options", "close option"], 
-        command:  hideMenu
+        commandUp:  hideMenu
     },{
         keywords: ["target"], 
-        command: toggleReticle
+        commandUp: toggleReticle
     },{
         keywords: ["change mode"], 
-        command: changeMode
+        commandUp: changeMode
     },{
         keywords: ["stereo"], 
-        command: setMode.bind(window, "stereoscope")
+        commandUp: setMode.bind(window, "stereoscope")
     },{
         keywords: ["cross eyed", "cross eye", "crosseyed", "crosseye"], 
-        command: setMode.bind(window, "crosseye")
+        commandUp: setMode.bind(window, "crosseye")
     },{
         keywords: ["green", "green red", "red red", "green green", "red", "red green", "anaglyph"], 
-        command: setMode.bind(window, "anaglyph")
+        commandUp: setMode.bind(window, "anaglyph")
     }]);
 
     setSpeech();

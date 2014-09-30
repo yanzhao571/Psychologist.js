@@ -1,5 +1,5 @@
 ﻿include(0,
-    ["js/input/NetworkedInput.js",
+    ["js/input/ButtonAndAxisInput.js",
     "js/input/GamepadInput.js"],
     gamepadTest);
 function gamepadTest(){

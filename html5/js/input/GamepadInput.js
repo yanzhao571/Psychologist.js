@@ -1,5 +1,5 @@
 ﻿function GamepadInput(name, axisConstraints, commands, socket, gpid){
-    NetworkedInput.call(this, name, axisConstraints, commands, socket, 1, GamepadInput.AXES, true);
+    ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, 1, GamepadInput.AXES, true);
     var connectedGamepads = [],
         listeners = {
             gamepadconnected: [],
@@ -81,10 +81,6 @@
         sendAll(listeners.gamepaddisconnected, id);
     }
 
-    this.isAvailable = function(){ 
-        return available;
-    };
-
     this.getErrorMessage = function(){
         return errorMessage;
     };
@@ -125,7 +121,7 @@
 
     try{
         this.update(0);
-        available = true;
+        this.available = true;
     }
     catch(err){
         avaliable = false;
@@ -133,9 +129,9 @@
     }
 }
 
-inherit(GamepadInput, NetworkedInput);
+inherit(GamepadInput, ButtonAndAxisInput);
 GamepadInput.AXES = ["LSX", "LSY", "RSX", "RSY"];
-NetworkedInput.fillAxes(GamepadInput);
+ButtonAndAxisInput.fillAxes(GamepadInput);
 
 /*
 https://www.github.com/capnmidnight/VR

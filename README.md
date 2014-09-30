@@ -123,7 +123,7 @@ This is still a work in progress. Eventually, I'll have enumerations for each of
     // to have multiple phrases execute the command. Useful when the phrase can be
     // misheard by the speech recognition engine.
     var speech = new SpeechInput("speech", [
-        { keywords: ["jump"], command: jump }
+        { keywords: ["jump"], commandUp: jump }
     ], socket);
 
     function loop(dt){

@@ -272,7 +272,7 @@ MotionCorrector.ZERO_EULER = {gamma: 90, alpha: 270, beta: 0};
 MotionCorrector.BROWSER_IS_GOOGLE_CHROME = !!window.chrome && !window.opera && navigator.userAgent.indexOf(' OPR/') < 0;
 
 function MotionInput(name, axisConstraints, commands, socket){
-    NetworkedInput.call(this, name, axisConstraints, commands, socket, 1, MotionInput.AXES);
+    ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, 1, MotionInput.AXES);
     
     var corrector = new MotionCorrector(MotionCorrector.BROWSER_IS_GOOGLE_CHROME);
     corrector.addEventListener("deviceorientation", function (evt){
@@ -285,9 +285,9 @@ function MotionInput(name, axisConstraints, commands, socket){
     this.zeroAxes = corrector.zeroAxes.bind(corrector);
 }
 
-inherit(MotionInput, NetworkedInput);
+inherit(MotionInput, ButtonAndAxisInput);
 MotionInput.AXES = ["HEADING", "PITCH", "ROLL", "ACCELX", "ACCELY", "ACCELZ", "ALPHA", "BETA", "GAMMA"];
-NetworkedInput.fillAxes(MotionInput);
+ButtonAndAxisInput.fillAxes(MotionInput);
 
 /*
 https://www.github.com/capnmidnight/VR

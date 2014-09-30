@@ -14,7 +14,7 @@
         }
     }
 
-    NetworkedInput.call(this, name, null, commands, socket, 0, 0);
+    ButtonAndAxisInput.call(this, name, null, commands, socket, 0, 0);
 
     var textEntry = false,
         onTextEntry = null,
@@ -84,7 +84,7 @@
     DOMElement.addEventListener("keyup", execute.bind(this, false), false);
 }
 
-inherit(KeyboardInput, NetworkedInput);
+inherit(KeyboardInput, ButtonAndAxisInput);
 
 KeyboardInput.BACKSPACE = 8;
 KeyboardInput.TAB = 9;

@@ -14,7 +14,7 @@ var isDebug = false,
 		"lib/three/ColladaLoader.js",
 		"lib/droid_sans_regular.typeface.js",
 		"/socket.io/socket.io.js",
-		"js/input/NetworkedInput.js",
+		"js/input/ButtonAndAxisInput.js",
 		"js/input/SpeechInput.js",
 		"js/input/GamepadInput.js",
 		"js/input/KeyboardInput.js",
@@ -630,12 +630,7 @@ function postScriptLoad(progress){
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 0.125 },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 0.125 },
         { name: "options", buttons: [KeyboardInput.GRAVEACCENT], commandUp: toggleOptions },
-        { 
-            name: "chat", 
-            preamble: true, 
-            buttons: [KeyboardInput.T], 
-            commandUp: showTyping.bind(window, true)
-        },
+        { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)},
     ], socket, renderer.domElement);
 
     gamepad = new GamepadInput("gamepad", [
@@ -655,9 +650,9 @@ function postScriptLoad(progress){
     ], socket);
 
     speech = new SpeechInput("speech", [
-        { keywords: ["jump"], command: jump },
-        { keywords: ["options"], command: toggleOptions },
-        { preamble: true, keywords: ["message"], command: socket.emit.bind(socket, "chat") }
+        { name: "jump", keywords: ["jump"], commandUp: jump },
+        { name: "options", keywords: ["options"], commandUp: toggleOptions },
+        { name: "chat", preamble: true, keywords: ["message"], commandUp: socket.emit.bind(socket, "chat") }
     ], socket);
 
     gamepad.addEventListener("gamepadconnected", function (id){

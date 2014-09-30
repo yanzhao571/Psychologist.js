@@ -1,5 +1,5 @@
 ﻿include(0,
-    ["js/input/NetworkedInput.js",
+    ["js/input/ButtonAndAxisInput.js",
     "js/input/TouchInput.js"],
     touchTest);
 function touchTest(){

@@ -33,8 +33,9 @@
     <Compile Include="html5\js\controllers\gamepad.js" />
     <Compile Include="html5\js\controllers\motion.js" />
     <Compile Include="html5\js\controllers\touch.js" />
-    <Compile Include="html5\js\input\TouchInput.js" />
     <Compile Include="html5\js\input\NetworkedInput.js" />
+    <Compile Include="html5\js\input\TouchInput.js" />
+    <Compile Include="html5\js\input\ButtonAndAxisInput.js" />
     <Compile Include="html5\js\input\GamepadInput.js" />
     <Compile Include="html5\js\oscope\oscope.client.js" />
     <Compile Include="html5\js\oscope\oscope.viewer.js" />

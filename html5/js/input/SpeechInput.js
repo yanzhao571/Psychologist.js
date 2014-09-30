@@ -47,15 +47,11 @@
 
 */
 function SpeechInput(name, commands, socket){
+    NetworkedInput.call(this, name, commands, socket);
     var command = "",
-        commandTimeout,
         running = false,
         recognition = null,
-        available = null,
-        errorMessage = null,
-        enable = true,
-        transmitting = true,
-        receiving = true;
+        errorMessage = null;
 
     function warn(){
         var msg = fmt("Failed to initialize speech engine. Reason: $1", err.message);
@@ -63,31 +59,8 @@ function SpeechInput(name, commands, socket){
         return false;
     }
 
-    this.check = function(){
-        if(enabled && !running){
-            this.start();
-        }
-        else if(!enabled && running){
-            this.stop();
-        }
-    }
-
-    this.enable = function(v){
-        enabled = v;
-        this.check();
-    };
-
-    this.transmit = function(v){
-        transmitting = v;
-        this.check();
-    };
-
-    this.receive = function(v){
-        receiving = v;
-    };
-
-    this.start = function(){
-        if(!available){
+    function start(){
+        if(!this.available){
             return warn();
         }
         else if(!running){
@@ -96,10 +69,10 @@ function SpeechInput(name, commands, socket){
             return true;
         }
         return false;
-    };
+    }
 
-    this.stop = function(){
-        if(!available){
+    function stop(){
+        if(!this.available){
             return warn();
         }
         if(running){
@@ -107,18 +80,22 @@ function SpeechInput(name, commands, socket){
             return true;
         }
         return false;
-    };
+    }
 
-    this.isAvailable = function(){ 
-        return available;
-    };
-
+    this.check = function(){
+        if(this.enabled && !running){
+            start();
+        }
+        else if(!this.enabled && running){
+            stop();
+        }
+    }
+    
     this.getErrorMessage = function(){
         return errorMessage;
     };
 
     function executeCommand(command){
-        console.log(command);
         var found = false;
         for(var i = 0; i < commands.length && !found; ++i){
             var cmd = commands[i];
@@ -137,14 +114,6 @@ function SpeechInput(name, commands, socket){
             console.log("Unknown command: " + command);
         }
         return found;
-    }
-
-    if(socket){
-        socket.on(name, function(command){
-            if(receiving){
-                executeCommand(command);
-            }
-        });
     }
 
     // clone the arrays, so the consumer can't add elements to it in their own code.
@@ -186,10 +155,6 @@ function SpeechInput(name, commands, socket){
         }, true);
 
         recognition.addEventListener("result", function(event){ 
-            if(commandTimeout){
-                clearTimeout(commandTimeout);
-            }
-
             var newCommand = "";
             for(var i = 0; i < event.results.length; ++i){
                 if(i >= event.resultIndex && event.results[i].length > 0){
@@ -199,26 +164,30 @@ function SpeechInput(name, commands, socket){
 
             newCommand = newCommand.trim().toLowerCase();
 
-            if(newCommand != command){
-                command = newCommand;
-                if(executeCommand(command) && transmitting && socket){
-                    socket.emit(name, command);
-                }
+            if(newCommand != this.inputState){
+                this.inputState = newCommand;
             }
-
-            commandTimeout = setTimeout(function(){
-                command = "";
-                delete commandTimeout;
-            }, 2000);
         }, true);
 
-        available = true;
+        this.available = true;
     }
     catch(err){
         errorMessage = err;
-        available = false;
+        this.available = false;
     }
 }
+
+inherit(SpeechInput, NetworkedInput);
+
+SpeechInput.prototype.enable = function(k, v){
+    NetworkedInput.prototype.enable.call(this, k, v);
+    this.check();
+};
+
+SpeechInput.prototype.transmit = function(v){
+    NetworkedInput.prototype.transmit.call(this, v);
+    this.check();
+};
 
 /*
 https://www.github.com/capnmidnight/VR

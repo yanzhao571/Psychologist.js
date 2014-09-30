@@ -14,7 +14,7 @@
         }
     }
 
-    NetworkedInput.call(this, name, axisConstraints, commands, socket, 1, TouchInput.AXES);
+    ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, 1, TouchInput.AXES);
 
     function setState (stateChange, setAxis, event){
         var touches = stateChange ? event.touches : event.changedTouches;
@@ -45,14 +45,14 @@
     DOMElement.addEventListener("touchmove", setState.bind(this, true, true), false);
 }
 
-inherit(TouchInput, NetworkedInput);
+inherit(TouchInput, ButtonAndAxisInput);
 TouchInput.NUM_FINGERS = 10;
 TouchInput.AXES = [];
 for(var i = 0; i < TouchInput.NUM_FINGERS; ++i){
     TouchInput.AXES.push("X" + i);
     TouchInput.AXES.push("Y" + i);
 }
-NetworkedInput.fillAxes(TouchInput);
+ButtonAndAxisInput.fillAxes(TouchInput);
 
 /*
 https://www.github.com/capnmidnight/VR
