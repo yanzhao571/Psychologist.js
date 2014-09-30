@@ -430,9 +430,11 @@ function postScriptLoad(progress){
         }
     }
 
+    var CHAT_TEXT_SIZE = 0.25;
+
     function shiftLines(){
         for(var i = 0; i < chatLines.length; ++i){
-            chatLines[i].position.y = PLAYER_HEIGHT + (chatLines.length - i) * 0.17;
+            chatLines[i].position.y = PLAYER_HEIGHT + (chatLines.length - i) * CHAT_TEXT_SIZE * 1.333;
         }
     }
 
@@ -442,7 +444,7 @@ function postScriptLoad(progress){
             if(userName == msg.userName){
                 showTyping(true, false, null);
             }
-            var textObj= makeText(msg, 0.125, -1, 0, -5, "left");
+            var textObj= makeText(msg, CHAT_TEXT_SIZE, -2, 0, -5, "left");
 		    bears[userName].add(textObj);
             chatLines.push(textObj);
             shiftLines();
@@ -487,13 +489,15 @@ function postScriptLoad(progress){
 
         var textCanvas = document.createElement("canvas");
         var textContext = textCanvas.getContext("2d");
-        var width = textContext.measureText(text).width * 1.25;
-        
-        textCanvas.width = Math.floor(width * 10) + 20;
-        textCanvas.height = height + 20;
-        textContext.fillStyle = "#FFFFFF";
         textContext.font = height + "px Arial";
-        textContext.fillText(text, 0, height);
+        var width = textContext.measureText(text).width;
+        
+        textCanvas.width = width;
+        textCanvas.height = height;
+        textContext.font = height + "px Arial";
+        textContext.fillStyle = "#FFFFFF";
+        textContext.textBaseline = "top";
+        textContext.fillText(text, 0, 0);
         
         var texture = new THREE.Texture(textCanvas);
         texture.needsUpdate = true;
@@ -506,7 +510,7 @@ function postScriptLoad(progress){
             shading: THREE.FlatShading
         });
 
-        var textGeometry = new THREE.PlaneGeometry(width / 100, height / 1000);
+        var textGeometry = new THREE.PlaneGeometry(size * width / height, size);
 		textGeometry.computeBoundingBox();
 		textGeometry.computeVertexNormals();
 
@@ -527,8 +531,8 @@ function postScriptLoad(progress){
         bear.heading = userState.heading;
         updateUserState(userState);
         scene.add(bear);
-        bear.nameObj = makeText(userState.userName, 1, 0, PLAYER_HEIGHT + 2, 0, "center");
-		bear.add(bear.nameObj);
+        bear.nameObj = makeText(userState.userName, 0.5, 0, PLAYER_HEIGHT + 2.5, 0, "center");
+		bear.add(bear.nameObj)
         
 
         if(userState.userName == userName && (arm.isEnabled() || arm.isReceiving())){
