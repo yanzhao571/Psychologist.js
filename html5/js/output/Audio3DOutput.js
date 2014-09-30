@@ -11,6 +11,9 @@
     }
     catch(exp){
         this.isAvailable = false;
+        this.setPosition = function(){};
+        this.setVelocity = function(){};
+        this.setOrientation = function(){};
         this.error = exp;
     }
 }

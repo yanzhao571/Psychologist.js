@@ -223,6 +223,7 @@ function postScriptLoad(progress){
                 bear.position.z += bear.dz * dt;
                 bear.heading += bear.dheading * dt;
                 bear.rotateY(bear.heading);
+                bear.nameObj.rotation.y = heading - bear.heading;
             }
         }
     }
@@ -526,9 +527,9 @@ function postScriptLoad(progress){
         bear.heading = userState.heading;
         updateUserState(userState);
         scene.add(bear);
-        var name = makeText(userState.userName, 1, 0, PLAYER_HEIGHT + 2, 0, "center");
-		bear.add(name);
-        name.rotateY(Math.PI);
+        bear.nameObj = makeText(userState.userName, 1, 0, PLAYER_HEIGHT + 2, 0, "center");
+		bear.add(bear.nameObj);
+        
 
         if(userState.userName == userName && (arm.isEnabled() || arm.isReceiving())){
             var sphere = new THREE.SphereGeometry(0.5, 4, 2);
