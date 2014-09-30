@@ -488,7 +488,7 @@ navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mo
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia || navigator.oGetUserMedia;
 
 MediaStreamTrack.getVideoTracks =
-    (window["MediaStream"] && MediaStream.getVideoTracks && (function (getter, success){
+    (window.MediaStream && MediaStream.getVideoTracks && (function (getter, success){
         success(getter());
     }).bind(MediaStream, MediaStream.getVideoTracks))
     || (MediaStreamTrack.getSources && function (success){

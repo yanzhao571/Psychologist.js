@@ -46,7 +46,6 @@ function displayProgress(file){
     ctrls.loadingMessage.innerHTML 
         = ctrls.connectButton.innerHTML 
         = fmt("Loading, please wait... $1 $2", file, ctrls.processedSoFar.style.width);
-    console.log(file, ctrls.processedSoFar.style.width);
     ctrls.loadedSoFar.style.left = ctrls.errorSoFar.style.width = prog.makeSize(FileState.ERRORED, "size");
     if(prog.isDone()){
         ctrls.loading.style.display = "none";
@@ -447,7 +446,7 @@ function postScriptLoad(progress){
             }
             var textObj= makeText(msg, 0.125);
 		    bears[userName].add(textObj);
-		    textObj.position.set(0, 0, -5);
+		    textObj.position.set(-1, 0, -5);
             chatLines.push(textObj);
             shiftLines();
             setTimeout(function(){
