@@ -29,13 +29,24 @@ var isDebug = false,
     
     writeForm(ctrls, formState);
 
-function displayProgress(){
+function displayProgress(file){
     ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
     ctrls.processedSoFar.style.width = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
     ctrls.loadedSoFar.style.width = prog.makeSize(FileState.COMPLETE, "size");
+    if(typeof(file) != "string"){
+        file = fmt(
+            "<br>$1:<br>[msg] $2<br>[line] $3<br>[col] $4<br>[file] $5", 
+            typeof(file), 
+            file.message,
+            file.line,
+            file.column,
+            file.sourceURL.match(/[^\/\\]*$/)[0]
+        );
+    }
     ctrls.loadingMessage.innerHTML 
         = ctrls.connectButton.innerHTML 
-        = "Loading, please wait... " + ctrls.processedSoFar.style.width;
+        = fmt("Loading, please wait... $1 $2", file, ctrls.processedSoFar.style.width);
+    console.log(file, ctrls.processedSoFar.style.width);
     ctrls.loadedSoFar.style.left = ctrls.errorSoFar.style.width = prog.makeSize(FileState.ERRORED, "size");
     if(prog.isDone()){
         ctrls.loading.style.display = "none";

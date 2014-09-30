@@ -1,32 +1,44 @@
 ﻿function Audio3DOutput(){
-    this.audioContext = new AudioContext();
-    this.mainVolume = this.audioContext.createGain();
-    this.mainVolume.connect(this.audioContext.destination);
+    try{
+        this.audioContext = new AudioContext();
+        this.mainVolume = this.audioContext.createGain();
+        this.mainVolume.connect(this.audioContext.destination);
 
-    this.setPosition = this.audioContext.listener.setPosition.bind(this.audioContext.listener);
-    this.setVelocity = this.audioContext.listener.setVelocity.bind(this.audioContext.listener);
-    this.setOrientation = this.audioContext.listener.setOrientation.bind(this.audioContext.listener);
+        this.setPosition = this.audioContext.listener.setPosition.bind(this.audioContext.listener);
+        this.setVelocity = this.audioContext.listener.setVelocity.bind(this.audioContext.listener);
+        this.setOrientation = this.audioContext.listener.setOrientation.bind(this.audioContext.listener);
+        this.isAvailable = true;
+    }
+    catch(exp){
+        this.isAvailable = false;
+        this.error = exp;
+    }
 }
 
 Audio3DOutput.prototype.loadSound = function(src, loop, progress, success){
     var error = function(){ 
         progress("error", src); 
     };
-    progress("loading", src);
-    GET(src, "arraybuffer", function(evt){ 
-        progress("intermediate", src, evt.loaded); 
-    }, error, function(response){
-        progress("success", src);
-        this.audioContext.decodeAudioData(response, function(buffer){
-            var snd = {
-                volume: this.audioContext.createGain(),
-                source: this.audioContext.createBufferSource()
-            };
-            snd.source.buffer = buffer;
-            snd.source.loop = loop;
-            success(snd);
-        }.bind(this), error);
-    }.bind(this));
+    if(this.isAvailable){
+        progress("loading", src);
+        GET(src, "arraybuffer", function(evt){ 
+            progress("intermediate", src, evt.loaded); 
+        }, error, function(response){
+            progress("success", src);
+            this.audioContext.decodeAudioData(response, function(buffer){
+                var snd = {
+                    volume: this.audioContext.createGain(),
+                    source: this.audioContext.createBufferSource()
+                };
+                snd.source.buffer = buffer;
+                snd.source.loop = loop;
+                success(snd);
+            }.bind(this), error);
+        }.bind(this));
+    }
+    else{
+        error();
+    }
 };
 
 Audio3DOutput.prototype.loadSound3D = function(src, loop, x, y, z, progress, success){

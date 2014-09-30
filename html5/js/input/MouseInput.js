@@ -63,7 +63,8 @@
     
     DOMElement.requestPointerLock = DOMElement.requestPointerLock
         || DOMElement.webkitRequestPointerLock
-        || DOMElement.mozRequestPointerLock;
+        || DOMElement.mozRequestPointerLock
+        || function(){};
 
     this.requestPointerLock = function(){
         if(!this.isPointerLocked()){
@@ -73,7 +74,8 @@
 
     document.exitPointerLock = document.exitPointerLock
         || document.webkitExitPointerLock
-        || document.mozExitPointerLock;
+        || document.mozExitPointerLock
+        || function(){};
 
     this.exitPointerLock = document.exitPointerLock.bind(document);
 

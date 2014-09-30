@@ -94,7 +94,16 @@ function LoadingProgress(){
         callbacks = ofType(args, "function"),
         manifest = paths.shift(),
         displayProgress = callbacks.shift(),
-        postScriptLoad = callbacks.shift();
+        userPostScriptLoad = callbacks.shift(),
+        postScriptLoad = function(progress){
+            try{
+                userPostScriptLoad(progress);
+            }
+            catch(exp){
+                displayProgress(exp);
+                throw exp;
+            }
+        };
 
     getObject(manifest, function(files){
         this.files = files.map(function(f){ return new FileState(f);});
@@ -106,7 +115,7 @@ function LoadingProgress(){
                 if(this.fileMap[file]){
                     this.fileMap[file].state = FileState.STARTED;
                 }
-                displayProgress();
+                displayProgress(file);
             }
             else {
                 if(this.fileMap[file]){
@@ -122,7 +131,7 @@ function LoadingProgress(){
                     }
                 }
             
-                displayProgress();
+                displayProgress(file);
             }
         }
 
