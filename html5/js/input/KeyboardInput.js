@@ -29,9 +29,7 @@
                 if(event.keyCode == KeyboardInput.ENTER){
                     onTextEntry(true, text);
                 }
-                else{
-                    onTextEntry(false, null);
-                }
+                onTextEntry(false, null);
                 this.enable(true);
             }
             else{
@@ -66,6 +64,9 @@
                 else if(!event.shiftKey && KeyboardInput.LOWERCASE[key]){
                     text = text.substring(0, insertionPoint) + KeyboardInput.LOWERCASE[key] + text.substring(insertionPoint);
                     ++insertionPoint;
+                }
+                else{
+                    console.log(event.keyCode);
                 }
 
                 insertionPoint = Math.max(0, Math.min(text.length, insertionPoint));

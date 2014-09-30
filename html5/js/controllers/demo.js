@@ -412,21 +412,18 @@ function postScriptLoad(progress){
                 bears[userName].remove(lastText);
                 lastText = null;
             }
-
+            
             if(isComplete){
                 socket.emit("chat", text);
             }
-            else if(text != null){
-                var textObj= makeText(text, 0.125);
-                lastText = textObj;
-		        bears[userName].add(textObj);
-		        textObj.position.set(
-                    textObj.children[0].geometry.boundingBox.min.x - textObj.children[0].geometry.boundingBox.max.x + 0.75,
-                    PLAYER_HEIGHT,
-		            -4
-                );
+            else{
                 if(isLocal){
                     socket.emit("typing", text);
+                } 
+                if(text != null){
+                    var textObj= makeText(text, 0.125, 0, PLAYER_HEIGHT, -4, "right");
+                    lastText = textObj;
+		            bears[userName].add(textObj);
                 }
             }
         }
@@ -444,9 +441,8 @@ function postScriptLoad(progress){
             if(userName == msg.userName){
                 showTyping(true, false, null);
             }
-            var textObj= makeText(msg, 0.125);
+            var textObj= makeText(msg, 0.125, -1, 0, -5, "left");
 		    bears[userName].add(textObj);
-		    textObj.position.set(-1, 0, -5);
             chatLines.push(textObj);
             shiftLines();
             setTimeout(function(){
@@ -484,26 +480,44 @@ function postScriptLoad(progress){
         }
     }
 
-    function makeText(text, size){       
-        var textGeometry = new THREE.TextGeometry(text, {
-            size: size,
-            height: size * 0.25,
-            curveSegments: 4,
-            font: "droid sans",
-            weight: "normal",
-            style: "normal",
-            bevelEnabled: true,
-            bevelThickness: size * 0.0625,
-            bevelSize: size * 0.0625
-        });
+    function makeText(text, size, x, y, z, hAlign){
+        hAlign = hAlign || "center";
+        var height = (size * 1000);
+
+        var textCanvas = document.createElement("canvas");
+        var textContext = textCanvas.getContext("2d");
+        var width = textContext.measureText(text).width * 1.25;
         
+        textCanvas.width = Math.floor(width * 10) + 20;
+        textCanvas.height = height + 20;
+        textContext.fillStyle = "#FFFFFF";
+        textContext.font = height + "px Arial";
+        textContext.fillText(text, 0, height);
+        
+        var texture = new THREE.Texture(textCanvas);
+        texture.needsUpdate = true;
+
+        var material = new THREE.MeshLambertMaterial({
+            map: texture,
+            transparent: true,
+            useScreenCoordinates: false,
+            color: 0xffffff,
+            shading: THREE.FlatShading
+        });
+
+        var textGeometry = new THREE.PlaneGeometry(width / 100, height / 1000);
 		textGeometry.computeBoundingBox();
 		textGeometry.computeVertexNormals();
 
-		var textMesh = new THREE.Mesh(textGeometry, nameMaterial);
-        var textObj = new THREE.Object3D();
-        textObj.add(textMesh);
-        return textObj;
+        var textMesh = new THREE.Mesh(textGeometry, material);
+        if(hAlign == "left"){
+            x -= textGeometry.boundingBox.min.x;
+        }
+        else if(hAlign == "right"){
+            x += textGeometry.boundingBox.min.x;
+        }
+        textMesh.position.set(x, y, z);
+        return textMesh;
     }
 
     function addUser(userState){
@@ -512,10 +526,8 @@ function postScriptLoad(progress){
         bear.heading = userState.heading;
         updateUserState(userState);
         scene.add(bear);
-        var name = makeText(userState.userName, 1);
+        var name = makeText(userState.userName, 1, 0, PLAYER_HEIGHT + 2, 0, "center");
 		bear.add(name);
-        var centerOffset = (name.children[0].geometry.boundingBox.max.x - name.children[0].geometry.boundingBox.min.x) * 0.5;
-		name.position.set(centerOffset, PLAYER_HEIGHT + 2, 0);
         name.rotateY(Math.PI);
 
         if(userState.userName == userName && (arm.isEnabled() || arm.isReceiving())){
@@ -555,6 +567,7 @@ function postScriptLoad(progress){
             }
         }
         msg("You are now connected to the device server.");
+        closers[0].click();
     });
 
     socket.on("userJoin", addUser);
