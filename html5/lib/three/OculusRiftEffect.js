@@ -79,9 +79,6 @@ THREE.OculusRiftEffect = function ( renderer, options ) {
 			'  vec2 rBlue = rvector * (chromAbParam.z + chromAbParam.w * rSq);',
 			"  vec2 tcBlue = (lensCenter + scale * rBlue);",
 			"  tcBlue = (tcBlue+1.0)/2.0;", // range from [-1,1] to [0,1]
-			"  if (any(bvec2(clamp(tcBlue, vec2(0.0,0.0), vec2(1.0,1.0))-tcBlue))) {",
-			"    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);",
-			"    return;}",
 			"  vec2 tcGreen = lensCenter + scale * rvector;",
 			"  tcGreen = (tcGreen+1.0)/2.0;", // range from [-1,1] to [0,1]
 			"  vec2 rRed = rvector * (chromAbParam.x + chromAbParam.y * rSq);",
