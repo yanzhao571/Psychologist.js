@@ -36,6 +36,8 @@
     <Compile Include="html5\js\input\TouchInput.js" />
     <Compile Include="html5\js\input\NetworkedInput.js" />
     <Compile Include="html5\js\input\GamepadInput.js" />
+    <Compile Include="html5\js\oscope\oscope.client.js" />
+    <Compile Include="html5\js\oscope\oscope.viewer.js" />
     <Compile Include="html5\js\output\ModelOutput.js" />
     <Compile Include="html5\lib\physics\ammo.js" />
     <Compile Include="html5\lib\physics\physi.js" />
@@ -75,6 +77,7 @@
     <Compile Include="src\core.js" />
     <Compile Include="src\master.js" />
     <Compile Include="src\options.js" />
+    <Compile Include="src\socketControllers\oscope.js" />
     <Compile Include="src\socketControllers\demo.js" />
     <Compile Include="src\starter.js" />
     <Compile Include="src\webServer.js" />
@@ -117,6 +120,7 @@
     <Folder Include="html5\js\" />
     <Folder Include="html5\css\" />
     <Folder Include="html5\img\" />
+    <Folder Include="html5\js\oscope\" />
     <Folder Include="html5\js\output\" />
     <Folder Include="html5\lib\" />
     <Folder Include="html5\lib\physics\" />

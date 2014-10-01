@@ -1,0 +1,26 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
+    <title>Oscope</title>
+</head>
+<body>
+    <section>
+        <h1>"Oscilliscope" for observing and debugging numeric values in live-running HTML5 applications.</h1>
+        <div id="status">Loading...</div>
+        <div>
+            <input type="text" id="appKey" placeholder="<application key>" />
+            <button type="button" id="setAppKeyButton">Set application key</button>
+            <button type="button" id="startButton">Start</button>
+            <button type="button" id="stopButton">Stop</button>
+        </div>
+        <div style="position:relative;width:640px;height:480px;background-color:slategrey;">
+            <canvas id="scope" width="640" height="480" style="width:640px;height:480px;position:absolute;left:0;top:0;"></canvas>
+            <canvas id="names" width="640" height="480" style="width: 640px; height: 480px; position: absolute; left: 0; top: 0;"></canvas>
+        </div>
+    </section>
+    <script type="text/javascript" src="js/psychologist.js"></script>
+    <script type="text/javascript" src="js/oscope/oscope.viewer.js"></script>
+</body>
+</html>
