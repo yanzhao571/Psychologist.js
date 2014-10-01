@@ -100,7 +100,31 @@ function LoadingProgress(){
                 userPostScriptLoad(progress);
             }
             catch(exp){
-                displayProgress(exp);
+                console.error(exp);
+                var msg = null;
+                if(exp.sourceURL){
+                    msg = fmt(
+                        "<br>$1:<br>[msg] $2<br>[line] $3<br>[col] $4<br>[file] $5", 
+                        typeof(exp), 
+                        exp.message,
+                        exp.line,
+                        exp.column,
+                        exp.sourceURL.match(/[^\/\\]*$/)[0]);
+                }
+                else if(exp.stack){
+                    msg = fmt(
+                        "<br>$1:<br>[msg] $2<br>[stack] $3", 
+                        typeof(exp), 
+                        exp.message,
+                        exp.stack.replace(/\n/g, "<br>"));
+                }
+                else{
+                    msg = fmt(
+                        "<br>$1: $2", 
+                        typeof(exp), 
+                        exp.message);
+                }
+                displayProgress(msg);
                 throw exp;
             }
         };
