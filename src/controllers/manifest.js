@@ -19,7 +19,7 @@ function makeManifest(strings, sendData, index, accum){
 }
 
 module.exports = {
-    pattern: /^\/manifest\/(\w+(?:\/\w+)*\.js)(?:\?)?/,
+    pattern: /^\/manifest\/([\w.]+(?:\/[\w.]+)*\.js)(?:\?)?/,
     GET: function(params, sendData, sendStaticFile, serverError){
         var path = "html5/" + params[0];
         fs.exists(path, function(yes){
