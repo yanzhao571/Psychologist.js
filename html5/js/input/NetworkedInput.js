@@ -32,7 +32,19 @@
             }
         }.bind(this));
     }
+    
+
+    function readMetaKeys(event){ 
+        for(var i = 0; i < NetworkedInput.META_KEYS.length; ++i){
+            var m = NetworkedInput.META_KEYS[i];
+            this.inputState[m] = event[m + "Key"]; 
+        }
+    }
 }
+
+NetworkedInput.META_KEYS = ["ctrl", "shift", "alt", "metaKeys"];
+
+NetworkedInput.prototype.preupdate = function(){};
 
 NetworkedInput.prototype.update = function(dt){
     if(this.inPhysicalUse && this.enabled){
@@ -41,77 +53,18 @@ NetworkedInput.prototype.update = function(dt){
             prevState = this.makeStateSnapshot();
         }
 
-        for(var n = 0; n < deltaTrackedAxes.length; ++n){
-            var a = deltaTrackedAxes[n];
-            var av = getAxis(a);
-            var i = "I" + a;
-            var iv = getAxis(i);
-            if(integrateOnly){
-                this.setAxis(i, iv + av * dt);
-            }
-            else{
-                var d = "D" + a;
-                var dv = getAxis(d);
-                var l = "L" + a;
-                var lv = getAxis(l);
-                if(lv){
-                    this.setAxis(d, av - lv);
-                }
-                if(dv){
-                    this.setAxis(i, iv + dv * dt);
-                }
-                this.setAxis(l, av);
-            }
-        }
+        this.preupdate();
             
-        for(var c = 0; c < commands.length; ++c){
-            var cmd = commands[c];
+        for(var c = 0; c < this.commands.length; ++c){
+            var cmd = this.commands[c];
+            var cmdState = this.commandState[cmd.name];
             if(!cmd.disabled){
-                commandState[cmd.name].wasPressed = commandState[cmd.name].pressed;
-                commandState[cmd.name].lt += dt;
-                commandState[cmd.name].fireAgain = commandState[cmd.name].lt >= cmd.dt;
-                var metaKeysSet = true, pressed, value;
-                
-                for(var n = 0; n < cmd.metaKeys.length && metaKeysSet; ++n){
-                    var m = cmd.metaKeys[n];
-                    metaKeysSet = metaKeysSet && (deviceState[metaKeys[m.index]] && m.toggle || !deviceState[metaKeys[m.index]] && !m.toggle);
-                }
-
-                commandState[cmd.name].pressed = pressed = metaKeysSet;
-                commandState[cmd.name].value = value = 0;
-                if(metaKeysSet){
-                    for(var n = 0; n < cmd.buttons.length; ++n){
-                        var b = cmd.buttons[n];
-                        var p = !!deviceState.buttons[b.index];
-                        var v = p ? b.sign : 0;
-                        pressed = pressed && (p && !b.toggle || !p && b.toggle);
-                        if(Math.abs(v) > Math.abs(value)){
-                            value = v;
-                        }
-                    }
-
-                    for(var n = 0; n < cmd.axes.length; ++n){
-                        var a = cmd.axes[n];
-                        var v = a.sign * getAxis(axisNames[a.index]);
-                        if(cmd.deadzone && Math.abs(v) < cmd.deadzone){
-                            v = 0;
-                        }
-                        else if(Math.abs(v) > Math.abs(value)){
-                            value = v;
-                        }
-                    }
-
-                    commandState[cmd.name].pressed = pressed;
-                    if(cmd.scale != null){
-                        value *= cmd.scale;
-                    }
-                    commandState[cmd.name].value = value;
-                }
+                this.evalCommand(cmd, cmdState);
             }
         }
 
         if(socketReady && transmitting){
-            finalState = makeStateSnapshot();
+            finalState = this.makeStateSnapshot();
             if(finalState != prevState){
                 socket.emit(name, commandState);
             }
@@ -120,6 +73,25 @@ NetworkedInput.prototype.update = function(dt){
         fireCommands(false);
     }
 };
+
+NetworkedInput.prototype.makeStateSnapshot = function(){
+    var state = this.name;
+    for(var i = 0; i < this.commands.length; ++i){
+        var cmd = this.commands[i];
+        var cmdState = this.commandState[cmd.name];
+        if(cmdState){
+            state += fmt(
+                "[$1:$2:$3:$4]", 
+                cmd.name, 
+                cmdState.value, 
+                cmdState.pressed, 
+                cmdState.wasPressed, 
+                cmdState.fireAgain
+            );
+        }
+    }
+    return state;
+}
 
 // We clone the commands to prevent the implementing programmer from munging with the state
 // outside of the control of the handlers.
@@ -192,10 +164,32 @@ NetworkedInput.prototype.enable = function(k, v){
     }
 };
 
+NetworkedInput.prototype.isEnabled = function(k){
+    if(k){
+        for(var i = 0; i < this.commands.length; ++i){
+            if(this.commands[i].name == k){
+                return !this.commands[i].disabled;
+            }
+        }
+        return false;
+    }
+    else{
+        return this.enabled;
+    }
+};
+
 NetworkedInput.prototype.transmit = function(v){
     this.transmitting = v;
 };
 
+NetworkedInput.prototype.isTransmitting = function(){
+    return this.transmitting;
+};
+
 NetworkedInput.prototype.receive = function(v){
     this.receiving = v;
+};
+
+NetworkedInput.prototype.isReceiving = function(){
+    return this.receiving;
 };

@@ -1,8 +1,8 @@
 ﻿function ButtonAndAxisInput(name, axisConstraints, commands, socket, offset, deltaTrackedAxes, integrateOnly){
     NetworkedInput.call(this, name, commands, socket);
     
-    var numAxes = 0;
-
+    var numAxes = 0,
+        axisNames = [];
     
     if(deltaTrackedAxes instanceof Array){
         numAxes = deltaTrackedAxes.length;
@@ -11,15 +11,6 @@
     axisConstraints = axisConstraints || [];
     deltaTrackedAxes = deltaTrackedAxes || [];
     offset = offset || 0;
-
-    var commandState = {},
-        deviceState = {
-            buttons: [],
-            axes: [],
-        },
-        metaKeys = ["ctrl", "shift", "alt", "metaKeys"],
-        axisNames = [];
-        inPhysicalUse = false;
     
     for(var y = 0; y < ButtonAndAxisInput.AXES_MODIFIERS.length; ++y){
         if(!(integrateOnly && ButtonAndAxisInput.AXES_MODIFIERS[y] == "D")){
@@ -45,13 +36,6 @@
             axisConstraints[index] = {};
         }
     });
-
-    function readMetaKeys(event){ 
-        for(var i = 0; i < metaKeys.length; ++i){
-            var m = metaKeys[i];
-            deviceState[m] = event[m + "Key"]; 
-        }
-    }
 
     function fireCommands(fromNetwork){
         for(var i = 0; i < commands.length; ++i){
@@ -106,51 +90,7 @@
         inPhysicalUse = true;
         deviceState.axes[axisNames.indexOf(name)] += value;
     };
-
-    this.enable = function(k, v){
-        if(v == null){
-            v = k;
-            k = null;
-        }
-
-        if(k){
-            setProperty("disabled", k, !v);
-        }
-        else{
-            enabled = v;
-        }
-    };
-
-    this.isEnabled = function(k){
-        if(k){
-            for(var i = 0; i < commands.length; ++i){
-                if(commands[i].name == k){
-                    return !commands[i].disabled;
-                }
-            }
-            return false;
-        }
-        else{
-            return enabled;
-        }
-    };
-
-    this.transmit = function(v){
-        transmitting = v;
-    };
-
-    this.isTransmitting = function(){
-        return transmitting;
-    };
-
-    this.receive = function(v){
-        receiving = v;
-    };
-
-    this.isReceiving = function(){
-        return receiving;
-    };
-
+    
     this.setButton = function(index, pressed){
         inPhysicalUse = true;
         deviceState.buttons[index] = pressed;
@@ -411,6 +351,76 @@ ButtonAndAxisInput.fillAxes = function(classFunc){
                 var name = (this.AXES_MODIFIERS[y] + classFunc.AXES[x]).toLocaleUpperCase();
                 classFunc[name] = y * classFunc.AXES.length + x + 1;
             }
+        }
+    }
+};
+
+ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState){
+    cmdState.wasPressed = cmdState.pressed;
+    cmdState.lt += dt;
+    cmdState.fireAgain = cmdState.lt >= cmd.dt;
+    var metaKeysSet = true, pressed, value;
+                
+    for(var n = 0; n < cmd.metaKeys.length && metaKeysSet; ++n){
+        var m = cmd.metaKeys[n];
+        metaKeysSet = metaKeysSet 
+            && (this.deviceState[NetworkedInput.META_KEYS[m.index]] && m.toggle 
+                || !this.deviceState[NetworkedInput.META_KEYS[m.index]] && !m.toggle);
+    }
+
+    cmdState.pressed = pressed = metaKeysSet;
+    cmdState.value = value = 0;
+    if(metaKeysSet){
+        for(var n = 0; n < cmd.buttons.length; ++n){
+            var b = cmd.buttons[n];
+            var p = !!deviceState.buttons[b.index];
+            var v = p ? b.sign : 0;
+            pressed = pressed && (p && !b.toggle || !p && b.toggle);
+            if(Math.abs(v) > Math.abs(value)){
+                value = v;
+            }
+        }
+
+        for(var n = 0; n < cmd.axes.length; ++n){
+            var a = cmd.axes[n];
+            var v = a.sign * getAxis(axisNames[a.index]);
+            if(cmd.deadzone && Math.abs(v) < cmd.deadzone){
+                v = 0;
+            }
+            else if(Math.abs(v) > Math.abs(value)){
+                value = v;
+            }
+        }
+
+        cmdState.pressed = pressed;
+        if(cmd.scale != null){
+            value *= cmd.scale;
+        }
+        cmdState.value = value;
+    }
+};
+
+ButtonAndAxisInput.prototype.preupdate = function(){
+    for(var n = 0; n < this.deltaTrackedAxes.length; ++n){
+        var a = this.deltaTrackedAxes[n];
+        var av = getAxis(a);
+        var i = "I" + a;
+        var iv = getAxis(i);
+        if(integrateOnly){
+            this.setAxis(i, iv + av * dt);
+        }
+        else{
+            var d = "D" + a;
+            var dv = getAxis(d);
+            var l = "L" + a;
+            var lv = getAxis(l);
+            if(lv){
+                this.setAxis(d, av - lv);
+            }
+            if(dv){
+                this.setAxis(i, iv + dv * dt);
+            }
+            this.setAxis(l, av);
         }
     }
 };
