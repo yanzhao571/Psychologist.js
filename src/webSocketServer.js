@@ -3,7 +3,7 @@
 
 module.exports = function (socket){
     log("New connection!");    
-    socket.once("handshake", function (controllerName){
+    socket.on("handshake", function (controllerName){
         var found = false;
         for(var i = 0; i < socketControllers.length; ++i){
             if(socketControllers[i].handshake == controllerName){

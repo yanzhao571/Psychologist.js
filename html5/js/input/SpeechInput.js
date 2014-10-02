@@ -186,7 +186,7 @@ SpeechInput.prototype.evalCommand = function(cmd, cmdState, dt){
             if(n === 0
                 && (cmd.preamble || cmd.keywords[i].length == this.inputState.text.length)){
                 cmdState.pressed = true;
-                cmdState.value = this.inputState.text.substring(cmd.keywords[i].length);
+                cmdState.value = this.inputState.text.substring(cmd.keywords[i].length).trim();
                 this.inputState.text = null;
                 return true;
             }

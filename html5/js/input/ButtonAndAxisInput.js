@@ -126,10 +126,6 @@ ButtonAndAxisInput.prototype.isUp = function(name){
     return (this.enabled || this.receiving) && this.commandState[name] && !this.commandState[name].pressed;
 };
 
-ButtonAndAxisInput.prototype.getValue = function(name){
-    return (this.enabled || this.receiving) && this.commandState[name] && this.commandState[name].value || 0;
-};
-
 ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState, dt){
     var metaKeysSet = true, pressed = true, value = 0;
     

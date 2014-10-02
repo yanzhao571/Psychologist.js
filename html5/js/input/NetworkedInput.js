@@ -89,7 +89,6 @@ NetworkedInput.prototype.update = function(dt){
             cmdState.pressed = false;
             cmdState.lt += dt;
             cmdState.fireAgain = cmdState.lt >= cmd.dt;
-            cmdState.value = 0;
             if(!cmd.disabled && this.evalCommand(cmd, cmdState, dt)){
                 break;
             }
@@ -104,6 +103,10 @@ NetworkedInput.prototype.update = function(dt){
 
         this.fireCommands();
     }
+};
+
+NetworkedInput.prototype.getValue = function(name){
+    return (this.enabled || this.receiving) && this.commandState[name] && this.commandState[name].value;
 };
 
 NetworkedInput.prototype.fireCommands = function(){

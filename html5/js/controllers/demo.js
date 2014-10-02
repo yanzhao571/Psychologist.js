@@ -96,7 +96,8 @@ function postScriptLoad(progress){
         renderer = new THREE.WebGLRenderer({ antialias: true }),
         repeater = new SpeechOutput.Character();
 
-    socket.on("handshakeFailed", console.warn.bind(console));
+    socket.on("handshakeFailed", console.warn.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
+    socket.on("handshakeComplete", console.log.bind(console, "Connected to websocket server."));
     socket.emit("handshake", "demo");
 
     tabs.style.width = pct(100);
@@ -302,6 +303,7 @@ function postScriptLoad(progress){
         if(socket){
             userName = ctrls.userNameField.value;
             var password = ctrls.passwordField.value;
+            console.log("logging in", userName, password);
             if(userName && password){
                 socket.emit("login", {
                     userName: userName, 
@@ -395,7 +397,7 @@ function postScriptLoad(progress){
     ctrls.regularRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "regular"), false);
 
     window.addEventListener("beforeunload", function(){
-        speech.stop();
+        speech.enable(false);
         var state = readForm(ctrls);
         setSetting("formState", state);
     }, false);
@@ -433,6 +435,10 @@ function postScriptLoad(progress){
                 }
             }
         }
+    }
+
+    function speechChat(){
+        showTyping(true, true, speech.getValue("chat"));
     }
 
     var CHAT_TEXT_SIZE = 0.25;
@@ -657,7 +663,7 @@ function postScriptLoad(progress){
     speech = new SpeechInput("speech", [
         { name: "jump", keywords: ["jump"], commandUp: jump },
         { name: "options", keywords: ["options"], commandUp: toggleOptions },
-        { name: "chat", preamble: true, keywords: ["message"], commandUp: socket.emit.bind(socket, "chat") }
+        { name: "chat", preamble: true, keywords: ["message"], commandUp: speechChat }
     ], socket, oscope);
 
     gamepad.addEventListener("gamepadconnected", function (id){
