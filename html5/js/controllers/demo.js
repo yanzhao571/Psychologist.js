@@ -14,6 +14,8 @@ var isDebug = false,
 		"lib/three/ColladaLoader.js",
 		"lib/droid_sans_regular.typeface.js",
 		"/socket.io/socket.io.js",
+		"js/oscope/oscope.client.js",
+		"js/input/NetworkedInput.js",
 		"js/input/ButtonAndAxisInput.js",
 		"js/input/SpeechInput.js",
 		"js/input/GamepadInput.js",
@@ -82,7 +84,8 @@ function postScriptLoad(progress){
             "reconnect": true,
             "reconnection delay": 1000,
             "max reconnection attempts": 60
-        }), 
+        }),
+        oscope = new Oscope("demo"),
         bears = {}, pointer, heightmap,
         nameMaterial = new THREE.MeshLambertMaterial({
             color: 0xdfdf7f,
@@ -95,6 +98,7 @@ function postScriptLoad(progress){
 
     socket.on("handshakeFailed", console.warn.bind(console));
     socket.emit("handshake", "demo");
+
     tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
     
@@ -597,13 +601,13 @@ function postScriptLoad(progress){
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] }
-    ], socket);
+    ], socket, oscope);
 
     arm = new MotionInput("arm", null, [
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] }
-    ], socket);
+    ], socket, oscope);
 
     mouse = new MouseInput("mouse", [
         { axis: MouseInput.DX, scale: 0.4 },
@@ -614,12 +618,12 @@ function postScriptLoad(progress){
         { name: "pitch", axes: [-MouseInput.IY]},
         { name: "fire", buttons: [1], commandDown: fire, dt: 0.125 },
         { name: "jump", buttons: [2], commandDown: jump, dt: 0.250 },
-    ], socket, renderer.domElement);
+    ], socket, oscope, renderer.domElement);
 
     touch = new TouchInput("touch", null, null, [
         { name: "heading", axes: [TouchInput.IX0] },
         { name: "drive", axes: [-TouchInput.DY0] },
-    ], socket, renderer.domElement);
+    ], socket, oscope, renderer.domElement);
 
     keyboard = new KeyboardInput("keyboard", [
         { name: "strafeLeft", buttons: [-KeyboardInput.A, -KeyboardInput.LEFTARROW] },
@@ -631,7 +635,7 @@ function postScriptLoad(progress){
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 0.125 },
         { name: "options", buttons: [KeyboardInput.GRAVEACCENT], commandUp: toggleOptions },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)},
-    ], socket, renderer.domElement);
+    ], socket, oscope, renderer.domElement);
 
     gamepad = new GamepadInput("gamepad", [
         { axis: GamepadInput.LSX, deadzone: 0.1},
@@ -647,13 +651,13 @@ function postScriptLoad(progress){
         { name: "jump", buttons: [1], commandDown: jump, dt: 0.250 },
         { name: "fire", buttons: [2], commandDown: fire, dt: 0.125 },
         { name: "options", buttons: [9], commandUp: toggleOptions },
-    ], socket);
+    ], socket, oscope);
 
     speech = new SpeechInput("speech", [
         { name: "jump", keywords: ["jump"], commandUp: jump },
         { name: "options", keywords: ["options"], commandUp: toggleOptions },
         { name: "chat", preamble: true, keywords: ["message"], commandUp: socket.emit.bind(socket, "chat") }
-    ], socket);
+    ], socket, oscope);
 
     gamepad.addEventListener("gamepadconnected", function (id){
         if (!gamepad.isGamepadSet() && ask(fmt("Would you like to use this gamepad? \"$1\"", id), true)){
@@ -679,6 +683,7 @@ function postScriptLoad(progress){
         r.addEventListener("change", function(){
             module.receive(r.checked);
         });
+
         if(z){
             z.addEventListener("click", module.zeroAxes.bind(module), false);
         }

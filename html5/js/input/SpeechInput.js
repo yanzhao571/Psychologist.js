@@ -46,10 +46,9 @@
             null if setup was successful.
 
 */
-function SpeechInput(name, commands, socket){
-    NetworkedInput.call(this, name, commands, socket);
-    var command = "",
-        running = false,
+function SpeechInput(name, commands, socket, oscope){
+    NetworkedInput.call(this, name, commands, socket, oscope);
+    var running = false,
         recognition = null,
         errorMessage = null;
 
@@ -94,30 +93,6 @@ function SpeechInput(name, commands, socket){
     this.getErrorMessage = function(){
         return errorMessage;
     };
-
-    function executeCommand(command){
-        var found = false;
-        for(var i = 0; i < commands.length && !found; ++i){
-            var cmd = commands[i];
-            for(var j = 0; j < cmd.keywords.length && !found; ++j){
-                if(cmd.preamble && command.indexOf(cmd.keywords[j]) == 0
-                    || cmd.keywords[j] == command){
-                    found = true;
-                    if(cmd.preamble){
-                        command = command.substring(cmd.keywords[j].length);
-                    }
-                    cmd.command(command);
-                }
-            }
-        }
-        if(!found){
-            console.log("Unknown command: " + command);
-        }
-        return found;
-    }
-
-    // clone the arrays, so the consumer can't add elements to it in their own code.
-    commands = commands.slice();
                 
     try{
         if(window.SpeechRecognition){
@@ -155,6 +130,7 @@ function SpeechInput(name, commands, socket){
         }, true);
 
         recognition.addEventListener("result", function(event){ 
+            console.log(event);
             var newCommand = "";
             for(var i = 0; i < event.results.length; ++i){
                 if(i >= event.resultIndex && event.results[i].length > 0){
@@ -178,6 +154,22 @@ function SpeechInput(name, commands, socket){
 }
 
 inherit(SpeechInput, NetworkedInput);
+
+SpeechInput.prototype.evalCommand = function(cmd, cmdState, dt){
+    if(this.inputState){
+        for(var i = 0; i < cmd.keywords.length; ++i){
+            var n = this.inputState.indexOf(cmd.keywords[i]);
+            if(n === 0
+                && (cmd.preamble || cmd.keywords[i].length == this.inputState.length)){
+                cmdState.pressed = true;
+                cmdState.value = this.inputState.substring(n);
+                this.inputState = null;
+                return true;
+            }
+        }
+    }
+    return false;
+};
 
 SpeechInput.prototype.enable = function(k, v){
     NetworkedInput.prototype.enable.call(this, k, v);

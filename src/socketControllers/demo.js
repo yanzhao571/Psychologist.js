@@ -21,9 +21,8 @@ fs.readFile("users.json", "utf8", function(err, file){
 module.exports = {
     handshake: "demo",
     bindSocket: function(socket){
-        log("starting demo for new user.");
-        function login(credentials){
-
+        log("starting demo for new user.");        
+        socket.once("login", function (credentials){
             var key = credentials 
                 && credentials.userName 
                 && credentials.userName.toLocaleUpperCase().trim();
@@ -52,13 +51,11 @@ module.exports = {
                 }
                 users[key].email = credentials.email || users[key].email;
                 users[key].addDevice(users, socket);
-                socket.removeListener("login", login);
             }
             else{
                 log("[$1] > failed to authenticate", key);
                 socket.emit("loginFailed");
             }
-        }
-        socket.on("login", login);
+        });
     }
 };

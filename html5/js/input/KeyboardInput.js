@@ -1,4 +1,4 @@
-﻿function KeyboardInput(name, commands, socket, DOMElement){
+﻿function KeyboardInput(name, commands, socket, oscope, DOMElement){
 
     for(var i = 0; i < commands.length; ++i){
         var cmd = commands[i];
@@ -14,7 +14,7 @@
         }
     }
 
-    ButtonAndAxisInput.call(this, name, null, commands, socket, 0, 0);
+    ButtonAndAxisInput.call(this, name, null, commands, socket, oscope, 0, 0);
 
     var textEntry = false,
         onTextEntry = null,

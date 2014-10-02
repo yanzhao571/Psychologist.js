@@ -1,4 +1,4 @@
-﻿function TouchInput(name, buttonBounds, axisConstraints, commands, socket, DOMElement){
+﻿function TouchInput(name, buttonBounds, axisConstraints, commands, socket, oscope, DOMElement){
     buttonBounds = buttonBounds || [];
     for(var i = buttonBounds.length - 1; i >= 0; --i){
         var b = buttonBounds[i];
@@ -14,7 +14,7 @@
         }
     }
 
-    ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, 1, TouchInput.AXES);
+    ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, oscope, 1, TouchInput.AXES);
 
     function setState (stateChange, setAxis, event){
         var touches = stateChange ? event.touches : event.changedTouches;
@@ -46,6 +46,7 @@
 }
 
 inherit(TouchInput, ButtonAndAxisInput);
+
 TouchInput.NUM_FINGERS = 10;
 TouchInput.AXES = [];
 for(var i = 0; i < TouchInput.NUM_FINGERS; ++i){

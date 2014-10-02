@@ -100,7 +100,6 @@ function LoadingProgress(){
                 userPostScriptLoad(progress);
             }
             catch(exp){
-                console.error(exp);
                 var msg = null;
                 if(exp.sourceURL){
                     msg = fmt(

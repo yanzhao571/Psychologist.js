@@ -1,5 +1,5 @@
-﻿function GamepadInput(name, axisConstraints, commands, socket, gpid){
-    ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, 1, GamepadInput.AXES, true);
+﻿function GamepadInput(name, axisConstraints, commands, socket, oscope, gpid){
+    ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, oscope, 1, GamepadInput.AXES, true);
     var connectedGamepads = [],
         listeners = {
             gamepadconnected: [],

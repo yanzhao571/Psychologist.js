@@ -1,6 +1,6 @@
-﻿function MouseInput(name, axisConstraints, commands, socket, DOMElement){
+﻿function MouseInput(name, axisConstraints, commands, socket, oscope, DOMElement){
     DOMElement = DOMElement || document.documentElement;
-    ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, 1, MouseInput.AXES);
+    ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, oscope, 1, MouseInput.AXES);
 
     this.setLocation = function(x, y){
         this.setAxis("X", x);
@@ -96,6 +96,7 @@
 }
 
 inherit(MouseInput, ButtonAndAxisInput);
+
 MouseInput.AXES = ["X", "Y", "Z"];
 ButtonAndAxisInput.fillAxes(MouseInput);
 
