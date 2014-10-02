@@ -1,8 +1,8 @@
 ﻿var COLLADA = new THREE.ColladaLoader();
 COLLADA.options.convertUpAxis = true;
-function ModelOutput(src, progress, success){
+function ModelInput(src, progress, success){
     if(src){
-        ModelOutput.loadCollada(src, progress, function(object){
+        ModelInput.loadCollada(src, progress, function(object){
             this.template = object;
             object.traverse(function(child){
                 if(child.name){
@@ -16,7 +16,7 @@ function ModelOutput(src, progress, success){
     }
 }
 
-ModelOutput.loadCollada = function(src, progress, success){
+ModelInput.loadCollada = function(src, progress, success){
     progress("loading", src);
     COLLADA.load(src, function(collada){
         if(success){
@@ -28,7 +28,7 @@ ModelOutput.loadCollada = function(src, progress, success){
     });
 };
 
-ModelOutput.makeHeightMap = function(obj, CLUSTER){
+ModelInput.makeHeightMap = function(obj, CLUSTER){
     var heightmap = [];
     var verts = obj.children[0].geometry.vertices;
     heightmap.minX = 0;
@@ -53,7 +53,7 @@ ModelOutput.makeHeightMap = function(obj, CLUSTER){
     return heightmap;
 };
 
-ModelOutput.prototype.clone = function(userName, socket){
+ModelInput.prototype.clone = function(userName, socket){
     var obj = this.template.clone();
     this.socket = socket;
                 

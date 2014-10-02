@@ -52,6 +52,7 @@
             wasPressed: false,
             fireAgain: false,
             lt: 0,
+            ct: 0,
             repeatCount: 0
         };
         this.commands[i] = this.cloneCommand(cmd);

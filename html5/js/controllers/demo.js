@@ -25,7 +25,7 @@ var isDebug = false,
 		"js/input/TouchInput.js",
 		"js/output/Audio3DOutput.js",
 		"js/output/SpeechOutput.js",
-		"js/output/ModelOutput.js",
+		"js/output/ModelInput.js",
 		displayProgress,
 		postScriptLoad);
     
@@ -719,7 +719,7 @@ function postScriptLoad(progress){
         setSize(window.innerWidth, window.innerHeight);
     }, false);
 
-    var mainScene = new ModelOutput("models/scene.dae", progress, function(object){
+    var mainScene = new ModelInput("models/scene.dae", progress, function(object){
         scene.add(object);
         var cam = mainScene.Camera.children[0];
         camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, drawDistance);
@@ -736,13 +736,13 @@ function postScriptLoad(progress){
                 snd.source.start(0);
             }
         );
-        heightmap = ModelOutput.makeHeightMap(mainScene.Terrain, CLUSTER);
+        heightmap = ModelInput.makeHeightMap(mainScene.Terrain, CLUSTER);
         var v = 0.55 * drawDistance;
         mainScene.Skybox.scale.set(v, v, v);
         scene.fog = new THREE.Fog(BG_COLOR, 1, drawDistance * 0.6);
     });
 
-    var bearModel = new ModelOutput("models/bear.dae", progress);
+    var bearModel = new ModelInput("models/bear.dae", progress);
 
         
     audio3d.loadSoundFixed("music/game1.ogg.break", true, progress, function(snd){

@@ -39,7 +39,7 @@
     <Compile Include="html5\js\input\GamepadInput.js" />
     <Compile Include="html5\js\oscope\oscope.client.js" />
     <Compile Include="html5\js\oscope\oscope.viewer.js" />
-    <Compile Include="html5\js\output\ModelOutput.js" />
+    <Compile Include="html5\js\input\ModelInput.js" />
     <Compile Include="html5\lib\physics\ammo.js" />
     <Compile Include="html5\lib\physics\physi.js" />
     <Compile Include="html5\lib\physics\physijs_worker.js" />
