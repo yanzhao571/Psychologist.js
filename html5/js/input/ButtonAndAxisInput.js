@@ -126,57 +126,6 @@ ButtonAndAxisInput.prototype.isUp = function(name){
     return (this.enabled || this.receiving) && this.commandState[name] && !this.commandState[name].pressed;
 };
 
-ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState, dt){
-    var metaKeysSet = true, pressed = true, value = 0;
-    
-    if(cmd.metaKeys){            
-        for(var n = 0; n < cmd.metaKeys.length && metaKeysSet; ++n){
-            var m = cmd.metaKeys[n];
-            metaKeysSet = metaKeysSet 
-                && (this.inputState[NetworkedInput.META_KEYS[m.index]] && m.toggle 
-                    || !this.inputState[NetworkedInput.META_KEYS[m.index]] && !m.toggle);
-        }
-    }
-    if(metaKeysSet){
-        if(cmd.buttons){
-            for(var n = 0; n < cmd.buttons.length; ++n){
-                var b = cmd.buttons[n];
-                var p = !!this.inputState.buttons[b.index];
-                var v = p ? b.sign : 0;
-                pressed = pressed && (p && !b.toggle || !p && b.toggle);
-                if(Math.abs(v) > Math.abs(value)){
-                    value = v;
-                }
-            }
-        }
-        
-        
-        if(cmd.axes){
-            for(var n = 0; n < cmd.axes.length; ++n){
-                var a = cmd.axes[n];
-                if(this.name == "mouse"){
-                    this.oscope.send(this.name + "axis index", a.index);
-                    this.oscope.send(this.axisNames[a.index], this.getAxis(this.axisNames[a.index]));
-                }
-                var v = a.sign * this.getAxis(this.axisNames[a.index]);
-                if(cmd.deadzone && Math.abs(v) < cmd.deadzone){
-                    v = 0;
-                }
-                else if(Math.abs(v) > Math.abs(value)){
-                    value = v;
-                }
-            }
-        }
-
-        cmdState.pressed = pressed;
-        if(cmd.scale != null){
-            value *= cmd.scale;
-        }
-        cmdState.value = value;
-    }
-    return false;
-};
-
 ButtonAndAxisInput.prototype.maybeClone = function(arr){ 
     var output = [];
     if(arr){
@@ -189,7 +138,7 @@ ButtonAndAxisInput.prototype.maybeClone = function(arr){
         }
     }
     return output; 
-}
+};
 
 ButtonAndAxisInput.prototype.cloneCommand = function(cmd){
     return {
@@ -197,6 +146,8 @@ ButtonAndAxisInput.prototype.cloneCommand = function(cmd){
         disabled: cmd.disabled,
         dt: cmd.dt,
         deadzone: cmd.deadzone,
+        threshold: cmd.threshold,
+        repetitions: cmd.repetitions,
         scale: cmd.scale,
         axes: this.maybeClone(cmd.axes),
         buttons: this.maybeClone(cmd.buttons),
@@ -204,7 +155,49 @@ ButtonAndAxisInput.prototype.cloneCommand = function(cmd){
         commandDown: cmd.commandDown,
         commandUp: cmd.commandUp
     };
-}
+};
+
+ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState, metaKeysSet, dt){
+    if(metaKeysSet){
+        var pressed = true, value = 0;
+
+        if(cmd.buttons){
+            for(var n = 0; n < cmd.buttons.length; ++n){
+                var b = cmd.buttons[n];
+                var p = !!this.inputState.buttons[b.index];
+                var v = p ? b.sign : 0;
+                pressed = pressed && (p && !b.toggle || !p && b.toggle);
+                if(Math.abs(v) > Math.abs(value)){
+                    value = v;
+                }
+            }
+        }        
+        
+        if(cmd.axes){
+            for(var n = 0; n < cmd.axes.length; ++n){
+                var a = cmd.axes[n];
+                var v = a.sign * this.getAxis(this.axisNames[a.index]);
+                if(cmd.deadzone && Math.abs(v) < cmd.deadzone){
+                    v = 0;
+                }
+                else if(Math.abs(v) > Math.abs(value)){
+                    value = v;
+                }
+            }
+        }
+
+        if(cmd.scale != null){
+            value *= cmd.scale;
+        }
+
+        if(cmd.threshold != null){
+            pressed = pressed && (value > cmd.threshold);
+        }
+
+        cmdState.pressed = pressed;
+        cmdState.value = value;
+    }
+};
 
 ButtonAndAxisInput.prototype.preupdate = function(dt){
     for(var n = 0; n < this.deltaTrackedAxes.length; ++n){

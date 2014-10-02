@@ -187,11 +187,9 @@ SpeechInput.prototype.evalCommand = function(cmd, cmdState, metaKeysSet, dt){
                 cmdState.pressed = true;
                 cmdState.value = this.inputState.text.substring(cmd.keywords[i].length).trim();
                 this.inputState.text = null;
-                return true;
             }
         }
     }
-    return false;
 };
 
 SpeechInput.prototype.enable = function(k, v){

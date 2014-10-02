@@ -1,16 +1,7 @@
 ﻿function NetworkedInput(name, commands, socket, oscope){
     this.name = name;
     this.commandState = {};
-    this.commands = commands.map(function(cmd){
-        this.commandState[cmd.name] = {
-            value: 0,
-            pressed: false,
-            wasPressed: false,
-            fireAgain: false,
-            lt: 0
-        };
-        return this.cloneCommand(cmd);
-    }.bind(this));
+    this.commands = [];
     this.socket = socket;
     this.oscope = oscope;
     this.enabled = true;
@@ -19,16 +10,16 @@
     this.socketReady = false;
     this.inPhysicalUse = true;
     this.inputState = {};
-    
-    commands.forEach(function(cmd){
-        return this.commandState[cmd.name] = {
-            lt: 0,
-            pressed: false,
-            wasPressed: false,
-            value: null,
-            fireAgain: false
-        };
-    }.bind(this));
+
+    function readMetaKeys(event){ 
+        for(var i = 0; i < NetworkedInput.META_KEYS.length; ++i){
+            var m = NetworkedInput.META_KEYS[i];
+            this.inputState[m] = event[m + "Key"]; 
+        }
+    }
+
+    window.addEventListener("keydown", readMetaKeys.bind(this), false);
+    window.addEventListener("keyup", readMetaKeys.bind(this), false);
 
     if(socket){
         socket.on("userList", function(){
@@ -53,16 +44,23 @@
         }.bind(this));
     }    
 
-    function readMetaKeys(event){ 
-        for(var i = 0; i < NetworkedInput.META_KEYS.length; ++i){
-            var m = NetworkedInput.META_KEYS[i];
-            this.inputState[m] = event[m + "Key"]; 
-        }
+    for(var i = 0; i < commands.length; ++i){
+        var cmd = commands[i];
+        this.commandState[cmd.name] = {
+            value: null,
+            pressed: false,
+            wasPressed: false,
+            fireAgain: false,
+            lt: 0,
+            repeatCount: 0
+        };
+        this.commands[i] = this.cloneCommand(cmd);
+        this.commands[i].repetitions = this.commands[i].repetitions || 1;
     }
     
-    NetworkedInput.META_KEYS.forEach(function(v){ this.inputState[v] = false; }.bind(this));
-    window.addEventListener("keydown", readMetaKeys.bind(this), false);
-    window.addEventListener("keyup", readMetaKeys.bind(this), false);
+    for(var i = 0; i < NetworkedInput.META_KEYS.length; ++i){
+        this.inputState[NetworkedInput.META_KEYS[i]] = false; 
+    }
 }
 
 NetworkedInput.META_KEYS = ["ctrl", "shift", "alt", "meta"];
@@ -87,10 +85,21 @@ NetworkedInput.prototype.update = function(dt){
             var cmdState = this.commandState[cmd.name];
             cmdState.wasPressed = cmdState.pressed;
             cmdState.pressed = false;
-            cmdState.lt += dt;
-            cmdState.fireAgain = cmdState.lt >= cmd.dt;
-            if(!cmd.disabled && this.evalCommand(cmd, cmdState, dt)){
-                break;
+            if(!cmd.disabled){
+                var metaKeysSet = true;        
+    
+                if(cmd.metaKeys){            
+                    for(var n = 0; n < cmd.metaKeys.length && metaKeysSet; ++n){
+                        var m = cmd.metaKeys[n];
+                        metaKeysSet = metaKeysSet 
+                            && (this.inputState[NetworkedInput.META_KEYS[m.index]] && m.toggle 
+                                || !this.inputState[NetworkedInput.META_KEYS[m.index]] && !m.toggle);
+                    }
+                }
+
+                cmdState.lt += dt;
+                cmdState.fireAgain = cmdState.lt >= cmd.dt;
+                this.evalCommand(cmd, cmdState, metaKeysSet, dt);
             }
         }
 
@@ -105,21 +114,32 @@ NetworkedInput.prototype.update = function(dt){
     }
 };
 
-NetworkedInput.prototype.getValue = function(name){
-    return (this.enabled || this.receiving) && this.commandState[name] && this.commandState[name].value;
-};
-
 NetworkedInput.prototype.fireCommands = function(){
     for(var i = 0; i < this.commands.length; ++i){
         var cmd = this.commands[i];
         var cmdState = this.commandState[cmd.name];
-        if(cmd.commandDown && cmdState.pressed && cmdState.fireAgain){
-            cmdState.lt -= cmd.dt;
-            cmd.commandDown();
-        }
 
-        if(cmd.commandUp && !cmdState.pressed && cmdState.wasPressed){
-            cmd.commandUp();
+        if(cmdState.fireAgain){
+            if(!cmdState.pressed && cmdState.wasPressed){
+                ++cmdState.repeatCount;
+                cmdState.ct = cmdState.lt;
+            }
+
+            if(cmdState.pressed){
+                if(cmd.commandDown){
+                    cmdState.lt = 0;
+                    cmd.commandDown();
+                }
+            }
+            else if(!cmdState.wasPressed && (cmdState.lt - cmdState.ct) >= cmd.dt){
+                cmdState.repeatCount = 0;
+            }
+
+            if(cmd.commandUp && cmdState.repeatCount >= cmd.repetitions){
+                cmd.commandUp();
+                cmdState.lt = 0;
+                cmdState.repeatCount = 0;
+            }
         }
     }
 };
@@ -141,7 +161,11 @@ NetworkedInput.prototype.makeStateSnapshot = function(){
         }
     }
     return state;
-}
+};
+
+NetworkedInput.prototype.getValue = function(name){
+    return (this.enabled || this.receiving) && this.commandState[name] && this.commandState[name].value;
+};
 
 NetworkedInput.prototype.setProperty = function(key, name, value){
     for(var i = 0; i < this.commands.length; ++i){

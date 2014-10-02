@@ -85,7 +85,7 @@ function postScriptLoad(progress){
             "reconnection delay": 1000,
             "max reconnection attempts": 60
         }),
-        oscope = new Oscope("demo"),
+        oscope /* / = new Oscope("demo"), //*/,
         bears = {}, pointer, heightmap,
         nameMaterial = new THREE.MeshLambertMaterial({
             color: 0xdfdf7f,
@@ -303,7 +303,6 @@ function postScriptLoad(progress){
         if(socket){
             userName = ctrls.userNameField.value;
             var password = ctrls.passwordField.value;
-            console.log("logging in", userName, password);
             if(userName && password){
                 socket.emit("login", {
                     userName: userName, 
@@ -403,6 +402,7 @@ function postScriptLoad(progress){
     }, false);
 
     function jump(){
+        console.log("jump");
         if (onground){
             vcy = 10;
             onground = false;
@@ -607,7 +607,8 @@ function postScriptLoad(progress){
     head = new MotionInput("head", null, [
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
-        { name: "roll", axes: [-MotionInput.ROLL] }
+        { name: "roll", axes: [-MotionInput.ROLL] },
+        { name: "jump", axes: [-MotionInput.DACCELX], threshold: 2 }
     ], socket, oscope);
 
     arm = new MotionInput("arm", null, [
@@ -624,7 +625,8 @@ function postScriptLoad(progress){
         { name: "heading", axes: [-MouseInput.IX] },
         { name: "pitch", axes: [-MouseInput.IY]},
         { name: "fire", buttons: [1], commandDown: fire, dt: 0.125 },
-        { name: "jump", buttons: [2], commandDown: jump, dt: 0.250 },
+        { name: "jump", buttons: [2], repetitions: 2, dt: 1, commandUp: jump },
+        { name: "jump2", axes: [-MouseInput.DY], threshold: 3, repetitions: 2, dt: 1, commandUp: jump },
     ], socket, oscope, renderer.domElement);
 
     touch = new TouchInput("touch", null, null, [
@@ -637,7 +639,7 @@ function postScriptLoad(progress){
         { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHTARROW] },
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
-        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 0.250 },
+        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 1 },
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 0.125 },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 0.125 },
         { name: "options", buttons: [KeyboardInput.GRAVEACCENT], commandUp: toggleOptions },
