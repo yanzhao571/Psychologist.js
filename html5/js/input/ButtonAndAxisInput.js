@@ -1,4 +1,5 @@
 ﻿function ButtonAndAxisInput(name, axisConstraints, commands, socket, oscope, offset, deltaTrackedAxes, integrateOnly){
+    this.offset = offset || 0;
     NetworkedInput.call(this, name, commands, socket, oscope);
     this.inputState.axes = [];
     this.inputState.buttons = [];
@@ -11,7 +12,6 @@
     
     axisConstraints = axisConstraints || [];
     this.deltaTrackedAxes = deltaTrackedAxes || [];
-    offset = offset || 0;
     
     for(var y = 0; y < ButtonAndAxisInput.AXES_MODIFIERS.length; ++y){
         if(!(integrateOnly && ButtonAndAxisInput.AXES_MODIFIERS[y] == "D")){
@@ -131,10 +131,7 @@ ButtonAndAxisInput.prototype.getValue = function(name){
 };
 
 ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState, dt){
-    cmdState.wasPressed = cmdState.pressed;
-    cmdState.lt += dt;
-    cmdState.fireAgain = cmdState.lt >= cmd.dt;
-    var metaKeysSet = true, pressed, value;
+    var metaKeysSet = true, pressed = true, value = 0;
     
     if(cmd.metaKeys){            
         for(var n = 0; n < cmd.metaKeys.length && metaKeysSet; ++n){
@@ -144,9 +141,6 @@ ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState, dt){
                     || !this.inputState[NetworkedInput.META_KEYS[m.index]] && !m.toggle);
         }
     }
-
-    cmdState.pressed = pressed = metaKeysSet;
-    cmdState.value = value = 0;
     if(metaKeysSet){
         if(cmd.buttons){
             for(var n = 0; n < cmd.buttons.length; ++n){
@@ -165,6 +159,7 @@ ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState, dt){
             for(var n = 0; n < cmd.axes.length; ++n){
                 var a = cmd.axes[n];
                 if(this.name == "mouse"){
+                    this.oscope.send(this.name + "axis index", a.index);
                     this.oscope.send(this.axisNames[a.index], this.getAxis(this.axisNames[a.index]));
                 }
                 var v = a.sign * this.getAxis(this.axisNames[a.index]);
@@ -183,7 +178,37 @@ ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState, dt){
         }
         cmdState.value = value;
     }
+    return false;
 };
+
+ButtonAndAxisInput.prototype.maybeClone = function(arr){ 
+    var output = [];
+    if(arr){
+        for(var i = 0; i < arr.length; ++i){
+            output[i] = {
+                index: Math.abs(arr[i]) - this.offset,
+                toggle: arr[i] < 0,
+                sign: (arr[i] < 0) ? -1: 1
+            };
+        }
+    }
+    return output; 
+}
+
+ButtonAndAxisInput.prototype.cloneCommand = function(cmd){
+    return {
+        name: cmd.name,
+        disabled: cmd.disabled,
+        dt: cmd.dt,
+        deadzone: cmd.deadzone,
+        scale: cmd.scale,
+        axes: this.maybeClone(cmd.axes),
+        buttons: this.maybeClone(cmd.buttons),
+        metaKeys: this.maybeClone(cmd.metaKeys),
+        commandDown: cmd.commandDown,
+        commandUp: cmd.commandUp
+    };
+}
 
 ButtonAndAxisInput.prototype.preupdate = function(dt){
     for(var n = 0; n < this.deltaTrackedAxes.length; ++n){

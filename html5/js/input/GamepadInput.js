@@ -121,7 +121,7 @@
 
     try{
         this.update(0);
-        this.available = true;
+        available = true;
     }
     catch(err){
         avaliable = false;

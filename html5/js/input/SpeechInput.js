@@ -53,13 +53,13 @@ function SpeechInput(name, commands, socket, oscope){
         errorMessage = null;
 
     function warn(){
-        var msg = fmt("Failed to initialize speech engine. Reason: $1", err.message);
+        var msg = fmt("Failed to initialize speech engine. Reason: $1", errorMessage.message);
         console.error(msg);
         return false;
     }
 
     function start(){
-        if(!this.available){
+        if(!available){
             return warn();
         }
         else if(!running){
@@ -71,7 +71,7 @@ function SpeechInput(name, commands, socket, oscope){
     }
 
     function stop(){
-        if(!this.available){
+        if(!available){
             return warn();
         }
         if(running){
@@ -110,14 +110,14 @@ function SpeechInput(name, commands, socket, oscope){
         recognition.addEventListener("start", function(){
             console.log("speech started");
             command = ""; 
-        }, true);
+        }.bind(this), true);
 
         recognition.addEventListener("error", function(event){
             restart = true;
             console.log("speech error", event);
             running = false;
             command = "speech error";
-        }, true);
+        }.bind(this), true);
 
         recognition.addEventListener("end", function(){
             console.log("speech ended", arguments);
@@ -127,43 +127,67 @@ function SpeechInput(name, commands, socket, oscope){
                 restart = false;
                 this.start();
             }
-        }, true);
+        }.bind(this), true);
 
-        recognition.addEventListener("result", function(event){ 
-            console.log(event);
-            var newCommand = "";
-            for(var i = 0; i < event.results.length; ++i){
-                if(i >= event.resultIndex && event.results[i].length > 0){
-                    newCommand += event.results[i][0].transcript.trim() + " ";
+        recognition.addEventListener("result", function(event){
+            var newCommand = [];
+            var result = event.results[event.resultIndex];
+            var max = 0;
+            var maxI = -1;
+            if(result && result.isFinal){
+                for(var i = 0; i < result.length; ++i){
+                    var alt = result[i];
+                    if(alt.confidence > max){
+                        max = alt.confidence;
+                        maxI = i;
+                    }
                 }
             }
 
-            newCommand = newCommand.trim().toLowerCase();
+            if(max > 0.85){
+                newCommand.push(result[maxI].transcript.trim());
+            }
+
+            newCommand = newCommand.join(" ");
 
             if(newCommand != this.inputState){
-                this.inputState = newCommand;
+                this.inputState.text = newCommand;
             }
-        }, true);
+        }.bind(this), true);
 
-        this.available = true;
+        available = true;
     }
     catch(err){
         errorMessage = err;
-        this.available = false;
+        available = false;
     }
 }
 
 inherit(SpeechInput, NetworkedInput);
 
+SpeechInput.maybeClone = function(arr){ 
+    return (arr && arr.slice()) || []; 
+}
+
+SpeechInput.prototype.cloneCommand = function(cmd){
+    return {
+        name: cmd.name,
+        preamble: cmd.preamble,
+        keywords: SpeechInput.maybeClone(cmd.keywords),
+        commandUp: cmd.commandUp,
+        disabled: cmd.disabled
+    }
+};
+
 SpeechInput.prototype.evalCommand = function(cmd, cmdState, dt){
-    if(this.inputState){
+    if(this.inputState.text){
         for(var i = 0; i < cmd.keywords.length; ++i){
-            var n = this.inputState.indexOf(cmd.keywords[i]);
+            var n = this.inputState.text.indexOf(cmd.keywords[i]);
             if(n === 0
-                && (cmd.preamble || cmd.keywords[i].length == this.inputState.length)){
+                && (cmd.preamble || cmd.keywords[i].length == this.inputState.text.length)){
                 cmdState.pressed = true;
-                cmdState.value = this.inputState.substring(n);
-                this.inputState = null;
+                cmdState.value = this.inputState.text.substring(cmd.keywords[i].length);
+                this.inputState.text = null;
                 return true;
             }
         }

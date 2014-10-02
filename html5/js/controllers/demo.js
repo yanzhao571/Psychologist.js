@@ -245,6 +245,7 @@ function postScriptLoad(progress){
             mouse.update(dt);
             gamepad.update(dt);
             touch.update(dt);
+            speech.update(dt);
             update(dt);
             setCamera(dt);
             draw();

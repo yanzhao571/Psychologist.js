@@ -1,6 +1,16 @@
 ﻿function NetworkedInput(name, commands, socket, oscope){
     this.name = name;
-    this.commands = commands.map(this.cloneCommand.bind(this));
+    this.commandState = {};
+    this.commands = commands.map(function(cmd){
+        this.commandState[cmd.name] = {
+            value: 0,
+            pressed: false,
+            wasPressed: false,
+            fireAgain: false,
+            lt: 0
+        };
+        return this.cloneCommand(cmd);
+    }.bind(this));
     this.socket = socket;
     this.oscope = oscope;
     this.enabled = true;
@@ -9,7 +19,6 @@
     this.socketReady = false;
     this.inPhysicalUse = true;
     this.inputState = {};
-    this.commandState = {};
     
     commands.forEach(function(cmd){
         return this.commandState[cmd.name] = {
@@ -61,6 +70,7 @@ NetworkedInput.META_KEYS.forEach(function(key, index){
     NetworkedInput[key.toLocaleUpperCase()] = index + 1;
 });
 
+NetworkedInput.prototype.cloneCommand = function(cmd){ throw new Error("cloneCommand function must be defined in subclass"); };
 NetworkedInput.prototype.preupdate = function(dt){};
 
 NetworkedInput.prototype.update = function(dt){
@@ -75,6 +85,11 @@ NetworkedInput.prototype.update = function(dt){
         for(var c = 0; c < this.commands.length; ++c){
             var cmd = this.commands[c];
             var cmdState = this.commandState[cmd.name];
+            cmdState.wasPressed = cmdState.pressed;
+            cmdState.pressed = false;
+            cmdState.lt += dt;
+            cmdState.fireAgain = cmdState.lt >= cmd.dt;
+            cmdState.value = 0;
             if(!cmd.disabled && this.evalCommand(cmd, cmdState, dt)){
                 break;
             }
@@ -124,20 +139,6 @@ NetworkedInput.prototype.makeStateSnapshot = function(){
     }
     return state;
 }
-
-// We clone the commands to prevent the implementing programmer from munging with the state
-// outside of the control of the handlers.
-NetworkedInput.prototype.cloneCommand = function(command){
-    var obj = {};
-    for(var key in command){
-        var val = command[key];
-        if(val instanceof Array){
-            val = val.slice();
-        }
-        obj[key] = val;    
-    }
-    return obj;
-};
 
 NetworkedInput.prototype.setProperty = function(key, name, value){
     for(var i = 0; i < this.commands.length; ++i){
