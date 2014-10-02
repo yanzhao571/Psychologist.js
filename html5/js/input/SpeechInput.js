@@ -125,7 +125,7 @@ function SpeechInput(name, commands, socket, oscope){
             command = "speech ended";
             if(restart){
                 restart = false;
-                this.start();
+                this.enable(true);
             }
         }.bind(this), true);
 
@@ -179,11 +179,10 @@ SpeechInput.prototype.cloneCommand = function(cmd){
     }
 };
 
-SpeechInput.prototype.evalCommand = function(cmd, cmdState, dt){
-    if(this.inputState.text){
+SpeechInput.prototype.evalCommand = function(cmd, cmdState, metaKeysSet, dt){
+    if(metaKeysSet && this.inputState.text){
         for(var i = 0; i < cmd.keywords.length; ++i){
-            var n = this.inputState.text.indexOf(cmd.keywords[i]);
-            if(n === 0
+            if(this.inputState.text.indexOf(cmd.keywords[i]) === 0
                 && (cmd.preamble || cmd.keywords[i].length == this.inputState.text.length)){
                 cmdState.pressed = true;
                 cmdState.value = this.inputState.text.substring(cmd.keywords[i].length).trim();
