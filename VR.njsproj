@@ -78,8 +78,8 @@
     <Compile Include="src\core.js" />
     <Compile Include="src\master.js" />
     <Compile Include="src\options.js" />
-    <Compile Include="src\socketControllers\oscope.js" />
-    <Compile Include="src\socketControllers\demo.js" />
+    <Compile Include="src\socketControllers\oscope.server.js" />
+    <Compile Include="src\socketControllers\demo.server.js" />
     <Compile Include="src\starter.js" />
     <Compile Include="src\webServer.js" />
     <Compile Include="src\webSocketServer.js" />
