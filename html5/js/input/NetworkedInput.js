@@ -1,4 +1,4 @@
-﻿function NetworkedInput(name, commands, socket, oscope){
+function NetworkedInput(name, commands, socket, oscope){
     this.name = name;
     this.commandState = {};
     this.commands = [];

@@ -1,11 +1,10 @@
-﻿include(0,
+include(0,
     ["js/input/ButtonAndAxisInput.js",
     "js/input/GamepadInput.js"],
     gamepadTest);
 function gamepadTest(){
     "use strict";
     var output = document.getElementById("output"),
-        frame = 0,
         commands = [
             { name: "a", buttons: [1] },
             { name: "b", buttons: [2] },
@@ -43,10 +42,8 @@ function gamepadTest(){
     }
 
     gamepad.addEventListener("gamepadconnected", function (id){
-        //if (confirm(id)){
-            gamepad.setGamepad(id);
-            console.log("connected", id);
-        //}
+        gamepad.setGamepad(id);
+        console.log("connected", id);
     });
 
     gamepad.addEventListener("gamepaddisconnected", console.log.bind(console, "disconnected"));
@@ -57,7 +54,11 @@ function gamepadTest(){
         lt = t;
         if(gamepad.isGamepadSet()){
             output.innerHTML = "<ul>"
-            + commands.map(function (c){ return "<li>" + c.name + ": " + gamepad.isDown(c.name) + ", " + gamepad.getValue(c.name) + "</li>"; }).join("")
+            + commands.map(function (c){ 
+                return "<li>" + c.name 
+                    + ": " + gamepad.isDown(c.name) 
+                    + ", " + gamepad.getValue(c.name) + "</li>"; 
+            }).join("")
             + "</ul>";
         }
     }

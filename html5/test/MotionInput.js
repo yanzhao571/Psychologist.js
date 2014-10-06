@@ -1,4 +1,4 @@
-﻿var Angle = LandscapeMotion.Angle;
+var Angle = LandscapeMotion.Angle;
 var Corrector = LandscapeMotion.Corrector;
 Angle.tests = {
     zero: function(){
@@ -163,7 +163,7 @@ Corrector.primaryTest = function(isChrome, alpha, gamma, beta, x, y, z, heading,
 Corrector.tests = {
     instantiate: function(){
         Assert.isNotNull(new Corrector(true));
-    },
+    }
 };
 
 Corrector.headingTestData.forEach(function(dat){

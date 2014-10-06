@@ -1,4 +1,4 @@
-﻿/*
+/*
     Class: Angle
         
         The Angle class smooths out the jump from 360 to 0 degrees. It keeps track
@@ -104,13 +104,13 @@ function MotionCorrector(isChrome){
             osz = (omz > 0) ? acceleration.z / omz : 1;
 
             if(omx > omy && omx > omz && omx > 4.5){
-                isPrimary = osx == -1;
+                isPrimary = osx === -1;
             }
             else if(omy > omz && omy > omx && omy > 4.5){
-                isPrimary = osy == 1;
+                isPrimary = osy === 1;
             }
 
-            isAboveHorizon = isChrome ?  (isPrimary ? orientation.gamma > 0 : orientation.gamma < 0): osz == 1;
+            isAboveHorizon = isChrome ?  (isPrimary ? orientation.gamma > 0 : orientation.gamma < 0): osz === 1;
             deltaAlpha = (isChrome && (isAboveHorizon ^ !isPrimary) || !isChrome && isPrimary) ? 270 : 90;
             if(isPrimary){
                 if(isAboveHorizon){
@@ -204,10 +204,10 @@ function MotionCorrector(isChrome){
                 non-default behavior is rarely needed, but it is included for completeness.
     */
     this.addEventListener = function(type, callback, bubbles){
-        if(type != "deviceorientation"){
+        if(type !== "deviceorientation"){
             throw new Error("The only event type that is supported is \"deviceorientation\". Type parameter was: " + type);
         }
-        if(typeof(callback) != "function"){
+        if(typeof(callback) !== "function"){
             throw new Error("A function must be provided as a callback parameter. Callback parameter was: " + callback);
         }
         var heading = new Angle(0), 
@@ -234,12 +234,12 @@ function MotionCorrector(isChrome){
                     GAMMA: o.gamma
                 });
             }
-        }
+        };
 
         this.checkOrientation = function(event){
             this.setOrientation(event.alpha !== null && event);
             this.onChange();
-        }
+        };
 
         this.checkMotion = function(event){
             if(event && event.accelerationIncludingGravity && event.accelerationIncludingGravity.x){
@@ -250,7 +250,7 @@ function MotionCorrector(isChrome){
             }
 
             this.onChange();
-        }
+        };
         
         this.setAcceleration(MotionCorrector.ZERO_VECTOR);
         this.setOrientation(MotionCorrector.ZERO_EULER);

@@ -1,4 +1,4 @@
-﻿function Oscope(key, path){
+function Oscope(key, path){
     var socketReady = null;
     if(!path){
         path = document.location.hostname;
@@ -13,7 +13,7 @@
     this.socket.emit("handshake", "oscope");
 
     this.socket.once("handshakeComplete", function(){
-        this.socket.emit("appKey", key)
+        this.socket.emit("appKey", key);
         socketReady = true;
     }.bind(this));
 
@@ -24,5 +24,5 @@
                 value: value
             });
         }
-    }
+    };
 }

@@ -1,17 +1,9 @@
-﻿function TouchInput(name, buttonBounds, axisConstraints, commands, socket, oscope, DOMElement){
+function TouchInput(name, buttonBounds, axisConstraints, commands, socket, oscope, DOMElement){
     buttonBounds = buttonBounds || [];
     for(var i = buttonBounds.length - 1; i >= 0; --i){
         var b = buttonBounds[i];
-        if(b.x == null
-            || b.y == null
-            || b.w == null
-            || b.h == null){
-            throw new Error("button bounds need to be defined as {x, y, w, h} objects. Object index " + i + " is not one.");
-        }
-        else{
-            b.x2 = b.x + b.w;
-            b.y2 = b.y + b.h;
-        }
+        b.x2 = b.x + b.w;
+        b.y2 = b.y + b.h;
     }
 
     ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, oscope, 1, TouchInput.AXES);

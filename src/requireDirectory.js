@@ -1,4 +1,4 @@
-﻿var fs = require("fs");
+var fs = require("fs");
 
 module.exports = function requireDirectory(path, mod){
     mod.exports = [];
@@ -18,4 +18,4 @@ module.exports = function requireDirectory(path, mod){
             }
         }
     });
-}
+};

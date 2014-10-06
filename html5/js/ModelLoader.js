@@ -24,7 +24,7 @@ ModelLoader.loadCollada = function(src, progress, success){
         }
         progress("success", src);
     }, function(prog){
-        progress("intermediate", src, prog.loaded)
+        progress("intermediate", src, prog.loaded);
     });
 };
 
@@ -43,7 +43,7 @@ ModelLoader.makeHeightMap = function(obj, CLUSTER){
         if(!heightmap[z]){
             heightmap[z] = [];
         }
-        if(heightmap[z][x] == undefined){
+        if(heightmap[z][x] === undefined){
             heightmap[z][x] = verts[i].y;
         }
         else{

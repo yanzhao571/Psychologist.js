@@ -1,4 +1,4 @@
-﻿function ButtonAndAxisInput(name, axisConstraints, commands, socket, oscope, offset, deltaTrackedAxes, integrateOnly){
+function ButtonAndAxisInput(name, axisConstraints, commands, socket, oscope, offset, deltaTrackedAxes, integrateOnly){
     this.offset = offset || 0;
     NetworkedInput.call(this, name, commands, socket, oscope);
     this.inputState.axes = [];

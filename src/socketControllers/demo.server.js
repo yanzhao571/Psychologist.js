@@ -1,4 +1,4 @@
-﻿var fs = require("fs"),
+var fs = require("fs"),
     User = require("../game/User"),
     log = require("../core").log,
 
@@ -45,7 +45,7 @@ module.exports = {
                 fs.writeFileSync("users.json", JSON.stringify(userList));
             }
         
-            if(key && users[key].password == credentials.password){
+            if(key && users[key].password === credentials.password){
                 if(!users[key].isConnected()){
                     log("[$1] > user login", key);
                 }

@@ -1,4 +1,4 @@
-﻿var socketControllers = require("./socketControllers"),
+var socketControllers = require("./socketControllers"),
     log = require("./core").log;
 
 module.exports = function (socket){
@@ -6,7 +6,7 @@ module.exports = function (socket){
     socket.on("handshake", function (controllerName){
         var found = false;
         for(var i = 0; i < socketControllers.length; ++i){
-            if(socketControllers[i].handshake == controllerName){
+            if(socketControllers[i].handshake === controllerName){
                 socketControllers[i].bindSocket(socket);
                 socket.emit("handshakeComplete");
                 found = true;
@@ -17,4 +17,4 @@ module.exports = function (socket){
             socket.emit("handshakeFailed", socketControllers.map(function(o){ return o.handshake; }));
         }
     });
-}
+};

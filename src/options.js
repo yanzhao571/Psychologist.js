@@ -1,4 +1,4 @@
-﻿module.exports.parse = function(arr, obj){
+module.exports.parse = function(arr, obj){
     obj = obj || {};
     for(var i = 0; i < arr.length; ++i){
         var val = arr[i];
@@ -8,4 +8,4 @@
         }
     }
     return obj;
-}
+};

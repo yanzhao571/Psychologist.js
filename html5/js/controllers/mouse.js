@@ -1,4 +1,4 @@
-﻿include(0,
+include(0,
     ["js/input/ButtonAndAxisInput.js",
      "js/input/MouseInput.js"],
 	postScriptLoad);
@@ -45,7 +45,11 @@ function postScriptLoad(){
         mouse.update((t - lt) * 0.001);
         lt = t;
         output.innerHTML = "<ul>"
-            + commands.map(function (c){ return "<li>" + c.name + ": " + mouse.isDown(c.name) + ", " + mouse.getValue(c.name) + "</li>"; }).join("")
+            + commands.map(function (c){ 
+                return "<li>" + c.name 
+                    + ": " + mouse.isDown(c.name) 
+                    + ", " + mouse.getValue(c.name) + "</li>"; 
+            }).join("")
             + "</ul>";
     }
 

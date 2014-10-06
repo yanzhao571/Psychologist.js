@@ -1,4 +1,4 @@
-﻿include(0,
+include(0,
     ["js/input/ButtonAndAxisInput.js",
     "js/input/MotionInput.js"],
     motionTest);
@@ -15,7 +15,7 @@ function motionTest(){
             {name: "z", axes: [MotionInput.ACCELZ]},
             {name: "alpha", axes: [MotionInput.ALPHA]},
             {name: "beta", axes: [MotionInput.BETA]},
-            {name: "gamma", axes: [MotionInput.GAMMA]},
+            {name: "gamma", axes: [MotionInput.GAMMA]}
         ],
         motion = new MotionInput("motion", null, commands);
 

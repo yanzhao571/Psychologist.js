@@ -1,26 +1,37 @@
-﻿include(0,
+include(0,
     ["js/input/ButtonAndAxisInput.js",
     "js/input/TouchInput.js"],
     touchTest);
 function touchTest(){
     "use strict";
     var output = document.getElementById("output"),
-        frame = 0,
         buttons = [
             {name: "fire", x: 100, y: 240, w: 100, h: 100 },
             {name: "jump", x: 100, y: 350, w: 100, h: 100 }
         ],
         commands = [
-            { name: "fire", buttons: [1], commandDown: function(){
-                document.getElementById("fire").style.backgroundColor = "blue";
-            }, commandUp: function(){
-                document.getElementById("fire").style.backgroundColor = "#c0c0c0";
-            }, dt: 0.250 },
-            { name: "jump", buttons: [2], commandDown: function(){
-                document.getElementById("jump").style.backgroundColor = "blue";
-            }, commandUp: function(){
-                document.getElementById("jump").style.backgroundColor = "#c0c0c0";
-            }, dt: 0.250 },
+            {
+                name: "fire",
+                buttons: [1],
+                dt: 0.250,
+                commandDown: function(){
+                    document.getElementById("fire").style.backgroundColor = "blue";
+                },
+                commandUp: function(){
+                    document.getElementById("fire").style.backgroundColor = "#c0c0c0";
+                }
+            },
+            { 
+                name: "jump",
+                buttons: [2],
+                dt: 0.250,
+                commandDown: function(){
+                    document.getElementById("jump").style.backgroundColor = "blue";
+                },
+                commandUp: function(){
+                    document.getElementById("jump").style.backgroundColor = "#c0c0c0";
+                }
+            },
             { name: "x0", axes: [TouchInput.X0] },
             { name: "y0", axes: [TouchInput.Y0] },
             { name: "x1", axes: [TouchInput.X1] },
@@ -28,7 +39,7 @@ function touchTest(){
             { name: "x2", axes: [TouchInput.X2] },
             { name: "y2", axes: [TouchInput.Y2] },
             { name: "dx0", axes: [TouchInput.DX0] },
-            { name: "iy1", axes: [TouchInput.IY1] },
+            { name: "iy1", axes: [TouchInput.IY1] }
         ],
         touch = new TouchInput("touch", buttons, null, commands, null, document.documentElement);
 

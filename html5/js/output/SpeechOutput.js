@@ -1,4 +1,4 @@
-﻿var SpeechOutput = {
+var SpeechOutput = {
 
     defaultLanguage: speechSynthesis.getVoices().filter(function(v){
         return v.default;
@@ -9,7 +9,7 @@
     voices: speechSynthesis.getVoices().filter(function(v){ 
         return v.default 
             || v.localService 
-            || v.lang.substring(0, 2) == this.defaultLanguage; 
+            || v.lang.substring(0, 2) === this.defaultLanguage; 
     }),
 
     pickRandomOption: function(options, key, min, max){

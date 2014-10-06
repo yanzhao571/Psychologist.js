@@ -1,4 +1,4 @@
-﻿var os = require("os"),
+var os = require("os"),
     spawn = require("child_process").spawn,
     startProc = {
         linux: "xdg-open",
@@ -15,7 +15,7 @@ module.exports = function(secure, port, startPage){
             startUrl += "s";
         }
         startUrl += "://localhost";
-        if(port != 80){
+        if(port !== 80){
             startUrl += ":" + port;
         }
         spawn(startProc, [startUrl + "/" + startPage]);

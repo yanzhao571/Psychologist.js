@@ -1,1 +1,1 @@
-﻿(require("./requireDirectory"))("controllers", module);
+(require("./requireDirectory"))("controllers", module);

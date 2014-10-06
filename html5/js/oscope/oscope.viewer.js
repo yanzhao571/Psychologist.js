@@ -31,7 +31,7 @@ function postScriptLoad(progress){
     socket.emit("handshake", "oscope");
 
     function lerp(v){
-        if(min == max){
+        if(min === max){
             return ctrls.scope.height / 2;
         }
         else{
@@ -64,7 +64,7 @@ function postScriptLoad(progress){
             accum -= 1;
             gScope.strokeStyle = "white";
             gScope.beginPath();
-            gScope.moveTo(0, 0)
+            gScope.moveTo(0, 0);
             gScope.lineTo(0, ctrls.names.height);
             gScope.stroke();
         }
@@ -80,7 +80,7 @@ function postScriptLoad(progress){
         for(var key in valueState){
             var value = valueState[key];
             output += fmt("[$1] $2.00000<br>", key, value.current);
-            if(value.last != null){
+            if(value.last !== null && value.last !== undefined){
                 var y = ctrls.scope.height - lerp(value.current);
                 gScope.strokeStyle = value.color;
                 gScope.beginPath();
@@ -103,11 +103,12 @@ function postScriptLoad(progress){
         "#0000ff",
         "#ffff00",
         "#ff00ff",
-        "#00ffff",
+        "#00ffff"
     ];
 
     function setValue(value){
-        if(valueState[value.name] == null){
+        if(valueState[value.name] === null
+            || (valueState[value.name] === undefined)){
             var c = "#ffffff";
             if(colors.length > 0){
                 c = colors.shift();

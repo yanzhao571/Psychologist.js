@@ -16,7 +16,7 @@
             var opt = {
                 optional: [{ sourceId: source }]
             };
-            if(mode != "default"){
+            if(mode !== "default"){
                 opt.mandatory = {
                     minWidth: mode.w,
                     minHeight: mode.h

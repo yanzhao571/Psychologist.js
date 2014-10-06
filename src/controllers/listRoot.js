@@ -1,4 +1,4 @@
-﻿var fmt = require("../core").fmt,
+var fmt = require("../core").fmt,
     master = require("../master"),
     controllers = require("../controllers"),
     fs = require("fs");
@@ -34,4 +34,4 @@ module.exports = {
             }
         });
     }
-}
+};

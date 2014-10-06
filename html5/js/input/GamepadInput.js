@@ -1,4 +1,4 @@
-﻿function GamepadInput(name, axisConstraints, commands, socket, oscope, gpid){
+function GamepadInput(name, axisConstraints, commands, socket, oscope, gpid){
     ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, oscope, 1, GamepadInput.AXES, true);
     var connectedGamepads = [],
         listeners = {
@@ -15,7 +15,7 @@
         for(var i = 0; i < pad.axes.length; ++i){
             this.setAxis(GamepadInput.AXES[i], pad.axes[i]);
         }
-    }
+    };
     
     this.update = function(dt){
         var pads,
@@ -32,11 +32,11 @@
             for(var i = 0; i < pads.length; ++i){
                 var pad = pads[i];
                 if(pad){
-                    if(connectedGamepads.indexOf(pad.id) == -1){
+                    if(connectedGamepads.indexOf(pad.id) === -1){
                         connectedGamepads.push(pad.id);
                         onConnected(pad.id);
                     }
-                    if(pad.id == gpid){
+                    if(pad.id === gpid){
                         this.checkDevice(pad);
                     }
                     currentPads.push(pad.id);
@@ -45,7 +45,7 @@
         }
 
         for(var i = connectedGamepads.length - 1; i >= 0; --i){
-            if(currentPads.indexOf(connectedGamepads[i]) == -1){
+            if(currentPads.indexOf(connectedGamepads[i]) === -1){
                 onDisconnected(connectedGamepads[i]);
                 connectedGamepads.splice(i, 1);
             }
@@ -55,7 +55,7 @@
     };
 
     function add(arr, val){
-        if(arr.indexOf(val) == -1){
+        if(arr.indexOf(val) === -1){
             arr.push(val);
         }
     }
@@ -104,7 +104,7 @@
     };
     
     this.addEventListener = function(event, handler, bubbles){
-        if(event == "gamepadconnected"){
+        if(event === "gamepadconnected"){
             if(listeners[event]){
                 add(listeners[event], handler);
             }

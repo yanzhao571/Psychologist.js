@@ -1,12 +1,12 @@
 (function(exports){
     // A few functions used in conjunction with
     // hashMap and where
-    exports.equal = function(a, b){ return a == b; }
-    exports.notEqual = function(a, b){ return a != b; }
-    exports.key = function(k, v){ return k; }
-    exports.keys = function(obj){ return this.hashMap(obj, this.key); }
-    exports.value = function(k, v){ return v; }
-    exports.values = function(obj){ return this.hashMap(obj, this.value); }
+    exports.equal = function(a, b){ return a === b; };
+    exports.notEqual = function(a, b){ return a !== b; };
+    exports.key = function(k, v){ return k; };
+    exports.keys = function(obj){ return this.hashMap(obj, this.key); };
+    exports.value = function(k, v){ return v; };
+    exports.values = function(obj){ return this.hashMap(obj, this.value); };
 
     // Applies a exports.to the contents of an associative
     // array, returning the results of each call on that
@@ -19,7 +19,7 @@
         for (var key in hsh)
             output[output.length] = thunk(key, hsh[key]);
         return output;
-    }
+    };
 
     
     // - match a dollar sign ($) literally, 
@@ -48,13 +48,13 @@
            => "1.41 + 3.14 = 9001.00"
         fmt("$001.000", Math.PI) => 003.142
 */
-    exports.fmt = function fmt(template){
+    exports.fmt = function (template){
         var args = arguments;
         return template.replace(paramRegex, function (m, pad, index, precision){
             index = parseInt(index, 10);
             if (0 <= index && index < args.length){
                 var val = args[index];
-                if (val != null){
+                if (val !== null && val !== undefined){
                     if(val instanceof Date && precision){
                         switch (precision.length){
                             case 1: val = val.getYear() + 1900; break;
@@ -113,7 +113,7 @@
         var v = (Math.round(x * p) / p).toString();
         if (y > 0){
             var i = v.indexOf(".");
-            if (i == -1){
+            if (i === -1){
                 v += ".";
                 i = v.length - 1;
             }
@@ -142,14 +142,14 @@
             }
         }
         return output;
-    }
+    };
 
     // Picks a random item out of an array
     exports.selectRandom = function(arr){
         if(arr){
             return arr[Math.floor(Math.random() * arr.length)];
         }
-    }
+    };
 
     // Frequently, it's necessary to print the status of a
     // hash. This exports.will run the printing, or return
@@ -168,7 +168,7 @@
             }
         }
         return "\tnone";
-    }
+    };
 
     exports.time = function(){
         var d = new Date();

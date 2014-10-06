@@ -1,9 +1,9 @@
-﻿var Assert = {
+var Assert = {
     ALPHA: 0.0000000000001,
     areEqual: function(expected, actual, msg){
-        if(expected != actual
-            && (typeof(expected) != "number"
-                || typeof(actual) != "number"
+        if(expected !== actual
+            && (typeof(expected) !== "number"
+                || typeof(actual) !== "number"
                 || Math.abs(actual - expected)
             || (Number.isNaN(expected)
                 ^ Number.isNaN(actual))) > Assert.ALPHA){
@@ -26,11 +26,11 @@
     },
 
     isNotNull: function(obj){
-        if(obj == null){
+        if(obj === null || obj === undefined){
             throw new Error("object was null");
         }
     }
-}
+};
 
 function test(func, printer){
     if(func.tests){
@@ -96,7 +96,7 @@ function consoleTest(func){
                 if(result.failure[key]){
                     var val = result.failure[key];
                     console.log(fmt("\t\t$1 FAILED after $2ms: $3", key, val.dt, val.msg));
-                    if(val.stack && val.stack.indexOf("at Object.Assert") == -1){
+                    if(val.stack && val.stack.indexOf("at Object.Assert") === -1){
                         console.log(fmt("\t\t$1", val.stack));
                     }
                 }

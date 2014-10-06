@@ -1,16 +1,16 @@
-﻿function MouseInput(name, axisConstraints, commands, socket, oscope, DOMElement){
+function MouseInput(name, axisConstraints, commands, socket, oscope, DOMElement){
     DOMElement = DOMElement || document.documentElement;
     ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, oscope, 1, MouseInput.AXES);
 
     this.setLocation = function(x, y){
         this.setAxis("X", x);
         this.setAxis("Y", y);
-    }
+    };
 
     this.setMovement = function(dx, dy){
         this.incAxis("X", dx);
         this.incAxis("Y", dy);
-    }
+    };
 
     this.readEvent = function(event){
         if(this.isPointerLocked()){
@@ -21,7 +21,7 @@
         else{
             this.setLocation(event.clientX, event.clientY);
         }
-    }
+    };
 
     DOMElement.addEventListener("mousedown", function(event){
         this.setButton(event.button, true);
@@ -40,13 +40,8 @@
         this.readEvent(event);
     }.bind(this), false);
 
-
-    var listeners = {
-        pointerlockchanged: []
-    };
-
     this.addEventListener = function(event, handler, bubbles){
-        if(event == "pointerlockchange"){
+        if(event === "pointerlockchange"){
             if(document.exitPointerLock){ document.addEventListener('pointerlockchange', handler, bubbles); }
             else if(document.mozExitPointerLock){ document.addEventListener('mozpointerlockchange', handler, bubbles); }
             else if(document.webkitExitPointerLock){ document.addEventListener('webkitpointerlockchange', handler, bubbles); }
@@ -54,7 +49,7 @@
     };
 
     this.removeEventListener = function(event, handler, bubbles){
-        if(event == "pointerlockchange"){
+        if(event === "pointerlockchange"){
             if(document.exitPointerLock){ document.removeEventListener('pointerlockchange', handler, bubbles); }
             else if(document.mozExitPointerLock){ document.removeEventListener('mozpointerlockchange', handler, bubbles); }
             else if(document.webkitExitPointerLock){ document.removeEventListener('webkitpointerlockchange', handler, bubbles); }
@@ -70,7 +65,7 @@
         if(!this.isPointerLocked()){
             DOMElement.requestPointerLock();
         }
-    }
+    };
 
     document.exitPointerLock = document.exitPointerLock
         || document.webkitExitPointerLock

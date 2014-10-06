@@ -1,4 +1,4 @@
-﻿var log = require("../core").log,
+var log = require("../core").log,
     io = require("socket.io"),
     sockets = {};
 
@@ -19,14 +19,14 @@ module.exports = {
                     }
                 }
 
-                if(count == 0){
+                if(count === 0){
                     delete sockets[appKey];
                 }
             }
         }
 
         socket.on("appKey", function(value){
-            if(appKey != null){
+            if(appKey !== null){
                 disconnect();
             }
             appKey = value;
@@ -39,7 +39,7 @@ module.exports = {
 
         socket.on("value", function(value){
             for(var i = 0; i < sockets[appKey].length; ++i){
-                if(i != index && sockets[appKey][i]){
+                if(i !== index && sockets[appKey][i]){
                     sockets[appKey][i].emit("value", value);
                 }
             }

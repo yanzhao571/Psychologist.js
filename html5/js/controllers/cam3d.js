@@ -1,4 +1,4 @@
-﻿include(0,
+include(0,
     ["lib/three/three.js",
     "lib/three/OculusRiftEffect.js",
     "lib/Blob.js",
@@ -36,8 +36,8 @@
         buttonsTimeout = null,
         modes = ["anaglyph", "stereoscope", "crosseye"],
         modeIndex = localStorage.getItem("mode"),
-        showReticle = localStorage.getItem("reticle") != "false",
-        useSpeech = localStorage.getItem("speech") == "true";
+        showReticle = localStorage.getItem("reticle") !== "false",
+        useSpeech = localStorage.getItem("speech") === "true";
 
 
     if(/^\d+$/.test(modeIndex)){
@@ -76,7 +76,7 @@
     
     ////////// buttons
     function hideButtonsLater(){
-        if(buttonsTimeout != null){
+        if(buttonsTimeout !== null && buttonsTimeout !== undefined){
             clearTimeout(buttonsTimeout);
         }
         buttonsTimeout = setTimeout(hideButtons, 3000);
@@ -117,7 +117,7 @@
 
     ///////////// reticle
     function toggleReticle (){
-        if(modes[modeIndex] != "anaglyph"){
+        if(modes[modeIndex] !== "anaglyph"){
             showReticle = !showReticle;
             localStorage.setItem("reticle", showReticle);
             setReticle();
@@ -125,8 +125,8 @@
     }
 
     function setReticle(){
-        reticle.style.display = (showReticle && modes[modeIndex] != "anaglyph") ? "block" : "none";
-        reticleButton.innerHTML = modes[modeIndex] != "anaglyph" 
+        reticle.style.display = (showReticle && modes[modeIndex] !== "anaglyph") ? "block" : "none";
+        reticleButton.innerHTML = modes[modeIndex] !== "anaglyph" 
             ? showReticle ? "hide reticle" : "show reticle"
             : "reticle disabled";
     }
@@ -178,14 +178,12 @@
     function capture(){
         if(frameIndex < 2){
             ++frameIndex;
-            if(frameIndex == 2){
+            if(frameIndex === 2){
                 reticle.style.display = "none";
                 captureButton.innerHTML = "save";
             }
         }
-        else if(frameIndex == 2){
-            var data = picture.toDataURL();
-
+        else if(frameIndex === 2){
             picture.toBlob(function(blob){
                 var date = new Date().toLocaleString().replace(/\//g, "-");
 		        saveAs(blob, fmt("$1-$2.jpg", modes[modeIndex], date));
@@ -221,7 +219,7 @@
                 case "anaglyph":
                     var img = fxs[i].getImageData(0, 0, frames[i].width, frames[i].height);
                     for(var n = 0, l = img.data.length; n < l; n+=4){
-                        if(i == 0){
+                        if(i === 0){
                             img.data[n + 1] = 0;
                             img.data[n + 2] = 0;
                         }
@@ -230,7 +228,7 @@
                         }
                     }
                     fxs[i].putImageData(img, 0, 0);
-                    gfx.globalCompositeOperation = (i == 0) ? "source-over" : "lighter";
+                    gfx.globalCompositeOperation = (i === 0) ? "source-over" : "lighter";
                     gfx.drawImage(frames[i], 0, 0);
                 break;
             }
@@ -247,7 +245,7 @@
     };
     
     function reset(){
-        size = camera.videoWidth * (modes[modeIndex] == "anaglyph" ? 1 : 0.5);
+        size = camera.videoWidth * (modes[modeIndex] === "anaglyph" ? 1 : 0.5);
         for(var i = 0; i < frames.length; ++i){
             var f = frames[i];
             f.width = size;

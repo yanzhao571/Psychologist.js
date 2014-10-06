@@ -81,7 +81,7 @@ function map(arr, fun){
     return Array.prototype.map.call(arr, fun);
 }
 
-FileState.STATE_NAMES = ["none", "started", "error", null, "success"]
+FileState.STATE_NAMES = ["none", "started", "error", null, "success"];
 FileState.NONE = 0;
 FileState.STARTED = 1;
 FileState.ERRORED = 2;
@@ -134,7 +134,7 @@ function LoadingProgress(){
         this.fileMap = this.files.reduce(function(a, b){ a[b.name] = b; return a;}, {});
             
         function progress(op, file, inter){
-            if(op == "loading"){
+            if(op === "loading"){
                 if(this.fileMap[file]){
                     this.fileMap[file].state = FileState.STARTED;
                 }
@@ -142,14 +142,14 @@ function LoadingProgress(){
             }
             else {
                 if(this.fileMap[file]){
-                    if(op == "intermediate" && inter){
+                    if(op === "intermediate" && inter){
                         this.fileMap[file].progress = inter;
                     }
-                    else if(op == "success"){
+                    else if(op === "success"){
                         this.fileMap[file].progress = this.fileMap[file].size;
                         this.fileMap[file].state = FileState.COMPLETE;
                     }
-                    else if(op == "error"){
+                    else if(op === "error"){
                         this.fileMap[file].state = FileState.ERRORED;
                     }
                 }
@@ -164,13 +164,13 @@ function LoadingProgress(){
 
 LoadingProgress.prototype.isDone = function(){
     var done = this.sum(FileState.COMPLETE, "size");
-    var error = this.sum(FileState.ERRORED, "size")
-    return (done + error) == this.totalFileSize
+    var error = this.sum(FileState.ERRORED, "size");
+    return (done + error) === this.totalFileSize;
 };
 
 LoadingProgress.prototype.sum = function(state, prop){
     return this.files.filter(function(f){
-        return (f.state & state) != 0 || (state == 0);
+        return (f.state & state) !== 0 || (state === 0);
     }).reduce(function(a, b){
         return a + b[prop];
     }, 0);
@@ -212,7 +212,7 @@ function fmt(template){
         index = parseInt(index, 10);
         if (0 <= index && index < args.length){
             var val = args[index];
-            if (val != null){
+            if (val !== null && val !== undefined){
                 if(val instanceof Date && precision){
                     switch (precision.length){
                         case 1: val = val.getYear(); break;
@@ -256,7 +256,7 @@ function sigfig(x, y){
     var v = (Math.round(x * p) / p).toString();
     if (y > 0){
         var i = v.indexOf(".");
-        if (i == -1){
+        if (i === -1){
             v += ".";
             i = v.length - 1;
         }
@@ -369,8 +369,8 @@ function makeTabSet(elem){
 			}
             var selectTab = function(index){
 				for(var n = 0; n < bodyCell.children.length; ++n){
-					bodyCell.children[n].style.display = (n == index) ? "" : "none";
-					headerRow.children[n].className = (n == index) ? "tab selectedTab" : "tab";
+					bodyCell.children[n].style.display = (n === index) ? "" : "none";
+					headerRow.children[n].className = (n === index) ? "tab selectedTab" : "tab";
 				}
 			}.bind(title, i / 2);
             headerCell.addEventListener("click", selectTab);
@@ -413,11 +413,11 @@ function readForm(ctrls){
     if(ctrls){
         for(var name in ctrls){
             var c = ctrls[name];
-            if(c.tagName == "INPUT" && (!c.dataset || !c.dataset.skipcache)){
-                if(c.type == "text" || c.type == "password"){
+            if(c.tagName === "INPUT" && (!c.dataset || !c.dataset.skipcache)){
+                if(c.type === "text" || c.type === "password"){
                     state[name] = c.value;
                 }
-                else if(c.type == "checkbox" || c.type == "radio"){
+                else if(c.type === "checkbox" || c.type === "radio"){
                     state[name] = c.checked;
                 }
             }
@@ -430,11 +430,14 @@ function writeForm(ctrls, state){
     if(state){
         for(var name in ctrls){
             var c = ctrls[name];
-            if(state[name] != null && c.tagName == "INPUT" && (!c.dataset || !c.dataset.skipcache)){
-                if(c.type == "text" || c.type == "password"){
+            if(state[name] !== null
+                && state[name] !== undefined
+                && c.tagName === "INPUT"
+                && (!c.dataset || !c.dataset.skipcache)){
+                if(c.type === "text" || c.type === "password"){
                     c.value = state[name];
                 }
-                else if(c.type == "checkbox" || c.type == "radio"){
+                else if(c.type === "checkbox" || c.type === "radio"){
                     c.checked = state[name];
                 }
             }
@@ -477,7 +480,7 @@ function group(arr, getKey, getValue){
         var obj = clone[i];
         var key = getKey ? getKey(obj) : obj;
         var val = getValue ? getValue(obj) : obj;
-        if (groups.length == 0 || groups[groups.length - 1].key != key){
+        if (groups.length === 0 || groups[groups.length - 1].key !== key){
             groups.push({key: key, values: []});
         }
         groups[groups.length - 1].values.push(val);
@@ -486,7 +489,7 @@ function group(arr, getKey, getValue){
 };
 
 function agg(arr, get, red){
-    if (typeof (get) != "function"){
+    if (typeof (get) !== "function"){
         get = (function (key, obj){
             return obj[key];
         }).bind(window, get);
@@ -517,7 +520,7 @@ MediaStreamTrack.getVideoTracks =
     || (MediaStreamTrack.getSources && function (success){
         return MediaStreamTrack.getSources(function (sources){
         success(sources.filter(function (source){
-            return source.kind == "video";
+            return source.kind === "video";
         }));
     });
     })
@@ -537,7 +540,7 @@ if (!document.documentElement.requestFullscreen){
     }
     else if (document.documentElement.webkitRequestFullscreen){
         document.documentElement.requestFullscreen = function (){
-            document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT)
+            document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
         };
         document.exitFullscreen = document.webkitExitFullscreen;
     }

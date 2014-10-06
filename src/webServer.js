@@ -184,7 +184,7 @@ function isNumber(v) { return isFinite(v) && !isNaN(v); }
         - string: the directory from which to serve static files.
 */
 module.exports = function webServer(host, target) {
-    IS_LOCAL = host == "localhost";
+    IS_LOCAL = host === "localhost";
     if (!isString(host)) {
         throw new Error("`host` parameter not a supported type. Excpected string. Given: " + host + ", type: " + typeof (host));
     }

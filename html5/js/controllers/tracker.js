@@ -1,4 +1,4 @@
-﻿include(0,
+include(0,
     ["js/input/NetworkedInput.js",
     "js/input/ButtonAndAxisInput.js",
     "js/input/KeyboardInput.js",
@@ -28,7 +28,7 @@
 
         function changeParameters(dp, dt){
             power += dp;
-            if (power == 0){
+            if (power === 0){
                 power += 2 * dp;
             }
             if (0.05 <= threshold + dt && threshold + dt < 1){

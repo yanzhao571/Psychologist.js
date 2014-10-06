@@ -1,4 +1,4 @@
-﻿var fmt = require("../core").fmt,
+var fmt = require("../core").fmt,
     fs = require("fs");
 
 function makeManifest(strings, sendData, index, accum){

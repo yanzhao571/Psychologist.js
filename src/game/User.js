@@ -1,4 +1,4 @@
-﻿var types = ["gamepad", "keyboard", "mouse", "touch", "head", "arm", "speech", "typing"],
+var types = ["gamepad", "keyboard", "mouse", "touch", "head", "arm", "speech", "typing"],
     log = require("../core").log;
 
 function User(info){
@@ -62,7 +62,7 @@ User.prototype.addDevice = function(users, socket){
     }
     socket.emit("userList", userList);
 
-    if(index == 0){
+    if(index === 0){
         //
         // notify all of the users of a new user
         //
@@ -83,7 +83,7 @@ User.prototype.broadcast = function(users, skipIndex){
     for(var key in users){
         var toUser = users[key];
         toUser.emit
-            .bind(toUser, (toUser.state.userName == this.state.userName) ? skipIndex : -1)
+            .bind(toUser, (toUser.state.userName === this.state.userName) ? skipIndex : -1)
             .apply(toUser, args);
     }
 };
@@ -91,7 +91,7 @@ User.prototype.broadcast = function(users, skipIndex){
 User.prototype.emit = function(skipIndex){
     var args = Array.prototype.slice.call(arguments, 1);
     for(var i = 0; i < this.devices.length; ++i){
-        if(i != skipIndex && this.devices[i]){
+        if(i !== skipIndex && this.devices[i]){
             this.devices[i].emit.apply(this.devices[i], args);
         }
     }

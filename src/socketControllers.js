@@ -1,1 +1,1 @@
-﻿(require("./requireDirectory"))("socketControllers", module);
+(require("./requireDirectory"))("socketControllers", module);

@@ -88,7 +88,7 @@ function SpeechInput(name, commands, socket, oscope){
         else if(!this.enabled && running){
             stop();
         }
-    }
+    };
     
     this.getErrorMessage = function(){
         return errorMessage;
@@ -150,7 +150,7 @@ function SpeechInput(name, commands, socket, oscope){
 
             newCommand = newCommand.join(" ");
 
-            if(newCommand != this.inputState){
+            if(newCommand !== this.inputState){
                 this.inputState.text = newCommand;
             }
         }.bind(this), true);
@@ -167,7 +167,7 @@ inherit(SpeechInput, NetworkedInput);
 
 SpeechInput.maybeClone = function(arr){ 
     return (arr && arr.slice()) || []; 
-}
+};
 
 SpeechInput.prototype.cloneCommand = function(cmd){
     return {
@@ -176,14 +176,14 @@ SpeechInput.prototype.cloneCommand = function(cmd){
         keywords: SpeechInput.maybeClone(cmd.keywords),
         commandUp: cmd.commandUp,
         disabled: cmd.disabled
-    }
+    };
 };
 
 SpeechInput.prototype.evalCommand = function(cmd, cmdState, metaKeysSet, dt){
     if(metaKeysSet && this.inputState.text){
         for(var i = 0; i < cmd.keywords.length; ++i){
             if(this.inputState.text.indexOf(cmd.keywords[i]) === 0
-                && (cmd.preamble || cmd.keywords[i].length == this.inputState.text.length)){
+                && (cmd.preamble || cmd.keywords[i].length === this.inputState.text.length)){
                 cmdState.pressed = true;
                 cmdState.value = this.inputState.text.substring(cmd.keywords[i].length).trim();
                 this.inputState.text = null;

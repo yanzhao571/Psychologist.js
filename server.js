@@ -1,4 +1,4 @@
-﻿var format = require("util").format,
+var format = require("util").format,
     fs = require("fs"),
     http = require("http"),
     https = require("https"),
@@ -42,7 +42,7 @@ while(files.length > 0){
 
 toZip.forEach(function(file){
     zlib.gzip(fs.readFileSync(file), function(err, zip){
-        fs.writeFileSync(file + ".gz", zip)
+        fs.writeFileSync(file + ".gz", zip);
     });
 });
 
@@ -76,7 +76,7 @@ function start(key, cert, ca){
 function readFiles(files, error, success, index, accum){
     index = index || 0;
     accum = accum || [];
-    if(index == files.length){
+    if(index === files.length){
         success(accum);
     }
     else{

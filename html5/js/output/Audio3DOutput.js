@@ -1,4 +1,4 @@
-﻿function Audio3DOutput(){
+function Audio3DOutput(){
     try{
         this.audioContext = new AudioContext();
         this.mainVolume = this.audioContext.createGain();
