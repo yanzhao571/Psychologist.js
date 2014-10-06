@@ -76,7 +76,7 @@ function sendStaticFile(req, res, url, path) {
     fs.exists(path, function (yes) {
         if (yes) {
             if(useGZIP(req)){
-                var t = path + ".gz";
+                var t = path.replace(/^html5/, "zipcache") + ".gz";
                 fs.exists(t, function(yes){
                     if(!IS_LOCAL && yes){
                         send(t);

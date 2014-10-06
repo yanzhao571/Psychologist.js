@@ -42,7 +42,14 @@ while(files.length > 0){
 
 toZip.forEach(function(file){
     zlib.gzip(fs.readFileSync(file), function(err, zip){
-        fs.writeFileSync(file + ".gz", zip);
+        if(!err){
+            var p = file.replace(/^html5/, "zipcache") + ".gz";
+            var dir = path.dirname(p);
+            if(!fs.existsSync(dir)){
+                fs.mkdirSync(dir);
+            }
+            fs.writeFileSync(p, zip);
+        }
     });
 });
 
@@ -50,7 +57,14 @@ function start(key, cert, ca){
     var useSecure = !!(key && cert && ca);
     if(useSecure){
         log("secure");
-        app = https.createServer({key: key, cert: cert, ca: ca}, webServer(host, srcDir));
+        app = https.createServer(
+            {
+                key: key, 
+                cert: cert, 
+                ca: ca
+            }, 
+            webServer(host, srcDir)
+        );
         redir = http.createServer(webServer(host, port + 1));
         redir.listen(port);
         app.listen(port + 1);
