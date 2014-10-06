@@ -1,4 +1,4 @@
-﻿var COLLADA = new THREE.ColladaLoader();
+var COLLADA = new THREE.ColladaLoader();
 COLLADA.options.convertUpAxis = true;
 function ModelLoader(src, progress, success){
     if(src){

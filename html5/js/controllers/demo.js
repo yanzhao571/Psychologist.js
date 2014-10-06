@@ -1,52 +1,53 @@
 var isDebug = false,
-    isLocal = document.location.hostname == "localhost",
-	ctrls = findEverything(),
+    isLocal = document.location.hostname === "localhost",
+    ctrls = findEverything(),
     tabs = makeTabSet(ctrls.options),
-	PLAYER_HEIGHT = 6,
+    PLAYER_HEIGHT = 6,
     formState = getSetting("formState"),
     login,
-	prog = new LoadingProgress(
-		"manifest/js/controllers/demo.js?v2",
-		"lib/three/three.js",
-		"lib/three/StereoEffect.js",
-		"lib/three/OculusRiftEffect.js",
-		"lib/three/AnaglyphEffect.js",
-		"lib/three/ColladaLoader.js",
-		"lib/droid_sans_regular.typeface.js",
-		"/socket.io/socket.io.js",
-		"js/oscope/oscope.client.js",
-		"js/input/NetworkedInput.js",
-		"js/input/ButtonAndAxisInput.js",
-		"js/input/SpeechInput.js",
-		"js/input/GamepadInput.js",
-		"js/input/KeyboardInput.js",
-		"js/input/MotionInput.js",
-		"js/input/MouseInput.js",
-		"js/input/TouchInput.js",
-		"js/output/Audio3DOutput.js",
-		"js/output/SpeechOutput.js",
-		"js/ModelLoader.js",
-		displayProgress,
-		postScriptLoad);
-    
+    prog = new LoadingProgress(
+        "manifest/js/controllers/demo.js?v2",
+        "lib/three/three.js",
+        "lib/three/StereoEffect.js",
+        "lib/three/OculusRiftEffect.js",
+        "lib/three/AnaglyphEffect.js",
+        "lib/three/ColladaLoader.js",
+        "lib/droid_sans_regular.typeface.js",
+        "/socket.io/socket.io.js",
+        "js/oscope/oscope.client.js",
+        "js/ModelLoader.js",
+        "js/input/NetworkedInput.js",
+        "js/input/ButtonAndAxisInput.js",
+        "js/input/SpeechInput.js",
+        "js/input/GamepadInput.js",
+        "js/input/KeyboardInput.js",
+        "js/input/MotionInput.js",
+        "js/input/MouseInput.js",
+        "js/input/TouchInput.js",
+        "js/output/Audio3DOutput.js",
+        "js/output/SpeechOutput.js",
+        "js/vui/vui.js",
+        displayProgress,
+        postScriptLoad);
+
     writeForm(ctrls, formState);
 
 function displayProgress(file){
     ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
     ctrls.processedSoFar.style.width = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
     ctrls.loadedSoFar.style.width = prog.makeSize(FileState.COMPLETE, "size");
-    if(typeof(file) != "string"){
+    if(typeof(file) !== "string"){
         file = fmt(
-            "<br>$1:<br>[msg] $2<br>[line] $3<br>[col] $4<br>[file] $5", 
-            typeof(file), 
+            "<br>$1:<br>[msg] $2<br>[line] $3<br>[col] $4<br>[file] $5",
+            typeof(file),
             file.message,
             file.line,
             file.column,
             file.sourceURL.match(/[^\/\\]*$/)[0]
         );
     }
-    ctrls.loadingMessage.innerHTML 
-        = ctrls.connectButton.innerHTML 
+    ctrls.loadingMessage.innerHTML
+        = ctrls.connectButton.innerHTML
         = fmt("Loading, please wait... $1 $2", file, ctrls.processedSoFar.style.width);
     ctrls.loadedSoFar.style.left = ctrls.errorSoFar.style.width = prog.makeSize(FileState.ERRORED, "size");
     if(prog.isDone()){
@@ -102,10 +103,10 @@ function postScriptLoad(progress){
 
     tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
-    
+
     function msg(){
         var txt = map(arguments, function(v){
-            return v ? v.toString() : ""
+            return v ? v.toString() : "";
         }).join(" ");
         if(isDebug){
             console.log.apply(console, arguments);
@@ -128,11 +129,11 @@ function postScriptLoad(progress){
     }
 
     function update(dt){
-		vcy -= dt * GRAVITY;
+        vcy -= dt * GRAVITY;
         var x = Math.floor((camera.position.x - heightmap.minX) / CLUSTER);
         var z = Math.floor((camera.position.z - heightmap.minZ) / CLUSTER);
         var y = PLAYER_HEIGHT;
-        if (heightmap 
+        if (heightmap
             && 0 <= z && z < heightmap.length
             && 0 <= x && x < heightmap[z].length){
             y += heightmap[z][x];
@@ -155,9 +156,9 @@ function postScriptLoad(progress){
                 + keyboard.getValue("driveForward")
                 + gamepad.getValue("drive")
                 + touch.getValue("drive");
-            if(tx != 0 || tz != 0){
+            if(tx || tz){
                 len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
-                    
+
                 if(bears[userName] && !bears[userName].animation.isPlaying){
                     bears[userName].animation.play();
                 }
@@ -168,7 +169,7 @@ function postScriptLoad(progress){
                     bears[userName].animation.stop();
                 }
             }
-                
+
             tx *= len;
             tz *= len;
             len = tx * Math.cos(heading) + tz * Math.sin(heading);
@@ -177,7 +178,7 @@ function postScriptLoad(progress){
             vcx = vcx * 0.9 + tx * 0.1;
             vcz = vcz * 0.9 + tz * 0.1;
         }
-        
+
         camera.updateProjectionMatrix();
         camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
         camera.translateX(vcx * dt);
@@ -190,8 +191,8 @@ function postScriptLoad(progress){
             + gamepad.getValue("pitch")) * TRACKING_SCALE_COMP;
 
         heading = heading * TRACKING_SCALE + (
-            head.getValue("heading") 
-            + touch.getValue("heading") 
+            head.getValue("heading")
+            + touch.getValue("heading")
             + mouse.getValue("heading")
             + gamepad.getValue("heading")) * TRACKING_SCALE_COMP;
 
@@ -212,12 +213,12 @@ function postScriptLoad(progress){
             socket.emit("userState", state);
         }
 
-        roll = roll * TRACKING_SCALE + head.getValue("roll") * TRACKING_SCALE_COMP;        
+        roll = roll * TRACKING_SCALE + head.getValue("roll") * TRACKING_SCALE_COMP;
 
         for(var key in bears){
             var bear = bears[key];
             bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-            if(key == userName){
+            if(key === userName){
                 bear.rotateY(heading);
                 bear.position.copy(camera.position);
                 bear.position.y -= PLAYER_HEIGHT;
@@ -237,9 +238,9 @@ function postScriptLoad(progress){
         requestAnimationFrame(animate);
         dt = (t - lt) * 0.001;
         lt = t;
-        
+
         if(camera && heightmap){
-		    THREE.AnimationHandler.update(dt);
+            THREE.AnimationHandler.update(dt);
             head.update(dt);
             arm.update(dt);
             keyboard.update(dt);
@@ -252,7 +253,7 @@ function postScriptLoad(progress){
             draw();
         }
     }
-    
+
     function setCamera(dt){
 
         camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
@@ -269,7 +270,7 @@ function postScriptLoad(progress){
         var x = camera.position.x / 10,
             y = camera.position.y / 10,
             z = camera.position.z / 10;
-            
+
         var len = Math.sqrt(x * x + y * y + z * z);
         audio3d.setPosition(x, y, z);
         audio3d.setVelocity(vcx, vcy, vcz);
@@ -292,20 +293,20 @@ function postScriptLoad(progress){
         }
 
         chooseRenderingEffect(getSetting("renderingEffect"));
-        
+
         renderer.setSize(w, h);
         if (effect){
             effect.setSize(w, h);
         }
     }
-    
+
     login = function(){
         if(socket){
             userName = ctrls.userNameField.value;
             var password = ctrls.passwordField.value;
             if(userName && password){
                 socket.emit("login", {
-                    userName: userName, 
+                    userName: userName,
                     password: password,
                     email: ctrls.emailField.value
                 });
@@ -317,19 +318,20 @@ function postScriptLoad(progress){
         else{
             msg("No socket available");
         }
-    }
+    };
 
     function toggleOptions(){
-        ctrls.options.style.display = (ctrls.options.style.display == "") ? "none" : "";
+        keyboard.pause(true);
+        ctrls.options.style.display = (ctrls.options.style.display === "") ? "none" : "";
     }
 
     var closers = document.getElementsByClassName("closeSectionButton");
     for(var i = 0; i < closers.length; ++i){
         closers[i].addEventListener("click", function(){
             this.parentElement.style.display = "none";
-            renderer.domElement.focus();
+            keyboard.pause(false);
         }, false);
-        if(!isDebug && !isLocal && closers[i].parentElement == ctrls.options){
+        if(!isDebug && !isLocal && closers[i].parentElement === ctrls.options){
             closers[i].addEventListener("click", function(){
                 requestFullScreen();
                 mouse.requestPointerLock();
@@ -338,7 +340,7 @@ function postScriptLoad(progress){
     }
 
     window.addEventListener("keyup", function(evt){
-        if(evt.keyCode == KeyboardInput.GRAVEACCENT){
+        if(evt.keyCode === KeyboardInput.GRAVEACCENT){
             toggleOptions();
         }
     }, false);
@@ -360,6 +362,7 @@ function postScriptLoad(progress){
         mouse.togglePointerLock();
         ctrls.options.style.display = "none";
         ctrls.menuButton.style.display = "";
+        keyboard.pause(false);
     }, false);
 
     ctrls.fullScreenButton.addEventListener("click", function(){
@@ -389,7 +392,7 @@ function postScriptLoad(progress){
 
         setSetting("renderingEffect", type);
     }
-    
+
     ctrls.riftRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "rift"), false);
     ctrls.anaglyphRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "anaglyph"), false);
     ctrls.stereoRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "stereo"), false);
@@ -420,18 +423,22 @@ function postScriptLoad(progress){
                 bears[userName].remove(lastText);
                 lastText = null;
             }
-            
+
             if(isComplete){
                 socket.emit("chat", text);
             }
             else{
                 if(isLocal){
                     socket.emit("typing", text);
-                } 
-                if(text != null){
-                    var textObj= makeText(text, 0.125, 0, PLAYER_HEIGHT, -4, "right");
+                }
+                if(!text){
+                    var textObj= new VUI.Text(
+                        text, 0.125,
+                        "black", "transparent",
+                        0, PLAYER_HEIGHT, -4,
+                        "right");
                     lastText = textObj;
-		            bears[userName].add(textObj);
+                    bears[userName].add(textObj);
                 }
             }
         }
@@ -450,13 +457,16 @@ function postScriptLoad(progress){
     }
 
     function showChat(msg){
-        msg = typeof(msg) == "string" ? msg : fmt("[$1]: $2", msg.userName, msg.text);
+        msg = typeof(msg) === "string" ? msg : fmt("[$1]: $2", msg.userName, msg.text);
         if(bears[userName]){
-            if(userName == msg.userName){
+            if(userName === msg.userName){
                 showTyping(true, false, null);
             }
-            var textObj= makeText(msg, CHAT_TEXT_SIZE, -2, 0, -5, "left");
-		    bears[userName].add(textObj);
+            var textObj= new VUI.Text(
+                msg, CHAT_TEXT_SIZE,
+                "black", "transparent",
+                -2, 0, -5, "left");
+            bears[userName].add(textObj);
             chatLines.push(textObj);
             shiftLines();
             setTimeout(function(){
@@ -494,59 +504,21 @@ function postScriptLoad(progress){
         }
     }
 
-    function makeText(text, size, x, y, z, hAlign){
-        hAlign = hAlign || "center";
-        var height = (size * 1000);
-
-        var textCanvas = document.createElement("canvas");
-        var textContext = textCanvas.getContext("2d");
-        textContext.font = height + "px Arial";
-        var width = textContext.measureText(text).width;
-        
-        textCanvas.width = width;
-        textCanvas.height = height;
-        textContext.font = height + "px Arial";
-        textContext.fillStyle = "#FFFFFF";
-        textContext.textBaseline = "top";
-        textContext.fillText(text, 0, 0);
-        
-        var texture = new THREE.Texture(textCanvas);
-        texture.needsUpdate = true;
-
-        var material = new THREE.MeshLambertMaterial({
-            map: texture,
-            transparent: true,
-            useScreenCoordinates: false,
-            color: 0xffffff,
-            shading: THREE.FlatShading
-        });
-
-        var textGeometry = new THREE.PlaneGeometry(size * width / height, size);
-		textGeometry.computeBoundingBox();
-		textGeometry.computeVertexNormals();
-
-        var textMesh = new THREE.Mesh(textGeometry, material);
-        if(hAlign == "left"){
-            x -= textGeometry.boundingBox.min.x;
-        }
-        else if(hAlign == "right"){
-            x += textGeometry.boundingBox.min.x;
-        }
-        textMesh.position.set(x, y, z);
-        return textMesh;
-    }
-
     function addUser(userState){
         var bear = bearModel.clone(userState.userName, socket);
         bears[userState.userName] = bear;
         bear.heading = userState.heading;
         updateUserState(userState);
         scene.add(bear);
-        bear.nameObj = makeText(userState.userName, 0.5, 0, PLAYER_HEIGHT + 2.5, 0, "center");
-		bear.add(bear.nameObj)
-        
+        bear.nameObj = new VUI.Text(
+            userState.userName, 0.5,
+            "black", "transparent",
+            0, PLAYER_HEIGHT + 2.5, 0, 
+            "center");
+        bear.add(bear.nameObj);
 
-        if(userState.userName == userName && (arm.isEnabled() || arm.isReceiving())){
+
+        if(userState.userName === userName && (arm.isEnabled() || arm.isReceiving())){
             var sphere = new THREE.SphereGeometry(0.5, 4, 2);
             var spine = new THREE.Object3D();
             spine.position.set(0, PLAYER_HEIGHT, 0);
@@ -578,7 +550,7 @@ function postScriptLoad(progress){
             isRunning: !!Math.abs(vcx + vcy + vcz)
         });
         for(var i = 0; i < users.length; ++i){
-            if(users[i].userName != userName){
+            if(users[i].userName !== userName){
                 addUser(users[i]);
             }
         }
@@ -593,7 +565,7 @@ function postScriptLoad(progress){
     socket.on("typing", showTyping.bind(window, false, false));
 
     socket.on("chat", showChat);
-    
+
     socket.on("userLeft", function(user){
         if(bears[user]){
             msg("user disconnected:", user);
@@ -624,14 +596,12 @@ function postScriptLoad(progress){
     ], [
         { name: "heading", axes: [-MouseInput.IX] },
         { name: "pitch", axes: [-MouseInput.IY]},
-        { name: "fire", buttons: [1], commandDown: fire, dt: 0.125 },
-        { name: "jump", buttons: [2], repetitions: 2, dt: 1, commandUp: jump },
-        { name: "jump2", axes: [-MouseInput.DY], threshold: 3, repetitions: 2, dt: 1, commandUp: jump },
+        { name: "fire", buttons: [1], commandDown: fire, dt: 0.125 }
     ], socket, oscope, renderer.domElement);
 
     touch = new TouchInput("touch", null, null, [
         { name: "heading", axes: [TouchInput.IX0] },
-        { name: "drive", axes: [-TouchInput.DY0] },
+        { name: "drive", axes: [-TouchInput.DY0] }
     ], socket, oscope, renderer.domElement);
 
     keyboard = new KeyboardInput("keyboard", [
@@ -639,12 +609,12 @@ function postScriptLoad(progress){
         { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHTARROW] },
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
-        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 1 },
+        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandUp: jump },
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 0.125 },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 0.125 },
         { name: "options", buttons: [KeyboardInput.GRAVEACCENT], commandUp: toggleOptions },
-        { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)},
-    ], socket, oscope, renderer.domElement);
+        { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
+    ], socket, oscope);
 
     gamepad = new GamepadInput("gamepad", [
         { axis: GamepadInput.LSX, deadzone: 0.1},
@@ -659,7 +629,7 @@ function postScriptLoad(progress){
         { name: "pitch", axes: [GamepadInput.IRSY]},
         { name: "jump", buttons: [1], commandDown: jump, dt: 0.250 },
         { name: "fire", buttons: [2], commandDown: fire, dt: 0.125 },
-        { name: "options", buttons: [9], commandUp: toggleOptions },
+        { name: "options", buttons: [9], commandUp: toggleOptions }
     ], socket, oscope);
 
     speech = new SpeechInput("speech", [
@@ -726,11 +696,11 @@ function postScriptLoad(progress){
         mainScene.Ocean.children[0].material.transparent = true;
         mainScene.Ocean.children[0].material.opacity = 0.75;
         audio3d.loadSound3D(
-            "music/ocean.mp3", true, 
-            mainScene.Campfire.position.x, 
-            mainScene.Campfire.position.y, 
-            mainScene.Campfire.position.z, 
-            progress, 
+            "music/ocean.mp3", true,
+            mainScene.Campfire.position.x,
+            mainScene.Campfire.position.y,
+            mainScene.Campfire.position.z,
+            progress,
             function(snd){
                 oceanSound = snd;
                 snd.source.start(0);
@@ -744,7 +714,7 @@ function postScriptLoad(progress){
 
     var bearModel = new ModelLoader("models/bear.dae", progress);
 
-        
+
     audio3d.loadSoundFixed("music/game1.ogg.break", true, progress, function(snd){
         snd.volume.gain.value = 0.5;
         snd.source.start(0);

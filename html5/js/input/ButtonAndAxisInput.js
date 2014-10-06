@@ -1,5 +1,9 @@
 ﻿function ButtonAndAxisInput(name, axisConstraints, commands, socket, oscope, offset, deltaTrackedAxes, integrateOnly){
     this.offset = offset || 0;
+    for(var i = 0; i < commands.length; ++i){
+        var cmd = commands[i];
+        if(name === "keyboard" && cmd.name === "chat") console.log("ButtonAndAxisInput", cmd.commandUp);
+    }
     NetworkedInput.call(this, name, commands, socket, oscope);
     this.inputState.axes = [];
     this.inputState.buttons = [];
@@ -14,7 +18,7 @@
     this.deltaTrackedAxes = deltaTrackedAxes || [];
     
     for(var y = 0; y < ButtonAndAxisInput.AXES_MODIFIERS.length; ++y){
-        if(!(integrateOnly && ButtonAndAxisInput.AXES_MODIFIERS[y] == "D")){
+        if(!(integrateOnly && ButtonAndAxisInput.AXES_MODIFIERS[y] === "D")){
             for(var x = 0; x < deltaTrackedAxes.length; ++x){
                 this.axisNames.push(ButtonAndAxisInput.AXES_MODIFIERS[y] + deltaTrackedAxes[x]);
             }
@@ -28,7 +32,7 @@
             min: o.min,
             max: o.max,
             deadzone: o.deadzone
-        }
+        };
         return m;
     }, new Array(this.axisNames.length));
 
@@ -78,19 +82,19 @@ ButtonAndAxisInput.prototype.getAxis = function(name){
         value = this.inputState.axes[index] || 0,
         con = this.axisConstraints[index];
     if(con){
-        if(con.scale != null){
+        if(con.scale){
             value *= con.scale;
         }
-        if(con.offset != null){
+        if(con.offset){
             value -= con.offset;
         }
-        if(con.min != null){
+        if(con.min){
             value = Math.max(con.min, value);
         }
-        if(con.max != null){
+        if(con.max){
             value = Math.min(con.max, value);
         }
-        if(con.deadzone != null && Math.abs(value) < con.deadzone){
+        if(con.deadzone && Math.abs(value) < con.deadzone){
             value = 0;
         }
     }
@@ -143,12 +147,12 @@ ButtonAndAxisInput.prototype.maybeClone = function(arr){
 ButtonAndAxisInput.prototype.cloneCommand = function(cmd){
     return {
         name: cmd.name,
-        disabled: cmd.disabled,
-        dt: cmd.dt,
-        deadzone: cmd.deadzone,
-        threshold: cmd.threshold,
-        repetitions: cmd.repetitions,
-        scale: cmd.scale,
+        disabled: !!cmd.disabled,
+        dt: cmd.dt || 0,
+        deadzone: cmd.deadzone || 0,
+        threshold: cmd.threshold || 0,
+        repetitions: cmd.repetitions || 1,
+        scale: cmd.scale || 1,
         axes: this.maybeClone(cmd.axes),
         buttons: this.maybeClone(cmd.buttons),
         metaKeys: this.maybeClone(cmd.metaKeys),
@@ -186,11 +190,11 @@ ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState, metaKeysSet, 
             }
         }
 
-        if(cmd.scale != null){
+        if(cmd.scale){
             value *= cmd.scale;
         }
 
-        if(cmd.threshold != null){
+        if(cmd.threshold){
             pressed = pressed && (value > cmd.threshold);
         }
 

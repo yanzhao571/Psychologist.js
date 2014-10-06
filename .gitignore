@@ -8,3 +8,4 @@ cur/
 commands.txt
 users.json
 *.gz
+/nbproject/private/

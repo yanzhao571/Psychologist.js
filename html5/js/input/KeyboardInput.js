@@ -1,4 +1,4 @@
-﻿function KeyboardInput(name, commands, socket, oscope, DOMElement){
+function KeyboardInput(name, commands, socket, oscope, DOMElement){
 
     for(var i = 0; i < commands.length; ++i){
         var cmd = commands[i];
@@ -20,13 +20,13 @@
         onTextEntry = null,
         text = null,
         insertionPoint = null;
-    
+
     function execute(stateChange, event){
         if(textEntry && stateChange){
-            if(event.keyCode == KeyboardInput.ENTER
-                || event.keyCode == KeyboardInput.ESCAPE){
+            if(event.keyCode === KeyboardInput.ENTER
+                || event.keyCode === KeyboardInput.ESCAPE){
                 textEntry = false;
-                if(event.keyCode == KeyboardInput.ENTER){
+                if(event.keyCode === KeyboardInput.ENTER){
                     onTextEntry(true, text);
                 }
                 onTextEntry(false, null);
@@ -38,23 +38,23 @@
                     key += KeyboardInput.NUMBER0 - KeyboardInput.NUMPAD0;
                 }
 
-                if(key == KeyboardInput.BACKSPACE){
+                if(key === KeyboardInput.BACKSPACE){
                     text = text.substring(0, insertionPoint - 1) + text.substring(insertionPoint);
                     --insertionPoint;
                 }
-                else if(key == KeyboardInput.DELETE){
+                else if(key === KeyboardInput.DELETE){
                     text = text.substring(0, insertionPoint) + text.substring(insertionPoint + 1);
                 }
-                else if(key == KeyboardInput.LEFTARROW){
+                else if(key === KeyboardInput.LEFTARROW){
                     --insertionPoint;
                 }
-                else if(key == KeyboardInput.RIGHTARROW){
+                else if(key === KeyboardInput.RIGHTARROW){
                     ++insertionPoint;
                 }
-                else if(key == KeyboardInput.HOME){
+                else if(key === KeyboardInput.HOME){
                     insertionPoint = 0;
                 }
-                else if(key == KeyboardInput.END){
+                else if(key === KeyboardInput.END){
                     insertionPoint = text.length;
                 }
                 else if(event.shiftKey && KeyboardInput.UPPERCASE[key]){
@@ -79,7 +79,7 @@
         }
     }
 
-    DOMElement = DOMElement || document;
+    DOMElement = DOMElement || window;
     DOMElement.addEventListener("keydown", execute.bind(this, true), false);
     DOMElement.addEventListener("keyup", execute.bind(this, false), false);
 }
@@ -300,28 +300,28 @@ https://www.github.com/capnmidnight/VR
 Copyright (c) 2014 Sean T. McBeth
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, 
+Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, this 
+* Redistributions of source code must retain the above copyright notice, this
   list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice, this 
-  list of conditions and the following disclaimer in the documentation and/or 
+* Redistributions in binary form must reproduce the above copyright notice, this
+  list of conditions and the following disclaimer in the documentation and/or
   other materials provided with the distribution.
 
 * Neither the name of Sean T. McBeth nor the names of its contributors
-  may be used to endorse or promote products derived from this software without 
+  may be used to endorse or promote products derived from this software without
   specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 OF THE POSSIBILITY OF SUCH DAMAGE.
 */

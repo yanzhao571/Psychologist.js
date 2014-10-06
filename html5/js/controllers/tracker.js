@@ -1,5 +1,6 @@
 ﻿include(0,
-    ["js/input/ButtonAndAxisInput.js",
+    ["js/input/NetworkedInput.js",
+    "js/input/ButtonAndAxisInput.js",
     "js/input/KeyboardInput.js",
     "js/camera.js"],
     function (){
@@ -38,10 +39,10 @@
 
         // use WASD or arrow keys to change contrast and threshold parameters
         keyboard = new KeyboardInput("keyboard", [
-            { name: "up", buttons: [87, 38], commandDown: changeParameters.bind(window, 1, 0), dt: 0.125 },
-            { name: "down", buttons: [83, 40], commandDown: changeParameters.bind(window, -1, 0), dt: 0.125 },
-            { name: "left", buttons: [65, 37], commandDown: changeParameters.bind(window, 0, -0.05), dt: 0.125 },
-            { name: "right", buttons: [68, 39], commandDown: changeParameters.bind(window, 0, 0.05), dt: 0.125 }
+            { name: "up", buttons: [KeyboardInput.UPARROW], commandDown: changeParameters.bind(window, 1, 0), dt: 0.125 },
+            { name: "down", buttons: [KeyboardInput.DOWNARROW], commandDown: changeParameters.bind(window, -1, 0), dt: 0.125 },
+            { name: "left", buttons: [KeyboardInput.LEFTARROW], commandDown: changeParameters.bind(window, 0, -0.05), dt: 0.125 },
+            { name: "right", buttons: [KeyboardInput.RIGHTARROW], commandDown: changeParameters.bind(window, 0, 0.05), dt: 0.125 }
         ]);
 
         picture.addEventListener("touchstart", function (event){
