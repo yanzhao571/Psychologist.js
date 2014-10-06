@@ -68,9 +68,8 @@ function displayProgress(file){
 }
 
 function postScriptLoad(progress){
-    var BG_COLOR = 0xafbfff, CLUSTER = 2,
-        TRACKING_SCALE = 0,
-        TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
+    var BG_COLOR = 0xafbfff, CLUSTER = 2, CHAT_TEXT_SIZE = 0.25, 
+        TRACKING_SCALE = 0, TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
         GRAVITY = 9.8, SPEED = 15,
         pitch = 0, roll = 0, heading = 0, lastHeading = 0, dheading = 0,
         vcx = 0, vcz = 0, vcy = 0,
@@ -87,7 +86,7 @@ function postScriptLoad(progress){
             "max reconnection attempts": 60
         }),
         oscope /* / = new Oscope("demo"), //*/,
-        bears = {}, pointer, heightmap,
+        bears = {}, pointer, heightmap, lastText,
         nameMaterial = new THREE.MeshLambertMaterial({
             color: 0xdfdf7f,
             shading: THREE.FlatShading
@@ -99,6 +98,14 @@ function postScriptLoad(progress){
 
     socket.on("handshakeFailed", console.warn.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
     socket.on("handshakeComplete", console.log.bind(console, "Connected to websocket server."));
+    socket.on("loginFailed", msg.bind(window, "Incorrect user name or password!"));
+    socket.on("userList", listUsers);
+    socket.on("userJoin", addUser);
+    socket.on("userState", updateUserState);
+    socket.on("typing", showTyping.bind(window, false, false));
+    socket.on("chat", showChat);
+    socket.on("userLeft", userLeft);
+    socket.on("disconnect", msg.bind(window));
     socket.emit("handshake", "demo");
 
     tabs.style.width = pct(100);
@@ -321,53 +328,15 @@ function postScriptLoad(progress){
     };
 
     function toggleOptions(){
-        keyboard.pause(true);
-        ctrls.options.style.display = (ctrls.options.style.display === "") ? "none" : "";
-    }
-
-    var closers = document.getElementsByClassName("closeSectionButton");
-    for(var i = 0; i < closers.length; ++i){
-        closers[i].addEventListener("click", function(){
-            this.parentElement.style.display = "none";
-            keyboard.pause(false);
-        }, false);
-        if(!isDebug && !isLocal && closers[i].parentElement === ctrls.options){
-            closers[i].addEventListener("click", function(){
-                requestFullScreen();
-                mouse.requestPointerLock();
-            });
+        var show = ctrls.options.style.display !== "";
+        console.log(show);
+        keyboard.pause(show);
+        ctrls.options.style.display = (show ? "" : "none");
+        if(!show){
+            requestFullScreen();
+            mouse.requestPointerLock();
         }
     }
-
-    window.addEventListener("keyup", function(evt){
-        if(evt.keyCode === KeyboardInput.GRAVEACCENT){
-            toggleOptions();
-        }
-    }, false);
-
-    ctrls.menuButton.addEventListener("click", toggleOptions, false);
-
-    ctrls.talkButton.addEventListener("click", function(){
-        ctrls.textEntry.style.display = "";
-        ctrls.textEntry.focus();
-    }, false);
-
-    ctrls.textEntry.addEventListener("change", function(){
-        ctrls.textEntry.style.display = "none";
-        showTyping(true, true, this.value);
-        this.value = "";
-    }, false);
-
-    ctrls.pointerLockButton.addEventListener("click", function(){
-        mouse.togglePointerLock();
-        ctrls.options.style.display = "none";
-        ctrls.menuButton.style.display = "";
-        keyboard.pause(false);
-    }, false);
-
-    ctrls.fullScreenButton.addEventListener("click", function(){
-        toggleFullScreen();
-    }, false);
 
     function chooseRenderingEffect(type){
         switch(type){
@@ -392,17 +361,23 @@ function postScriptLoad(progress){
 
         setSetting("renderingEffect", type);
     }
-
-    ctrls.riftRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "rift"), false);
-    ctrls.anaglyphRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "anaglyph"), false);
-    ctrls.stereoRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "stereo"), false);
-    ctrls.regularRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "regular"), false);
-
-    window.addEventListener("beforeunload", function(){
+    
+    function showChatBox(){
+        ctrls.textEntry.style.display = "";
+        ctrls.textEntry.focus();
+    }
+    
+    function readChatBox(){
+        ctrls.textEntry.style.display = "none";
+        showTyping(true, true, ctrls.textEntry.value);
+        ctrls.textEntry.value = "";
+    }
+    
+    function shutdown(){
         speech.enable(false);
         var state = readForm(ctrls);
         setSetting("formState", state);
-    }, false);
+    }
 
     function jump(){
         console.log("jump");
@@ -414,8 +389,6 @@ function postScriptLoad(progress){
 
     function fire(){
     }
-
-    var lastText;
 
     function showTyping(isLocal, isComplete, text){
         if(bears[userName]){
@@ -447,8 +420,6 @@ function postScriptLoad(progress){
     function speechChat(){
         showTyping(true, true, speech.getValue("chat"));
     }
-
-    var CHAT_TEXT_SIZE = 0.25;
 
     function shiftLines(){
         for(var i = 0; i < chatLines.length; ++i){
@@ -562,21 +533,28 @@ function postScriptLoad(progress){
         closers[0].click();
     }
 
-    socket.on("loginFailed", msg.bind(window, "Incorrect user name or password!"));
+    var closers = document.getElementsByClassName("closeSectionButton");
+    for(var i = 0; i < closers.length; ++i){
+        closers[i].addEventListener("click", toggleOptions, false);
+    }
 
-    socket.on("userList", listUsers);
+    window.addEventListener("keyup", function(evt){
+        if(evt.keyCode === KeyboardInput.GRAVEACCENT){
+            toggleOptions();
+        }
+    }, false);
 
-    socket.on("userJoin", addUser);
+    ctrls.menuButton.addEventListener("click", toggleOptions, false);
+    ctrls.talkButton.addEventListener("click", showChatBox, false);
+    ctrls.textEntry.addEventListener("change", readChatBox, false);
+    ctrls.pointerLockButton.addEventListener("click", toggleOptions, false);
+    ctrls.fullScreenButton.addEventListener("click", toggleFullScreen, false);
+    ctrls.riftRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "rift"), false);
+    ctrls.anaglyphRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "anaglyph"), false);
+    ctrls.stereoRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "stereo"), false);
+    ctrls.regularRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "regular"), false);
 
-    socket.on("userState", updateUserState);
-
-    socket.on("typing", showTyping.bind(window, false, false));
-
-    socket.on("chat", showChat);
-
-    socket.on("userLeft", userLeft);
-
-    socket.on("disconnect", msg.bind(window));
+    window.addEventListener("beforeunload", shutdown, false);
 
     head = new MotionInput("head", null, [
         { name: "heading", axes: [-MotionInput.HEADING] },
@@ -614,7 +592,6 @@ function postScriptLoad(progress){
         { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 1 },
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 0.125 },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 1 },
-        { name: "options", buttons: [KeyboardInput.GRAVEACCENT], commandUp: toggleOptions },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
     ], socket, oscope);
 

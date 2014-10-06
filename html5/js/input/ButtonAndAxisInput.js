@@ -1,9 +1,5 @@
 ﻿function ButtonAndAxisInput(name, axisConstraints, commands, socket, oscope, offset, deltaTrackedAxes, integrateOnly){
     this.offset = offset || 0;
-    for(var i = 0; i < commands.length; ++i){
-        var cmd = commands[i];
-        if(name === "keyboard" && cmd.name === "chat") console.log("ButtonAndAxisInput", cmd.commandUp);
-    }
     NetworkedInput.call(this, name, commands, socket, oscope);
     this.inputState.axes = [];
     this.inputState.buttons = [];
