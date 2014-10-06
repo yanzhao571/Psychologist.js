@@ -531,12 +531,16 @@ function postScriptLoad(progress){
             msg("user joined: " + userState.userName);
         }
     }
-
-    socket.on("loginFailed", function(){
-        msg("Incorrect user name or password!");
-    });
-
-    socket.on("userList", function(users){
+    
+    function userLeft(userName){
+        if(bears[userName]){
+            msg("user disconnected:", userName);
+            scene.remove(bears[userName]);
+            delete bears[userName];
+        }
+    }
+    
+    function listUsers(users){
         addUser({
             userName: userName,
             x: camera.position.x,
@@ -556,7 +560,11 @@ function postScriptLoad(progress){
         }
         msg("You are now connected to the device server.");
         closers[0].click();
-    });
+    }
+
+    socket.on("loginFailed", msg.bind(window, "Incorrect user name or password!"));
+
+    socket.on("userList", listUsers);
 
     socket.on("userJoin", addUser);
 
@@ -566,13 +574,7 @@ function postScriptLoad(progress){
 
     socket.on("chat", showChat);
 
-    socket.on("userLeft", function(user){
-        if(bears[user]){
-            msg("user disconnected:", user);
-            scene.remove(bears[user]);
-            delete bears[user];
-        }
-    });
+    socket.on("userLeft", userLeft);
 
     socket.on("disconnect", msg.bind(window));
 
@@ -580,7 +582,7 @@ function postScriptLoad(progress){
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] },
-        { name: "jump", axes: [-MotionInput.DACCELX], threshold: 2 }
+        { name: "jump", axes: [-MotionInput.DACCELX], threshold: 2, repetitions: 2 }
     ], socket, oscope);
 
     arm = new MotionInput("arm", null, [
@@ -644,6 +646,10 @@ function postScriptLoad(progress){
         }
     }, false);
 
+    window.addEventListener("resize", function (){
+        setSize(window.innerWidth, window.innerHeight);
+    }, false);
+
     function setupModuleEvents(module, name){
         var e = ctrls[name + "Enable"],
             t = ctrls[name + "Transmit"],
@@ -683,11 +689,6 @@ function postScriptLoad(progress){
     setupModuleEvents(keyboard, "keyboard");
     setupModuleEvents(gamepad, "gamepad");
     setupModuleEvents(speech, "speech");
-
-
-    window.addEventListener("resize", function (){
-        setSize(window.innerWidth, window.innerHeight);
-    }, false);
 
     var mainScene = new ModelLoader("models/scene.dae", progress, function(object){
         scene.add(object);
