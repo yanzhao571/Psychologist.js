@@ -431,7 +431,7 @@ function postScriptLoad(progress){
                 if(isLocal){
                     socket.emit("typing", text);
                 }
-                if(!text){
+                if(text !== null && text !== undefined){
                     var textObj= new VUI.Text(
                         text, 0.125,
                         "black", "transparent",
@@ -609,9 +609,9 @@ function postScriptLoad(progress){
         { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHTARROW] },
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
-        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandUp: jump },
+        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 1 },
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 0.125 },
-        { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 0.125 },
+        { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 1 },
         { name: "options", buttons: [KeyboardInput.GRAVEACCENT], commandUp: toggleOptions },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
     ], socket, oscope);
