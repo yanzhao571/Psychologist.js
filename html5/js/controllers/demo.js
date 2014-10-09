@@ -707,5 +707,6 @@ function postScriptLoad(progress){
     renderer.domElement.setAttribute("tabindex", 0);
     setSize(window.innerWidth, window.innerHeight);
 
+    toggleOptions();
     requestAnimationFrame(animate);
 }
