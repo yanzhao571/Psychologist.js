@@ -85,7 +85,7 @@ function postScriptLoad(progress){
             "reconnection delay": 1000,
             "max reconnection attempts": 60
         }),
-        oscope /* / = new Oscope("demo"), //*/,
+        oscope = new Oscope("demo"),
         bears = {}, pointer, heightmap, lastText,
         nameMaterial = new THREE.MeshLambertMaterial({
             color: 0xdfdf7f,
@@ -96,8 +96,13 @@ function postScriptLoad(progress){
         renderer = new THREE.WebGLRenderer({ antialias: true }),
         repeater = new SpeechOutput.Character();
 
+    oscope.connect();
     socket.on("handshakeFailed", console.warn.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
-    socket.on("handshakeComplete", console.log.bind(console, "Connected to websocket server."));
+    socket.on("handshakeComplete", function(controller){
+        if(controller === "demo"){
+            console.log("Connected to websocket server.");
+        }
+    });
     socket.on("loginFailed", msg.bind(window, "Incorrect user name or password!"));
     socket.on("userList", listUsers);
     socket.on("userJoin", addUser);
