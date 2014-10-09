@@ -237,14 +237,11 @@ function postScriptLoad(progress){
             //
             // update audio
             //
-            x = camera.position.x / 10,
-            y = camera.position.y / 10,
-            z = camera.position.z / 10;
-
-            var len = Math.sqrt(x * x + y * y + z * z);
-            audio3d.setPosition(x, y, z);
+            var p = camera.position.clone().divideScalar(10);
+            audio3d.setPosition(p.x, p.y, p.z);
+            p.normalize();
             audio3d.setVelocity(vcx, vcy, vcz);
-            audio3d.setOrientation(x / len, y / len, z / len, 0, 1, 0);
+            audio3d.setOrientation(p.x, p.y, p.z, 0, 1, 0);
 
             //
             // send a network update of the user's position, if it's been enough 
@@ -684,9 +681,8 @@ function postScriptLoad(progress){
 
     var bearModel = new ModelLoader("models/bear.dae", progress);
 
-
     audio3d.loadSoundFixed("music/game1.ogg.break", true, progress, function(snd){
-        snd.volume.gain.value = 0.5;
+        snd.volume.gain.value = 1;
         snd.source.start(0);
     });
 
