@@ -8,7 +8,7 @@ module.exports = function (socket){
         for(var i = 0; i < socketControllers.length; ++i){
             if(socketControllers[i].handshake === controllerName){
                 socketControllers[i].bindSocket(socket);
-                socket.emit("handshakeComplete");
+                socket.emit("handshakeComplete", controllerName);
                 found = true;
             }
         }
