@@ -87,10 +87,6 @@ function postScriptLoad(progress){
         }),
         oscope = new Oscope("demo"),
         bears = {}, heightmap, lastText,
-        nameMaterial = new THREE.MeshLambertMaterial({
-            color: 0xdfdf7f,
-            shading: THREE.FlatShading
-        }),
         camera, effect, drawDistance = 250,
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
@@ -125,6 +121,7 @@ function postScriptLoad(progress){
         }
         else if(bears[userName]){
             showChat(txt);
+            repeater.speak(txt);
         }
         else {
             alert(txt);
@@ -137,112 +134,6 @@ function postScriptLoad(progress){
         }
         else{
             return confirm(txt);
-        }
-    }
-
-    function update(dt){
-        vcy -= dt * GRAVITY;
-        var x = Math.floor((camera.position.x - heightmap.minX) / CLUSTER);
-        var z = Math.floor((camera.position.z - heightmap.minZ) / CLUSTER);
-        var y = PLAYER_HEIGHT;
-        if (heightmap
-            && 0 <= z && z < heightmap.length
-            && 0 <= x && x < heightmap[z].length){
-            y += heightmap[z][x];
-        }
-
-        if(camera.position.y <= y && vcy <= 0){
-            vcy = 0;
-            camera.position.y = camera.position.y * 0.75 + y * 0.25;
-            if(!onground){
-                navigator.vibrate(100);
-            }
-            onground = true;
-        }
-
-        if(onground){
-            var tx = keyboard.getValue("strafeRight")
-                + keyboard.getValue("strafeLeft")
-                + gamepad.getValue("strafe");
-            var tz = keyboard.getValue("driveBack")
-                + keyboard.getValue("driveForward")
-                + gamepad.getValue("drive")
-                + touch.getValue("drive");
-            if(tx || tz){
-                len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
-
-                if(bears[userName] && !bears[userName].animation.isPlaying){
-                    bears[userName].animation.play();
-                }
-            }
-            else{
-                len = 0;
-                if(bears[userName] && bears[userName].animation.isPlaying){
-                    bears[userName].animation.stop();
-                }
-            }
-
-            tx *= len;
-            tz *= len;
-            len = tx * Math.cos(heading) + tz * Math.sin(heading);
-            tz = tz * Math.cos(heading) - tx * Math.sin(heading);
-            tx = len;
-            vcx = vcx * 0.9 + tx * 0.1;
-            vcz = vcz * 0.9 + tz * 0.1;
-        }
-
-        camera.updateProjectionMatrix();
-        camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-        camera.translateX(vcx * dt);
-        camera.translateY(vcy * dt);
-        camera.translateZ(vcz * dt);
-
-        pitch = pitch * TRACKING_SCALE + (
-            head.getValue("pitch")
-            + mouse.getValue("pitch")
-            + gamepad.getValue("pitch")) * TRACKING_SCALE_COMP;
-
-        heading = heading * TRACKING_SCALE + (
-            head.getValue("heading")
-            + touch.getValue("heading")
-            + mouse.getValue("heading")
-            + gamepad.getValue("heading")) * TRACKING_SCALE_COMP;
-
-        if(userName && frame > dFrame){
-            frame -= dFrame;
-            var state = {
-                x: camera.position.x,
-                y: camera.position.y,
-                z: camera.position.z,
-                dx: vcx,
-                dy: vcy,
-                dz: vcz,
-                heading: heading,
-                dheading: (heading - lastHeading) / dFrame,
-                isRunning: Math.abs(vcx + vcy + vcz) > 1
-            };
-            lastHeading = heading;
-            socket.emit("userState", state);
-        }
-
-        roll = roll * TRACKING_SCALE + head.getValue("roll") * TRACKING_SCALE_COMP;
-
-        for(var key in bears){
-            var bear = bears[key];
-            bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-            if(key === userName){
-                bear.rotateY(heading);
-                bear.position.copy(camera.position);
-                bear.position.y -= PLAYER_HEIGHT;
-            }
-            else if(bear.dx || bear.dx || bear.dz){
-                bear.position.x += bear.dx * dt;
-                bear.position.y += bear.dy * dt;
-                bear.position.z += bear.dz * dt;
-                bear.heading += bear.dheading * dt;
-                bear.rotateY(bear.heading);
-                bear.nameObj.rotation.y = heading - bear.heading;
-            }
         }
     }
 
@@ -259,34 +150,131 @@ function postScriptLoad(progress){
             gamepad.update(dt);
             touch.update(dt);
             speech.update(dt);
-            update(dt);
-            setCamera(dt);
-            draw();
-        }
-    }
+            
+            vcy -= dt * GRAVITY;
+            var x = Math.floor((camera.position.x - heightmap.minX) / CLUSTER);
+            var z = Math.floor((camera.position.z - heightmap.minZ) / CLUSTER);
+            var y = PLAYER_HEIGHT;
+            if (heightmap
+                && 0 <= z && z < heightmap.length
+                && 0 <= x && x < heightmap[z].length){
+                y += heightmap[z][x];
+            }
 
-    function setCamera(dt){
+            if(camera.position.y <= y && vcy <= 0){
+                vcy = 0;
+                camera.position.y = camera.position.y * 0.75 + y * 0.25;
+                if(!onground){
+                    navigator.vibrate(100);
+                }
+                onground = true;
+            }
 
-        camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
-        mainScene.Skybox.position.set(camera.position.x, camera.position.y, camera.position.z);
-        frame += dt;
+            if(onground){
+                var tx = keyboard.getValue("strafeRight")
+                    + keyboard.getValue("strafeLeft")
+                    + gamepad.getValue("strafe");
+                var tz = keyboard.getValue("driveBack")
+                    + keyboard.getValue("driveForward")
+                    + gamepad.getValue("drive")
+                    + touch.getValue("drive");
+                if(tx || tz){
+                    len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
 
-        var x = camera.position.x / 10,
-            y = camera.position.y / 10,
-            z = camera.position.z / 10;
+                    if(bears[userName] && !bears[userName].animation.isPlaying){
+                        bears[userName].animation.play();
+                    }
+                }
+                else{
+                    len = 0;
+                    if(bears[userName] && bears[userName].animation.isPlaying){
+                        bears[userName].animation.stop();
+                    }
+                }
 
-        var len = Math.sqrt(x * x + y * y + z * z);
-        audio3d.setPosition(x, y, z);
-        audio3d.setVelocity(vcx, vcy, vcz);
-        audio3d.setOrientation(x / len, y / len, z / len, 0, 1, 0);
-    }
+                tx *= len;
+                tz *= len;
+                len = tx * Math.cos(heading) + tz * Math.sin(heading);
+                tz = tz * Math.cos(heading) - tx * Math.sin(heading);
+                tx = len;
+                vcx = vcx * 0.9 + tx * 0.1;
+                vcz = vcz * 0.9 + tz * 0.1;
+            }
 
-    function draw(){
-        if (effect){
-            effect.render(scene, camera);
-        }
-        else {
-            renderer.render(scene, camera);
+
+            pitch = pitch * TRACKING_SCALE + (
+                head.getValue("pitch")
+                + mouse.getValue("pitch")
+                + gamepad.getValue("pitch")) * TRACKING_SCALE_COMP;
+
+            heading = heading * TRACKING_SCALE + (
+                head.getValue("heading")
+                + touch.getValue("heading")
+                + mouse.getValue("heading")
+                + gamepad.getValue("heading")) * TRACKING_SCALE_COMP;
+
+            roll = roll * TRACKING_SCALE + head.getValue("roll") * TRACKING_SCALE_COMP;
+
+            frame += dt;
+
+            if(userName && frame > dFrame){
+                frame -= dFrame;
+                var state = {
+                    x: camera.position.x,
+                    y: camera.position.y,
+                    z: camera.position.z,
+                    dx: vcx,
+                    dy: vcy,
+                    dz: vcz,
+                    heading: heading,
+                    dheading: (heading - lastHeading) / dFrame,
+                    isRunning: Math.abs(vcx + vcy + vcz) > 1
+                };
+                lastHeading = heading;
+                socket.emit("userState", state);
+            }
+
+            camera.updateProjectionMatrix();
+            camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+            camera.translateX(vcx * dt);
+            camera.translateY(vcy * dt);
+            camera.translateZ(vcz * dt);
+            camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
+
+            mainScene.Skybox.position.set(camera.position.x, camera.position.y, camera.position.z);
+
+            var x = camera.position.x / 10,
+                y = camera.position.y / 10,
+                z = camera.position.z / 10;
+
+            var len = Math.sqrt(x * x + y * y + z * z);
+            audio3d.setPosition(x, y, z);
+            audio3d.setVelocity(vcx, vcy, vcz);
+            audio3d.setOrientation(x / len, y / len, z / len, 0, 1, 0);
+
+            for(var key in bears){
+                var bear = bears[key];
+                bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+                if(key === userName){
+                    bear.rotateY(heading);
+                    bear.position.copy(camera.position);
+                    bear.position.y -= PLAYER_HEIGHT;
+                }
+                else if(bear.dx || bear.dx || bear.dz){
+                    bear.position.x += bear.dx * dt;
+                    bear.position.y += bear.dy * dt;
+                    bear.position.z += bear.dz * dt;
+                    bear.heading += bear.dheading * dt;
+                    bear.rotateY(bear.heading);
+                    bear.nameObj.rotation.y = heading - bear.heading;
+                }
+            }
+            if (effect){
+                effect.render(scene, camera);
+            }
+            else {
+                renderer.render(scene, camera);
+            }
         }
     }
 
