@@ -74,7 +74,7 @@ function postScriptLoad(progress){
         pitch = 0, roll = 0, heading = 0, lastHeading = 0, dheading = 0,
         vcx = 0, vcz = 0, vcy = 0,
         onground = false,
-        head, arm, keyboard, mouse, gamepad, touch, speech,
+        head, keyboard, mouse, gamepad, touch, speech,
         dt, lt = 0, frame = 0, dFrame = 0.125,
         userName = null,
         chatLines = [],
@@ -86,7 +86,7 @@ function postScriptLoad(progress){
             "max reconnection attempts": 60
         }),
         oscope = new Oscope("demo"),
-        bears = {}, pointer, heightmap, lastText,
+        bears = {}, heightmap, lastText,
         nameMaterial = new THREE.MeshLambertMaterial({
             color: 0xdfdf7f,
             shading: THREE.FlatShading
@@ -254,7 +254,6 @@ function postScriptLoad(progress){
         if(camera && heightmap){
             THREE.AnimationHandler.update(dt);
             head.update(dt);
-            arm.update(dt);
             keyboard.update(dt);
             mouse.update(dt);
             gamepad.update(dt);
@@ -271,13 +270,6 @@ function postScriptLoad(progress){
         camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
         mainScene.Skybox.position.set(camera.position.x, camera.position.y, camera.position.z);
         frame += dt;
-
-        if(pointer){
-            var ph = arm.getValue("heading") + head.getValue("heading") - heading + Math.PI / 2;
-            var pr = arm.getValue("roll");
-            var pp = arm.getValue("pitch");
-            pointer.setRotationFromEuler(new THREE.Euler(0, ph, 0, "YZX"));
-        }
 
         var x = camera.position.x / 10,
             y = camera.position.y / 10,
@@ -493,17 +485,7 @@ function postScriptLoad(progress){
             "center");
         bear.add(bear.nameObj);
 
-
-        if(userState.userName === userName && (arm.isEnabled() || arm.isReceiving())){
-            var sphere = new THREE.SphereGeometry(0.5, 4, 2);
-            var spine = new THREE.Object3D();
-            spine.position.set(0, PLAYER_HEIGHT, 0);
-            pointer = new THREE.Mesh(sphere, nameMaterial);
-            spine.add(pointer);
-            bear.add(spine);
-            pointer = spine;
-        }
-        else{
+        if(userState.userName !== userName){
             msg("user joined: " + userState.userName);
         }
     }
@@ -566,12 +548,6 @@ function postScriptLoad(progress){
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] },
         { name: "jump", axes: [-MotionInput.DACCELX], threshold: 2, repetitions: 2 }
-    ], socket, oscope);
-
-    arm = new MotionInput("arm", null, [
-        { name: "heading", axes: [-MotionInput.HEADING] },
-        { name: "pitch", axes: [MotionInput.PITCH] },
-        { name: "roll", axes: [-MotionInput.ROLL] }
     ], socket, oscope);
 
     mouse = new MouseInput("mouse", [
@@ -665,7 +641,6 @@ function postScriptLoad(progress){
     }
 
     setupModuleEvents(head, "head");
-    setupModuleEvents(arm, "arm");
     setupModuleEvents(mouse, "mouse");
     setupModuleEvents(touch, "touch");
     setupModuleEvents(keyboard, "keyboard");
