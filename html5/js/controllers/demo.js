@@ -151,12 +151,15 @@ function postScriptLoad(progress){
             touch.update(dt);
             speech.update(dt);
             
+            
+            //
+            // update user position and view
+            //
             vcy -= dt * GRAVITY;
             var x = Math.floor((camera.position.x - heightmap.minX) / CLUSTER);
             var z = Math.floor((camera.position.z - heightmap.minZ) / CLUSTER);
             var y = PLAYER_HEIGHT;
-            if (heightmap
-                && 0 <= z && z < heightmap.length
+            if (0 <= z && z < heightmap.length
                 && 0 <= x && x < heightmap[z].length){
                 y += heightmap[z][x];
             }
@@ -215,8 +218,11 @@ function postScriptLoad(progress){
 
             roll = roll * TRACKING_SCALE + head.getValue("roll") * TRACKING_SCALE_COMP;
 
+            //
+            // send a network update of the user's position, if it's been enough 
+            // time since the last update (don't want to flood the server).
+            //
             frame += dt;
-
             if(userName && frame > dFrame){
                 frame -= dFrame;
                 var state = {
@@ -234,6 +240,9 @@ function postScriptLoad(progress){
                 socket.emit("userState", state);
             }
 
+            //
+            // update the camera
+            //
             camera.updateProjectionMatrix();
             camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
             camera.translateX(vcx * dt);
@@ -241,17 +250,14 @@ function postScriptLoad(progress){
             camera.translateZ(vcz * dt);
             camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
 
+            //
+            // place the skybox centered to the camera
+            //
             mainScene.Skybox.position.set(camera.position.x, camera.position.y, camera.position.z);
 
-            var x = camera.position.x / 10,
-                y = camera.position.y / 10,
-                z = camera.position.z / 10;
-
-            var len = Math.sqrt(x * x + y * y + z * z);
-            audio3d.setPosition(x, y, z);
-            audio3d.setVelocity(vcx, vcy, vcz);
-            audio3d.setOrientation(x / len, y / len, z / len, 0, 1, 0);
-
+            //
+            // update avatars
+            //
             for(var key in bears){
                 var bear = bears[key];
                 bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
@@ -265,10 +271,27 @@ function postScriptLoad(progress){
                     bear.position.y += bear.dy * dt;
                     bear.position.z += bear.dz * dt;
                     bear.heading += bear.dheading * dt;
-                    bear.rotateY(bear.heading);
-                    bear.nameObj.rotation.y = heading - bear.heading;
+                    // we have to offset the rotation of the name so the user
+                    // can read it.
+                    bear.rotateY(heading - bear.heading);
                 }
             }
+            
+            //
+            // update audio
+            //
+            x = camera.position.x / 10,
+            y = camera.position.y / 10,
+            z = camera.position.z / 10;
+
+            var len = Math.sqrt(x * x + y * y + z * z);
+            audio3d.setPosition(x, y, z);
+            audio3d.setVelocity(vcx, vcy, vcz);
+            audio3d.setOrientation(x / len, y / len, z / len, 0, 1, 0);
+            
+            //
+            // draw
+            //
             if (effect){
                 effect.render(scene, camera);
             }
