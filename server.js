@@ -10,13 +10,13 @@ var format = require("util").format,
     webServer = require("./src/webServer"),
     webSocketServer = require("./src/webSocketServer"),
     options = require("./src/options").parse(process.argv, {
-        v: true
+        v: true,
+        h: "localhost"
     }),
 
     srcDir = "html5",
     startPage = "",
     port = 8080,
-    host = options.h || "localhost",
     app, redir, io;
 
 var files = fs.readdirSync(srcDir).map(function(f){ return srcDir + "/" + f; });
@@ -63,15 +63,15 @@ function start(key, cert, ca){
                 cert: cert, 
                 ca: ca
             }, 
-            webServer(host, srcDir)
+            webServer(options.h, srcDir)
         );
-        redir = http.createServer(webServer(host, port + 1));
+        redir = http.createServer(webServer(options.h, port + 1));
         redir.listen(port);
         app.listen(port + 1);
     }
     else{
         log("insecure");
-        app = http.createServer(webServer(host, srcDir));
+        app = http.createServer(webServer(options.h, srcDir));
         app.listen(port);
     }
     io = socketio.listen(app);
@@ -87,27 +87,49 @@ function start(key, cert, ca){
     }
 }
 
-function readFiles(files, error, success, index, accum){
-    index = index || 0;
-    accum = accum || [];
-    if(index === files.length){
-        success(accum);
+/*
+ * function: readFiles(filePaths, callback)
+ * parameters:
+ *  `filePaths`: array of strings, representing file paths
+ *  `callback`: callback function - `function(err, fileContents)`
+ *      `err`: the Error object--if any--that caused the reading 
+ *             process to abort.
+ *      `fileContents`: an array of strings
+ *          
+ * Reads all files specified in the filePaths array as UTF-8 encoded text files
+ * and executes the provided callback function when done.
+ * 
+ * If any one of the files is missing or causes an error, the entire process 
+ * aborts and the callback is called with the error object as the first 
+ * parameter. The second `fileContents` parameter will be null.
+ * 
+ * If all of the files load successfully, the callback is called with null
+ * as the first parameter and the full string contents of each of the files in 
+ * an array as the second parameter.
+ */
+function readFiles(filePaths, callback){
+    __readFiles(filePaths, callback, 0, []);
+}
+
+function __readFiles(filePaths, callback, index, fileContents){
+    if(index === filePaths.length){
+        callback(null, fileContents);
     }
     else{
-        fs.exists(files[index], function(yes){
+        fs.exists(filePaths[index], function(yes){
             if(yes){
-                fs.readFile(files[index], {encoding: "utf8"}, function(err, file){
+                fs.readFile(filePaths[index], {encoding: "utf8"}, function(err, file){
                     if(err){
-                        error(err);
+                        callback(err, null);
                     }
                     else{
-                        accum.push(file);
-                        setImmediate(readFiles, files, error, success, index + 1, accum);
+                        fileContents.push(file);
+                        setImmediate(__readFiles, filePaths, callback, index + 1, fileContents);
                     }
                 });
             }
             else{
-                error(files[index] + " does not exist");
+                callback(new Error(filePaths[index] + " does not exist"), null);
             }
         });
     }
@@ -117,11 +139,13 @@ readFiles([
     "../key.pem",
     "../cert.pem",
     "../ca.pem"],
-    function(err){
-        console.error(err);
-        start();
-    },
-    function(files){
-        start.apply(this, files);
+    function(err, files){
+        if(err){
+            console.error(err);
+            start();
+        }
+        else{
+            start.apply(this, files);
+        }
     }
 );
