@@ -220,6 +220,33 @@ function postScriptLoad(progress){
             roll = roll * TRACKING_SCALE + head.getValue("roll") * TRACKING_SCALE_COMP;
 
             //
+            // update the camera
+            //
+            camera.updateProjectionMatrix();
+            camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
+            camera.translateX(vcx * dt);
+            camera.translateY(vcy * dt);
+            camera.translateZ(vcz * dt);
+            camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
+
+            //
+            // place the skybox centered to the camera
+            //
+            mainScene.Skybox.position.set(camera.position.x, camera.position.y, camera.position.z);
+            
+            //
+            // update audio
+            //
+            x = camera.position.x / 10,
+            y = camera.position.y / 10,
+            z = camera.position.z / 10;
+
+            var len = Math.sqrt(x * x + y * y + z * z);
+            audio3d.setPosition(x, y, z);
+            audio3d.setVelocity(vcx, vcy, vcz);
+            audio3d.setOrientation(x / len, y / len, z / len, 0, 1, 0);
+
+            //
             // send a network update of the user's position, if it's been enough 
             // time since the last update (don't want to flood the server).
             //
@@ -242,21 +269,6 @@ function postScriptLoad(progress){
             }
 
             //
-            // update the camera
-            //
-            camera.updateProjectionMatrix();
-            camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-            camera.translateX(vcx * dt);
-            camera.translateY(vcy * dt);
-            camera.translateZ(vcz * dt);
-            camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
-
-            //
-            // place the skybox centered to the camera
-            //
-            mainScene.Skybox.position.set(camera.position.x, camera.position.y, camera.position.z);
-
-            //
             // update avatars
             //
             for(var key in bears){
@@ -277,18 +289,6 @@ function postScriptLoad(progress){
                     bear.rotateY(heading - bear.heading);
                 }
             }
-            
-            //
-            // update audio
-            //
-            x = camera.position.x / 10,
-            y = camera.position.y / 10,
-            z = camera.position.z / 10;
-
-            var len = Math.sqrt(x * x + y * y + z * z);
-            audio3d.setPosition(x, y, z);
-            audio3d.setVelocity(vcx, vcy, vcz);
-            audio3d.setOrientation(x / len, y / len, z / len, 0, 1, 0);
             
             //
             // draw
