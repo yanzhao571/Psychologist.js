@@ -122,7 +122,7 @@ function postScriptLoad(progress){
         }
         else if(bears[userName]){
             showChat(txt);
-            repeater.speak(txt);
+            //repeater.speak(txt);
         }
         else {
             alert(txt);
@@ -218,7 +218,27 @@ function postScriptLoad(progress){
                 + gamepad.getValue("heading")) * TRACKING_SCALE_COMP;
 
             roll = roll * TRACKING_SCALE + head.getValue("roll") * TRACKING_SCALE_COMP;
-
+            
+            var velocity = new THREE.Vector3(vcx, vcy, vcz);
+            var len = velocity.length() * dt;
+            var location = camera.position.clone();
+            location.y -= PLAYER_HEIGHT;
+            var direction = velocity.clone().normalize();
+            var raycaster = new THREE.Raycaster(location, direction, 0, len * 2);
+            var intersections = raycaster.intersectObject(scene, true);
+            for(var i = 0; i < intersections.length; ++i){
+                var inter = intersections[i];
+                var name = inter.object.parent.name;
+                if(name !== "Ocean"
+                    && name !== "BearMesh"
+                    && name !== "Terrain"
+                    && inter.distance < len){
+                    velocity.reflect(inter.face.normal);
+                }
+            }
+            vcx = velocity.x;
+            vcy = velocity.y;
+            vcz = velocity.z;
             //
             // update the camera
             //
