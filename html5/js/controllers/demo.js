@@ -68,8 +68,9 @@ function displayProgress(file){
 function postScriptLoad(progress){
     var BG_COLOR = 0xafbfff, CLUSTER = 2, CHAT_TEXT_SIZE = 0.25, 
         TRACKING_SCALE = 0, TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
+        RIGHT = new THREE.Vector3(-1, 0, 0),
         GRAVITY = 9.8, SPEED = 15,
-        lastRenderingType,
+        lastRenderingType, currentButton,
         deviceStates = new StateList(ctrls.deviceTypes, ctrls, [
             { name: "-- select device --" },
             { name: "PC", values:{
@@ -153,11 +154,19 @@ function postScriptLoad(progress){
         }),
         oscope = new Oscope("demo"),
         bears = {}, heightmap, lastText,
-        camera, effect, drawDistance = 250,
+        camera, effect, drawDistance = 500,
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
+        pointer = new THREE.Mesh(
+            new THREE.SphereGeometry(0.05, 4, 2),
+            new THREE.MeshBasicMaterial({
+                color: 0xffff00
+            })
+        ),
         repeater = new SpeechOutput.Character();
 
+    scene.add(pointer);
+    pointer.visible = false;
     writeForm(ctrls, formState);
     oscope.connect();
     socket.on("handshakeFailed", console.warn.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
@@ -294,13 +303,45 @@ function postScriptLoad(progress){
 
             roll = roll * TRACKING_SCALE + head.getValue("roll") * TRACKING_SCALE_COMP;
             
-            var velocity = new THREE.Vector3(vcx, vcy, vcz);
-            var len = velocity.length() * dt;
+            //
+            // place pointer
+            //
+            var direction = new THREE.Vector3(0, 0, -4)
+                .applyAxisAngle(RIGHT, -pitch)
+                .applyAxisAngle(camera.up, heading);
             var location = camera.position.clone();
-            location.y -= PLAYER_HEIGHT;
-            var direction = velocity.clone().normalize();
-            var raycaster = new THREE.Raycaster(location, direction, 0, len * 2);
+            location.y -= 0.25;   
+            pointer.position.copy(location);
+            pointer.position.add(direction);         
+            var raycaster = new THREE.Raycaster(location, direction.clone().normalize(), 0, 7);
             var intersections = raycaster.intersectObject(scene, true);
+            if(currentButton){
+                mainScene[currentButton].children[0].material.materials[0].color.g = 0;
+                mainScene[currentButton].children[0].material.materials[0].color.r = 0.5;
+                currentButton = null;
+            }
+            for(var i = 0; i < intersections.length; ++i){
+                var inter = intersections[i];
+                
+                if(inter.object.parent.isButton){
+                    currentButton = inter.object.parent.name;
+                    //pointer.position.copy(inter.point);
+                    inter.object.material.materials[0].color.g = 0.5;
+                    inter.object.material.materials[0].color.r = 0.0;
+                    break;
+                }
+            }
+            
+            //
+            // do collision detection
+            //
+            var velocity = new THREE.Vector3(vcx, vcy, vcz);
+            velocity.applyAxisAngle(camera.up, heading);
+            var len = velocity.length() * dt;
+            location.y -= PLAYER_HEIGHT;
+            direction = velocity.clone().normalize();
+            raycaster = new THREE.Raycaster(location, direction, 0, len * 2);
+            intersections = raycaster.intersectObject(scene, true);
             for(var i = 0; i < intersections.length; ++i){
                 var inter = intersections[i];
                 if(inter.object.parent.isSolid
@@ -308,9 +349,11 @@ function postScriptLoad(progress){
                     velocity.reflect(inter.face.normal);
                 }
             }
+            velocity.applyAxisAngle(camera.up, -heading);
             vcx = velocity.x;
             vcy = velocity.y;
             vcz = velocity.z;
+            
             //
             // update the camera
             //
@@ -493,8 +536,24 @@ function postScriptLoad(progress){
             onground = false;
         }
     }
+    
+    function showPointer(){
+        pointer.visible = true;
+    }
 
-    function fire(){
+    var buttonHandlers = {
+        testButton: function(btn){
+            msg("Clicked " + currentButton);
+            btn.parent.position.x = Math.random() * 10;
+        }
+    }
+    function fireButton(){
+        pointer.visible = false;
+        if(currentButton){
+            if(buttonHandlers[currentButton]){
+                buttonHandlers[currentButton](mainScene[currentButton]);
+            }
+        }
     }
 
     function showTyping(isLocal, isComplete, text){
@@ -627,7 +686,6 @@ function postScriptLoad(progress){
             }
         }
         msg("You are now connected to the device server.");
-        closers[0].click();
     }
 
     var closers = document.getElementsByClassName("closeSectionButton");
@@ -666,7 +724,7 @@ function postScriptLoad(progress){
     ], [
         { name: "heading", axes: [-MouseInput.IX] },
         { name: "pitch", axes: [-MouseInput.IY]},
-        { name: "fire", buttons: [1], commandDown: fire, dt: 0.125 }
+        { name: "fire", buttons: [1], commandDown: showPointer, commandUp: fireButton }
     ], socket, oscope, renderer.domElement);
 
     touch = new TouchInput("touch", null, null, [
@@ -680,7 +738,7 @@ function postScriptLoad(progress){
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
         { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 1 },
-        { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: fire, dt: 0.125 },
+        { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: showPointer, commandUp: fireButton },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 1 },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
     ], socket, oscope);
@@ -697,7 +755,7 @@ function postScriptLoad(progress){
         { name: "heading", axes: [-GamepadInput.IRSX]},
         { name: "pitch", axes: [GamepadInput.IRSY]},
         { name: "jump", buttons: [1], commandDown: jump, dt: 0.250 },
-        { name: "fire", buttons: [2], commandDown: fire, dt: 0.125 },
+        { name: "fire", buttons: [2], commandDown: showPointer, commandUp: fireButton },
         { name: "options", buttons: [9], commandUp: toggleOptions }
     ], socket, oscope);
 
@@ -756,7 +814,7 @@ function postScriptLoad(progress){
     setupModuleEvents(gamepad, "gamepad");
     setupModuleEvents(speech, "speech");
 
-    var mainScene = new ModelLoader("models/scene2.dae", progress, function(object){
+    var mainScene = new ModelLoader("models/scene.dae", progress, function(object){
         scene.add(object);
         var cam = mainScene.Camera.children[0];
         camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, drawDistance);

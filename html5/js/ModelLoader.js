@@ -13,6 +13,7 @@ function ModelLoader(src, progress, success){
                         if(materials){
                             for(var i = 0; i < materials.length; ++i){
                                 child.isSolid = materials[i].name === "solid";
+                                child.isButton = materials[i].name === "button";
                             }
                         }
                         mesh.geometry.computeBoundingBox();
