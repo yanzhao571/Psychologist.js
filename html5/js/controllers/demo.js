@@ -70,7 +70,7 @@ function postScriptLoad(progress){
         TRACKING_SCALE = 0, TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
         RIGHT = new THREE.Vector3(-1, 0, 0),
         GRAVITY = 9.8, SPEED = 15,
-        lastRenderingType, currentButton,
+        lastRenderingType, currentButton, autoWalking = false,
         deviceStates = new StateList(ctrls.deviceTypes, ctrls, [
             { name: "-- select device --" },
             { name: "PC", values:{
@@ -259,13 +259,20 @@ function postScriptLoad(progress){
             }
 
             if(onground){
-                var tx = keyboard.getValue("strafeRight")
-                    + keyboard.getValue("strafeLeft")
-                    + gamepad.getValue("strafe");
-                var tz = keyboard.getValue("driveBack")
-                    + keyboard.getValue("driveForward")
-                    + gamepad.getValue("drive")
-                    + touch.getValue("drive");
+                var tx, tz;
+                if(autoWalking){
+                    tx = 0;
+                    tz = -0.5;
+                }
+                else{
+                    tx = keyboard.getValue("strafeRight")
+                        + keyboard.getValue("strafeLeft")
+                        + gamepad.getValue("strafe");
+                    tz = keyboard.getValue("driveBack")
+                        + keyboard.getValue("driveForward")
+                        + gamepad.getValue("drive")
+                        + touch.getValue("drive");
+                }
                 if(tx || tz){
                     len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
 
@@ -288,7 +295,6 @@ function postScriptLoad(progress){
                 vcx = vcx * 0.9 + tx * 0.1;
                 vcz = vcz * 0.9 + tz * 0.1;
             }
-
 
             pitch = pitch * TRACKING_SCALE + (
                 head.getValue("pitch")
@@ -537,6 +543,10 @@ function postScriptLoad(progress){
         }
     }
     
+    function autoWalk(){
+        autoWalking = !autoWalking;
+    }
+    
     function showPointer(){
         pointer.visible = true;
     }
@@ -547,6 +557,7 @@ function postScriptLoad(progress){
             btn.parent.position.x = Math.random() * 10;
         }
     }
+    
     function fireButton(){
         pointer.visible = false;
         if(currentButton){
@@ -714,7 +725,8 @@ function postScriptLoad(progress){
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] },
-        { name: "jump", axes: [-MotionInput.DACCELX], threshold: 2, repetitions: 2 }
+        { name: "autoWalk", axes: [-MotionInput.DACCELY], threshold: 1.5, repetitions: 2, commandUp: autoWalk },
+        { name: "fire", axes: [-MotionInput.DACCELX], threshold: 1.5, repetitions: 2, commandUp: fireButton }
     ], socket, oscope);
 
     mouse = new MouseInput("mouse", [
