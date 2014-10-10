@@ -23,7 +23,7 @@ VUI.Text = function(text, size, fgcolor, bgcolor, x, y, z, hAlign){
     var texture = new THREE.Texture(textCanvas);
     texture.needsUpdate = true;
 
-    var material = new THREE.MeshLambertMaterial({
+    var material = new THREE.MeshBasicMaterial({
         map: texture,
         transparent: bgcolor === "transparent",
         useScreenCoordinates: false,

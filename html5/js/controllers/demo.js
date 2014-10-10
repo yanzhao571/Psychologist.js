@@ -552,14 +552,28 @@ function postScriptLoad(progress){
     }
 
     var buttonHandlers = {
-        testButton: function(btn){
+        button1: function(btn){
             msg("Clicked " + currentButton);
             btn.parent.position.x = Math.random() * 10;
+        },
+        button2: function(btn){
+            repeater.speak("That's okay. Try again.");
+            btn.parent.position.x = Math.random() * 10;
+        },
+        button3: function(btn){
+            repeater.speak("Incorrect, you get no more chances. You are on the way to destruction. Make your time.");
+            btn.parent.position.x = Math.random() * 10;
+        },
+        button4: function(btn){
+            msg("Clicked " + currentButton);
+            repeater.speak("You clicked the fourth button");
+            btn.parent.position.x = Math.random() * 10;
         }
-    }
+    };
     
     function fireButton(){
         pointer.visible = false;
+        console.log(currentButton);
         if(currentButton){
             if(buttonHandlers[currentButton]){
                 buttonHandlers[currentButton](mainScene[currentButton]);
@@ -584,7 +598,7 @@ function postScriptLoad(progress){
                 if(text !== null && text !== undefined){
                     var textObj= new VUI.Text(
                         text, 0.125,
-                        "black", "transparent",
+                        "white", "transparent",
                         0, PLAYER_HEIGHT, -4,
                         "right");
                     lastText = textObj;
@@ -612,7 +626,7 @@ function postScriptLoad(progress){
             }
             var textObj= new VUI.Text(
                 msg, CHAT_TEXT_SIZE,
-                "black", "transparent",
+                "white", "transparent",
                 -2, 0, -5, "left");
             bears[userName].add(textObj);
             chatLines.push(textObj);

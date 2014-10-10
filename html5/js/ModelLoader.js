@@ -14,6 +14,9 @@ function ModelLoader(src, progress, success){
                             for(var i = 0; i < materials.length; ++i){
                                 child.isSolid = materials[i].name === "solid";
                                 child.isButton = materials[i].name === "button";
+                                if(child.isButton){
+                                    materials[0] = materials[0].clone();
+                                }
                             }
                         }
                         mesh.geometry.computeBoundingBox();
