@@ -328,6 +328,7 @@ function postScriptLoad(progress){
             // place the skybox centered to the camera
             //
             mainScene.Skybox.position.set(camera.position.x, camera.position.y, camera.position.z);
+            mainScene.Skybox.setRotationFromEuler(new THREE.Euler(t*0.00001, 0, 0, "XYZ"));
             
             //
             // update audio
@@ -758,10 +759,11 @@ function postScriptLoad(progress){
     setupModuleEvents(gamepad, "gamepad");
     setupModuleEvents(speech, "speech");
 
-    var mainScene = new ModelLoader("models/scene.dae", progress, function(object){
+    var mainScene = new ModelLoader("models/scene2.dae", progress, function(object){
         scene.add(object);
         var cam = mainScene.Camera.children[0];
         camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, drawDistance);
+        console.log(mainScene);
         mainScene.Ocean.children[0].material.transparent = true;
         mainScene.Ocean.children[0].material.opacity = 0.75;
         audio3d.loadSound3D(
@@ -778,7 +780,6 @@ function postScriptLoad(progress){
         heightmap = ModelLoader.makeHeightMap(mainScene.Terrain, CLUSTER);
         var v = 0.55 * drawDistance;
         mainScene.Skybox.scale.set(v, v, v);
-        scene.fog = new THREE.Fog(BG_COLOR, 1, drawDistance * 0.6);
     });
 
     var bearModel = new ModelLoader("models/bear.dae", progress);
