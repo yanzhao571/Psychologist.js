@@ -316,25 +316,33 @@ function postScriptLoad(progress){
                 .applyAxisAngle(RIGHT, -pitch)
                 .applyAxisAngle(camera.up, heading);
             var location = camera.position.clone();
-            location.y -= 0.25;   
             pointer.position.copy(location);
             pointer.position.add(direction);         
             var raycaster = new THREE.Raycaster(location, direction.clone().normalize(), 0, 7);
             var intersections = raycaster.intersectObject(scene, true);
             if(currentButton){
-                mainScene[currentButton].children[0].material.materials[0].color.g = 0;
-                mainScene[currentButton].children[0].material.materials[0].color.r = 0.5;
+                var btn = mainScene[currentButton];
+                btn.position.y = btn.originalY;
+                btn.children[0].material.materials[0].color.g = 0;
+                btn.children[0].material.materials[0].color.r = 0.5;
                 currentButton = null;
             }
             for(var i = 0; i < intersections.length; ++i){
                 var inter = intersections[i];
-                
-                if(inter.object.parent.isButton){
-                    currentButton = inter.object.parent.name;
-                    //pointer.position.copy(inter.point);
-                    inter.object.material.materials[0].color.g = 0.5;
-                    inter.object.material.materials[0].color.r = 0.0;
-                    break;
+                if(inter.object.parent.isSolid || inter.object.parent.isButton){
+                    pointer.position.copy(inter.point);
+
+                    if(inter.object.parent.isButton){
+                        currentButton = inter.object.parent.name;
+                        var btn = mainScene[currentButton];
+                        btn.originalY = btn.position.y;
+                        if(pointer.visible){
+                            btn.position.y = btn.originalY - 0.05;
+                        }
+                        inter.object.material.materials[0].color.g = 0.5;
+                        inter.object.material.materials[0].color.r = 0.0;
+                        break;
+                    }
                 }
             }
             
@@ -550,36 +558,30 @@ function postScriptLoad(progress){
     function showPointer(){
         pointer.visible = true;
     }
+    
+    function fireButton(){
+        pointer.visible = false;
+        if(currentButton && buttonHandlers[currentButton]){
+            var btn = mainScene[currentButton];
+            buttonHandlers[currentButton](btn);
+        }
+    }
 
     var buttonHandlers = {
         button1: function(btn){
             msg("Clicked " + currentButton);
-            btn.parent.position.x = Math.random() * 10;
         },
         button2: function(btn){
             repeater.speak("That's okay. Try again.");
-            btn.parent.position.x = Math.random() * 10;
         },
         button3: function(btn){
             repeater.speak("Incorrect, you get no more chances. You are on the way to destruction. Make your time.");
-            btn.parent.position.x = Math.random() * 10;
         },
         button4: function(btn){
             msg("Clicked " + currentButton);
             repeater.speak("You clicked the fourth button");
-            btn.parent.position.x = Math.random() * 10;
         }
     };
-    
-    function fireButton(){
-        pointer.visible = false;
-        console.log(currentButton);
-        if(currentButton){
-            if(buttonHandlers[currentButton]){
-                buttonHandlers[currentButton](mainScene[currentButton]);
-            }
-        }
-    }
 
     function showTyping(isLocal, isComplete, text){
         if(bears[userName]){
@@ -770,15 +772,15 @@ function postScriptLoad(progress){
     ], socket, oscope);
 
     gamepad = new GamepadInput("gamepad", [
-        { axis: GamepadInput.LSX, deadzone: 0.1},
-        { axis: GamepadInput.LSY, deadzone: 0.1},
-        { axis: GamepadInput.RSX, deadzone: 0.1, scale: 1.5},
-        { axis: GamepadInput.RSY, deadzone: 0.1, scale: 1.5},
+        { axis: GamepadInput.LSX, deadzone: 0.2},
+        { axis: GamepadInput.LSY, deadzone: 0.2},
+        { axis: GamepadInput.RSX, deadzone: 0.2, scale: 1.5},
+        { axis: GamepadInput.RSY, deadzone: 0.2, scale: 1.5},
         { axis: GamepadInput.IRSY, min: -2, max: 1.3 }
     ], [
         { name: "strafe", axes: [GamepadInput.LSX]},
         { name: "drive", axes: [GamepadInput.LSY]},
-        { name: "heading", axes: [-GamepadInput.IRSX]},
+        { name: "heading", axes: [-GamepadInput.RSX]},
         { name: "pitch", axes: [GamepadInput.IRSY]},
         { name: "jump", buttons: [1], commandDown: jump, dt: 0.250 },
         { name: "fire", buttons: [2], commandDown: showPointer, commandUp: fireButton },
