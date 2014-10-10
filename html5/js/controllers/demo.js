@@ -3,7 +3,6 @@ var isDebug = false,
     ctrls = findEverything(),
     tabs = makeTabSet(ctrls.options),
     PLAYER_HEIGHT = 6,
-    formState = getSetting("formState"),
     login,
     prog = new LoadingProgress(
         "manifest/js/controllers/demo.js?v2",
@@ -30,8 +29,6 @@ var isDebug = false,
         "js/vui/vui.js",
         displayProgress,
         postScriptLoad);
-
-    writeForm(ctrls, formState);
 
 function displayProgress(file){
     ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
@@ -72,6 +69,74 @@ function postScriptLoad(progress){
     var BG_COLOR = 0xafbfff, CLUSTER = 2, CHAT_TEXT_SIZE = 0.25, 
         TRACKING_SCALE = 0, TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
         GRAVITY = 9.8, SPEED = 15,
+        lastRenderingType,
+        deviceStates = new StateList(ctrls.deviceTypes, ctrls, [
+            { name: "-- select device --" },
+            { name: "PC", values:{
+                speechEnable: {checked: false},
+                speechTransmit: {checked: false},
+                speechReceive: {checked: false},
+                keyboardEnable: {checked: true},
+                keyboardTransmit: {checked: true},
+                keyboardReceive: {checked: false},
+                mouseEnable: {checked: true},
+                mouseTransmit: {checked: true},
+                mouseReceive: {checked: false},
+                gamepadEnable: {checked: true},
+                gamepadTransmit: {checked: true},
+                gamepadReceive: {checked: false},
+                touchEnable: {checked: false},
+                touchTransmit: {checked: false},
+                touchReceive: {checked: true},
+                headEnable: {checked: false},
+                headTransmit: {checked: false},
+                headReceive: {checked: true},
+                renderingStyle: {value: "regular" }
+            }},
+            { name: "Smartphone HMD", values:{
+                speechEnable: {checked: false},
+                speechTransmit: {checked: false},
+                speechReceive: {checked: true},
+                keyboardEnable: {checked: false},
+                keyboardTransmit: {checked: false},
+                keyboardReceive: {checked: true},
+                mouseEnable: {checked: false},
+                mouseTransmit: {checked: false},
+                mouseReceive: {checked: true},
+                gamepadEnable: {checked: false},
+                gamepadTransmit: {checked: false},
+                gamepadReceive: {checked: true},
+                touchEnable: {checked: false},
+                touchTransmit: {checked: false},
+                touchReceive: {checked: true},
+                headEnable: {checked: true},
+                headTransmit: {checked: true},
+                headReceive: {checked: false},
+                renderingStyle: {value: "rift" }
+            }},
+            { name: "Smartphone - no HMD", values:{
+                speechEnable: {checked: false},
+                speechTransmit: {checked: false},
+                speechReceive: {checked: true},
+                keyboardEnable: {checked: false},
+                keyboardTransmit: {checked: false},
+                keyboardReceive: {checked: true},
+                mouseEnable: {checked: false},
+                mouseTransmit: {checked: false},
+                mouseReceive: {checked: true},
+                gamepadEnable: {checked: false},
+                gamepadTransmit: {checked: false},
+                gamepadReceive: {checked: true},
+                touchEnable: {checked: true},
+                touchTransmit: {checked: true},
+                touchReceive: {checked: false},
+                headEnable: {checked: true},
+                headTransmit: {checked: true},
+                headReceive: {checked: false},
+                renderingStyle: {value: "regular" }
+            }}
+        ], readSettings),
+        formState = getSetting("formState"),
         pitch = 0, roll = 0, heading = 0, lastHeading = 0, dheading = 0,
         vcx = 0, vcz = 0, vcy = 0,
         onground = false,
@@ -93,6 +158,7 @@ function postScriptLoad(progress){
         renderer = new THREE.WebGLRenderer({ antialias: true }),
         repeater = new SpeechOutput.Character();
 
+    writeForm(ctrls, formState);
     oscope.connect();
     socket.on("handshakeFailed", console.warn.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
     socket.on("handshakeComplete", function(controller){
@@ -112,6 +178,15 @@ function postScriptLoad(progress){
 
     tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
+    
+    function readSettings(){
+        for(var key in ctrls){
+            if(key !== "deviceTypes"){
+                var evt = new Event("change");
+                ctrls[key].dispatchEvent(evt);
+            }
+        }
+    }
 
     function msg(){
         var txt = map(arguments, function(v){
@@ -325,7 +400,7 @@ function postScriptLoad(progress){
             camera.updateProjectionMatrix();
         }
 
-        chooseRenderingEffect(getSetting("renderingEffect"));
+        chooseRenderingEffect(ctrls.renderingStyle.value);
 
         renderer.setSize(w, h);
         if (effect){
@@ -355,7 +430,6 @@ function postScriptLoad(progress){
 
     function toggleOptions(){
         var show = ctrls.options.style.display !== "";
-        console.log(show);
         keyboard.pause(show);
         ctrls.options.style.display = (show ? "" : "none");
         if(!show){
@@ -382,10 +456,20 @@ function postScriptLoad(progress){
                     chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
                 }
             }); break;
-            default: effect = null;
+            default: 
+                effect = null;
+                type = "regular";
+                break;
         }
-
-        setSetting("renderingEffect", type);
+        if(ctrls.renderingStyle.value !== type){
+            ctrls.renderingStyle.value = type;
+        }
+        if((lastRenderingType === "rift" || lastRenderingType === "stereo")
+            && (type === "anaglyph" || type === "regular")){
+            alert("The page must reload to enable the new settings.");
+            document.location = document.location.href;
+        }
+        lastRenderingType = type;
     }
     
     function showChatBox(){
@@ -406,7 +490,6 @@ function postScriptLoad(progress){
     }
 
     function jump(){
-        console.log("jump");
         if (onground){
             vcy = 10;
             onground = false;
@@ -565,10 +648,9 @@ function postScriptLoad(progress){
     ctrls.textEntry.addEventListener("change", readChatBox, false);
     ctrls.pointerLockButton.addEventListener("click", toggleOptions, false);
     ctrls.fullScreenButton.addEventListener("click", toggleFullScreen, false);
-    ctrls.riftRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "rift"), false);
-    ctrls.anaglyphRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "anaglyph"), false);
-    ctrls.stereoRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "stereo"), false);
-    ctrls.regularRenderButton.addEventListener("click", chooseRenderingEffect.bind(window, "regular"), false);
+    ctrls.renderingStyle.addEventListener("change", function(){
+        chooseRenderingEffect(ctrls.renderingStyle.value);
+    }, false);
 
     window.addEventListener("beforeunload", shutdown, false);
 

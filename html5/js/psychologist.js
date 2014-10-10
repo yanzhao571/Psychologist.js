@@ -57,17 +57,6 @@ FileState.prototype.toString = function () {
     return fmt("$1 ($2.00KB of $3.00KB): $4", this.name, this.progress / 1000, this.size / 1000, FileState.STATE_NAMES[this.state]);
 };
 
-// Applying Array's slice method to array-like objects. Called with
-// no parameters, this function converts array-like objects into
-// JavaScript Arrays.
-function arr(arg, a, b) {
-    return Array.prototype.slice.call(arg, a, b);
-}
-
-function map(arr, fun) {
-    return Array.prototype.map.call(arr, fun);
-}
-
 FileState.STATE_NAMES = ["none", "started", "error", null, "success"];
 FileState.NONE = 0;
 FileState.STARTED = 1;
@@ -173,6 +162,61 @@ LoadingProgress.prototype.sum = function (state, prop) {
 LoadingProgress.prototype.makeSize = function (state, prop) {
     return pct(sigfig(100 * this.sum(state, prop) / this.totalFileSize, 1));
 };
+
+// Applying Array's slice method to array-like objects. Called with
+// no parameters, this function converts array-like objects into
+// JavaScript Arrays.
+function arr(arg, a, b) {
+    return Array.prototype.slice.call(arg, a, b);
+}
+
+function map(arr, fun) {
+    return Array.prototype.map.call(arr, fun);
+}
+
+/*
+ * 1) If id is a string, tries to find the DOM element that has said ID
+ *      a) if it exists, and it matches the expected tag type, returns the
+ *          element, or throws an error if validation fails.
+ *      b) if it doesn't exist, creates it and sets its ID to the provided
+ *          id, then returns the new DOM element, not yet placed in the
+ *          document anywhere.
+ * 2) If id is a DOM element, validates that it is of the expected type,
+ *      a) returning the DOM element back if it's good,
+ *      b) or throwing an error if it is not
+ * 3) If id is null, creates the DOM element to match the expected type.
+ * @param {string|DOM element|null} id
+ * @param {string} tag name
+ * @param {function} DOMclass
+ * @returns DOM element
+ */
+function cascadeElement(id, tag, DOMclass) {
+    var elem = null;
+    if (id === null) {
+        elem = document.createElement(tag);
+    }
+    else if (id instanceof DOMclass) {
+        elem = id;
+    }
+    else if (typeof (id) === "string") {
+        elem = document.getElementById(id);
+        if (elem === null) {
+            elem = document.createElement(tag);
+            elem.id = id;
+        }
+        else if (elem.tagName !== tag.toUpperCase()) {
+            elem = null;
+        }
+    }
+
+    if (elem === null) {
+        throw new Error(id + " does not refer to a valid " + tag + " element.");
+    }
+    else {
+        elem.innerHTML = "";
+    }
+    return elem;
+}
 
 /*
  Replace template place holders in a string with a positional value.
@@ -444,8 +488,9 @@ function readForm(ctrls) {
     if (ctrls) {
         for (var name in ctrls) {
             var c = ctrls[name];
-            if (c.tagName === "INPUT" && (!c.dataset || !c.dataset.skipcache)) {
-                if (c.type === "text" || c.type === "password") {
+            if ((c.tagName === "INPUT" || c.tagName === "SELECT")
+                && (!c.dataset || !c.dataset.skipcache)) {
+                if (c.type === "text" || c.type === "password" || c.tagName === "SELECT") {
                     state[name] = c.value;
                 }
                 else if (c.type === "checkbox" || c.type === "radio") {
@@ -463,9 +508,9 @@ function writeForm(ctrls, state) {
             var c = ctrls[name];
             if (state[name] !== null
                     && state[name] !== undefined
-                    && c.tagName === "INPUT"
+                    && (c.tagName === "INPUT" || c.tagName === "SELECT")
                     && (!c.dataset || !c.dataset.skipcache)) {
-                if (c.type === "text" || c.type === "password") {
+                if (c.type === "text" || c.type === "password" || c.tagName === "SELECT") {
                     c.value = state[name];
                 }
                 else if (c.type === "checkbox" || c.type === "radio") {
@@ -620,6 +665,53 @@ function toggleFullScreen() {
         else {
             requestFullScreen();
         }
+    }
+}
+
+/*
+ * The StateList is a set of objects that can be mapped to DOM elements
+ * in such a way to alter their state. The UI presents a drop down list
+ * and the select action changes the various controls as the state set
+ * dictates. It's a way of streamlining the altering of UI state by select
+ * list.
+ * 
+ * States take the form of:
+ * { name: "A string for display", values: [
+ *      {
+ *          ctrlName1: {attributeName1: value1, attributeName2: value2 },
+ *          ctrlName2: {attributeName3: value3, attributeName4: value4 }
+ *      |]}
+ *      
+ *  The states paramareter should be an array of such objects
+ */
+function StateList(id, ctrls, states, callback, parent){
+    var select = cascadeElement(id, "select", HTMLSelectElement);
+    for(var i = 0; i < states.length; ++i){
+        var opt = document.createElement("option");
+        opt.appendChild(document.createTextNode(states[i].name));
+        select.appendChild(opt);
+    }
+    select.addEventListener("change", function(){
+        var values = states[select.selectedIndex].values;
+        if(values !== undefined){
+            for(var id in values){
+                if(values.hasOwnProperty(id)){
+                    var attrs = values[id];
+                    for(var attr in attrs){
+                        if(attrs.hasOwnProperty(attr)){
+                            ctrls[id][attr] = attrs[attr];
+                        }
+                    }
+                }
+            }
+            if(callback){
+                callback();
+            }
+        }
+    }.bind(this), false);
+    this.DOMElement = select;
+    if(parent){
+        parent.appendChild(this.DOMElement);
     }
 }
 
