@@ -9,6 +9,12 @@ function ModelLoader(src, progress, success){
                     this[child.name] = child;
                     var mesh = child.children[0];
                     if(mesh instanceof THREE.Mesh){
+                        var materials = mesh.material.materials;
+                        if(materials){
+                            for(var i = 0; i < materials.length; ++i){
+                                child.isSolid = materials[i].name === "solid";
+                            }
+                        }
                         mesh.geometry.computeBoundingBox();
                         var delta = new THREE.Vector3().subVectors(
                             mesh.geometry.boundingBox.max, 

@@ -303,10 +303,7 @@ function postScriptLoad(progress){
             var intersections = raycaster.intersectObject(scene, true);
             for(var i = 0; i < intersections.length; ++i){
                 var inter = intersections[i];
-                var name = inter.object.parent.name;
-                if(name !== "Ocean"
-                    && name !== "BearMesh"
-                    && name !== "Terrain"
+                if(inter.object.parent.isSolid
                     && inter.distance < len){
                     velocity.reflect(inter.face.normal);
                 }
