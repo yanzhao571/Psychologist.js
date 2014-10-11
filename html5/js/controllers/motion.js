@@ -1,22 +1,17 @@
 include(0,
-    ["js/input/ButtonAndAxisInput.js",
+    ["js/input/NetworkedInput.js",
+    "js/input/ButtonAndAxisInput.js",
     "js/input/MotionInput.js"],
     motionTest);
 
 function motionTest(){
     var output = document.getElementById("output"),
         zeroButton = document.getElementById("zeroButton"),
-        commands = [
-            {name: "heading", axes: [MotionInput.HEADING]},
-            {name: "pitch", axes: [MotionInput.PITCH]},
-            {name: "roll", axes: [MotionInput.ROLL]},
-            {name: "x", axes: [MotionInput.ACCELX]},
-            {name: "y", axes: [MotionInput.ACCELY]},
-            {name: "z", axes: [MotionInput.ACCELZ]},
-            {name: "alpha", axes: [MotionInput.ALPHA]},
-            {name: "beta", axes: [MotionInput.BETA]},
-            {name: "gamma", axes: [MotionInput.GAMMA]}
-        ],
+        commands = MotionInput.AXES.map(function(name){
+            return {name: name, axes: [MotionInput[name]] };
+        }).concat(MotionInput.AXES.map(function(name){
+            return {name: "I" + name, axes: [MotionInput["I" + name]] };
+        })),
         motion = new MotionInput("motion", null, commands);
 
     zeroButton.addEventListener("click", motion.zeroAxes.bind(motion), false);

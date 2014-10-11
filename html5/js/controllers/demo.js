@@ -770,9 +770,7 @@ function postScriptLoad(progress){
     head = new MotionInput("head", null, [
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
-        { name: "roll", axes: [-MotionInput.ROLL] },
-        { name: "autoWalk", axes: [-MotionInput.DACCELY], threshold: 1.5, repetitions: 2, commandUp: autoWalk },
-        { name: "fire", axes: [-MotionInput.DACCELX], threshold: 1.5, repetitions: 2, commandUp: fireButton }
+        { name: "roll", axes: [-MotionInput.ROLL] }
     ], socket, oscope);
 
     mouse = new MouseInput("mouse", [

@@ -205,8 +205,8 @@ ButtonAndAxisInput.prototype.preupdate = function(dt){
         var av = this.getAxis(a);
         var i = "I" + a;
         var iv = this.getAxis(i);
-        if(this.integrateOnly){
-            this.setAxis(i, iv + av * dt);
+        if(this.integrateOnly || a.indexOf("D_") == 0){
+            this.setAxis(i, iv + av * (this.integrateOnly ? dt : 1));
         }
         else{
             var d = "D" + a;

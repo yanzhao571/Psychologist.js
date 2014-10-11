@@ -76,7 +76,7 @@ function Angle(v){
 
 */
 function MotionCorrector(isChrome){
-    var acceleration, orientation,
+    var acceleration, orientation, rotation,
         deltaAlpha, signAlpha, heading,
         deltaGamma, signGamma, pitch,
         deltaBeta, signBeta, roll,
@@ -170,7 +170,12 @@ function MotionCorrector(isChrome){
         orientation = v;
         calculate();
     };
+
+    this.setRotation = function(v){
+        rotation = v;
+    };
     
+    this.getRotation = function(){ return rotation; };
     this.getAcceleration = function(){ return acceleration; };
     this.getOrientation = function(){ return orientation; };
     this.getHeading = function(){ return heading; };
@@ -213,25 +218,32 @@ function MotionCorrector(isChrome){
         var heading = new Angle(0), 
             pitch = new Angle(0), 
             roll = new Angle(0),
+            dHeading = new Angle(0),
+            dPitch = new Angle(0),
+            dRoll = new Angle(0),
             o, a;
 
         this.onChange = function(){
             o = this.getOrientation();
             a = this.getAcceleration();
-            if(o && a){
+            r = this.getRotation();
+            if(o && a && r){
                 heading.setDegrees(this.getHeading());
                 pitch.setDegrees(this.getPitch());
                 roll.setDegrees(this.getRoll());
+                dHeading.setDegrees(r.alpha);
+                dPitch.setDegrees(r.beta);
+                dRoll.setDegrees(r.gamma);
                 callback({
                     HEADING: heading.getRadians(),
                     PITCH: pitch.getRadians(),
                     ROLL: roll.getRadians(),
+                    D_HEADING: dHeading.getRadians(),
+                    D_PITCH: dPitch.getRadians(),
+                    D_ROLL: dRoll.getRadians(),
                     ACCELX: a.x - dAccel.x,
                     ACCELY: a.y - dAccel.y,
-                    ACCELZ: a.z - dAccel.z,
-                    ALPHA: o.alpha,
-                    BETA: o.beta,
-                    GAMMA: o.gamma
+                    ACCELZ: a.z - dAccel.z
                 });
             }
         };
@@ -247,6 +259,10 @@ function MotionCorrector(isChrome){
             }
             else if(event && event.acceleration && event.acceleration.x){
                 this.setAcceleration(event.acceleration);
+            }
+
+            if(event.rotationRate){
+                this.setRotation(event.rotationRate);
             }
 
             this.onChange();
@@ -287,7 +303,7 @@ function MotionInput(name, axisConstraints, commands, socket, oscope){
 
 inherit(MotionInput, ButtonAndAxisInput);
 
-MotionInput.AXES = ["HEADING", "PITCH", "ROLL", "ACCELX", "ACCELY", "ACCELZ", "ALPHA", "BETA", "GAMMA"];
+MotionInput.AXES = ["HEADING", "PITCH", "ROLL", "D_HEADING", "D_PITCH", "D_ROLL", "ACCELX", "ACCELY", "ACCELZ"];
 ButtonAndAxisInput.fillAxes(MotionInput);
 
 /*

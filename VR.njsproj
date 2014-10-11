@@ -40,15 +40,15 @@
     <Compile Include="html5\js\oscope\oscope.client.js" />
     <Compile Include="html5\js\oscope\oscope.viewer.js" />
     <Compile Include="html5\js\ModelLoader.js" />
-    <Compile Include="html5\lib\physics\ammo.js" />
-    <Compile Include="html5\lib\physics\physi.js" />
-    <Compile Include="html5\lib\physics\physijs_worker.js" />
+    <Compile Include="html5\js\vui\vui.js" />
+    <Compile Include="html5\lib\physics\cannon.min.js" />
     <Compile Include="html5\lib\Blob.js" />
     <Compile Include="html5\lib\canvas-toBlob.js" />
     <Compile Include="html5\lib\droid_sans_regular.typeface.js" />
     <Compile Include="html5\lib\FileSaver.js" />
     <Compile Include="html5\lib\three\AnaglyphEffect.js" />
     <Compile Include="html5\lib\three\ColladaLoader.js" />
+    <Compile Include="html5\lib\three\JSONLoader.js" />
     <Compile Include="html5\lib\three\Mirror.js" />
     <Compile Include="html5\lib\three\OculusRiftEffect.js" />
     <Compile Include="html5\lib\three\SceneLoader.js" />
@@ -84,6 +84,7 @@
     <Compile Include="src\webServer.js" />
     <Compile Include="src\webSocketServer.js" />
     <Content Include="html5\gamepad.html" />
+    <Content Include="html5\ico\chat.png" />
     <Content Include="html5\ico\fs.png" />
     <Content Include="html5\ico\menu.png" />
     <Content Include="html5\img\brick.PNG" />
@@ -97,6 +98,8 @@
     <Content Include="html5\models\grass.png" />
     <Content Include="html5\models\ocean.jpg" />
     <Content Include="html5\models\scene.dae" />
+    <Content Include="html5\models\skybox.png" />
+    <Content Include="html5\models\Untitled.png" />
     <Content Include="html5\music\ocean.mp3" />
     <Content Include="html5\oscope.html" />
     <Content Include="html5\touch.html" />
@@ -124,6 +127,7 @@
     <Folder Include="html5\img\" />
     <Folder Include="html5\js\oscope\" />
     <Folder Include="html5\js\output\" />
+    <Folder Include="html5\js\vui\" />
     <Folder Include="html5\lib\" />
     <Folder Include="html5\lib\physics\" />
     <Folder Include="html5\lib\three\" />
