@@ -1,11 +1,7 @@
-var isDebug = false,
-    isLocal = document.location.hostname === "localhost",
-    ctrls = findEverything(),
-    tabs = makeTabSet(ctrls.options),
-    PLAYER_HEIGHT = 6,
-    login,
+var isDebug = false, isLocal = document.location.hostname === "localhost",
+    ctrls = findEverything(), tabs = makeTabSet(ctrls.options), login,
     prog = new LoadingProgress(
-        "manifest/js/controllers/demo.js?v2",
+        "manifest/js/controllers/demo.js",
         "lib/three/three.js",
         "lib/three/StereoEffect.js",
         "lib/three/OculusRiftEffect.js",
@@ -68,6 +64,7 @@ function displayProgress(file){
 function postScriptLoad(progress){
     var BG_COLOR = 0xafbfff, CLUSTER = 2, CHAT_TEXT_SIZE = 0.25, 
         TRACKING_SCALE = 0, TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
+        PLAYER_HEIGHT = 6.5,
         RIGHT = new THREE.Vector3(-1, 0, 0),
         GRAVITY = 9.8, SPEED = 15,
         lastRenderingType, currentButton, autoWalking = false,
@@ -140,6 +137,7 @@ function postScriptLoad(progress){
         formState = getSetting("formState"),
         pitch = 0, roll = 0, heading = 0, lastHeading = 0, dheading = 0,
         velocity = new THREE.Vector3(), location = new THREE.Vector3(),
+        testPoint = new THREE.Vector3(),
         raycaster = new THREE.Raycaster(location, direction, 0, 7),
         direction = new THREE.Vector3(), orientation = new THREE.Euler(0, 0, 0, "YZX"),
         skyboxRotation = new THREE.Euler(0, 0, 0, "XYZ"),
@@ -160,12 +158,9 @@ function postScriptLoad(progress){
         camera, effect, drawDistance = 500,
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
-        pointer = new THREE.Mesh(
-            new THREE.SphereGeometry(0.05, 4, 2),
-            new THREE.MeshBasicMaterial({
+        pointer = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 2), new THREE.MeshBasicMaterial({
                 color: 0xffff00
-            })
-        ),
+            })),
         repeater = new SpeechOutput.Character();
 
     scene.add(pointer);
@@ -244,17 +239,17 @@ function postScriptLoad(progress){
             // update user position and view
             //
             velocity.y -= dt * GRAVITY;
-            var x = Math.floor((camera.position.x - heightmap.minX) / CLUSTER);
-            var z = Math.floor((camera.position.z - heightmap.minZ) / CLUSTER);
-            var y = PLAYER_HEIGHT;
+            var x = Math.floor((location.x - heightmap.minX) / CLUSTER);
+            var z = Math.floor((location.z - heightmap.minZ) / CLUSTER);
+            var y = 0;
             if (0 <= z && z < heightmap.length
                 && 0 <= x && x < heightmap[z].length){
                 y += heightmap[z][x];
             }
 
-            if(camera.position.y <= y && velocity.y <= 0){
+            if(location.y <= y && velocity.y <= 0){
                 velocity.y = 0;
-                camera.position.y = camera.position.y * 0.75 + y * 0.25;
+                location.y = location.y * 0.75 + y * 0.25;
                 if(!onground){
                     navigator.vibrate(100);
                 }
@@ -318,10 +313,10 @@ function postScriptLoad(progress){
             direction.set(0, 0, -4)
                 .applyAxisAngle(RIGHT, -pitch)
                 .applyAxisAngle(camera.up, heading);
-            pointer.position.copy(camera.position);
+            pointer.position.copy(location);
             pointer.position.add(direction);
             direction.normalize();
-            raycaster.set(camera.position, direction);
+            raycaster.set(location, direction);
             raycaster.far = 7;
             var intersections = raycaster.intersectObject(scene, true);
             if(currentButton){
@@ -353,12 +348,11 @@ function postScriptLoad(progress){
             //
             // do collision detection
             //
+            testPoint.copy(location);
             var len = velocity.length() * dt;
-            location.copy(camera.position);
-            location.y -= PLAYER_HEIGHT;
             direction.copy(velocity);
             direction.normalize();
-            raycaster.set(location, direction, 0, len * 2);
+            raycaster.set(testPoint, direction, 0, len * 2);
             intersections = raycaster.intersectObject(scene, true);
             for(var i = 0; i < intersections.length; ++i){
                 var inter = intersections[i];
@@ -369,26 +363,31 @@ function postScriptLoad(progress){
             }
             
             //
+            // update audio
+            //
+            testPoint.divideScalar(10);
+            audio3d.setPosition(testPoint.x, testPoint.y, testPoint.z);
+            audio3d.setVelocity(velocity.x, velocity.y, velocity.z);
+            testPoint.normalize();
+            audio3d.setOrientation(testPoint.x, testPoint.y, testPoint.z, 0, 1, 0);
+            
+            //
             // update the camera
             //
             orientation.set(pitch, heading, roll, "YZX");
-            camera.setRotationFromEuler(orientation);
-            camera.position.add(velocity.clone().multiplyScalar(dt));
-
+            camera.rotation.copy(orientation);
+            
+            testPoint.copy(velocity).multiplyScalar(dt);
+            location.add(testPoint);
+            camera.position.copy(location);
+            camera.position.y += PLAYER_HEIGHT;
+            
             //
             // place the skybox centered to the camera
             //
             skyboxRotation.set(t*0.00001, 0, 0, "XYZ");
-            mainScene.Skybox.position.copy(camera.position);
+            mainScene.Skybox.position.copy(location);
             mainScene.Skybox.setRotationFromEuler(skyboxRotation);
-            
-            //
-            // update audio
-            //
-            audio3d.setPosition(location.x, location.y, location.z);
-            audio3d.setVelocity(velocity.x, velocity.y, velocity.z);
-            location.normalize();
-            audio3d.setOrientation(location.x, location.y, location.z, 0, 1, 0);
 
             //
             // send a network update of the user's position, if it's been enough 
@@ -398,9 +397,9 @@ function postScriptLoad(progress){
             if(userName && frame > dFrame){
                 frame -= dFrame;
                 var state = {
-                    x: camera.position.x,
-                    y: camera.position.y,
-                    z: camera.position.z,
+                    x: location.x,
+                    y: location.y,
+                    z: location.z,
                     dx: velocity.x,
                     dy: velocity.y,
                     dz: velocity.z,
@@ -419,8 +418,7 @@ function postScriptLoad(progress){
                 var bear = bears[key];
                 if(key === userName){
                     bear.rotation.set(0, heading, 0, "XYZ");
-                    bear.position.copy(camera.position);
-                    bear.position.y -= PLAYER_HEIGHT;
+                    bear.position.copy(location);
                 }
                 else if(bear.dx || bear.dx || bear.dz){
                     bear.position.x += bear.dx * dt;
@@ -666,10 +664,12 @@ function postScriptLoad(progress){
     }
 
     function addUser(userState){
-        var bear = bearModel.clone(userState.userName, socket);
-        bears[userState.userName] = bear;
+        var bear = new THREE.Object3D();
+        var model = bearModel.clone(userState.userName, socket);
+        model.position.z = 1.33;
+        bear.animation = model.animation;
+        bear.add(model);
         bear.heading = userState.heading;
-        updateUserState(userState);
         scene.add(bear);
         bear.nameObj = new VUI.Text(
             userState.userName, 0.5,
@@ -681,6 +681,8 @@ function postScriptLoad(progress){
         if(userState.userName !== userName){
             msg("user joined: " + userState.userName);
         }
+        updateUserState(userState);
+        bears[userState.userName] = bear;
     }
     
     function userLeft(userName){
@@ -695,7 +697,7 @@ function postScriptLoad(progress){
         if(bear.x !== undefined
             && bear.y !== undefined
             && bear.z !== undefined){
-            camera.position.set(bear.x, bear.y, bear.z);
+            location.set(bear.x, bear.y, bear.z);
         }
         if(bear.dx !== undefined
             && bear.dy !== undefined
@@ -719,9 +721,9 @@ function postScriptLoad(progress){
         else{
             addUser({
                 userName: userName,
-                x: camera.position.x,
-                y: camera.position.y,
-                z: camera.position.z,
+                x: location.x,
+                y: location.y,
+                z: location.z,
                 dx: velocity.x,
                 dy: velocity.y,
                 dz: velocity.z,
@@ -864,7 +866,6 @@ function postScriptLoad(progress){
         scene.add(object);
         var cam = mainScene.Camera.children[0];
         camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, drawDistance);
-        console.log(mainScene);
         mainScene.Ocean.children[0].material.transparent = true;
         mainScene.Ocean.children[0].material.opacity = 0.75;
         audio3d.loadSound3D(

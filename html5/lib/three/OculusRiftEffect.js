@@ -29,8 +29,7 @@ THREE.OculusRiftEffect = function (renderer, options) {
     var HMD = {};
     for(var key in defaultHMD){
         HMD[key] = options.HMD[key];
-        if(HMD[key] == null){
-            console.log("HMD " + key + " " + defaultHMD[key]);
+        if(HMD[key] === undefined){
             HMD[key] = defaultHMD[key];
         }
     }
@@ -45,7 +44,6 @@ THREE.OculusRiftEffect = function (renderer, options) {
 	oCamera.position.z = 1;
 
 	renderer.autoClear = false;
-	var emptyColor = new THREE.Color("black");
 
 	// Render target
 	var RTParams = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBAFormat };
@@ -115,7 +113,7 @@ THREE.OculusRiftEffect = function (renderer, options) {
 		// But with lens distortion it is increased (see Oculus SDK Documentation)
 		var r = -1.0 - (4 * (HMD.hScreenSize/4 - HMD.lensSeparationDistance/2) / HMD.hScreenSize);
 		distScale = (HMD.distortionK[0] + HMD.distortionK[1] * Math.pow(r,2) + HMD.distortionK[2] * Math.pow(r,4) + HMD.distortionK[3] * Math.pow(r,6));
-		var fov = THREE.Math.radToDeg(2*Math.atan2(HMD.vScreenSize*distScale, 2*HMD.eyeToScreenDistance));
+		var fov = THREE.Math.radToDeg(3*Math.atan2(HMD.vScreenSize*distScale, 2*HMD.eyeToScreenDistance));
 
 		// Compute camera projection matrices
 		var proj = (new THREE.Matrix4()).makePerspective(fov, aspect, 0.3, 10000);
@@ -147,7 +145,7 @@ THREE.OculusRiftEffect = function (renderer, options) {
 		RTMaterial.uniforms.texid.value = renderTarget;
 
 	}	
-	this.getHMD = function() {return HMD};
+	this.getHMD = function() {return HMD; };
 
 	this.setHMD(HMD);	
 
