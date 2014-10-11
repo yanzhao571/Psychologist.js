@@ -139,7 +139,7 @@ function postScriptLoad(progress){
         ], readSettings),
         formState = getSetting("formState"),
         pitch = 0, roll = 0, heading = 0, lastHeading = 0, dheading = 0,
-        vcx = 0, vcz = 0, vcy = 0,
+        velocity = new THREE.Vector3(),
         onground = false,
         head, keyboard, mouse, gamepad, touch, speech,
         dt, lt = 0, frame = 0, dFrame = 0.125,
@@ -240,7 +240,7 @@ function postScriptLoad(progress){
             //
             // update user position and view
             //
-            vcy -= dt * GRAVITY;
+            velocity.y -= dt * GRAVITY;
             var x = Math.floor((camera.position.x - heightmap.minX) / CLUSTER);
             var z = Math.floor((camera.position.z - heightmap.minZ) / CLUSTER);
             var y = PLAYER_HEIGHT;
@@ -249,8 +249,8 @@ function postScriptLoad(progress){
                 y += heightmap[z][x];
             }
 
-            if(camera.position.y <= y && vcy <= 0){
-                vcy = 0;
+            if(camera.position.y <= y && velocity.y <= 0){
+                velocity.y = 0;
                 camera.position.y = camera.position.y * 0.75 + y * 0.25;
                 if(!onground){
                     navigator.vibrate(100);
@@ -292,8 +292,8 @@ function postScriptLoad(progress){
                 len = tx * Math.cos(heading) + tz * Math.sin(heading);
                 tz = tz * Math.cos(heading) - tx * Math.sin(heading);
                 tx = len;
-                vcx = vcx * 0.9 + tx * 0.1;
-                vcz = vcz * 0.9 + tz * 0.1;
+                velocity.x = velocity.x * 0.9 + tx * 0.1;
+                velocity.z = velocity.z * 0.9 + tz * 0.1;
             }
 
             pitch = pitch * TRACKING_SCALE + (
@@ -349,9 +349,8 @@ function postScriptLoad(progress){
             //
             // do collision detection
             //
-            var velocity = new THREE.Vector3(vcx, vcy, vcz);
-            velocity.applyAxisAngle(camera.up, heading);
             var len = velocity.length() * dt;
+            var location = camera.position.clone();
             location.y -= PLAYER_HEIGHT;
             direction = velocity.clone().normalize();
             raycaster = new THREE.Raycaster(location, direction, 0, len * 2);
@@ -363,20 +362,12 @@ function postScriptLoad(progress){
                     velocity.reflect(inter.face.normal);
                 }
             }
-            velocity.applyAxisAngle(camera.up, -heading);
-            vcx = velocity.x;
-            vcy = velocity.y;
-            vcz = velocity.z;
             
             //
             // update the camera
             //
-            camera.updateProjectionMatrix();
-            camera.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
-            camera.translateX(vcx * dt);
-            camera.translateY(vcy * dt);
-            camera.translateZ(vcz * dt);
             camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
+            camera.position.add(velocity.clone().multiplyScalar(dt));
 
             //
             // place the skybox centered to the camera
@@ -390,7 +381,7 @@ function postScriptLoad(progress){
             var p = camera.position.clone().divideScalar(10);
             audio3d.setPosition(p.x, p.y, p.z);
             p.normalize();
-            audio3d.setVelocity(vcx, vcy, vcz);
+            audio3d.setVelocity(velocity.x, velocity.y, velocity.z);
             audio3d.setOrientation(p.x, p.y, p.z, 0, 1, 0);
 
             //
@@ -404,12 +395,12 @@ function postScriptLoad(progress){
                     x: camera.position.x,
                     y: camera.position.y,
                     z: camera.position.z,
-                    dx: vcx,
-                    dy: vcy,
-                    dz: vcz,
+                    dx: velocity.x,
+                    dy: velocity.y,
+                    dz: velocity.z,
                     heading: heading,
                     dheading: (heading - lastHeading) / dFrame,
-                    isRunning: Math.abs(vcx + vcy + vcz) > 1
+                    isRunning: Math.abs(velocity.x + velocity.y + velocity.z) > 1
                 };
                 lastHeading = heading;
                 socket.emit("userState", state);
@@ -546,7 +537,7 @@ function postScriptLoad(progress){
 
     function jump(){
         if (onground){
-            vcy = 10;
+            velocity.y = 10;
             onground = false;
         }
     }
@@ -700,12 +691,12 @@ function postScriptLoad(progress){
             x: camera.position.x,
             y: camera.position.y,
             z: camera.position.z,
-            dx: vcx,
-            dy: vcy,
-            dz: vcz,
+            dx: velocity.x,
+            dy: velocity.y,
+            dz: velocity.z,
             heading: heading,
             dheading: dheading,
-            isRunning: !!Math.abs(vcx + vcy + vcz)
+            isRunning: !!Math.abs(velocity.x + velocity.y + velocity.z)
         });
         for(var i = 0; i < users.length; ++i){
             if(users[i].userName !== userName){
