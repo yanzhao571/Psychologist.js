@@ -138,7 +138,7 @@ function postScriptLoad(progress){
         pitch = 0, roll = 0, heading = 0, lastHeading = 0, dheading = 0,
         velocity = new THREE.Vector3(), location = new THREE.Vector3(),
         testPoint = new THREE.Vector3(),
-        raycaster = new THREE.Raycaster(location, direction, 0, 7),
+        raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7),
         direction = new THREE.Vector3(), orientation = new THREE.Euler(0, 0, 0, "YZX"),
         skyboxRotation = new THREE.Euler(0, 0, 0, "XYZ"),
         onground = false,
@@ -313,10 +313,12 @@ function postScriptLoad(progress){
             direction.set(0, 0, -4)
                 .applyAxisAngle(RIGHT, -pitch)
                 .applyAxisAngle(camera.up, heading);
-            pointer.position.copy(location);
+            testPoint.copy(location);
+            testPoint.y += PLAYER_HEIGHT;
+            pointer.position.copy(testPoint);
             pointer.position.add(direction);
             direction.normalize();
-            raycaster.set(location, direction);
+            raycaster.set(testPoint, direction);
             raycaster.far = 7;
             var intersections = raycaster.intersectObject(scene, true);
             if(currentButton){
@@ -348,11 +350,11 @@ function postScriptLoad(progress){
             //
             // do collision detection
             //
-            testPoint.copy(location);
             var len = velocity.length() * dt;
             direction.copy(velocity);
             direction.normalize();
-            raycaster.set(testPoint, direction, 0, len * 2);
+            raycaster.set(location, direction);
+            raycaster.far = len * 2;
             intersections = raycaster.intersectObject(scene, true);
             for(var i = 0; i < intersections.length; ++i){
                 var inter = intersections[i];
@@ -367,6 +369,7 @@ function postScriptLoad(progress){
             //
             // update audio
             //
+            testPoint.copy(location);
             testPoint.divideScalar(10);
             audio3d.setPosition(testPoint.x, testPoint.y, testPoint.z);
             audio3d.setVelocity(velocity.x, velocity.y, velocity.z);
