@@ -358,7 +358,9 @@ function postScriptLoad(progress){
                 var inter = intersections[i];
                 if(inter.object.parent.isSolid
                     && inter.distance < len){
-                    velocity.reflect(inter.face.normal);
+                    testPoint.copy(inter.face.normal);
+                    testPoint.applyEuler(inter.object.parent.rotation);
+                    velocity.reflect(testPoint);
                 }
             }
             
