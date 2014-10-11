@@ -139,7 +139,10 @@ function postScriptLoad(progress){
         ], readSettings),
         formState = getSetting("formState"),
         pitch = 0, roll = 0, heading = 0, lastHeading = 0, dheading = 0,
-        velocity = new THREE.Vector3(),
+        velocity = new THREE.Vector3(), location = new THREE.Vector3(),
+        raycaster = new THREE.Raycaster(location, direction, 0, 7),
+        direction = new THREE.Vector3(), orientation = new THREE.Euler(0, 0, 0, "YZX"),
+        skyboxRotation = new THREE.Euler(0, 0, 0, "XYZ"),
         onground = false,
         head, keyboard, mouse, gamepad, touch, speech,
         dt, lt = 0, frame = 0, dFrame = 0.125,
@@ -312,13 +315,14 @@ function postScriptLoad(progress){
             //
             // place pointer
             //
-            var direction = new THREE.Vector3(0, 0, -4)
+            direction.set(0, 0, -4)
                 .applyAxisAngle(RIGHT, -pitch)
                 .applyAxisAngle(camera.up, heading);
-            var location = camera.position.clone();
-            pointer.position.copy(location);
-            pointer.position.add(direction);         
-            var raycaster = new THREE.Raycaster(location, direction.clone().normalize(), 0, 7);
+            pointer.position.copy(camera.position);
+            pointer.position.add(direction);
+            direction.normalize();
+            raycaster.set(camera.position, direction);
+            raycaster.far = 7;
             var intersections = raycaster.intersectObject(scene, true);
             if(currentButton){
                 var btn = mainScene[currentButton];
@@ -350,10 +354,11 @@ function postScriptLoad(progress){
             // do collision detection
             //
             var len = velocity.length() * dt;
-            var location = camera.position.clone();
+            location.copy(camera.position);
             location.y -= PLAYER_HEIGHT;
-            direction = velocity.clone().normalize();
-            raycaster = new THREE.Raycaster(location, direction, 0, len * 2);
+            direction.copy(velocity);
+            direction.normalize();
+            raycaster.set(location, direction, 0, len * 2);
             intersections = raycaster.intersectObject(scene, true);
             for(var i = 0; i < intersections.length; ++i){
                 var inter = intersections[i];
@@ -366,23 +371,24 @@ function postScriptLoad(progress){
             //
             // update the camera
             //
-            camera.setRotationFromEuler(new THREE.Euler(pitch, heading, roll, "YZX"));
+            orientation.set(pitch, heading, roll, "YZX");
+            camera.setRotationFromEuler(orientation);
             camera.position.add(velocity.clone().multiplyScalar(dt));
 
             //
             // place the skybox centered to the camera
             //
-            mainScene.Skybox.position.set(camera.position.x, camera.position.y, camera.position.z);
-            mainScene.Skybox.setRotationFromEuler(new THREE.Euler(t*0.00001, 0, 0, "XYZ"));
+            skyboxRotation.set(t*0.00001, 0, 0, "XYZ");
+            mainScene.Skybox.position.copy(camera.position);
+            mainScene.Skybox.setRotationFromEuler(skyboxRotation);
             
             //
             // update audio
             //
-            var p = camera.position.clone().divideScalar(10);
-            audio3d.setPosition(p.x, p.y, p.z);
-            p.normalize();
+            audio3d.setPosition(location.x, location.y, location.z);
             audio3d.setVelocity(velocity.x, velocity.y, velocity.z);
-            audio3d.setOrientation(p.x, p.y, p.z, 0, 1, 0);
+            location.normalize();
+            audio3d.setOrientation(location.x, location.y, location.z, 0, 1, 0);
 
             //
             // send a network update of the user's position, if it's been enough 
@@ -411,9 +417,8 @@ function postScriptLoad(progress){
             //
             for(var key in bears){
                 var bear = bears[key];
-                bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
                 if(key === userName){
-                    bear.rotateY(heading);
+                    bear.rotation.set(0, heading, 0, "XYZ");
                     bear.position.copy(camera.position);
                     bear.position.y -= PLAYER_HEIGHT;
                 }
@@ -424,7 +429,8 @@ function postScriptLoad(progress){
                     bear.heading += bear.dheading * dt;
                     // we have to offset the rotation of the name so the user
                     // can read it.
-                    bear.rotateY(heading - bear.heading);
+                    bear.rotation.set(0, bear.heading, 0, "XYZ");
+                    bear.nameObj.rotation.set(0, heading - bear.heading, 0, "XYZ");
                 }
             }
             
@@ -635,11 +641,11 @@ function postScriptLoad(progress){
     function updateUserState(userState){
         var bear = bears[userState.userName];
         if(bear){
-            bear.setRotationFromEuler(new THREE.Euler(0, 0, 0, "XYZ"));
             bear.dx = ((userState.x + userState.dx * dFrame) - bear.position.x) / dFrame;
             bear.dy = ((userState.y - PLAYER_HEIGHT + userState.dy * dFrame) - bear.position.y) / dFrame;
             bear.dz = ((userState.z + userState.dz * dFrame) - bear.position.z) / dFrame;
             bear.dheading = ((userState.heading + userState.dheading * dFrame) - bear.heading) / dFrame;
+            //
             if(!bear.animation.isPlaying && userState.isRunning){
                 bear.animation.play();
             }
@@ -667,7 +673,7 @@ function postScriptLoad(progress){
         scene.add(bear);
         bear.nameObj = new VUI.Text(
             userState.userName, 0.5,
-            "black", "transparent",
+            "white", "transparent",
             0, PLAYER_HEIGHT + 2.5, 0, 
             "center");
         bear.add(bear.nameObj);
@@ -685,23 +691,44 @@ function postScriptLoad(progress){
         }
     }
     
+    function copyBearToUser(bear){
+        if(bear.x !== undefined
+            && bear.y !== undefined
+            && bear.z !== undefined){
+            camera.position.set(bear.x, bear.y, bear.z);
+        }
+        if(bear.dx !== undefined
+            && bear.dy !== undefined
+            && bear.dz !== undefined){
+            velocity.set(bear.dx, bear.dy, bear.dz);
+        }
+        if(bear.heading !== undefined){
+            heading = bear.heading;
+        }
+    }
+    
     function listUsers(users){
-        addUser({
-            userName: userName,
-            x: camera.position.x,
-            y: camera.position.y,
-            z: camera.position.z,
-            dx: velocity.x,
-            dy: velocity.y,
-            dz: velocity.z,
-            heading: heading,
-            dheading: dheading,
-            isRunning: !!Math.abs(velocity.x + velocity.y + velocity.z)
-        });
+        var userFound = false;
         for(var i = 0; i < users.length; ++i){
-            if(users[i].userName !== userName){
-                addUser(users[i]);
-            }
+            userFound = userFound || users[i].userName === userName;
+            addUser(users[i]);
+        }
+        if(userFound){
+            copyBearToUser(bears[userName]);            
+        }
+        else{
+            addUser({
+                userName: userName,
+                x: camera.position.x,
+                y: camera.position.y,
+                z: camera.position.z,
+                dx: velocity.x,
+                dy: velocity.y,
+                dz: velocity.z,
+                heading: heading,
+                dheading: dheading,
+                isRunning: !!Math.abs(velocity.x + velocity.y + velocity.z)
+            });
         }
         msg("You are now connected to the device server.");
     }
