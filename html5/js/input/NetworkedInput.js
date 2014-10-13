@@ -37,11 +37,13 @@ function NetworkedInput(name, commands, socket, oscope){
         socket.on("deviceLost", function(name){
             if(this.name === name){
                 this.inPhysicalUse = true;
+                this.socketReady = false;
             }
         }.bind(this));
         socket.on("deviceAdded", function(name){
             if(this.name === name){
                 this.inPhysicalUse = false;
+                this.socketReady = true;
             }
         }.bind(this));
     }
@@ -168,7 +170,9 @@ NetworkedInput.prototype.makeStateSnapshot = function(){
 };
 
 NetworkedInput.prototype.getValue = function(name){
-    return (this.enabled || this.receiving) && this.commandState[name] && this.commandState[name].value;
+    return (this.enabled || (this.receiving && this.socketReady)) 
+        && this.commandState[name] 
+        && this.commandState[name].value;
 };
 
 NetworkedInput.prototype.setProperty = function(key, name, value){
