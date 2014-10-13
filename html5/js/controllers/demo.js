@@ -805,8 +805,6 @@ function postScriptLoad(progress){
     ], [
         { name: "strafe", axes: [GamepadInput.LSX]},
         { name: "drive", axes: [GamepadInput.LSY]},
-        { name: "heading", axes: [-GamepadInput.IRSX]},
-        { name: "pitch", axes: [GamepadInput.IRSY]},
         { name: "jump", buttons: [1], commandDown: jump, dt: 0.5 },
         { name: "fire", buttons: [2], commandDown: showPointer, commandUp: fireButton },
         { name: "options", buttons: [9], commandUp: toggleOptions }

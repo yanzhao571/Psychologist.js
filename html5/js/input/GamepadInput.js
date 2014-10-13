@@ -131,7 +131,7 @@ function GamepadInput(name, axisConstraints, commands, socket, oscope, gpid){
 
 inherit(GamepadInput, ButtonAndAxisInput);
 GamepadInput.AXES = ["LSX", "LSY", "RSX", "RSY"];
-ButtonAndAxisInput.fillAxes(GamepadInput);
+ButtonAndAxisInput.fillAxes(GamepadInput, true);
 
 /*
 https://www.github.com/capnmidnight/VR

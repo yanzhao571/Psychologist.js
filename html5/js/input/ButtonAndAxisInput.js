@@ -3,21 +3,15 @@ function ButtonAndAxisInput(name, axisConstraints, commands, socket, oscope, off
     NetworkedInput.call(this, name, commands, socket, oscope);
     this.inputState.axes = [];
     this.inputState.buttons = [];
-    var numAxes = 0;
     this.axisNames = [];
-    
-    if(deltaTrackedAxes instanceof Array){
-        numAxes = deltaTrackedAxes.length;
-    }
+    this.integrateOnly = !!integrateOnly;
     
     axisConstraints = axisConstraints || [];
     this.deltaTrackedAxes = deltaTrackedAxes || [];
     
-    for(var y = 0; y < ButtonAndAxisInput.AXES_MODIFIERS.length; ++y){
-        if(!(integrateOnly && ButtonAndAxisInput.AXES_MODIFIERS[y] === "D")){
-            for(var x = 0; x < deltaTrackedAxes.length; ++x){
-                this.axisNames.push(ButtonAndAxisInput.AXES_MODIFIERS[y] + deltaTrackedAxes[x]);
-            }
+    for(var y = 0; y < (integrateOnly ? 2 : 4); ++y){
+        for(var x = 0; x < deltaTrackedAxes.length; ++x){
+            this.axisNames.push(ButtonAndAxisInput.AXES_MODIFIERS[y] + deltaTrackedAxes[x]);
         }
     }
 
@@ -38,7 +32,7 @@ function ButtonAndAxisInput(name, axisConstraints, commands, socket, oscope, off
         }
     }.bind(this));    
 
-    for(var i = 0; i < numAxes; ++i){
+    for(var i = 0; i < this.axisNames.length; ++i){
         this.inputState.axes[i] = 0;
     }
 
@@ -62,13 +56,40 @@ function ButtonAndAxisInput(name, axisConstraints, commands, socket, oscope, off
 inherit(ButtonAndAxisInput, NetworkedInput);
 
 ButtonAndAxisInput.AXES_MODIFIERS = ["", "I", "L", "D"];
-ButtonAndAxisInput.fillAxes = function(classFunc){
+ButtonAndAxisInput.fillAxes = function(classFunc, integrateOnly){
     if(classFunc.AXES){
-        for(var y = 0; y < this.AXES_MODIFIERS.length; ++y){
+        for(var y = 0; y < (integrateOnly ? 2 : 4); ++y){
             for(var x = 0; x < classFunc.AXES.length; ++x){
                 var name = (this.AXES_MODIFIERS[y] + classFunc.AXES[x]).toLocaleUpperCase();
                 classFunc[name] = y * classFunc.AXES.length + x + 1;
             }
+        }
+    }
+};
+
+ButtonAndAxisInput.prototype.preupdate = function(dt){
+    for(var n = 0; n < this.deltaTrackedAxes.length; ++n){
+        var a = this.deltaTrackedAxes[n];
+        var i = "I" + a;
+        var l = "L" + a;
+        var d = "D" + a;
+        
+        var av = this.getAxis(a);
+        if(this.integrateOnly){
+            this.incAxis(i, av * dt);
+        }
+        else{
+            var lv = this.getAxis(l);
+            if(lv){
+                this.setAxis(d, av - lv);
+            }
+            
+            var dv = this.getAxis(d);
+            if(dv){
+                this.incAxis(i, dv * dt);
+            }
+            
+            this.setAxis(l, av);
         }
     }
 };
@@ -196,31 +217,6 @@ ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState, metaKeysSet, 
 
         cmdState.pressed = pressed;
         cmdState.value = value;
-    }
-};
-
-ButtonAndAxisInput.prototype.preupdate = function(dt){
-    for(var n = 0; n < this.deltaTrackedAxes.length; ++n){
-        var a = this.deltaTrackedAxes[n];
-        var av = this.getAxis(a);
-        var i = "I" + a;
-        var iv = this.getAxis(i);
-        if(this.integrateOnly || a.indexOf("D_") == 0){
-            this.setAxis(i, iv + av * (this.integrateOnly ? dt : 1));
-        }
-        else{
-            var d = "D" + a;
-            var dv = this.getAxis(d);
-            var l = "L" + a;
-            var lv = this.getAxis(l);
-            if(lv){
-                this.setAxis(d, av - lv);
-            }
-            if(dv){
-                this.setAxis(i, iv + dv * dt);
-            }
-            this.setAxis(l, av);
-        }
     }
 };
 
