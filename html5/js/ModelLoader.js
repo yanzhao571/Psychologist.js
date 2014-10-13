@@ -64,31 +64,6 @@ ModelLoader.loadCollada = function(src, progress, success){
     });
 };
 
-ModelLoader.makeHeightMap = function(obj, CLUSTER){
-    var heightmap = [];
-    var verts = obj.children[0].geometry.vertices;
-    heightmap.minX = 0;
-    heightmap.minZ = 0;
-    for(var i = 0; i < verts.length; ++i){
-        heightmap.minX = Math.min(heightmap.minX, verts[i].x);
-        heightmap.minZ = Math.min(heightmap.minZ, verts[i].z);
-    }
-    for(var i = 0; i < verts.length; ++i){
-        var x = Math.round((verts[i].x - heightmap.minX) / CLUSTER);
-        var z = Math.round((verts[i].z - heightmap.minZ) / CLUSTER);
-        if(!heightmap[z]){
-            heightmap[z] = [];
-        }
-        if(heightmap[z][x] === undefined){
-            heightmap[z][x] = verts[i].y;
-        }
-        else{
-            heightmap[z][x] = Math.max(heightmap[z][x], verts[i].y);
-        }
-    }
-    return heightmap;
-};
-
 ModelLoader.prototype.clone = function(userName, socket){
     var obj = this.template.clone();
     this.socket = socket;

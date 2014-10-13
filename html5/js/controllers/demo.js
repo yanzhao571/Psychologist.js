@@ -154,7 +154,7 @@ function postScriptLoad(progress){
             "max reconnection attempts": 60
         }),
         oscope = new Oscope("demo"),
-        bears = {}, heightmap, lastText,
+        bears = {}, lastText,
         camera, effect, drawDistance = 500,
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
@@ -222,7 +222,7 @@ function postScriptLoad(progress){
         
     function waitForResources(t){
         lt = t;
-        if(camera && heightmap && userName && bears[userName]){
+        if(camera && userName && bears[userName]){
             requestAnimationFrame(animate);
         }
         else{
@@ -340,14 +340,6 @@ function postScriptLoad(progress){
                 bears[userName].velocity.y = 0.1;
                 onground = true;
             }
-        }
-        
-        var x = Math.floor((bears[userName].position.x - heightmap.minX) / CLUSTER);
-        var z = Math.floor((bears[userName].position.z - heightmap.minZ) / CLUSTER);
-        var y = 0;
-        if (0 <= z && z < heightmap.length
-            && 0 <= x && x < heightmap[z].length){
-            y += heightmap[z][x];
         }
 
         //
@@ -508,6 +500,9 @@ function postScriptLoad(progress){
         if(!show){
             requestFullScreen();
             mouse.requestPointerLock();
+        }
+        else{
+            mouse.exitPointerLock();
         }
     }
 
@@ -676,7 +671,12 @@ function postScriptLoad(progress){
         }
         else{
             if(firstTime){
-                bear.position.set(userState.x, userState.y, userState.z);
+                bear.position.set(
+                    userState.x, 
+                    // just in case the user falls through the world, 
+                    // reloading will get them back to level.
+                    Math.max(0, userState.y), 
+                    userState.z);
                 bear.heading = userState.heading;
             }
             else{
@@ -869,7 +869,6 @@ function postScriptLoad(progress){
                 snd.source.start(0);
             }
         );
-        heightmap = ModelLoader.makeHeightMap(mainScene.Terrain, CLUSTER);
         var v = 0.55 * drawDistance;
         mainScene.Skybox.scale.set(v, v, v);
     });
