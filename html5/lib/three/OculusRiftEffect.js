@@ -113,7 +113,7 @@ THREE.OculusRiftEffect = function (renderer, options) {
 		// But with lens distortion it is increased (see Oculus SDK Documentation)
 		var r = -1.0 - (4 * (HMD.hScreenSize/4 - HMD.lensSeparationDistance/2) / HMD.hScreenSize);
 		distScale = (HMD.distortionK[0] + HMD.distortionK[1] * Math.pow(r,2) + HMD.distortionK[2] * Math.pow(r,4) + HMD.distortionK[3] * Math.pow(r,6));
-		var fov = THREE.Math.radToDeg(3*Math.atan2(HMD.vScreenSize*distScale, 2*HMD.eyeToScreenDistance));
+		var fov = THREE.Math.radToDeg(2.25*Math.atan2(HMD.vScreenSize*distScale, 2*HMD.eyeToScreenDistance));
 
 		// Compute camera projection matrices
 		var proj = (new THREE.Matrix4()).makePerspective(fov, aspect, 0.3, 10000);
