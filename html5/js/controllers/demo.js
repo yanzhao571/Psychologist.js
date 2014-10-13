@@ -64,6 +64,7 @@ function displayProgress(file){
 function postScriptLoad(progress){
     var BG_COLOR = 0xafbfff, CHAT_TEXT_SIZE = 0.25, 
         TRACKING_SCALE = 0, TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
+        NO_HMD_SMARTPHONE = "Smartphone - no HMD",
         PLAYER_HEIGHT = 6.5,
         RIGHT = new THREE.Vector3(-1, 0, 0),
         GRAVITY = 9.8, SPEED = 15,
@@ -112,7 +113,7 @@ function postScriptLoad(progress){
                 headReceive: {checked: false},
                 renderingStyle: {value: "rift" }
             }},
-            { name: "Smartphone - no HMD", values:{
+            { name: NO_HMD_SMARTPHONE, values:{
                 speechEnable: {checked: false},
                 speechTransmit: {checked: false},
                 speechReceive: {checked: true},
@@ -192,7 +193,18 @@ function postScriptLoad(progress){
                 var evt = new Event("change");
                 ctrls[key].dispatchEvent(evt);
             }
+            else {
+                showHideControls();
+            }
         }
+    }
+    
+    function showHideControls(){
+        ctrls.onScreenControls.style.display = 
+            (ctrls.deviceTypes.value === NO_HMD_SMARTPHONE
+            || !ctrls.defaultDisplay.checked) 
+                ? "" 
+                : "none";
     }
 
     function msg(){
@@ -246,6 +258,7 @@ function postScriptLoad(progress){
             update(dt);
         }
     }
+    
     function update(dt){
         THREE.AnimationHandler.update(dt);
 
@@ -291,10 +304,10 @@ function postScriptLoad(progress){
         
         bears[userName].velocity.y -= dt * GRAVITY;
         
-        bears[userName].dHeading = head.getValue("dheading")
-            + touch.getValue("dheading")
-            + mouse.getValue("dheading")
-            + gamepad.getValue("dheading");
+        bears[userName].heading = head.getValue("heading")
+            + touch.getValue("heading")
+            + mouse.getValue("heading")
+            + gamepad.getValue("heading");
         pitch = head.getValue("pitch") 
             + mouse.getValue("pitch") 
             + gamepad.getValue("pitch");
@@ -372,6 +385,7 @@ function postScriptLoad(progress){
             btn.children[0].material.materials[0].color.r = 0.5;
             currentButton = null;
         }
+        
         for(var i = 0; i < intersections.length; ++i){
             var inter = intersections[i];
             if(inter.object.parent.isSolid || inter.object.parent.isButton){
@@ -550,13 +564,7 @@ function postScriptLoad(progress){
         lastRenderingType = type;
     }
     
-    function showChatBox(){
-        ctrls.textEntry.style.display = "";
-        ctrls.textEntry.focus();
-    }
-    
     function readChatBox(){
-        ctrls.textEntry.style.display = "none";
         showTyping(true, true, ctrls.textEntry.value);
         ctrls.textEntry.value = "";
     }
@@ -662,7 +670,11 @@ function postScriptLoad(progress){
                 shiftLines();
             }, 3000);
         }
-    }
+        var div = document.createElement("div");
+        div.appendChild(document.createTextNode(msg));
+        ctrls.chatLog.appendChild(div);
+        ctrls.chatLog.scrollTop = ctrls.chatLog.scrollHeight; 
+   }
 
     function reload(){
         if (isFullScreenMode()){
@@ -688,6 +700,7 @@ function postScriptLoad(progress){
                     Math.max(0, userState.y), 
                     userState.z);
                 bear.heading = userState.heading;
+                bear.dHeading = 0;
             }
             else{
                 bear.velocity.set(
@@ -749,7 +762,6 @@ function postScriptLoad(progress){
     }, false);
 
     ctrls.menuButton.addEventListener("click", toggleOptions, false);
-    ctrls.talkButton.addEventListener("click", showChatBox, false);
     ctrls.textEntry.addEventListener("change", readChatBox, false);
     ctrls.pointerLockButton.addEventListener("click", toggleOptions, false);
     ctrls.fullScreenButton.addEventListener("click", toggleFullScreen, false);
@@ -760,7 +772,7 @@ function postScriptLoad(progress){
     window.addEventListener("beforeunload", shutdown, false);
 
     head = new MotionInput("head", null, [
-        { name: "dheading", axes: [-MotionInput.DHEADING] },
+        { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] }
     ], socket, oscope);
@@ -770,13 +782,13 @@ function postScriptLoad(progress){
         { axis: MouseInput.DY, scale: 0.4 },
         { axis: MouseInput.IY, min: -2, max: 1.3 }
     ], [
-        { name: "dheading", axes: [-MouseInput.DX] },
+        { name: "heading", axes: [-MouseInput.IX] },
         { name: "pitch", axes: [-MouseInput.IY]},
         { name: "fire", buttons: [1], commandDown: showPointer, commandUp: fireButton }
     ], socket, oscope, renderer.domElement);
 
     touch = new TouchInput("touch", null, null, [
-        { name: "dheading", axes: [TouchInput.DX0] },
+        { name: "heading", axes: [TouchInput.IX0] },
         { name: "drive", axes: [-TouchInput.DY0] }
     ], socket, oscope, renderer.domElement);
 
@@ -800,7 +812,7 @@ function postScriptLoad(progress){
     ], [
         { name: "strafe", axes: [GamepadInput.LSX]},
         { name: "drive", axes: [GamepadInput.LSY]},
-        { name: "dheading", axes: [-GamepadInput.RSX]},
+        { name: "heading", axes: [-GamepadInput.IRSX]},
         { name: "pitch", axes: [GamepadInput.IRSY]},
         { name: "jump", buttons: [1], commandDown: jump, dt: 0.5 },
         { name: "fire", buttons: [2], commandDown: showPointer, commandUp: fireButton },
@@ -894,6 +906,7 @@ function postScriptLoad(progress){
     renderer.domElement.setAttribute("tabindex", 0);
     setSize(window.innerWidth, window.innerHeight);
 
-    toggleOptions();
+    toggleOptions();    
+    showHideControls();
     requestAnimationFrame(waitForResources);
 }

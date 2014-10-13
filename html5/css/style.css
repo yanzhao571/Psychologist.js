@@ -1,7 +1,6 @@
 section
 {
     border-radius: 10px;
-    position: absolute;
     color: #2e2e2e;
     background-color: #fff;
 }
@@ -91,19 +90,17 @@ td > .button, td > input
     background-image:url(../ico/menu.png);
 }
 
-#talkButton
-{
-    left: 52px;
-    background-image:url(../ico/chat.png);
-}
-
 #textEntry
 {
-    position:fixed;
-    top:25px;
-    left:0px;
-    width:90%;
     margin:10px;
+}
+
+#chatLog{
+    border: solid 1px #c0c0c0;
+    padding: 1em;
+    margin-top:2em;
+    height:10em;
+    overflow-y: scroll;
 }
 
 body
@@ -160,9 +157,12 @@ a.button
         background-color: #1b2c63;
     }
 
-.altClose
+section, .altClose
 {
     position: absolute;
+}
+
+.altClose{
     right: 0;
     top: 0;
 }
