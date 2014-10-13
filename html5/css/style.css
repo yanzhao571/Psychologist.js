@@ -96,11 +96,12 @@ td > .button, td > input
 }
 
 #chatLog{
-    border: solid 1px #c0c0c0;
+    border: solid 1px #ccc;
     padding: 1em;
     margin-top:2em;
     height:10em;
     overflow-y: scroll;
+    color:#666
 }
 
 body

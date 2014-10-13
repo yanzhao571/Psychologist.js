@@ -208,15 +208,12 @@ function postScriptLoad(progress){
     }
 
     function msg(){
-        var txt = map(arguments, function(v){
-            return v ? v.toString() : "";
-        }).join(" ");
+        var txt = fmt.apply(window, map(arguments, function(v){ return v ? v.toString() : ""; }));
         if(isDebug){
-            console.log.apply(console, arguments);
+            console.log(txt);
         }
         else if(bears[userName]){
             showChat(txt);
-            //repeater.speak(txt);
         }
         else {
             alert(txt);
@@ -600,7 +597,7 @@ function postScriptLoad(progress){
 
     var buttonHandlers = {
         button1: function(btn){
-            msg("Clicked " + currentButton);
+            msg("Clicked $1", currentButton);
         },
         button2: function(btn){
             repeater.speak("That's okay. Try again.");
@@ -609,7 +606,7 @@ function postScriptLoad(progress){
             repeater.speak("Incorrect, you get no more chances. You are on the way to destruction. Make your time.");
         },
         button4: function(btn){
-            msg("Clicked " + currentButton);
+            msg("Clicked $1", currentButton);
             repeater.speak("You clicked the fourth button");
         }
     };
@@ -714,6 +711,7 @@ function postScriptLoad(progress){
 
     function addUser(userState){
         var bear = new THREE.Object3D();
+        bears[userState.userName] = bear;
         var model = bearModel.clone(userState.userName, socket);
         model.position.z = 1.33;
         bear.animation = model.animation;
@@ -726,18 +724,14 @@ function postScriptLoad(progress){
             "center");
         bear.add(bear.nameObj);
         bear.velocity = new THREE.Vector3();
-
-        if(userState.userName !== userName){
-            msg("user joined: " + userState.userName);
-        }
-        bears[userState.userName] = bear;
         updateUserState(userState, true);
         scene.add(bear);
+        msg("$1 has joined", userState.userName);
     }
     
     function userLeft(userName){
         if(bears[userName]){
-            msg("user disconnected:", userName);
+            msg("$1 has disconnected", userName);
             scene.remove(bears[userName]);
             delete bears[userName];
         }
@@ -747,7 +741,6 @@ function postScriptLoad(progress){
         for(var i = 0; i < users.length; ++i){
             addUser(users[i]);
         }
-        msg("You are now connected to the device server.");
     }
 
     var closers = document.getElementsByClassName("closeSectionButton");
