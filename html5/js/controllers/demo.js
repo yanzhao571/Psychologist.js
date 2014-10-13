@@ -238,6 +238,7 @@ function postScriptLoad(progress){
             //
             // update user position and view
             //
+            
             velocity.y -= dt * GRAVITY;
             var x = Math.floor((location.x - heightmap.minX) / CLUSTER);
             var z = Math.floor((location.z - heightmap.minZ) / CLUSTER);
@@ -256,7 +257,7 @@ function postScriptLoad(progress){
                 onground = true;
             }
 
-            if(onground){
+            if(onground || location.y < -0.5){
                 var tx, tz;
                 if(autoWalking){
                     tx = 0;
@@ -364,6 +365,10 @@ function postScriptLoad(progress){
                     testPoint.applyEuler(inter.object.parent.rotation);
                     velocity.reflect(testPoint);
                 }
+            }
+            
+            if(location.y < -0.5){
+                velocity.multiplyScalar(0.925);
             }
             
             //
@@ -545,7 +550,7 @@ function postScriptLoad(progress){
     }
 
     function jump(){
-        if (onground){
+        if (onground || location.y < -0.5){
             velocity.y = 10;
             onground = false;
         }
