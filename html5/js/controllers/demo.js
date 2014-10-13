@@ -247,24 +247,6 @@ function postScriptLoad(progress){
         //
         // update user position and view
         //
-        bears[userName].velocity.y -= dt * GRAVITY;
-        var x = Math.floor((bears[userName].position.x - heightmap.minX) / CLUSTER);
-        var z = Math.floor((bears[userName].position.z - heightmap.minZ) / CLUSTER);
-        var y = 0;
-        if (0 <= z && z < heightmap.length
-            && 0 <= x && x < heightmap[z].length){
-            y += heightmap[z][x];
-        }
-
-        if(bears[userName].position.y <= y && bears[userName].velocity.y <= 0){
-            bears[userName].velocity.y = 0;
-            bears[userName].position.y = bears[userName].position.y * 0.75 + y * 0.25;
-            if(!onground){
-                navigator.vibrate(100);
-            }
-            onground = true;
-        }
-
         if(onground || bears[userName].position.y < -0.5){
             var tx, tz;
             if(autoWalking){
@@ -302,6 +284,12 @@ function postScriptLoad(progress){
             bears[userName].velocity.x = bears[userName].velocity.x * 0.9 + tx * 0.1;
             bears[userName].velocity.z = bears[userName].velocity.z * 0.9 + tz * 0.1;
         }
+        bears[userName].velocity.y -= dt * GRAVITY;
+        
+
+        if(bears[userName].position.y < -0.5){
+            bears[userName].velocity.multiplyScalar(0.925);
+        }
 
         bears[userName].dHeading = head.getValue("dheading")
             + touch.getValue("dheading")
@@ -317,20 +305,47 @@ function postScriptLoad(progress){
         direction.copy(bears[userName].velocity);
         direction.normalize();
         raycaster.set(bears[userName].position, direction);
-        raycaster.far = len * 2;
+        raycaster.far = len;// * 2;
         intersections = raycaster.intersectObject(scene, true);
         for(var i = 0; i < intersections.length; ++i){
             var inter = intersections[i];
-            if(inter.object.parent.isSolid
-                && inter.distance < len){
+            if(inter.object.parent.isSolid){
                 testPoint.copy(inter.face.normal);
                 testPoint.applyEuler(inter.object.parent.rotation);
                 bears[userName].velocity.reflect(testPoint);
+                var d = testPoint.dot(camera.up);
+                if(d > 0.75){
+                    bears[userName].position.y = inter.point.y + 0.0125;
+                    bears[userName].velocity.y = 0.1;
+                    onground = true;
+                }
             }
         }
-
-        if(bears[userName].position.y < -0.5){
-            bears[userName].velocity.multiplyScalar(0.925);
+        
+        // ground test
+        testPoint.copy(bears[userName].position);
+        testPoint.y += 1;
+        direction.set(0, -1, 0);
+        raycaster.set(testPoint, direction);
+        raycaster.far = 1;
+        intersections = raycaster.intersectObject(scene, true);
+        for(var i = 0; i < intersections.length; ++i){
+            var inter = intersections[i];
+            if(inter.object.parent.isSolid){
+                testPoint.copy(inter.face.normal);
+                testPoint.applyEuler(inter.object.parent.rotation);
+                bears[userName].position.y = inter.point.y + 0.0125;
+                bears[userName].velocity.y = 0.1;
+                onground = true;
+            }
+        }
+        
+        var x = Math.floor((bears[userName].position.x - heightmap.minX) / CLUSTER);
+        var z = Math.floor((bears[userName].position.z - heightmap.minZ) / CLUSTER);
+        var y = 0;
+        if (0 <= z && z < heightmap.length
+            && 0 <= x && x < heightmap[z].length){
+            y += heightmap[z][x];
         }
 
         //
@@ -346,9 +361,11 @@ function postScriptLoad(progress){
         //
         // place the skybox centered to the camera
         //
-        skyboxRotation.set(t*0.00001, 0, 0, "XYZ");
-        mainScene.Skybox.position.copy(bears[userName].position);
-        mainScene.Skybox.setRotationFromEuler(skyboxRotation);
+        if(mainScene.Skybox){
+            skyboxRotation.set(t*0.00001, 0, 0, "XYZ");
+            mainScene.Skybox.position.copy(bears[userName].position);
+            mainScene.Skybox.setRotationFromEuler(skyboxRotation);
+        }
 
         //
         // update avatars
@@ -756,7 +773,7 @@ function postScriptLoad(progress){
         { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHTARROW] },
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
-        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 1 },
+        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 0.5 },
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: showPointer, commandUp: fireButton },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 1 },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
@@ -773,7 +790,7 @@ function postScriptLoad(progress){
         { name: "drive", axes: [GamepadInput.LSY]},
         { name: "dheading", axes: [-GamepadInput.RSX]},
         { name: "pitch", axes: [GamepadInput.IRSY]},
-        { name: "jump", buttons: [1], commandDown: jump, dt: 0.250 },
+        { name: "jump", buttons: [1], commandDown: jump, dt: 0.5 },
         { name: "fire", buttons: [2], commandDown: showPointer, commandUp: fireButton },
         { name: "options", buttons: [9], commandUp: toggleOptions }
     ], socket, oscope);
