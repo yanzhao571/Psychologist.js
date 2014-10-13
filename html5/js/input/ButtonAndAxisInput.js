@@ -130,8 +130,7 @@ ButtonAndAxisInput.prototype.setAxis = function(name, value){
 };
 
 ButtonAndAxisInput.prototype.incAxis = function(name, value){
-    this.inPhysicalUse = true;
-    this.inputState.axes[this.axisNames.indexOf(name)] += value;
+    this.setAxis(name, this.getAxis(name) + value);
 };
     
 ButtonAndAxisInput.prototype.setButton = function(index, pressed){

@@ -69,6 +69,7 @@ function postScriptLoad(progress){
         RIGHT = new THREE.Vector3(-1, 0, 0),
         GRAVITY = 9.8, SPEED = 15,
         lastRenderingType, currentButton, autoWalking = false,
+        startHeading = 0,
         deviceStates = new StateList(ctrls.deviceTypes, ctrls, [
             { name: "-- select device type --" },
             { name: "PC", values:{
@@ -262,6 +263,16 @@ function postScriptLoad(progress){
         //
         // update user position and view
         //
+        
+        bears[userName].dHeading = (head.getValue("heading")
+            + touch.getValue("heading")
+            + mouse.getValue("heading")
+            + startHeading
+            - bears[userName].heading) / dt;
+        pitch = head.getValue("pitch") 
+            + mouse.getValue("pitch");
+        roll = head.getValue("roll");
+        
         if(onground || bears[userName].position.y < -0.5){                
             if(autoWalking){
                 strafe = 0;
@@ -278,16 +289,9 @@ function postScriptLoad(progress){
             }
             if(strafe || drive){
                 len = SPEED * Math.min(1, 1 / Math.sqrt(drive * drive + strafe * strafe));
-
-                if(bears[userName] && !bears[userName].animation.isPlaying){
-                    bears[userName].animation.play();
-                }
             }
             else{
                 len = 0;
-                if(bears[userName] && bears[userName].animation.isPlaying){
-                    bears[userName].animation.stop();
-                }
             }
 
             strafe *= len;
@@ -300,15 +304,6 @@ function postScriptLoad(progress){
         }
         
         bears[userName].velocity.y -= dt * GRAVITY;
-        
-        bears[userName].heading = head.getValue("heading")
-            + touch.getValue("heading")
-            + mouse.getValue("heading")
-            + gamepad.getValue("heading");
-        pitch = head.getValue("pitch") 
-            + mouse.getValue("pitch") 
-            + gamepad.getValue("pitch");
-        roll = head.getValue("roll");
 
         //
         // "water"
@@ -324,9 +319,9 @@ function postScriptLoad(progress){
         direction.copy(bears[userName].velocity);
         direction.normalize();
         testPoint.copy(bears[userName].position);
-        testPoint.y += 1;
+        testPoint.y += PLAYER_HEIGHT / 2;
         raycaster.set(testPoint, direction);
-        raycaster.far = len;// * 2;
+        raycaster.far = len;
         intersections = raycaster.intersectObject(scene, true);
         for(var i = 0; i < intersections.length; ++i){
             var inter = intersections[i];
@@ -403,28 +398,6 @@ function postScriptLoad(progress){
         }
 
         //
-        // send a network update of the user's position, if it's been enough 
-        // time since the last update (don't want to flood the server).
-        //
-        frame += dt;
-        if(frame > dFrame){
-            frame -= dFrame;
-            var state = {
-                x: bears[userName].position.x,
-                y: bears[userName].position.y,
-                z: bears[userName].position.z,
-                dx: bears[userName].velocity.x,
-                dy: bears[userName].velocity.y,
-                dz: bears[userName].velocity.z,
-                heading: bears[userName].heading,
-                dHeading: (bears[userName].heading - bears[userName].lastHeading) / dFrame,
-                isRunning: bears[userName].velocity.length() > 0
-            };
-            bears[userName].lastHeading = bears[userName].heading;
-            socket.emit("userState", state);
-        }
-
-        //
         // update audio
         //
         testPoint.copy(bears[userName].position);
@@ -453,11 +426,39 @@ function postScriptLoad(progress){
             bear.position.add(testPoint);
             bear.heading += bear.dHeading * dt;
             bear.rotation.set(0, bear.heading, 0, "XYZ");
+            if(!bear.animation.isPlaying && bear.velocity.length() >= 2){
+                bear.animation.play();                
+            }
+            else if(bear.animation.isPlaying && bear.velocity.length() < 2){
+                bear.animation.stop();
+            }
             if(key !== userName){ 
                 // we have to offset the rotation of the name so the user
                 // can read it.
                 bear.nameObj.rotation.set(0, bears[userName].heading - bear.heading, 0, "XYZ");
             }
+        }
+
+        //
+        // send a network update of the user's position, if it's been enough 
+        // time since the last update (don't want to flood the server).
+        //
+        frame += dt;
+        if(frame > dFrame){
+            frame -= dFrame;
+            var state = {
+                x: bears[userName].position.x,
+                y: bears[userName].position.y,
+                z: bears[userName].position.z,
+                dx: bears[userName].velocity.x,
+                dy: bears[userName].velocity.y,
+                dz: bears[userName].velocity.z,
+                heading: bears[userName].heading,
+                dHeading: (bears[userName].heading - bears[userName].lastHeading) / dFrame,
+                isRunning: bears[userName].velocity.length() > 0
+            };
+            bears[userName].lastHeading = bears[userName].heading;
+            socket.emit("userState", state);
         }
         
         //
@@ -466,7 +467,6 @@ function postScriptLoad(progress){
         orientation.set(pitch, bears[userName].heading, roll, "YZX");
         camera.rotation.copy(orientation);
         camera.position.copy(bears[userName].position);
-        camera.position.y = 0.01 * Math.round(camera.position.y * 100);
         camera.position.y += PLAYER_HEIGHT;
 
         //
@@ -696,13 +696,16 @@ function postScriptLoad(progress){
                     // reloading will get them back to level.
                     Math.max(0, userState.y), 
                     userState.z);
-                bear.heading = userState.heading;
+                bear.lastHeading = bear.heading = userState.heading;
                 bear.dHeading = 0;
+                if(userState.userName === userName){
+                    startHeading = bear.heading;
+                }
             }
             else{
                 bear.velocity.set(
                     ((userState.x + userState.dx * dFrame) - bear.position.x) / dFrame,
-                    ((userState.y - PLAYER_HEIGHT + userState.dy * dFrame) - bear.position.y) / dFrame,
+                    ((userState.y + userState.dy * dFrame) - bear.position.y) / dFrame,
                     ((userState.z + userState.dz * dFrame) - bear.position.z) / dFrame);
                 bear.dHeading = ((userState.heading + userState.dHeading * dFrame) - bear.heading) / dFrame;
             }
@@ -713,8 +716,8 @@ function postScriptLoad(progress){
         var bear = new THREE.Object3D();
         bears[userState.userName] = bear;
         var model = bearModel.clone(userState.userName, socket);
-        model.position.z = 1.33;
         bear.animation = model.animation;
+        model.position.z = 1.33;
         bear.add(model);
         bear.heading = userState.heading;
         bear.nameObj = new VUI.Text(
@@ -738,6 +741,7 @@ function postScriptLoad(progress){
     }
     
     function listUsers(users){
+        users.sort(function(a){ return (a.userName === userName) ? -1 : 1;});
         for(var i = 0; i < users.length; ++i){
             addUser(users[i]);
         }
@@ -897,7 +901,7 @@ function postScriptLoad(progress){
     renderer.domElement.setAttribute("tabindex", 0);
     setSize(window.innerWidth, window.innerHeight);
 
-    toggleOptions();    
+//    toggleOptions();    
     showHideControls();
     requestAnimationFrame(waitForResources);
 }

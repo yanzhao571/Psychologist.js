@@ -11,7 +11,7 @@ function User(info){
         dy: 0,
         dz: 0,
         heading: 0,
-        dheading: 0,
+        dHeading: 0,
         isRunning: false,
         userName: info.userName
     };

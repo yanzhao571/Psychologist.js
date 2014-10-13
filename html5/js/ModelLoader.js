@@ -71,6 +71,7 @@ ModelLoader.prototype.clone = function(userName, socket){
     obj.traverse(function(child){
         if (child instanceof THREE.SkinnedMesh ){
             obj.mesh = child;
+            child.parent.isSolid = true;
 			obj.animation = new THREE.Animation(child, child.geometry.animation);
             if(!this.template.originalAnimationData && obj.animation.data){
                 this.template.originalAnimationData = obj.animation.data;
