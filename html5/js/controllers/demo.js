@@ -135,11 +135,11 @@ function postScriptLoad(progress){
             }}
         ], readSettings),
         formState = getSetting("formState"),
-        pitch = 0, roll = 0, heading = 0, lastHeading = 0, dheading = 0,
-        velocity = new THREE.Vector3(), location = new THREE.Vector3(),
+        pitch = 0, roll = 0, 
         testPoint = new THREE.Vector3(),
         raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7),
-        direction = new THREE.Vector3(), orientation = new THREE.Euler(0, 0, 0, "YZX"),
+        direction = new THREE.Vector3(),
+        orientation = new THREE.Euler(0, 0, 0, "YZX"),
         skyboxRotation = new THREE.Euler(0, 0, 0, "XYZ"),
         onground = false,
         head, keyboard, mouse, gamepad, touch, speech,
@@ -159,14 +159,17 @@ function postScriptLoad(progress){
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
         pointer = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 2), new THREE.MeshBasicMaterial({
-                color: 0xffff00
-            })),
+            color: 0xffff00
+        })),
         repeater = new SpeechOutput.Character();
 
+    tabs.style.width = pct(100);
+    renderer.setClearColor(BG_COLOR);
     scene.add(pointer);
     pointer.visible = false;
     writeForm(ctrls, formState);
     oscope.connect();
+    
     socket.on("handshakeFailed", console.warn.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
     socket.on("handshakeComplete", function(controller){
         if(controller === "demo"){
@@ -182,9 +185,6 @@ function postScriptLoad(progress){
     socket.on("userLeft", userLeft);
     socket.on("disconnect", msg.bind(window));
     socket.emit("handshake", "demo");
-
-    tabs.style.width = pct(100);
-    renderer.setClearColor(BG_COLOR);
     
     function readSettings(){
         for(var key in ctrls){
@@ -219,238 +219,232 @@ function postScriptLoad(progress){
             return confirm(txt);
         }
     }
+        
+    function waitForResources(t){
+        lt = t;
+        if(camera && heightmap && userName && bears[userName]){
+            requestAnimationFrame(animate);
+        }
+        else{
+            requestAnimationFrame(waitForResources);
+        }
+    }
 
     function animate(t){
         requestAnimationFrame(animate);
         dt = (t - lt) * 0.001;
         lt = t;
 
-        if(camera && heightmap){
-            THREE.AnimationHandler.update(dt);
-            head.update(dt);
-            keyboard.update(dt);
-            mouse.update(dt);
-            gamepad.update(dt);
-            touch.update(dt);
-            speech.update(dt);
-            
-            
-            //
-            // update user position and view
-            //
-            
-            velocity.y -= dt * GRAVITY;
-            var x = Math.floor((location.x - heightmap.minX) / CLUSTER);
-            var z = Math.floor((location.z - heightmap.minZ) / CLUSTER);
-            var y = 0;
-            if (0 <= z && z < heightmap.length
-                && 0 <= x && x < heightmap[z].length){
-                y += heightmap[z][x];
+        THREE.AnimationHandler.update(dt);
+        head.update(dt);
+        keyboard.update(dt);
+        mouse.update(dt);
+        gamepad.update(dt);
+        touch.update(dt);
+        speech.update(dt);
+
+
+        //
+        // update user position and view
+        //
+        bears[userName].velocity.y -= dt * GRAVITY;
+        var x = Math.floor((bears[userName].position.x - heightmap.minX) / CLUSTER);
+        var z = Math.floor((bears[userName].position.z - heightmap.minZ) / CLUSTER);
+        var y = 0;
+        if (0 <= z && z < heightmap.length
+            && 0 <= x && x < heightmap[z].length){
+            y += heightmap[z][x];
+        }
+
+        if(bears[userName].position.y <= y && bears[userName].velocity.y <= 0){
+            bears[userName].velocity.y = 0;
+            bears[userName].position.y = bears[userName].position.y * 0.75 + y * 0.25;
+            if(!onground){
+                navigator.vibrate(100);
+            }
+            onground = true;
+        }
+
+        if(onground || bears[userName].position.y < -0.5){
+            var tx, tz;
+            if(autoWalking){
+                tx = 0;
+                tz = -0.5;
+            }
+            else{
+                tx = keyboard.getValue("strafeRight")
+                    + keyboard.getValue("strafeLeft")
+                    + gamepad.getValue("strafe");
+                tz = keyboard.getValue("driveBack")
+                    + keyboard.getValue("driveForward")
+                    + gamepad.getValue("drive")
+                    + touch.getValue("drive");
+            }
+            if(tx || tz){
+                len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
+
+                if(bears[userName] && !bears[userName].animation.isPlaying){
+                    bears[userName].animation.play();
+                }
+            }
+            else{
+                len = 0;
+                if(bears[userName] && bears[userName].animation.isPlaying){
+                    bears[userName].animation.stop();
+                }
             }
 
-            if(location.y <= y && velocity.y <= 0){
-                velocity.y = 0;
-                location.y = location.y * 0.75 + y * 0.25;
-                if(!onground){
-                    navigator.vibrate(100);
-                }
-                onground = true;
+            tx *= len;
+            tz *= len;
+            len = tx * Math.cos(bears[userName].heading) + tz * Math.sin(bears[userName].heading);
+            tz = tz * Math.cos(bears[userName].heading) - tx * Math.sin(bears[userName].heading);
+            tx = len;
+            bears[userName].velocity.x = bears[userName].velocity.x * 0.9 + tx * 0.1;
+            bears[userName].velocity.z = bears[userName].velocity.z * 0.9 + tz * 0.1;
+        }
+
+        bears[userName].dHeading = head.getValue("dheading")
+            + touch.getValue("dheading")
+            + mouse.getValue("dheading")
+            + gamepad.getValue("dheading");
+        var pitch = head.getValue("pitch") + mouse.getValue("pitch") + gamepad.getValue("pitch");
+        var roll = head.getValue("roll");        
+
+        //
+        // do collision detection
+        //
+        var len = bears[userName].velocity.length() * dt;
+        direction.copy(bears[userName].velocity);
+        direction.normalize();
+        raycaster.set(bears[userName].position, direction);
+        raycaster.far = len * 2;
+        intersections = raycaster.intersectObject(scene, true);
+        for(var i = 0; i < intersections.length; ++i){
+            var inter = intersections[i];
+            if(inter.object.parent.isSolid
+                && inter.distance < len){
+                testPoint.copy(inter.face.normal);
+                testPoint.applyEuler(inter.object.parent.rotation);
+                bears[userName].velocity.reflect(testPoint);
             }
+        }
 
-            if(onground || location.y < -0.5){
-                var tx, tz;
-                if(autoWalking){
-                    tx = 0;
-                    tz = -0.5;
-                }
-                else{
-                    tx = keyboard.getValue("strafeRight")
-                        + keyboard.getValue("strafeLeft")
-                        + gamepad.getValue("strafe");
-                    tz = keyboard.getValue("driveBack")
-                        + keyboard.getValue("driveForward")
-                        + gamepad.getValue("drive")
-                        + touch.getValue("drive");
-                }
-                if(tx || tz){
-                    len = SPEED * Math.min(1, 1 / Math.sqrt(tz * tz + tx * tx));
+        if(bears[userName].position.y < -0.5){
+            bears[userName].velocity.multiplyScalar(0.925);
+        }
 
-                    if(bears[userName] && !bears[userName].animation.isPlaying){
-                        bears[userName].animation.play();
+        //
+        // update audio
+        //
+        testPoint.copy(bears[userName].position);
+        testPoint.divideScalar(10);
+        audio3d.setPosition(testPoint.x, testPoint.y, testPoint.z);
+        audio3d.setVelocity(bears[userName].velocity.x, bears[userName].velocity.y, bears[userName].velocity.z);
+        testPoint.normalize();
+        audio3d.setOrientation(testPoint.x, testPoint.y, testPoint.z, 0, 1, 0);
+
+        //
+        // place the skybox centered to the camera
+        //
+        skyboxRotation.set(t*0.00001, 0, 0, "XYZ");
+        mainScene.Skybox.position.copy(bears[userName].position);
+        mainScene.Skybox.setRotationFromEuler(skyboxRotation);
+
+        //
+        // update avatars
+        //
+        for(var key in bears){
+            var bear = bears[key];
+            testPoint.copy(bear.velocity);
+            testPoint.multiplyScalar(dt);
+            bear.position.add(testPoint);
+            bear.heading += bear.dHeading * dt;
+            bear.rotation.set(0, bear.heading, 0, "XYZ");
+            if(key !== userName){ 
+                // we have to offset the rotation of the name so the user
+                // can read it.
+                bear.nameObj.rotation.set(0, bears[userName].heading - bear.heading, 0, "XYZ");
+            }
+        }
+
+        //
+        // send a network update of the user's position, if it's been enough 
+        // time since the last update (don't want to flood the server).
+        //
+        frame += dt;
+        if(frame > dFrame){
+            frame -= dFrame;
+            var state = {
+                x: bears[userName].position.x,
+                y: bears[userName].position.y,
+                z: bears[userName].position.z,
+                dx: bears[userName].velocity.x,
+                dy: bears[userName].velocity.y,
+                dz: bears[userName].velocity.z,
+                heading: bears[userName].heading,
+                dHeading: (bears[userName].heading - bears[userName].lastHeading) / dFrame,
+                isRunning: bears[userName].velocity.length() > 0
+            };
+            bears[userName].lastHeading = bears[userName].heading;
+            socket.emit("userState", state);
+        }
+
+        //
+        // update the camera
+        //
+        orientation.set(pitch, bears[userName].heading, roll, "YZX");
+        camera.rotation.copy(orientation);
+        camera.position.copy(bears[userName].position);
+        camera.position.y += PLAYER_HEIGHT;
+
+        //
+        // place pointer
+        //
+        direction.set(0, 0, -4)
+            .applyAxisAngle(RIGHT, -pitch)
+            .applyAxisAngle(camera.up, bears[userName].heading);
+        testPoint.copy(bears[userName].position);
+        testPoint.y += PLAYER_HEIGHT;
+        pointer.position.copy(testPoint);
+        pointer.position.add(direction);
+        direction.normalize();
+        raycaster.set(testPoint, direction);
+        raycaster.far = 7;
+        var intersections = raycaster.intersectObject(scene, true);
+        if(currentButton){
+            var btn = mainScene[currentButton];
+            btn.position.y = btn.originalY;
+            btn.children[0].material.materials[0].color.g = 0;
+            btn.children[0].material.materials[0].color.r = 0.5;
+            currentButton = null;
+        }
+        for(var i = 0; i < intersections.length; ++i){
+            var inter = intersections[i];
+            if(inter.object.parent.isSolid || inter.object.parent.isButton){
+                pointer.position.copy(inter.point);
+
+                if(inter.object.parent.isButton){
+                    currentButton = inter.object.parent.name;
+                    var btn = mainScene[currentButton];
+                    btn.originalY = btn.position.y;
+                    if(pointer.visible){
+                        btn.position.y = btn.originalY - 0.05;
                     }
-                }
-                else{
-                    len = 0;
-                    if(bears[userName] && bears[userName].animation.isPlaying){
-                        bears[userName].animation.stop();
-                    }
-                }
-
-                tx *= len;
-                tz *= len;
-                len = tx * Math.cos(heading) + tz * Math.sin(heading);
-                tz = tz * Math.cos(heading) - tx * Math.sin(heading);
-                tx = len;
-                velocity.x = velocity.x * 0.9 + tx * 0.1;
-                velocity.z = velocity.z * 0.9 + tz * 0.1;
-            }
-
-            pitch = pitch * TRACKING_SCALE + (
-                head.getValue("pitch")
-                + mouse.getValue("pitch")
-                + gamepad.getValue("pitch")) * TRACKING_SCALE_COMP;
-
-            heading = heading * TRACKING_SCALE + (
-                head.getValue("heading")
-                + touch.getValue("heading")
-                + mouse.getValue("heading")
-                + gamepad.getValue("heading")) * TRACKING_SCALE_COMP;
-
-            roll = roll * TRACKING_SCALE + head.getValue("roll") * TRACKING_SCALE_COMP;
-            
-            //
-            // place pointer
-            //
-            direction.set(0, 0, -4)
-                .applyAxisAngle(RIGHT, -pitch)
-                .applyAxisAngle(camera.up, heading);
-            testPoint.copy(location);
-            testPoint.y += PLAYER_HEIGHT;
-            pointer.position.copy(testPoint);
-            pointer.position.add(direction);
-            direction.normalize();
-            raycaster.set(testPoint, direction);
-            raycaster.far = 7;
-            var intersections = raycaster.intersectObject(scene, true);
-            if(currentButton){
-                var btn = mainScene[currentButton];
-                btn.position.y = btn.originalY;
-                btn.children[0].material.materials[0].color.g = 0;
-                btn.children[0].material.materials[0].color.r = 0.5;
-                currentButton = null;
-            }
-            for(var i = 0; i < intersections.length; ++i){
-                var inter = intersections[i];
-                if(inter.object.parent.isSolid || inter.object.parent.isButton){
-                    pointer.position.copy(inter.point);
-
-                    if(inter.object.parent.isButton){
-                        currentButton = inter.object.parent.name;
-                        var btn = mainScene[currentButton];
-                        btn.originalY = btn.position.y;
-                        if(pointer.visible){
-                            btn.position.y = btn.originalY - 0.05;
-                        }
-                        inter.object.material.materials[0].color.g = 0.5;
-                        inter.object.material.materials[0].color.r = 0.0;
-                        break;
-                    }
+                    inter.object.material.materials[0].color.g = 0.5;
+                    inter.object.material.materials[0].color.r = 0.0;
+                    break;
                 }
             }
-            
-            //
-            // do collision detection
-            //
-            var len = velocity.length() * dt;
-            direction.copy(velocity);
-            direction.normalize();
-            raycaster.set(location, direction);
-            raycaster.far = len * 2;
-            intersections = raycaster.intersectObject(scene, true);
-            for(var i = 0; i < intersections.length; ++i){
-                var inter = intersections[i];
-                if(inter.object.parent.isSolid
-                    && inter.distance < len){
-                    testPoint.copy(inter.face.normal);
-                    testPoint.applyEuler(inter.object.parent.rotation);
-                    velocity.reflect(testPoint);
-                }
-            }
-            
-            if(location.y < -0.5){
-                velocity.multiplyScalar(0.925);
-            }
-            
-            //
-            // update audio
-            //
-            testPoint.copy(location);
-            testPoint.divideScalar(10);
-            audio3d.setPosition(testPoint.x, testPoint.y, testPoint.z);
-            audio3d.setVelocity(velocity.x, velocity.y, velocity.z);
-            testPoint.normalize();
-            audio3d.setOrientation(testPoint.x, testPoint.y, testPoint.z, 0, 1, 0);
-            
-            //
-            // update the camera
-            //
-            orientation.set(pitch, heading, roll, "YZX");
-            camera.rotation.copy(orientation);
-            
-            testPoint.copy(velocity).multiplyScalar(dt);
-            location.add(testPoint);
-            camera.position.copy(location);
-            camera.position.y += PLAYER_HEIGHT;
-            
-            //
-            // place the skybox centered to the camera
-            //
-            skyboxRotation.set(t*0.00001, 0, 0, "XYZ");
-            mainScene.Skybox.position.copy(location);
-            mainScene.Skybox.setRotationFromEuler(skyboxRotation);
+        }
 
-            //
-            // send a network update of the user's position, if it's been enough 
-            // time since the last update (don't want to flood the server).
-            //
-            frame += dt;
-            if(userName && frame > dFrame){
-                frame -= dFrame;
-                var state = {
-                    x: location.x,
-                    y: location.y,
-                    z: location.z,
-                    dx: velocity.x,
-                    dy: velocity.y,
-                    dz: velocity.z,
-                    heading: heading,
-                    dheading: (heading - lastHeading) / dFrame,
-                    isRunning: Math.abs(velocity.x + velocity.y + velocity.z) > 1
-                };
-                lastHeading = heading;
-                socket.emit("userState", state);
-            }
-
-            //
-            // update avatars
-            //
-            for(var key in bears){
-                var bear = bears[key];
-                if(key === userName){
-                    bear.rotation.set(0, heading, 0, "XYZ");
-                    bear.position.copy(location);
-                }
-                else if(bear.dx || bear.dx || bear.dz){
-                    bear.position.x += bear.dx * dt;
-                    bear.position.y += bear.dy * dt;
-                    bear.position.z += bear.dz * dt;
-                    bear.heading += bear.dheading * dt;
-                    // we have to offset the rotation of the name so the user
-                    // can read it.
-                    bear.rotation.set(0, bear.heading, 0, "XYZ");
-                    bear.nameObj.rotation.set(0, heading - bear.heading, 0, "XYZ");
-                }
-            }
-            
-            //
-            // draw
-            //
-            if (effect){
-                effect.render(scene, camera);
-            }
-            else {
-                renderer.render(scene, camera);
-            }
+        //
+        // draw
+        //
+        if (effect){
+            effect.render(scene, camera);
+        }
+        else {
+            renderer.render(scene, camera);
         }
     }
 
@@ -550,8 +544,8 @@ function postScriptLoad(progress){
     }
 
     function jump(){
-        if (onground || location.y < -0.5){
-            velocity.y = 10;
+        if (onground || bears[userName].position.y < -0.5){
+            bears[userName].velocity.y = 10;
             onground = false;
         }
     }
@@ -646,23 +640,6 @@ function postScriptLoad(progress){
         }
     }
 
-    function updateUserState(userState){
-        var bear = bears[userState.userName];
-        if(bear){
-            bear.dx = ((userState.x + userState.dx * dFrame) - bear.position.x) / dFrame;
-            bear.dy = ((userState.y - PLAYER_HEIGHT + userState.dy * dFrame) - bear.position.y) / dFrame;
-            bear.dz = ((userState.z + userState.dz * dFrame) - bear.position.z) / dFrame;
-            bear.dheading = ((userState.heading + userState.dheading * dFrame) - bear.heading) / dFrame;
-            //
-            if(!bear.animation.isPlaying && userState.isRunning){
-                bear.animation.play();
-            }
-            else if(bear.animation.isPlaying && !userState.isRunning){
-                bear.animation.stop();
-            }
-        }
-    }
-
     function reload(){
         if (isFullScreenMode()){
             document.location = document.location.href;
@@ -673,6 +650,26 @@ function postScriptLoad(progress){
         }
     }
 
+    function updateUserState(userState, firstTime){
+        var bear = bears[userState.userName];
+        if(!bear){
+            addUser(userState);
+        }
+        else{
+            if(firstTime){
+                bear.position.set(userState.x, userState.y, userState.z);
+                bear.heading = userState.heading;
+            }
+            else{
+                bear.velocity.set(
+                    ((userState.x + userState.dx * dFrame) - bear.position.x) / dFrame,
+                    ((userState.y - PLAYER_HEIGHT + userState.dy * dFrame) - bear.position.y) / dFrame,
+                    ((userState.z + userState.dz * dFrame) - bear.position.z) / dFrame);
+                bear.dHeading = ((userState.heading + userState.dHeading * dFrame) - bear.heading) / dFrame;
+            }
+        }
+    }
+
     function addUser(userState){
         var bear = new THREE.Object3D();
         var model = bearModel.clone(userState.userName, socket);
@@ -680,19 +677,20 @@ function postScriptLoad(progress){
         bear.animation = model.animation;
         bear.add(model);
         bear.heading = userState.heading;
-        scene.add(bear);
         bear.nameObj = new VUI.Text(
             userState.userName, 0.5,
             "white", "transparent",
             0, PLAYER_HEIGHT + 2.5, 0, 
             "center");
         bear.add(bear.nameObj);
+        bear.velocity = new THREE.Vector3();
 
         if(userState.userName !== userName){
             msg("user joined: " + userState.userName);
         }
-        updateUserState(userState);
         bears[userState.userName] = bear;
+        updateUserState(userState, true);
+        scene.add(bear);
     }
     
     function userLeft(userName){
@@ -703,44 +701,9 @@ function postScriptLoad(progress){
         }
     }
     
-    function copyBearToUser(bear){
-        if(bear.x !== undefined
-            && bear.y !== undefined
-            && bear.z !== undefined){
-            location.set(bear.x, bear.y, bear.z);
-        }
-        if(bear.dx !== undefined
-            && bear.dy !== undefined
-            && bear.dz !== undefined){
-            velocity.set(bear.dx, bear.dy, bear.dz);
-        }
-        if(bear.heading !== undefined){
-            heading = bear.heading;
-        }
-    }
-    
     function listUsers(users){
-        var userFound = false;
         for(var i = 0; i < users.length; ++i){
-            userFound = userFound || users[i].userName === userName;
             addUser(users[i]);
-        }
-        if(userFound){
-            copyBearToUser(bears[userName]);            
-        }
-        else{
-            addUser({
-                userName: userName,
-                x: location.x,
-                y: location.y,
-                z: location.z,
-                dx: velocity.x,
-                dy: velocity.y,
-                dz: velocity.z,
-                heading: heading,
-                dheading: dheading,
-                isRunning: !!Math.abs(velocity.x + velocity.y + velocity.z)
-            });
         }
         msg("You are now connected to the device server.");
     }
@@ -768,7 +731,7 @@ function postScriptLoad(progress){
     window.addEventListener("beforeunload", shutdown, false);
 
     head = new MotionInput("head", null, [
-        { name: "heading", axes: [-MotionInput.HEADING] },
+        { name: "dheading", axes: [-MotionInput.DHEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] }
     ], socket, oscope);
@@ -778,13 +741,13 @@ function postScriptLoad(progress){
         { axis: MouseInput.DY, scale: 0.4 },
         { axis: MouseInput.IY, min: -2, max: 1.3 }
     ], [
-        { name: "heading", axes: [-MouseInput.IX] },
+        { name: "dheading", axes: [-MouseInput.DX] },
         { name: "pitch", axes: [-MouseInput.IY]},
         { name: "fire", buttons: [1], commandDown: showPointer, commandUp: fireButton }
     ], socket, oscope, renderer.domElement);
 
     touch = new TouchInput("touch", null, null, [
-        { name: "heading", axes: [TouchInput.IX0] },
+        { name: "dheading", axes: [TouchInput.DX0] },
         { name: "drive", axes: [-TouchInput.DY0] }
     ], socket, oscope, renderer.domElement);
 
@@ -808,7 +771,7 @@ function postScriptLoad(progress){
     ], [
         { name: "strafe", axes: [GamepadInput.LSX]},
         { name: "drive", axes: [GamepadInput.LSY]},
-        { name: "heading", axes: [-GamepadInput.RSX]},
+        { name: "dheading", axes: [-GamepadInput.RSX]},
         { name: "pitch", axes: [GamepadInput.IRSY]},
         { name: "jump", buttons: [1], commandDown: jump, dt: 0.250 },
         { name: "fire", buttons: [2], commandDown: showPointer, commandUp: fireButton },
@@ -904,5 +867,5 @@ function postScriptLoad(progress){
     setSize(window.innerWidth, window.innerHeight);
 
     toggleOptions();
-    requestAnimationFrame(animate);
+    requestAnimationFrame(waitForResources);
 }

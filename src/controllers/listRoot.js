@@ -23,14 +23,14 @@ module.exports = {
                     })
                 )
                 .map(function(file){
-                    return fmt("<li><a href=\"$1\">$1</a></li>", file);
+                    return fmt("<a class=\"button\" href=\"$1\" style=\"width:100%\">$2</a><br>", file, file.replace(".html", ""));
                 })
                 .join("");
 
                 master.build(sendData, serverError, 
                     "src/templates/master.html", 
                     "Root file list", 
-                    fmt("<section><h1>JSVR</h1><p>Virtual reality-related HTML5 and JavaScript demos</p><ul>$1</ul></div>", paths));
+                    fmt("<section><h1>JSVR</h1><p>Virtual reality-related HTML5 and JavaScript demos</p><p>$1</p></div>", paths));
             }
         });
     }
