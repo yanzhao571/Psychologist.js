@@ -304,7 +304,9 @@ function postScriptLoad(progress){
         var len = bears[userName].velocity.length() * dt;
         direction.copy(bears[userName].velocity);
         direction.normalize();
-        raycaster.set(bears[userName].position, direction);
+        testPoint.copy(bears[userName].position);
+        testPoint.y += 1;
+        raycaster.set(testPoint, direction);
         raycaster.far = len;// * 2;
         intersections = raycaster.intersectObject(scene, true);
         for(var i = 0; i < intersections.length; ++i){
