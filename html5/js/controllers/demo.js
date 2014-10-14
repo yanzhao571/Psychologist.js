@@ -272,20 +272,18 @@ function postScriptLoad(progress){
         pitch = head.getValue("pitch") 
             + mouse.getValue("pitch");
         roll = head.getValue("roll");
+        strafe = keyboard.getValue("strafeRight")
+            + keyboard.getValue("strafeLeft")
+            + gamepad.getValue("strafe");
+        drive = keyboard.getValue("driveBack")
+            + keyboard.getValue("driveForward")
+            + gamepad.getValue("drive")
+            + touch.getValue("drive");
         
         if(onground || bears[userName].position.y < -0.5){                
             if(autoWalking){
                 strafe = 0;
                 drive = -0.5;
-            }
-            else{
-                strafe = keyboard.getValue("strafeRight")
-                    + keyboard.getValue("strafeLeft")
-                    + gamepad.getValue("strafe");
-                drive = keyboard.getValue("driveBack")
-                    + keyboard.getValue("driveForward")
-                    + gamepad.getValue("drive")
-                    + touch.getValue("drive");
             }
             if(strafe || drive){
                 len = SPEED * Math.min(1, 1 / Math.sqrt(drive * drive + strafe * strafe));
