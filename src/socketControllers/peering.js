@@ -42,16 +42,18 @@ module.exports = {
             
             ["offer", "answer", "ice"].forEach(function(o){
                 socket.on(o, function(obj){
-                    forOthers(function(skt){
-                        skt.emit(o, obj);
-                    });
+                    sockets[obj.toIndex].emit(o, obj);
                 });
             });
             
             sockets.push(socket);
             
-            forAll(function(skt){
-                skt.emit("user", sockets.length);
+            forOthers(function(skt, i){
+                skt.emit("user", i, sockets.length - 1);
+            });
+            
+            forOthers(function(skt, i){
+                socket.emit("user", sockets.length - 1, i);
             });
             
             log("CONNECT: currently " + sockets.length + " connections for " + name);
