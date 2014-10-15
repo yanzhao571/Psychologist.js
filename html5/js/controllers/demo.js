@@ -11,7 +11,6 @@ var isDebug = false, isLocal = document.location.hostname === "localhost",
         "lib/droid_sans_regular.typeface.js",
         "/socket.io/socket.io.js",
         "js/oscope/oscope.client.js",
-        "js/WebRTCSocket.js",
         "js/ModelLoader.js",
         "js/input/NetworkedInput.js",
         "js/input/ButtonAndAxisInput.js",
@@ -164,8 +163,7 @@ function postScriptLoad(progress){
         pointer = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 2), new THREE.MeshBasicMaterial({
             color: 0xffff00
         })),
-        repeater = new SpeechOutput.Character(),
-        proxy = null;
+        repeater = new SpeechOutput.Character();
 
     tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
@@ -173,16 +171,6 @@ function postScriptLoad(progress){
     pointer.visible = false;
     writeForm(ctrls, formState);
     oscope.connect();
-    console.log("socket", socket);
-    proxy = new WebRTCSocket(socket, ctrls.defaultDisplay.checked);
-    
-    if(ctrls.defaultDisplay.checked){
-        socket.on("userJoin", addUser);
-        socket.on("userState", updateUserState);
-        socket.on("typing", showTyping.bind(window, false, false));
-        socket.on("chat", showChat);
-        socket.on("userLeft", userLeft);
-    }
     
     socket.on("handshakeFailed", console.warn.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
     socket.on("handshakeComplete", function(controller){
@@ -192,6 +180,11 @@ function postScriptLoad(progress){
     });
     socket.on("loginFailed", msg.bind(window, "Incorrect user name or password!"));
     socket.on("userList", listUsers);
+    socket.on("userJoin", addUser);
+    socket.on("userState", updateUserState);
+    socket.on("typing", showTyping.bind(window, false, false));
+    socket.on("chat", showChat);
+    socket.on("userLeft", userLeft);
     socket.on("disconnect", msg.bind(window));
     socket.emit("handshake", "demo");
     
@@ -720,7 +713,7 @@ function postScriptLoad(progress){
     function addUser(userState){
         var bear = new THREE.Object3D();
         bears[userState.userName] = bear;
-        var model = bearModel.clone(userState.userName);
+        var model = bearModel.clone(userState.userName, socket);
         bear.animation = model.animation;
         model.position.z = 1.33;
         bear.add(model);
@@ -746,7 +739,6 @@ function postScriptLoad(progress){
     }
     
     function listUsers(users){
-        proxy.connect(userName);
         users.sort(function(a){ return (a.userName === userName) ? -1 : 1;});
         for(var i = 0; i < users.length; ++i){
             addUser(users[i]);
@@ -778,7 +770,7 @@ function postScriptLoad(progress){
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] }
-    ], proxy, oscope);
+    ], socket, oscope);
 
     mouse = new MouseInput("mouse", [
         { axis: MouseInput.DX, scale: 0.4 },
@@ -788,12 +780,12 @@ function postScriptLoad(progress){
         { name: "heading", axes: [-MouseInput.IX] },
         { name: "pitch", axes: [-MouseInput.IY]},
         { name: "fire", buttons: [1], commandDown: showPointer, commandUp: fireButton }
-    ], proxy, oscope, renderer.domElement);
+    ], socket, oscope, renderer.domElement);
 
     touch = new TouchInput("touch", null, null, [
         { name: "heading", axes: [TouchInput.IX0] },
         { name: "drive", axes: [-TouchInput.DY0] }
-    ], proxy, oscope, renderer.domElement);
+    ], socket, oscope, renderer.domElement);
 
     keyboard = new KeyboardInput("keyboard", [
         { name: "strafeLeft", buttons: [-KeyboardInput.A, -KeyboardInput.LEFTARROW] },
@@ -804,7 +796,7 @@ function postScriptLoad(progress){
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: showPointer, commandUp: fireButton },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 1 },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
-    ], proxy, oscope);
+    ], socket, oscope);
 
     gamepad = new GamepadInput("gamepad", [
         { axis: GamepadInput.LSX, deadzone: 0.2},
@@ -818,13 +810,13 @@ function postScriptLoad(progress){
         { name: "jump", buttons: [1], commandDown: jump, dt: 0.5 },
         { name: "fire", buttons: [2], commandDown: showPointer, commandUp: fireButton },
         { name: "options", buttons: [9], commandUp: toggleOptions }
-    ], proxy, oscope);
+    ], socket, oscope);
 
     speech = new SpeechInput("speech", [
         { name: "jump", keywords: ["jump"], commandUp: jump },
         { name: "options", keywords: ["options"], commandUp: toggleOptions },
         { name: "chat", preamble: true, keywords: ["message"], commandUp: speechChat }
-    ], proxy, oscope);
+    ], socket, oscope);
 
     gamepad.addEventListener("gamepadconnected", function (id){
         if (!gamepad.isGamepadSet() && ask(fmt("Would you like to use this gamepad? \"$1\"", id), true)){
@@ -906,6 +898,7 @@ function postScriptLoad(progress){
     document.body.insertBefore(renderer.domElement, document.body.firstChild);
     renderer.domElement.setAttribute("tabindex", 0);
     setSize(window.innerWidth, window.innerHeight);
+
     toggleOptions();    
     showHideControls();
     requestAnimationFrame(waitForResources);

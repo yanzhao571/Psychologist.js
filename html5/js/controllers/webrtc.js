@@ -8,11 +8,11 @@ include(0,
     
 function webRTCTest() {
     var ctrls = findEverything(),
-        sock = new WebRTCSocket(document.location.hostname, 
+        sock = new WebRTCSocket(document.location.hostname, "webrtc-demo", 
             confirm("mesh?")
                 ? undefined
                 : confirm("hub?"));
-    
+
     function showMessage(msg) {
         var div = document.createElement("div");
         div.appendChild(document.createTextNode(msg));
@@ -35,6 +35,4 @@ function webRTCTest() {
     });
     
     sock.on("chat", showMessage);
-    
-    sock.connect("webrtc-demo");
 }
