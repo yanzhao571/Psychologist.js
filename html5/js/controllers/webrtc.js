@@ -1,61 +1,87 @@
-var peers = [],
-    channels = [],
-    myIndex = null;
-
 include(0,
     ["/socket.io/socket.io.js",
     "js/input/NetworkedInput.js",
     "js/input/ButtonAndAxisInput.js",
     "js/input/KeyboardInput.js"],
     webRTCTest);
-
-function webRTCTest() {
-    var ctrls = findEverything(),
-        socket = io.connect(document.location.hostname, {
-            "reconnect": true,
-            "reconnection delay": 1000,
-            "max reconnection attempts": 60
-        });
-
-    function showMessage(msg) {
-        var div = document.createElement("div");
-        div.appendChild(document.createTextNode(msg));
-        ctrls.output.appendChild(div);
-        return div;
-    }
+    
+    
+    
+ function WebRTCSocket(proxyServer){
+    var socket = io.connect(proxyServer, {
+        "reconnect": true,
+        "reconnection delay": 1000,
+        "max reconnection attempts": 60
+    }),
+        peers = [],
+        channels = [],
+        listeners = {},
+        myIndex = null;
 
     function setChannelEvents(index) {
         channels[index].addEventListener("message", function (evt) {
-            showMessage(fmt("< ($1): $2", index, evt.data));
+            var args = JSON.parse(evt.data),
+                key = args.shift();
+            if(listeners[key]){
+                for(var i = 0; i < listeners[key].length; ++i){
+                    var l = listeners[key][i];
+                    if(l){
+                        l.apply(this, args);
+                    }
+                }
+            }
         }, false);
+        
         channels[index].addEventListener("open", function () {
-            ctrls.input.disabled = false;
+            if(listeners.open){
+                for(var i = 0; i < listeners.open.length; ++i){
+                    var l = listeners.open[i];
+                    if(l){
+                        l.call(this);
+                    }
+                }
+            }
         }, false);
 
         function closer() {
             channels[index] = null;
             peers[index] = null;
-            ctrls.input.disabled = (filter(channels, function (c) {
+            var closed = (filter(channels, function (c) {
                 return c;
             }).length === 0);
+            if(closed && listeners.close){
+                for(var i = 0; i < listeners.close.length; ++i){
+                    var l = listeners.close[i];
+                    if(l){
+                        l.call(this);
+                    }
+                }                
+            }
         }
 
         channels[index].addEventListener("error", closer, false);
         channels[index].addEventListener("close", closer, false);
     }
-
-    ctrls.input.addEventListener("change", function () {
+    
+    this.on = function(evt, thunk){
+        if(!listeners[evt]){
+            listeners[evt] = [];
+        }
+        listeners[evt].push(thunk);
+    };
+    
+    this.emit = function(){
+        var data = JSON.stringify(arr(arguments));
+        
         for (var i = 0; i < channels.length; ++i) {
             var channel = channels[i];
             if (channel && channel.readyState === "open") {
-                channel.send(ctrls.input.value);
+                channel.send(data);
             }
         }
-        showMessage(fmt("> ($1): $2", myIndex, ctrls.input.value));
-        ctrls.input.value = "";
-    }, false);
-
-    window.addEventListener("unload", function () {
+    };
+    
+    this.close = function(){
         channels.forEach(function(channel){
             if (channel && channel.readyState === "open") {
                 channel.close();
@@ -63,11 +89,13 @@ function webRTCTest() {
         });
         peers.forEach(function(peer){
             if(peer){
-                console.log(peer);
                 peer.close();
             }
         });
-    });
+    };   
+
+    window.addEventListener("unload", this.close.bind(this));   
+    
 
     socket.on("connect", function () {
         socket.emit("handshake", "peer");
@@ -78,7 +106,7 @@ function webRTCTest() {
             socket.emit("joinRequest", "webrtc-demo");
         }
     });
-
+    
     socket.on("user", function (index, theirIndex) {
         try {
             if (myIndex === null) {
@@ -168,4 +196,32 @@ function webRTCTest() {
             console.error(exp);
         }
     });
+ }
+
+function webRTCTest() {
+    var ctrls = findEverything(),
+        sock = new WebRTCSocket(document.location.hostname);
+
+    function showMessage(msg) {
+        var div = document.createElement("div");
+        div.appendChild(document.createTextNode(msg));
+        ctrls.output.appendChild(div);
+        return div;
+    }
+
+    ctrls.input.addEventListener("change", function () {
+        sock.emit("chat", ctrls.input.value);
+        showMessage(fmt(">: $1", ctrls.input.value));
+        ctrls.input.value = "";
+    }, false);
+
+    sock.on("open", function(){
+        ctrls.input.disabled = false;
+    });
+    
+    sock.on("closed", function(){
+       ctrls.input.disabled = true; 
+    });
+    
+    sock.on("chat", showMessage);
 }
