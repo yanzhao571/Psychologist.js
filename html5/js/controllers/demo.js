@@ -259,6 +259,10 @@ function postScriptLoad(progress){
         pitch = head.getValue("pitch") 
             + mouse.getValue("pitch");
         roll = head.getValue("roll");
+        heading = head.getValue("heading")
+                + touch.getValue("heading")
+                + mouse.getValue("heading")
+                + startHeading;
         if(ctrls.defaultDisplay.checked){
             THREE.AnimationHandler.update(dt);
 
@@ -266,11 +270,7 @@ function postScriptLoad(progress){
             // update user position and view
             //
 
-            bears[userName].dHeading = (head.getValue("heading")
-                + touch.getValue("heading")
-                + mouse.getValue("heading")
-                + startHeading
-                - bears[userName].heading) / dt;
+            bears[userName].dHeading = (heading - bears[userName].heading) / dt;
             strafe = keyboard.getValue("strafeRight")
                 + keyboard.getValue("strafeLeft")
                 + gamepad.getValue("strafe");
@@ -462,7 +462,7 @@ function postScriptLoad(progress){
         //
         // update the camera
         //
-        orientation.set(pitch, bears[userName].heading, roll, "YZX");
+        orientation.set(pitch, heading, roll, "YZX");
         camera.rotation.copy(orientation);
         camera.position.copy(bears[userName].position);
         camera.position.y += PLAYER_HEIGHT;
