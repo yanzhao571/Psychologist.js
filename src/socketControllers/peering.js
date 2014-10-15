@@ -28,13 +28,12 @@ module.exports = {
             }
             
             function removeSocket(){                
-                for(var i = sockets.length - 1; i >= 0; --i){
+                for(var i = 0; i < sockets.length; ++i){
                     if(sockets[i] === socket){
-                        sockets.splice(i, 1);
+                        sockets[i] = null;
                         break;
                     }
                 }
-                log("DISCONNECT: currently " + sockets.length + " connections for " + name);
             }
             
             socket.on("error", removeSocket);
@@ -46,17 +45,19 @@ module.exports = {
                 });
             });
             
-            sockets.push(socket);
+            var index;
+            for(index = 0; index < sockets.length; ++index){
+                if(!sockets[index]){
+                    break;
+                }
+            }
+            
+            sockets[index] = socket;
             
             forOthers(function(skt, i){
-                skt.emit("user", i, sockets.length - 1);
+                skt.emit("user", i, index);
+                socket.emit("user", index, i);
             });
-            
-            forOthers(function(skt, i){
-                socket.emit("user", sockets.length - 1, i);
-            });
-            
-            log("CONNECT: currently " + sockets.length + " connections for " + name);
         });
     }
 };
