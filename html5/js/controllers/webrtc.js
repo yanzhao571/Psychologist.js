@@ -1,21 +1,21 @@
 var peers = [],
-        channels = [],
-        myIndex = null;
+    channels = [],
+    myIndex = null;
 
 include(0,
-        ["/socket.io/socket.io.js",
-            "js/input/NetworkedInput.js",
-            "js/input/ButtonAndAxisInput.js",
-            "js/input/KeyboardInput.js"],
-        webRTCTest);
+    ["/socket.io/socket.io.js",
+    "js/input/NetworkedInput.js",
+    "js/input/ButtonAndAxisInput.js",
+    "js/input/KeyboardInput.js"],
+    webRTCTest);
 
 function webRTCTest() {
     var ctrls = findEverything(),
-            socket = io.connect(document.location.hostname, {
-                "reconnect": true,
-                "reconnection delay": 1000,
-                "max reconnection attempts": 60
-            });
+        socket = io.connect(document.location.hostname, {
+            "reconnect": true,
+            "reconnection delay": 1000,
+            "max reconnection attempts": 60
+        });
 
     function showMessage(msg) {
         var div = document.createElement("div");
@@ -25,7 +25,6 @@ function webRTCTest() {
     }
 
     function setChannelEvents(index) {
-        console.log(channels[index]);
         channels[index].addEventListener("message", function (evt) {
             showMessage(fmt("< ($1): $2", index, evt.data));
         }, false);
@@ -33,7 +32,7 @@ function webRTCTest() {
             ctrls.input.disabled = false;
         }, false);
 
-        function closer(name) {
+        function closer() {
             channels[index] = null;
             peers[index] = null;
             ctrls.input.disabled = (filter(channels, function (c) {
@@ -41,8 +40,8 @@ function webRTCTest() {
             }).length === 0);
         }
 
-        channels[index].addEventListener("error", closer.bind(this, "errored"), false);
-        channels[index].addEventListener("close", closer.bind(this, "closed"), false);
+        channels[index].addEventListener("error", closer, false);
+        channels[index].addEventListener("close", closer, false);
     }
 
     ctrls.input.addEventListener("change", function () {
