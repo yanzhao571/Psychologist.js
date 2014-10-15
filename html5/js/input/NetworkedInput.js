@@ -24,8 +24,9 @@ function NetworkedInput(name, commands, socket, oscope){
     window.addEventListener("keyup", readMetaKeys.bind(this), false);
 
     if(socket){
-        socket.on("userList", function(){
+        socket.on("open", function(){
             this.socketReady = true;
+            this.inPhysicalUse = !this.receiving;
         }.bind(this));
         socket.on(name, function(cmdState){
             if(this.receiving){
@@ -34,17 +35,9 @@ function NetworkedInput(name, commands, socket, oscope){
                 this.fireCommands();
             }
         }.bind(this));
-        socket.on("deviceLost", function(name){
-            if(this.name === name){
-                this.inPhysicalUse = true;
-                this.socketReady = false;
-            }
-        }.bind(this));
-        socket.on("deviceAdded", function(name){
-            if(this.name === name){
-                this.inPhysicalUse = false;
-                this.socketReady = true;
-            }
+        socket.on("close", function(){
+            this.inPhysicalUse = true;
+            this.socketReady = false;
         }.bind(this));
     }
 

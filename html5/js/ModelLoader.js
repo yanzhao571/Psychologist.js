@@ -64,9 +64,8 @@ ModelLoader.loadCollada = function(src, progress, success){
     });
 };
 
-ModelLoader.prototype.clone = function(userName, socket){
+ModelLoader.prototype.clone = function(userName){
     var obj = this.template.clone();
-    this.socket = socket;
                 
     obj.traverse(function(child){
         if (child instanceof THREE.SkinnedMesh ){
