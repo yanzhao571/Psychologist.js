@@ -1,4 +1,4 @@
-function WebRTCSocket(proxyServer, connectionKey){
+function WebRTCSocket(proxyServer, connectionKey, isStarHub){
     var socket = io.connect(proxyServer, {
         "reconnect": true,
         "reconnection delay": 1000,
@@ -147,7 +147,7 @@ function WebRTCSocket(proxyServer, connectionKey){
                     }
                 });
 
-                if (myIndex < theirIndex) {
+                if (isStarHub === true || (isStarHub === undefined && myIndex < theirIndex)) {
                     var channel = peer.createDataChannel("data-channel-" + myIndex + "-to-" + theirIndex, {
                         id: myIndex,
                         ordered: false,
@@ -164,7 +164,7 @@ function WebRTCSocket(proxyServer, connectionKey){
 
                     peer.createOffer(descriptionCreated, console.error.bind(console, "createOffer error"));
                 }
-                else {
+                else if(isStarHub === false || (isStarHub === undefined && myIndex > theirIndex)) {
                     peer.addEventListener("datachannel", function (evt) {
                         if (evt.channel.id === theirIndex) {
                             channels[evt.channel.id] = evt.channel;
