@@ -1,13 +1,24 @@
-function WebRTCSocket(proxyServer, connectionKey, isStarHub){
-    var socket = io.connect(proxyServer, {
-        "reconnect": true,
-        "reconnection delay": 1000,
-        "max reconnection attempts": 60
-    }),
+function WebRTCSocket(proxyServer, isStarHub){
+    var socket,
         peers = [],
         channels = [],
         listeners = {},
         myIndex = null;
+
+    if(typeof(proxyServer) === "string"){
+        socket = io.connect(proxyServer, {
+            "reconnect": true,
+            "reconnection delay": 1000,
+            "max reconnection attempts": 60
+        });
+    }
+    else if(proxyServer && proxyServer.on && proxyServer.emit){
+        socket = proxyServer;
+    }
+    else{
+        console.error("proxy error", socket);
+        throw new Error("need a socket");
+    }
 
     function setChannelEvents(index) {
         
@@ -64,7 +75,6 @@ function WebRTCSocket(proxyServer, connectionKey, isStarHub){
     
     this.emit = function(){
         var data = JSON.stringify(arr(arguments));
-        
         for (var i = 0; i < channels.length; ++i) {
             var channel = channels[i];
             if (channel && channel.readyState === "open") {
@@ -89,15 +99,15 @@ function WebRTCSocket(proxyServer, connectionKey, isStarHub){
     window.addEventListener("unload", this.close.bind(this));   
     
 
-    socket.on("connect", function () {
+    this.connect = function(connectionKey){
         socket.emit("handshake", "peer");
-    });
 
-    socket.on("handshakeComplete", function (name) {
-        if (name === "peer") {
-            socket.emit("joinRequest", connectionKey);
-        }
-    });
+        socket.on("handshakeComplete", function (name) {
+            if (name === "peer") {
+                socket.emit("joinRequest", connectionKey);
+            }
+        });
+    };
     
     socket.on("user", function (index, theirIndex) {
         try {
@@ -146,7 +156,6 @@ function WebRTCSocket(proxyServer, connectionKey, isStarHub){
                         peers[theirIndex].addIceCandidate(new RTCIceCandidate(ice));
                     }
                 });
-
                 if (isStarHub === true || (isStarHub === undefined && myIndex < theirIndex)) {
                     var channel = peer.createDataChannel("data-channel-" + myIndex + "-to-" + theirIndex, {
                         id: myIndex,

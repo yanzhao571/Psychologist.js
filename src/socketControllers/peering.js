@@ -5,7 +5,6 @@ var users = {};
 module.exports = {
     handshake: "peer",
     bindSocket: function(socket){
-        log("new peering request.");
         socket.on("joinRequest", function(name){
             if(users[name] === undefined){
                 users[name] = [];
