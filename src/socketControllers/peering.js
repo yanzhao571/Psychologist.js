@@ -15,7 +15,9 @@ module.exports = {
             
             function forAll(thunk){
                 for(var i = 0; i < sockets.length; ++i){
-                    thunk(sockets[i], i);
+                    if(sockets[i]){
+                        thunk(sockets[i], i);
+                    }
                 }
             }
             

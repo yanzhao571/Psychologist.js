@@ -25,6 +25,7 @@ function webRTCTest() {
     }
 
     function setChannelEvents(index) {
+        console.log(channels[index]);
         channels[index].addEventListener("message", function (evt) {
             showMessage(fmt("< ($1): $2", index, evt.data));
         }, false);
@@ -120,7 +121,8 @@ function webRTCTest() {
                 if (myIndex < theirIndex) {
                     var channel = peer.createDataChannel("data-channel-" + myIndex + "-to-" + theirIndex, {
                         id: myIndex,
-                        ordered: false
+                        ordered: false,
+                        maxRetransmits: 0
                     });
                     channels[theirIndex] = channel;
                     setChannelEvents(theirIndex);
