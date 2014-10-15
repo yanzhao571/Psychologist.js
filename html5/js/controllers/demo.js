@@ -176,14 +176,11 @@ function postScriptLoad(progress){
     console.log("socket", socket);
     proxy = new WebRTCSocket(socket, ctrls.defaultDisplay.checked);
     
-    if(ctrls.defaultDisplay.checked){
-        socket.on("userJoin", addUser);
-        socket.on("userState", updateUserState);
-        socket.on("typing", showTyping.bind(window, false, false));
-        socket.on("chat", showChat);
-        socket.on("userLeft", userLeft);
-    }
-    
+    socket.on("typing", showTyping.bind(window, false, false));
+    socket.on("chat", showChat);    
+    socket.on("userJoin", addUser);
+    socket.on("userState", updateUserState);
+    socket.on("userLeft", userLeft);
     socket.on("handshakeFailed", console.warn.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
     socket.on("handshakeComplete", function(controller){
         if(controller === "demo"){
@@ -259,105 +256,146 @@ function postScriptLoad(progress){
         touch.update(dt);
         speech.update(dt);
 
-        if(ctrls.defaultDisplay.checked){
-            update(dt);
-        }
-    }
-    
-    function update(dt){
-        THREE.AnimationHandler.update(dt);
-
-        //
-        // update user position and view
-        //
-        
-        bears[userName].dHeading = (head.getValue("heading")
-            + touch.getValue("heading")
-            + mouse.getValue("heading")
-            + startHeading
-            - bears[userName].heading) / dt;
         pitch = head.getValue("pitch") 
             + mouse.getValue("pitch");
         roll = head.getValue("roll");
-        strafe = keyboard.getValue("strafeRight")
-            + keyboard.getValue("strafeLeft")
-            + gamepad.getValue("strafe");
-        drive = keyboard.getValue("driveBack")
-            + keyboard.getValue("driveForward")
-            + gamepad.getValue("drive")
-            + touch.getValue("drive");
-        
-        if(onground || bears[userName].position.y < -0.5){                
-            if(autoWalking){
-                strafe = 0;
-                drive = -0.5;
-            }
-            if(strafe || drive){
-                len = SPEED * Math.min(1, 1 / Math.sqrt(drive * drive + strafe * strafe));
-            }
-            else{
-                len = 0;
+        if(ctrls.defaultDisplay.checked){
+            THREE.AnimationHandler.update(dt);
+
+            //
+            // update user position and view
+            //
+
+            bears[userName].dHeading = (head.getValue("heading")
+                + touch.getValue("heading")
+                + mouse.getValue("heading")
+                + startHeading
+                - bears[userName].heading) / dt;
+            strafe = keyboard.getValue("strafeRight")
+                + keyboard.getValue("strafeLeft")
+                + gamepad.getValue("strafe");
+            drive = keyboard.getValue("driveBack")
+                + keyboard.getValue("driveForward")
+                + gamepad.getValue("drive")
+                + touch.getValue("drive");
+
+            if(onground || bears[userName].position.y < -0.5){                
+                if(autoWalking){
+                    strafe = 0;
+                    drive = -0.5;
+                }
+                if(strafe || drive){
+                    len = SPEED * Math.min(1, 1 / Math.sqrt(drive * drive + strafe * strafe));
+                }
+                else{
+                    len = 0;
+                }
+
+                strafe *= len;
+                drive *= len;
+                len = strafe * Math.cos(bears[userName].heading) + drive * Math.sin(bears[userName].heading);
+                drive = drive * Math.cos(bears[userName].heading) - strafe * Math.sin(bears[userName].heading);
+                strafe = len;
+                bears[userName].velocity.x = bears[userName].velocity.x * 0.9 + strafe * 0.1;
+                bears[userName].velocity.z = bears[userName].velocity.z * 0.9 + drive * 0.1;
             }
 
-            strafe *= len;
-            drive *= len;
-            len = strafe * Math.cos(bears[userName].heading) + drive * Math.sin(bears[userName].heading);
-            drive = drive * Math.cos(bears[userName].heading) - strafe * Math.sin(bears[userName].heading);
-            strafe = len;
-            bears[userName].velocity.x = bears[userName].velocity.x * 0.9 + strafe * 0.1;
-            bears[userName].velocity.z = bears[userName].velocity.z * 0.9 + drive * 0.1;
-        }
-        
-        bears[userName].velocity.y -= dt * GRAVITY;
+            bears[userName].velocity.y -= dt * GRAVITY;
 
-        //
-        // "water"
-        //
-        if(bears[userName].position.y < -0.5){
-            bears[userName].velocity.multiplyScalar(0.925);
-        }
+            //
+            // "water"
+            //
+            if(bears[userName].position.y < -0.5){
+                bears[userName].velocity.multiplyScalar(0.925);
+            }
 
-        //
-        // do collision detection
-        //
-        var len = bears[userName].velocity.length() * dt;
-        direction.copy(bears[userName].velocity);
-        direction.normalize();
-        testPoint.copy(bears[userName].position);
-        testPoint.y += PLAYER_HEIGHT / 2;
-        raycaster.set(testPoint, direction);
-        raycaster.far = len;
-        intersections = raycaster.intersectObject(scene, true);
-        for(var i = 0; i < intersections.length; ++i){
-            var inter = intersections[i];
-            if(inter.object.parent.isSolid){
-                testPoint.copy(inter.face.normal);
-                testPoint.applyEuler(inter.object.parent.rotation);
-                bears[userName].velocity.reflect(testPoint);
-                var d = testPoint.dot(camera.up);
-                if(d > 0.75){
+            //
+            // do collision detection
+            //
+            var len = bears[userName].velocity.length() * dt;
+            direction.copy(bears[userName].velocity);
+            direction.normalize();
+            testPoint.copy(bears[userName].position);
+            testPoint.y += PLAYER_HEIGHT / 2;
+            raycaster.set(testPoint, direction);
+            raycaster.far = len;
+            intersections = raycaster.intersectObject(scene, true);
+            for(var i = 0; i < intersections.length; ++i){
+                var inter = intersections[i];
+                if(inter.object.parent.isSolid){
+                    testPoint.copy(inter.face.normal);
+                    testPoint.applyEuler(inter.object.parent.rotation);
+                    bears[userName].velocity.reflect(testPoint);
+                    var d = testPoint.dot(camera.up);
+                    if(d > 0.75){
+                        bears[userName].position.y = inter.point.y + 0.0125;
+                        bears[userName].velocity.y = 0.1;
+                        onground = true;
+                    }
+                }
+            }
+
+            // ground test
+            testPoint.copy(bears[userName].position);
+            testPoint.y += 1;
+            direction.set(0, -1, 0);
+            raycaster.set(testPoint, direction);
+            raycaster.far = 1;
+            intersections = raycaster.intersectObject(scene, true);
+            for(var i = 0; i < intersections.length; ++i){
+                var inter = intersections[i];
+                if(inter.object.parent.isSolid){
+                    testPoint.copy(inter.face.normal);
+                    testPoint.applyEuler(inter.object.parent.rotation);
                     bears[userName].position.y = inter.point.y + 0.0125;
                     bears[userName].velocity.y = 0.1;
                     onground = true;
                 }
             }
+
+            //
+            // send a network update of the user's position, if it's been enough 
+            // time since the last update (don't want to flood the server).
+            //
+            frame += dt;
+            if(frame > dFrame){
+                frame -= dFrame;
+                var state = {
+                    x: bears[userName].position.x,
+                    y: bears[userName].position.y,
+                    z: bears[userName].position.z,
+                    dx: bears[userName].velocity.x,
+                    dy: bears[userName].velocity.y,
+                    dz: bears[userName].velocity.z,
+                    heading: bears[userName].heading,
+                    dHeading: (bears[userName].heading - bears[userName].lastHeading) / dFrame,
+                    isRunning: bears[userName].velocity.length() > 0
+                };
+                bears[userName].lastHeading = bears[userName].heading;
+                socket.emit("userState", state);
+            }
         }
 
-        // ground test
-        testPoint.copy(bears[userName].position);
-        testPoint.y += 1;
-        direction.set(0, -1, 0);
-        raycaster.set(testPoint, direction);
-        raycaster.far = 1;
-        intersections = raycaster.intersectObject(scene, true);
-        for(var i = 0; i < intersections.length; ++i){
-            var inter = intersections[i];
-            if(inter.object.parent.isSolid){
-                testPoint.copy(inter.face.normal);
-                testPoint.applyEuler(inter.object.parent.rotation);
-                bears[userName].position.y = inter.point.y + 0.0125;
-                bears[userName].velocity.y = 0.1;
-                onground = true;
+        //
+        // update avatars
+        //
+        for(var key in bears){
+            var bear = bears[key];
+            testPoint.copy(bear.velocity);
+            testPoint.multiplyScalar(dt);
+            bear.position.add(testPoint);
+            bear.heading += bear.dHeading * dt;
+            bear.rotation.set(0, bear.heading, 0, "XYZ");
+            if(!bear.animation.isPlaying && bear.velocity.length() >= 2){
+                bear.animation.play();                
+            }
+            else if(bear.animation.isPlaying && bear.velocity.length() < 2){
+                bear.animation.stop();
+            }
+            if(key !== userName){ 
+                // we have to offset the rotation of the name so the user
+                // can read it.
+                bear.nameObj.rotation.set(0, bears[userName].heading - bear.heading, 0, "XYZ");
             }
         }
 
@@ -419,51 +457,6 @@ function postScriptLoad(progress){
             skyboxRotation.set(lt*0.00001, 0, 0, "XYZ");
             mainScene.Skybox.position.copy(bears[userName].position);
             mainScene.Skybox.setRotationFromEuler(skyboxRotation);
-        }
-
-        //
-        // update avatars
-        //
-        for(var key in bears){
-            var bear = bears[key];
-            testPoint.copy(bear.velocity);
-            testPoint.multiplyScalar(dt);
-            bear.position.add(testPoint);
-            bear.heading += bear.dHeading * dt;
-            bear.rotation.set(0, bear.heading, 0, "XYZ");
-            if(!bear.animation.isPlaying && bear.velocity.length() >= 2){
-                bear.animation.play();                
-            }
-            else if(bear.animation.isPlaying && bear.velocity.length() < 2){
-                bear.animation.stop();
-            }
-            if(key !== userName){ 
-                // we have to offset the rotation of the name so the user
-                // can read it.
-                bear.nameObj.rotation.set(0, bears[userName].heading - bear.heading, 0, "XYZ");
-            }
-        }
-
-        //
-        // send a network update of the user's position, if it's been enough 
-        // time since the last update (don't want to flood the server).
-        //
-        frame += dt;
-        if(frame > dFrame){
-            frame -= dFrame;
-            var state = {
-                x: bears[userName].position.x,
-                y: bears[userName].position.y,
-                z: bears[userName].position.z,
-                dx: bears[userName].velocity.x,
-                dy: bears[userName].velocity.y,
-                dz: bears[userName].velocity.z,
-                heading: bears[userName].heading,
-                dHeading: (bears[userName].heading - bears[userName].lastHeading) / dFrame,
-                isRunning: bears[userName].velocity.length() > 0
-            };
-            bears[userName].lastHeading = bears[userName].heading;
-            socket.emit("userState", state);
         }
         
         //
