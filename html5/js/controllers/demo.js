@@ -161,7 +161,7 @@ function postScriptLoad(progress){
         camera, effect, drawDistance = 500,
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
-        pointer = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 2), new THREE.MeshBasicMaterial({
+        pointer = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 2), new THREE.MeshPhongMaterial({
             color: 0xffff00
         })),
         repeater = new SpeechOutput.Character(),
