@@ -587,6 +587,11 @@ function postScriptLoad(progress){
         pointer.visible = true;
     }
     
+    function resetLocation(){
+        bears[userName].position.set(0, 2, 0);
+        bears[userName].velocity.set(0, 0, 0);
+    }
+    
     function fireButton(){
         pointer.visible = false;
         if(currentButton && buttonHandlers[currentButton]){
@@ -794,6 +799,7 @@ function postScriptLoad(progress){
         { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHTARROW] },
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
+        { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: resetLocation },
         { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 0.5 },
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: showPointer, commandUp: fireButton },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 1 },
@@ -901,7 +907,7 @@ function postScriptLoad(progress){
     renderer.domElement.setAttribute("tabindex", 0);
     setSize(window.innerWidth, window.innerHeight);
 
-//    toggleOptions();    
+    toggleOptions();    
     showHideControls();
     requestAnimationFrame(waitForResources);
 }
