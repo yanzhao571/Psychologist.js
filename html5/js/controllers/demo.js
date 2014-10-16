@@ -11,6 +11,7 @@ var isDebug = false, isLocal = document.location.hostname === "localhost",
         "lib/droid_sans_regular.typeface.js",
         "/socket.io/socket.io.js",
         "js/oscope/oscope.client.js",
+        "js/WebRTCSocket.js",
         "js/ModelLoader.js",
         "js/input/NetworkedInput.js",
         "js/input/ButtonAndAxisInput.js",
@@ -163,7 +164,8 @@ function postScriptLoad(progress){
         pointer = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 2), new THREE.MeshBasicMaterial({
             color: 0xffff00
         })),
-        repeater = new SpeechOutput.Character();
+        repeater = new SpeechOutput.Character(),
+        proxy = null;
 
     tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
@@ -171,7 +173,13 @@ function postScriptLoad(progress){
     pointer.visible = false;
     writeForm(ctrls, formState);
     oscope.connect();
+    proxy = new WebRTCSocket(socket, ctrls.defaultDisplay.checked);
     
+    socket.on("typing", showTyping.bind(window, false, false));
+    socket.on("chat", showChat);    
+    socket.on("userJoin", addUser);
+    socket.on("userState", updateUserState);
+    socket.on("userLeft", userLeft);
     socket.on("handshakeFailed", console.warn.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
     socket.on("handshakeComplete", function(controller){
         if(controller === "demo"){
@@ -180,11 +188,6 @@ function postScriptLoad(progress){
     });
     socket.on("loginFailed", msg.bind(window, "Incorrect user name or password!"));
     socket.on("userList", listUsers);
-    socket.on("userJoin", addUser);
-    socket.on("userState", updateUserState);
-    socket.on("typing", showTyping.bind(window, false, false));
-    socket.on("chat", showChat);
-    socket.on("userLeft", userLeft);
     socket.on("disconnect", msg.bind(window));
     socket.emit("handshake", "demo");
     
@@ -252,107 +255,146 @@ function postScriptLoad(progress){
         touch.update(dt);
         speech.update(dt);
 
-        if(ctrls.defaultDisplay.checked){
-            update(dt);
-        }
-    }
-    
-    function update(dt){
-        THREE.AnimationHandler.update(dt);
-
-        //
-        // update user position and view
-        //
-        
-        bears[userName].dHeading = (head.getValue("heading")
-            + touch.getValue("heading")
-            + mouse.getValue("heading")
-            + startHeading
-            - bears[userName].heading) / dt;
         pitch = head.getValue("pitch") 
             + mouse.getValue("pitch");
         roll = head.getValue("roll");
-        
-        if(onground || bears[userName].position.y < -0.5){                
-            if(autoWalking){
-                strafe = 0;
-                drive = -0.5;
-            }
-            else{
-                strafe = keyboard.getValue("strafeRight")
-                    + keyboard.getValue("strafeLeft")
-                    + gamepad.getValue("strafe");
-                drive = keyboard.getValue("driveBack")
-                    + keyboard.getValue("driveForward")
-                    + gamepad.getValue("drive")
-                    + touch.getValue("drive");
-            }
-            if(strafe || drive){
-                len = SPEED * Math.min(1, 1 / Math.sqrt(drive * drive + strafe * strafe));
-            }
-            else{
-                len = 0;
+        heading = head.getValue("heading")
+                + touch.getValue("heading")
+                + mouse.getValue("heading")
+                + startHeading;
+        if(ctrls.defaultDisplay.checked){
+            THREE.AnimationHandler.update(dt);
+
+            //
+            // update user position and view
+            //
+
+            bears[userName].dHeading = (heading - bears[userName].heading) / dt;
+            strafe = keyboard.getValue("strafeRight")
+                + keyboard.getValue("strafeLeft")
+                + gamepad.getValue("strafe");
+            drive = keyboard.getValue("driveBack")
+                + keyboard.getValue("driveForward")
+                + gamepad.getValue("drive")
+                + touch.getValue("drive");
+
+            if(onground || bears[userName].position.y < -0.5){                
+                if(autoWalking){
+                    strafe = 0;
+                    drive = -0.5;
+                }
+                if(strafe || drive){
+                    len = SPEED * Math.min(1, 1 / Math.sqrt(drive * drive + strafe * strafe));
+                }
+                else{
+                    len = 0;
+                }
+
+                strafe *= len;
+                drive *= len;
+                len = strafe * Math.cos(bears[userName].heading) + drive * Math.sin(bears[userName].heading);
+                drive = drive * Math.cos(bears[userName].heading) - strafe * Math.sin(bears[userName].heading);
+                strafe = len;
+                bears[userName].velocity.x = bears[userName].velocity.x * 0.9 + strafe * 0.1;
+                bears[userName].velocity.z = bears[userName].velocity.z * 0.9 + drive * 0.1;
             }
 
-            strafe *= len;
-            drive *= len;
-            len = strafe * Math.cos(bears[userName].heading) + drive * Math.sin(bears[userName].heading);
-            drive = drive * Math.cos(bears[userName].heading) - strafe * Math.sin(bears[userName].heading);
-            strafe = len;
-            bears[userName].velocity.x = bears[userName].velocity.x * 0.9 + strafe * 0.1;
-            bears[userName].velocity.z = bears[userName].velocity.z * 0.9 + drive * 0.1;
-        }
-        
-        bears[userName].velocity.y -= dt * GRAVITY;
+            bears[userName].velocity.y -= dt * GRAVITY;
 
-        //
-        // "water"
-        //
-        if(bears[userName].position.y < -0.5){
-            bears[userName].velocity.multiplyScalar(0.925);
-        }
+            //
+            // "water"
+            //
+            if(bears[userName].position.y < -0.5){
+                bears[userName].velocity.multiplyScalar(0.925);
+            }
 
-        //
-        // do collision detection
-        //
-        var len = bears[userName].velocity.length() * dt;
-        direction.copy(bears[userName].velocity);
-        direction.normalize();
-        testPoint.copy(bears[userName].position);
-        testPoint.y += PLAYER_HEIGHT / 2;
-        raycaster.set(testPoint, direction);
-        raycaster.far = len;
-        intersections = raycaster.intersectObject(scene, true);
-        for(var i = 0; i < intersections.length; ++i){
-            var inter = intersections[i];
-            if(inter.object.parent.isSolid){
-                testPoint.copy(inter.face.normal);
-                testPoint.applyEuler(inter.object.parent.rotation);
-                bears[userName].velocity.reflect(testPoint);
-                var d = testPoint.dot(camera.up);
-                if(d > 0.75){
+            //
+            // do collision detection
+            //
+            var len = bears[userName].velocity.length() * dt;
+            direction.copy(bears[userName].velocity);
+            direction.normalize();
+            testPoint.copy(bears[userName].position);
+            testPoint.y += PLAYER_HEIGHT / 2;
+            raycaster.set(testPoint, direction);
+            raycaster.far = len;
+            intersections = raycaster.intersectObject(scene, true);
+            for(var i = 0; i < intersections.length; ++i){
+                var inter = intersections[i];
+                if(inter.object.parent.isSolid){
+                    testPoint.copy(inter.face.normal);
+                    testPoint.applyEuler(inter.object.parent.rotation);
+                    bears[userName].velocity.reflect(testPoint);
+                    var d = testPoint.dot(camera.up);
+                    if(d > 0.75){
+                        bears[userName].position.y = inter.point.y + 0.0125;
+                        bears[userName].velocity.y = 0.1;
+                        onground = true;
+                    }
+                }
+            }
+
+            // ground test
+            testPoint.copy(bears[userName].position);
+            testPoint.y += 1;
+            direction.set(0, -1, 0);
+            raycaster.set(testPoint, direction);
+            raycaster.far = 1;
+            intersections = raycaster.intersectObject(scene, true);
+            for(var i = 0; i < intersections.length; ++i){
+                var inter = intersections[i];
+                if(inter.object.parent.isSolid){
+                    testPoint.copy(inter.face.normal);
+                    testPoint.applyEuler(inter.object.parent.rotation);
                     bears[userName].position.y = inter.point.y + 0.0125;
                     bears[userName].velocity.y = 0.1;
                     onground = true;
                 }
             }
+
+            //
+            // send a network update of the user's position, if it's been enough 
+            // time since the last update (don't want to flood the server).
+            //
+            frame += dt;
+            if(frame > dFrame){
+                frame -= dFrame;
+                var state = {
+                    x: bears[userName].position.x,
+                    y: bears[userName].position.y,
+                    z: bears[userName].position.z,
+                    dx: bears[userName].velocity.x,
+                    dy: bears[userName].velocity.y,
+                    dz: bears[userName].velocity.z,
+                    heading: bears[userName].heading,
+                    dHeading: (bears[userName].heading - bears[userName].lastHeading) / dFrame,
+                    isRunning: bears[userName].velocity.length() > 0
+                };
+                bears[userName].lastHeading = bears[userName].heading;
+                socket.emit("userState", state);
+            }
         }
 
-        // ground test
-        testPoint.copy(bears[userName].position);
-        testPoint.y += 1;
-        direction.set(0, -1, 0);
-        raycaster.set(testPoint, direction);
-        raycaster.far = 1;
-        intersections = raycaster.intersectObject(scene, true);
-        for(var i = 0; i < intersections.length; ++i){
-            var inter = intersections[i];
-            if(inter.object.parent.isSolid){
-                testPoint.copy(inter.face.normal);
-                testPoint.applyEuler(inter.object.parent.rotation);
-                bears[userName].position.y = inter.point.y + 0.0125;
-                bears[userName].velocity.y = 0.1;
-                onground = true;
+        //
+        // update avatars
+        //
+        for(var key in bears){
+            var bear = bears[key];
+            testPoint.copy(bear.velocity);
+            testPoint.multiplyScalar(dt);
+            bear.position.add(testPoint);
+            bear.heading += bear.dHeading * dt;
+            bear.rotation.set(0, bear.heading, 0, "XYZ");
+            if(!bear.animation.isPlaying && bear.velocity.length() >= 2){
+                bear.animation.play();                
+            }
+            else if(bear.animation.isPlaying && bear.velocity.length() < 2){
+                bear.animation.stop();
+            }
+            if(key !== userName){ 
+                // we have to offset the rotation of the name so the user
+                // can read it.
+                bear.nameObj.rotation.set(0, bears[userName].heading - bear.heading, 0, "XYZ");
             }
         }
 
@@ -415,56 +457,11 @@ function postScriptLoad(progress){
             mainScene.Skybox.position.copy(bears[userName].position);
             mainScene.Skybox.setRotationFromEuler(skyboxRotation);
         }
-
-        //
-        // update avatars
-        //
-        for(var key in bears){
-            var bear = bears[key];
-            testPoint.copy(bear.velocity);
-            testPoint.multiplyScalar(dt);
-            bear.position.add(testPoint);
-            bear.heading += bear.dHeading * dt;
-            bear.rotation.set(0, bear.heading, 0, "XYZ");
-            if(!bear.animation.isPlaying && bear.velocity.length() >= 2){
-                bear.animation.play();                
-            }
-            else if(bear.animation.isPlaying && bear.velocity.length() < 2){
-                bear.animation.stop();
-            }
-            if(key !== userName){ 
-                // we have to offset the rotation of the name so the user
-                // can read it.
-                bear.nameObj.rotation.set(0, bears[userName].heading - bear.heading, 0, "XYZ");
-            }
-        }
-
-        //
-        // send a network update of the user's position, if it's been enough 
-        // time since the last update (don't want to flood the server).
-        //
-        frame += dt;
-        if(frame > dFrame){
-            frame -= dFrame;
-            var state = {
-                x: bears[userName].position.x,
-                y: bears[userName].position.y,
-                z: bears[userName].position.z,
-                dx: bears[userName].velocity.x,
-                dy: bears[userName].velocity.y,
-                dz: bears[userName].velocity.z,
-                heading: bears[userName].heading,
-                dHeading: (bears[userName].heading - bears[userName].lastHeading) / dFrame,
-                isRunning: bears[userName].velocity.length() > 0
-            };
-            bears[userName].lastHeading = bears[userName].heading;
-            socket.emit("userState", state);
-        }
         
         //
         // update the camera
         //
-        orientation.set(pitch, bears[userName].heading, roll, "YZX");
+        orientation.set(pitch, heading, roll, "YZX");
         camera.rotation.copy(orientation);
         camera.position.copy(bears[userName].position);
         camera.position.y += PLAYER_HEIGHT;
@@ -720,7 +717,7 @@ function postScriptLoad(progress){
     function addUser(userState){
         var bear = new THREE.Object3D();
         bears[userState.userName] = bear;
-        var model = bearModel.clone(userState.userName, socket);
+        var model = bearModel.clone(userState.userName);
         bear.animation = model.animation;
         model.position.z = 1.33;
         bear.add(model);
@@ -746,6 +743,7 @@ function postScriptLoad(progress){
     }
     
     function listUsers(users){
+        proxy.connect(userName);
         users.sort(function(a){ return (a.userName === userName) ? -1 : 1;});
         for(var i = 0; i < users.length; ++i){
             addUser(users[i]);
@@ -777,7 +775,7 @@ function postScriptLoad(progress){
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] }
-    ], socket, oscope);
+    ], proxy, oscope);
 
     mouse = new MouseInput("mouse", [
         { axis: MouseInput.DX, scale: 0.4 },
@@ -787,12 +785,12 @@ function postScriptLoad(progress){
         { name: "heading", axes: [-MouseInput.IX] },
         { name: "pitch", axes: [-MouseInput.IY]},
         { name: "fire", buttons: [1], commandDown: showPointer, commandUp: fireButton }
-    ], socket, oscope, renderer.domElement);
+    ], proxy, oscope, renderer.domElement);
 
     touch = new TouchInput("touch", null, null, [
         { name: "heading", axes: [TouchInput.IX0] },
         { name: "drive", axes: [-TouchInput.DY0] }
-    ], socket, oscope, renderer.domElement);
+    ], proxy, oscope, renderer.domElement);
 
     keyboard = new KeyboardInput("keyboard", [
         { name: "strafeLeft", buttons: [-KeyboardInput.A, -KeyboardInput.LEFTARROW] },
@@ -804,7 +802,7 @@ function postScriptLoad(progress){
         { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: showPointer, commandUp: fireButton },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 1 },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
-    ], socket, oscope);
+    ], proxy, oscope);
 
     gamepad = new GamepadInput("gamepad", [
         { axis: GamepadInput.LSX, deadzone: 0.2},
@@ -818,13 +816,13 @@ function postScriptLoad(progress){
         { name: "jump", buttons: [1], commandDown: jump, dt: 0.5 },
         { name: "fire", buttons: [2], commandDown: showPointer, commandUp: fireButton },
         { name: "options", buttons: [9], commandUp: toggleOptions }
-    ], socket, oscope);
+    ], proxy, oscope);
 
     speech = new SpeechInput("speech", [
         { name: "jump", keywords: ["jump"], commandUp: jump },
         { name: "options", keywords: ["options"], commandUp: toggleOptions },
         { name: "chat", preamble: true, keywords: ["message"], commandUp: speechChat }
-    ], socket, oscope);
+    ], proxy, oscope);
 
     gamepad.addEventListener("gamepadconnected", function (id){
         if (!gamepad.isGamepadSet() && ask(fmt("Would you like to use this gamepad? \"$1\"", id), true)){
@@ -906,7 +904,6 @@ function postScriptLoad(progress){
     document.body.insertBefore(renderer.domElement, document.body.firstChild);
     renderer.domElement.setAttribute("tabindex", 0);
     setSize(window.innerWidth, window.innerHeight);
-
     toggleOptions();    
     showHideControls();
     requestAnimationFrame(waitForResources);

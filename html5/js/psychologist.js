@@ -174,6 +174,42 @@ function map(arr, fun) {
     return Array.prototype.map.call(arr, fun);
 }
 
+function reduce(arr, fun, base){
+    return Array.prototype.reduce.call(arr, fun, base);
+}
+
+function filter(arr, fun){
+    return Array.prototype.filter.call(arr, fun);
+}
+
+function ofType(arr, type){
+    return filter(arr, function(e){
+        return typeof(e) === type || e instanceof type;
+    });
+}
+
+function help(obj){
+    var funcs = [];
+    var props = [];
+    var evnts = [];
+    for(var k in obj){
+        if(k.indexOf("on") === 0){
+            evnts.push(k);
+        }
+        else if(typeof(obj[k]) === "function"){
+            funcs.push(k);
+        }
+        else{
+            props.push(fmt("$1 = '$2'", k, obj[k]));
+        }
+    }
+    
+    console.log("object", obj);
+    console.log("events", evnts);
+    console.log("functions", funcs);
+    console.log("properties", props);
+}
+
 /*
  * 1) If id is a string, tries to find the DOM element that has said ID
  *      a) if it exists, and it matches the expected tag type, returns the
@@ -593,8 +629,10 @@ function makeURL(url, queryMap) {
 }
 
 navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate;
-
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia || navigator.oGetUserMedia;
+window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+window.RTCIceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate || window.RTCIceCandidate;
+window.RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.RTCSessionDescription;
 
 MediaStreamTrack.getVideoTracks =
         (window.MediaStream && MediaStream.getVideoTracks && (function (getter, success) {
