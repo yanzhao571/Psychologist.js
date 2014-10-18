@@ -15,14 +15,18 @@ inherit(LeapMotionInput, ButtonAndAxisInput);
 LeapMotionInput.CONNECTION_TIMEOUT = 3000;
 
 LeapMotionInput.prototype.start = function(gameUpdateLoop){
-    var alternateLooper = function(t){
-        requestAnimationFrame(alternateLooper);
-        gameUpdateLoop(t);
-    };
-    var timeout = setTimeout(alternateLooper, LeapMotionInput.CONNECTION_TIMEOUT);
-    this.controller.on("streamingStarted", clearTimeout.bind(window, timeout));    
-    this.controller.on("frame", this.setState.bind(this, gameUpdateLoop));    
-    this.controller.connect();
+    if(this.isEnabled()){
+        if(gameUpdateLoop){
+            var alternateLooper = function(t){
+                requestAnimationFrame(alternateLooper);
+                gameUpdateLoop(t);
+            };
+            var timeout = setTimeout(alternateLooper, LeapMotionInput.CONNECTION_TIMEOUT);
+            this.controller.on("streamingStarted", clearTimeout.bind(window, timeout));  
+        }
+        this.controller.on("frame", this.setState.bind(this, gameUpdateLoop));    
+        this.controller.connect();
+    }
 };
 
 LeapMotionInput.COMPONENTS = ["X", "Y", "Z"];
@@ -64,7 +68,9 @@ LeapMotionInput.prototype.setState = function(gameUpdateLoop, frame){
         }
     }
     
-    gameUpdateLoop(frame.timestamp * 0.001);
+    if(gameUpdateLoop){
+        gameUpdateLoop(frame.timestamp * 0.001);
+    }
 };
 
 LeapMotionInput.AXES = [];

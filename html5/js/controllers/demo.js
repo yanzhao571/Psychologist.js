@@ -21,6 +21,7 @@ var isDebug = false, isLocal = document.location.hostname === "localhost",
         "js/input/MotionInput.js",
         "js/input/MouseInput.js",
         "js/input/TouchInput.js",
+        "js/input/LeapMotionInput.js",
         "js/output/Audio3DOutput.js",
         "js/output/SpeechOutput.js",
         "js/vui/vui.js",
@@ -145,7 +146,7 @@ function postScriptLoad(progress){
         orientation = new THREE.Euler(0, 0, 0, "YZX"),
         skyboxRotation = new THREE.Euler(0, 0, 0, "XYZ"),
         onground = false,
-        head, keyboard, mouse, gamepad, touch, speech,
+        head, keyboard, mouse, gamepad, touch, speech, leap,
         dt, lt = 0, frame = 0, dFrame = 0.125,
         userName = null,
         chatLines = [],
@@ -170,7 +171,6 @@ function postScriptLoad(progress){
     tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
     scene.add(pointer);
-    pointer.visible = false;
     writeForm(ctrls, formState);
     oscope.connect();
     proxy = new WebRTCSocket(socket, ctrls.defaultDisplay.checked);
@@ -254,6 +254,7 @@ function postScriptLoad(progress){
         gamepad.update(dt);
         touch.update(dt);
         speech.update(dt);
+        leap.update(dt);
 
         pitch = head.getValue("pitch") 
             + mouse.getValue("pitch");
@@ -401,9 +402,13 @@ function postScriptLoad(progress){
         //
         // place pointer
         //
-        direction.set(0, 0, -4)
+        direction.set(
+            leap.getValue("handX") / 100,
+            -leap.getValue("handY") / 100 - 2,
+            -leap.getValue("handZ") / 100 - 2)
             .applyAxisAngle(RIGHT, -pitch)
             .applyAxisAngle(camera.up, bears[userName].heading);
+        
         testPoint.copy(bears[userName].position);
         testPoint.y += PLAYER_HEIGHT;
         pointer.position.copy(testPoint);
@@ -581,7 +586,7 @@ function postScriptLoad(progress){
     }
     
     function showPointer(){
-        pointer.visible = true;
+        //pointer.visible = true;
     }
     
     function resetLocation(){
@@ -590,7 +595,7 @@ function postScriptLoad(progress){
     }
     
     function fireButton(){
-        pointer.visible = false;
+        //pointer.visible = false;
         if(currentButton && buttonHandlers[currentButton]){
             var btn = mainScene[currentButton];
             buttonHandlers[currentButton](btn);
@@ -786,7 +791,17 @@ function postScriptLoad(progress){
         { name: "pitch", axes: [-MouseInput.IY]},
         { name: "fire", buttons: [1], commandDown: showPointer, commandUp: fireButton }
     ], proxy, oscope, renderer.domElement);
-
+    
+    leap = new LeapMotionInput("leap", [
+        { name: "fire", x: -500, y: -500, z: -500, w: 1000, h: 1000, d: 1000 }
+    ], null, [
+        { name: "handX", axes: [LeapMotionInput.HAND0X] },
+        { name: "handY", axes: [-LeapMotionInput.HAND0Y] },
+        { name: "handZ", axes: [-LeapMotionInput.HAND0Z] },
+        { name: "fire", buttons: [1], commandUp: fireButton }
+    ], proxy, oscope);
+    leap.start();
+            
     touch = new TouchInput("touch", null, null, [
         { name: "heading", axes: [TouchInput.IX0] },
         { name: "drive", axes: [-TouchInput.DY0] }
@@ -868,6 +883,7 @@ function postScriptLoad(progress){
 
     setupModuleEvents(head, "head");
     setupModuleEvents(mouse, "mouse");
+    setupModuleEvents(leap, "leap");
     setupModuleEvents(touch, "touch");
     setupModuleEvents(keyboard, "keyboard");
     setupModuleEvents(gamepad, "gamepad");
