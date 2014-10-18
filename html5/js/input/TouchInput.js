@@ -1,4 +1,5 @@
 function TouchInput(name, buttonBounds, axisConstraints, commands, socket, oscope, DOMElement){
+    DOMElement = DOMElement || window;
     buttonBounds = buttonBounds || [];
     for(var i = buttonBounds.length - 1; i >= 0; --i){
         var b = buttonBounds[i];

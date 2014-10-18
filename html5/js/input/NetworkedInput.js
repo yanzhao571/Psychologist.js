@@ -96,7 +96,7 @@ NetworkedInput.prototype.update = function(dt){
                 }
 
                 cmdState.lt += dt;
-                cmdState.fireAgain = (cmd.dt !== 0 || !cmd.wasPressed) && cmdState.lt >= cmd.dt;
+                cmdState.fireAgain = cmd.dt === 0 || (!cmd.wasPressed && cmdState.lt >= cmd.dt);
                 this.evalCommand(cmd, cmdState, metaKeysSet, dt);
             }
         }

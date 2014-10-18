@@ -1,5 +1,6 @@
 include(0,
-    ["js/input/ButtonAndAxisInput.js",
+    ["js/input/NetworkedInput.js",
+    "js/input/ButtonAndAxisInput.js",
      "js/input/MouseInput.js"],
 	postScriptLoad);
 
