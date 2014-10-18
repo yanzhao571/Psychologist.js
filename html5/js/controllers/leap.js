@@ -7,8 +7,8 @@ var WIDTH = 640,
     FINGER_PARTS = ["tip", "dip", "pip", "mcp", "carp"],
     c = findEverything(),
     g = c.canv.getContext("2d"),
-    controller = new Leap.Controller(),
-    lt = null, dt;
+    controller = new Leap.Controller({ enableGestures: true }),
+    lt = null, dt, taps = [];
 
 c.canv.width = WIDTH;
 c.canv.height = HEIGHT;
@@ -63,6 +63,21 @@ E("frame", function(frame){
                 g.fillRect(p.x, p.y, 10, 10);
             }
         }
+    }
+    for(var i = 0; i < frame.gestures.length; ++i){
+        var gesture = frame.gestures[i];
+        if(gesture.type === "keyTap"){
+            taps.push(leapInterpolate(frame, gesture.position));
+        }
+    }
+    
+    while(taps.length > 10){
+        taps.shift();
+    }
+    
+    g.fillStyle = "yellow";
+    for(var i = 0; i < taps.length; ++i){
+        g.fillRect(taps[i].x, taps[i].y, 5, 5);
     }
 });
 
