@@ -12,19 +12,41 @@ function LeapMotionInput(name, buttonBounds, axisConstraints, commands, socket, 
 }
 inherit(LeapMotionInput, ButtonAndAxisInput);
 
-LeapMotionInput.CONNECTION_TIMEOUT = 3000;
+LeapMotionInput.CONNECTION_TIMEOUT = 5000;
+LeapMotionInput.prototype.E = function (e, f){
+    if(f){
+        this.controller.on(e, f);            
+    }
+    else{
+        this.controller.on(e, console.log.bind(console, "leap " + e));
+    }
+};
 
 LeapMotionInput.prototype.start = function(gameUpdateLoop){
+    console.log("starting");
     if(this.isEnabled()){
         if(gameUpdateLoop){
+            console.log("creating fallback");
+            console.log("events setup");
             var alternateLooper = function(t){
                 requestAnimationFrame(alternateLooper);
                 gameUpdateLoop(t);
             };
-            var timeout = setTimeout(alternateLooper, LeapMotionInput.CONNECTION_TIMEOUT);
-            this.controller.on("streamingStarted", clearTimeout.bind(window, timeout));  
-        }
-        this.controller.on("frame", this.setState.bind(this, gameUpdateLoop));    
+            var startAlternate = requestAnimationFrame.bind(window, alternateLooper);
+            var timeout = setTimeout(startAlternate, LeapMotionInput.CONNECTION_TIMEOUT);
+            var canceller = clearTimeout.bind(window, timeout);
+            this.E("connect");
+            this.E("focus");
+            this.E("blur");
+            this.E("protocol");
+            this.E("deviceStreaming", canceller);
+            this.E("streamingStarted", canceller);
+            this.E("streamingStopped", startAlternate);
+            this.E("deviceStopped");
+            this.E("disconnect");
+            console.log("fallback created");
+        }  
+        this.controller.on("frame", this.setState.bind(this, gameUpdateLoop));  
         this.controller.connect();
     }
 };

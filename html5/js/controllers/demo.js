@@ -139,7 +139,7 @@ function postScriptLoad(progress){
             }}
         ], readSettings),
         formState = getSetting("formState"),
-        pitch = 0, roll = 0, strafe = 0, drive = 0,
+        heading = 0, pitch = 0, roll = 0, strafe = 0, drive = 0,
         testPoint = new THREE.Vector3(),
         raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7),
         direction = new THREE.Vector3(),
@@ -236,7 +236,7 @@ function postScriptLoad(progress){
     function waitForResources(t){
         lt = t;
         if(camera && userName && bears[userName]){
-            requestAnimationFrame(animate);
+            leap.start(animate);
         }
         else{
             requestAnimationFrame(waitForResources);
@@ -244,7 +244,6 @@ function postScriptLoad(progress){
     }
 
     function animate(t){
-        requestAnimationFrame(animate);
         dt = (t - lt) * 0.001;
         lt = t;
 
@@ -386,37 +385,22 @@ function postScriptLoad(progress){
             bear.position.add(testPoint);
             bear.heading += bear.dHeading * dt;
             bear.rotation.set(0, bear.heading, 0, "XYZ");
+            if(key !== userName){ 
+                // we have to offset the rotation of the name so the user
+                // can read it.
+                bear.nameObj.rotation.set(0, bears[userName].heading - bear.heading, 0, "XYZ");
+            }
             if(!bear.animation.isPlaying && bear.velocity.length() >= 2){
                 bear.animation.play();                
             }
             else if(bear.animation.isPlaying && bear.velocity.length() < 2){
                 bear.animation.stop();
             }
-            if(key !== userName){ 
-                // we have to offset the rotation of the name so the user
-                // can read it.
-                bear.nameObj.rotation.set(0, bears[userName].heading - bear.heading, 0, "XYZ");
-            }
         }
 
         //
         // place pointer
         //
-        direction.set(
-            leap.getValue("handX") / 100,
-            -leap.getValue("handY") / 100 - 2,
-            -leap.getValue("handZ") / 100 - 2)
-            .applyAxisAngle(RIGHT, -pitch)
-            .applyAxisAngle(camera.up, bears[userName].heading);
-        
-        testPoint.copy(bears[userName].position);
-        testPoint.y += PLAYER_HEIGHT;
-        pointer.position.copy(testPoint);
-        pointer.position.add(direction);
-        direction.normalize();
-        raycaster.set(testPoint, direction);
-        raycaster.far = 7;
-        var intersections = raycaster.intersectObject(scene, true);
         if(currentButton){
             var btn = mainScene[currentButton];
             btn.position.y = btn.originalY;
@@ -425,22 +409,36 @@ function postScriptLoad(progress){
             currentButton = null;
         }
         
-        for(var i = 0; i < intersections.length; ++i){
-            var inter = intersections[i];
-            if(inter.object.parent.isSolid || inter.object.parent.isButton){
+        direction.set(
+            leap.getValue("handX") / 50,
+            -leap.getValue("handY") / 50 - 2,
+            -leap.getValue("handZ") / 25 - 3)
+            .applyAxisAngle(RIGHT, -pitch)
+            .applyAxisAngle(camera.up, bears[userName].heading);
+        
+        testPoint.copy(bears[userName].position);
+        testPoint.y += PLAYER_HEIGHT;
+        pointer.position.copy(testPoint);
+        pointer.position.add(direction);
+        
+        direction.normalize();
+        raycaster.set(testPoint, direction);
+        raycaster.far = 7;
+        
+        for(var i = 0; i < mainScene.buttons.length; ++i){
+            var btn = mainScene.buttons[i];
+            var intersections = raycaster.intersectObject(btn.children[0]);
+            if(intersections.length === 1){
+                var inter = intersections[0];
                 pointer.position.copy(inter.point);
-
-                if(inter.object.parent.isButton){
-                    currentButton = inter.object.parent.name;
-                    var btn = mainScene[currentButton];
-                    btn.originalY = btn.position.y;
-                    if(pointer.visible){
-                        btn.position.y = btn.originalY - 0.05;
-                    }
-                    inter.object.material.materials[0].color.g = 0.5;
-                    inter.object.material.materials[0].color.r = 0.0;
-                    break;
+                currentButton = inter.object.parent.name;
+                btn.originalY = btn.position.y;
+                if(pointer.visible){
+                    btn.position.y = btn.originalY - 0.05;
                 }
+                inter.object.material.materials[0].color.g = 0.5;
+                inter.object.material.materials[0].color.r = 0.0;
+                break;
             }
         }
 
@@ -722,7 +720,7 @@ function postScriptLoad(progress){
     function addUser(userState){
         var bear = new THREE.Object3D();
         bears[userState.userName] = bear;
-        var model = bearModel.clone(userState.userName);
+        var model = bearModel.clone();
         bear.animation = model.animation;
         model.position.z = 1.33;
         bear.add(model);
@@ -800,7 +798,6 @@ function postScriptLoad(progress){
         { name: "handZ", axes: [-LeapMotionInput.HAND0Z] },
         { name: "fire", buttons: [1], commandUp: fireButton }
     ], proxy, oscope);
-    leap.start();
             
     touch = new TouchInput("touch", null, null, [
         { name: "heading", axes: [TouchInput.IX0] },
@@ -893,8 +890,6 @@ function postScriptLoad(progress){
         scene.add(object);
         var cam = mainScene.Camera.children[0];
         camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, drawDistance);
-        mainScene.Ocean.children[0].material.transparent = true;
-        mainScene.Ocean.children[0].material.opacity = 0.75;
         audio3d.loadSound3D(
             "music/ocean.mp3", true,
             mainScene.Campfire.position.x,

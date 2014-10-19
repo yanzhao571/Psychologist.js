@@ -1,6 +1,7 @@
 var COLLADA = new THREE.ColladaLoader();
 COLLADA.options.convertUpAxis = true;
 function ModelLoader(src, progress, success){
+    this.buttons = [];
     if(src){
         ModelLoader.loadCollada(src, progress, function(objects){
             this.template = objects;
@@ -16,6 +17,7 @@ function ModelLoader(src, progress, success){
                                 child.isButton = materials[i].name === "button";
                                 if(child.isButton){
                                     materials[0] = materials[0].clone();
+                                    this.buttons.push(child);
                                 }
                             }
                         }
@@ -40,8 +42,7 @@ function ModelLoader(src, progress, success){
                             child.position.copy(body.position);
                             child.quaternion.copy(body.quaternion);
                         };
-                        child.physicsBody = body;
-                        
+                        child.physicsBody = body;                        
                     }
                 }
             }.bind(this));
@@ -64,7 +65,7 @@ ModelLoader.loadCollada = function(src, progress, success){
     });
 };
 
-ModelLoader.prototype.clone = function(userName){
+ModelLoader.prototype.clone = function(){
     var obj = this.template.clone();
                 
     obj.traverse(function(child){
