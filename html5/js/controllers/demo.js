@@ -655,7 +655,7 @@ function postScriptLoad(progress){
 
     function shiftLines(){
         for(var i = 0; i < chatLines.length; ++i){
-            chatLines[i].position.y = PLAYER_HEIGHT + (chatLines.length - i) * CHAT_TEXT_SIZE * 1.333;
+            chatLines[i].position.y = PLAYER_HEIGHT + (chatLines.length - i) * CHAT_TEXT_SIZE * 1.333 - 1;
         }
     }
 
@@ -807,9 +807,9 @@ function postScriptLoad(progress){
     for(var i = 0; i < LeapMotionInput.NUM_FINGERS / 2; ++i){
         var finger = "finger" + i;
         for(var j = 0; j < LeapMotionInput.FINGER_PARTS.length; ++j){
-            if(j === 0 || j === LeapMotionInput.FINGER_PARTS.length - 1){
+            if(j === 0 || j === LeapMotionInput.FINGER_PARTS.length - 2){
                 var knuckle = (finger + LeapMotionInput.FINGER_PARTS[j]).toUpperCase();
-                var k = new THREE.Mesh(new THREE.SphereGeometry(0.07, 4, 2), new THREE.MeshPhongMaterial({
+                var k = new THREE.Mesh(new THREE.SphereGeometry(0.04 + j * 0.01, 4, 4), new THREE.MeshPhongMaterial({
                     color: 0xffff00
                 }));
                 k.name = knuckle;
@@ -817,7 +817,7 @@ function postScriptLoad(progress){
                 scene.add(k);
                 leapCommands.push({ name: knuckle + "X", axes: [LeapMotionInput[knuckle + "X"]], scale: 0.01 });
                 leapCommands.push({ name: knuckle + "Y", axes: [LeapMotionInput[knuckle + "Y"]], scale: 0.01, offset: -2 });
-                leapCommands.push({ name: knuckle + "Z", axes: [LeapMotionInput[knuckle + "Z"]], scale: 0.01, offset: -6 });
+                leapCommands.push({ name: knuckle + "Z", axes: [LeapMotionInput[knuckle + "Z"]], scale: 0.01, offset: -8 });
             }
         }
     }
