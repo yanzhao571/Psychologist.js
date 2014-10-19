@@ -410,9 +410,9 @@ function postScriptLoad(progress){
         }
         
         direction.set(
-            leap.getValue("handX") / 50,
-            -leap.getValue("handY") / 50 - 2,
-            -leap.getValue("handZ") / 25 - 3)
+            leap.getValue("handX"),
+            leap.getValue("handY"),
+            leap.getValue("handZ"))
             .applyAxisAngle(RIGHT, -pitch)
             .applyAxisAngle(camera.up, bears[userName].heading);
         
@@ -431,7 +431,7 @@ function postScriptLoad(progress){
             if(intersections.length === 1){
                 var inter = intersections[0];
                 pointer.position.copy(inter.point);
-                currentButton = inter.object.parent.name;
+                currentButton = btn.name;
                 btn.originalY = btn.position.y;
                 if(pointer.visible){
                     btn.position.y = btn.originalY - 0.05;
@@ -793,9 +793,9 @@ function postScriptLoad(progress){
     leap = new LeapMotionInput("leap", [
         { name: "fire", x: -500, y: -500, z: -500, w: 1000, h: 1000, d: 1000 }
     ], null, [
-        { name: "handX", axes: [LeapMotionInput.HAND0X] },
-        { name: "handY", axes: [-LeapMotionInput.HAND0Y] },
-        { name: "handZ", axes: [-LeapMotionInput.HAND0Z] },
+        { name: "handX", axes: [LeapMotionInput.HAND0X], scale: 0.02 },
+        { name: "handY", axes: [LeapMotionInput.HAND0Y], scale: 0.02, offset: -2 },
+        { name: "handZ", axes: [LeapMotionInput.HAND0Z], scale: 0.04, offset: -3 },
         { name: "fire", buttons: [1], commandUp: fireButton }
     ], proxy, oscope);
             

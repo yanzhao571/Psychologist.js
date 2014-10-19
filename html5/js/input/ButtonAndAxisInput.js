@@ -169,6 +169,7 @@ ButtonAndAxisInput.prototype.cloneCommand = function(cmd){
         threshold: cmd.threshold || 0,
         repetitions: cmd.repetitions || 1,
         scale: cmd.scale || 1,
+        offset: cmd.offset || 0,
         axes: this.maybeClone(cmd.axes),
         buttons: this.maybeClone(cmd.buttons),
         metaKeys: this.maybeClone(cmd.metaKeys),
@@ -205,10 +206,8 @@ ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState, metaKeysSet, 
                 }
             }
         }
-
-        if(cmd.scale){
-            value *= cmd.scale;
-        }
+        
+        value = value * cmd.scale + cmd.offset;
 
         if(cmd.threshold){
             pressed = pressed && (value > cmd.threshold);
