@@ -65,7 +65,6 @@ function displayProgress(file){
 
 function postScriptLoad(progress){
     var BG_COLOR = 0xafbfff, CHAT_TEXT_SIZE = 0.25, 
-        TRACKING_SCALE = 0, TRACKING_SCALE_COMP = 1 - TRACKING_SCALE,
         NO_HMD_SMARTPHONE = "Smartphone - no HMD",
         PLAYER_HEIGHT = 6.5,
         RIGHT = new THREE.Vector3(-1, 0, 0),
@@ -87,6 +86,9 @@ function postScriptLoad(progress){
                 gamepadEnable: {checked: true},
                 gamepadTransmit: {checked: true},
                 gamepadReceive: {checked: false},
+                leapEnable: {checked: true},
+                leapTransmit: {checked: true},
+                leapReceive: {checked: false},
                 touchEnable: {checked: false},
                 touchTransmit: {checked: false},
                 touchReceive: {checked: true},
@@ -108,6 +110,9 @@ function postScriptLoad(progress){
                 gamepadEnable: {checked: false},
                 gamepadTransmit: {checked: false},
                 gamepadReceive: {checked: true},
+                leapEnable: {checked: false},
+                leapTransmit: {checked: false},
+                leapReceive: {checked: true},
                 touchEnable: {checked: false},
                 touchTransmit: {checked: false},
                 touchReceive: {checked: true},
@@ -129,6 +134,9 @@ function postScriptLoad(progress){
                 gamepadEnable: {checked: false},
                 gamepadTransmit: {checked: false},
                 gamepadReceive: {checked: true},
+                leapEnable: {checked: false},
+                leapTransmit: {checked: false},
+                leapReceive: {checked: true},
                 touchEnable: {checked: true},
                 touchTransmit: {checked: true},
                 touchReceive: {checked: false},
@@ -162,15 +170,11 @@ function postScriptLoad(progress){
         camera, effect, drawDistance = 500,
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
-        pointer = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 2), new THREE.MeshPhongMaterial({
-            color: 0xffff00
-        })),
         repeater = new SpeechOutput.Character(),
         proxy = null;
 
     tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
-    scene.add(pointer);
     writeForm(ctrls, formState);
     oscope.connect();
     proxy = new WebRTCSocket(socket, ctrls.defaultDisplay.checked);
@@ -236,7 +240,8 @@ function postScriptLoad(progress){
     function waitForResources(t){
         lt = t;
         if(camera && userName && bears[userName]){
-            leap.start(animate);
+            leap.start();
+            requestAnimationFrame(animate);
         }
         else{
             requestAnimationFrame(waitForResources);
@@ -244,6 +249,7 @@ function postScriptLoad(progress){
     }
 
     function animate(t){
+        requestAnimationFrame(animate);
         dt = (t - lt) * 0.001;
         lt = t;
 
@@ -400,7 +406,7 @@ function postScriptLoad(progress){
 
         //
         // place pointer
-        //
+        //        
         if(currentButton){
             var btn = mainScene[currentButton];
             btn.position.y = btn.originalY;
@@ -408,37 +414,46 @@ function postScriptLoad(progress){
             btn.children[0].material.materials[0].color.r = 0.5;
             currentButton = null;
         }
+        for(var i = 0; i < fingerParts.length; ++i){
+            var finger = fingerParts[i];
+            var name = finger.name;
+            direction.set(
+                leap.getValue(name + "X"),
+                leap.getValue(name + "Y"),
+                leap.getValue(name + "Z"))
+                .applyAxisAngle(RIGHT, -pitch)
+                .applyAxisAngle(camera.up, bears[userName].heading);
+
+            testPoint.copy(bears[userName].position);
+            testPoint.y += PLAYER_HEIGHT;
+            finger.position.copy(testPoint);
+            finger.position.add(direction);
         
-        direction.set(
-            leap.getValue("handX"),
-            leap.getValue("handY"),
-            leap.getValue("handZ"))
-            .applyAxisAngle(RIGHT, -pitch)
-            .applyAxisAngle(camera.up, bears[userName].heading);
-        
-        testPoint.copy(bears[userName].position);
-        testPoint.y += PLAYER_HEIGHT;
-        pointer.position.copy(testPoint);
-        pointer.position.add(direction);
-        
-        direction.normalize();
-        raycaster.set(testPoint, direction);
-        raycaster.far = 7;
-        
-        for(var i = 0; i < mainScene.buttons.length; ++i){
-            var btn = mainScene.buttons[i];
-            var intersections = raycaster.intersectObject(btn.children[0]);
-            if(intersections.length === 1){
-                var inter = intersections[0];
-                pointer.position.copy(inter.point);
-                currentButton = btn.name;
-                btn.originalY = btn.position.y;
-                if(pointer.visible){
-                    btn.position.y = btn.originalY - 0.05;
+            if(name.indexOf("TIP") > 0){
+                direction.normalize();
+                raycaster.set(testPoint, direction);
+                raycaster.far = 7;
+
+                for(var j = 0; j < mainScene.buttons.length; ++j){
+                    var btn = mainScene.buttons[j];
+                    var intersections = raycaster.intersectObject(btn.children[0]);
+                    if(intersections.length === 1){
+                        var inter = intersections[0];
+                        if(currentButton){
+                            var btn = mainScene[currentButton];
+                            btn.position.y = btn.originalY;
+                            btn.children[0].material.materials[0].color.g = 0;
+                            btn.children[0].material.materials[0].color.r = 0.5;
+                            currentButton = null;
+                        }
+                        currentButton = btn.name;
+                        btn.originalY = btn.position.y;
+                        btn.position.y = btn.originalY - 0.05;
+                        inter.object.material.materials[0].color.g = 0.5;
+                        inter.object.material.materials[0].color.r = 0.0;
+                        break;
+                    }
                 }
-                inter.object.material.materials[0].color.g = 0.5;
-                inter.object.material.materials[0].color.r = 0.0;
-                break;
             }
         }
 
@@ -579,21 +594,12 @@ function postScriptLoad(progress){
         }
     }
     
-    function autoWalk(){
-        autoWalking = !autoWalking;
-    }
-    
-    function showPointer(){
-        //pointer.visible = true;
-    }
-    
     function resetLocation(){
         bears[userName].position.set(0, 2, 0);
         bears[userName].velocity.set(0, 0, 0);
     }
     
     function fireButton(){
-        //pointer.visible = false;
         if(currentButton && buttonHandlers[currentButton]){
             var btn = mainScene[currentButton];
             buttonHandlers[currentButton](btn);
@@ -787,17 +793,38 @@ function postScriptLoad(progress){
     ], [
         { name: "heading", axes: [-MouseInput.IX] },
         { name: "pitch", axes: [-MouseInput.IY]},
-        { name: "fire", buttons: [1], commandDown: showPointer, commandUp: fireButton }
+        { name: "fire", buttons: [1], commandUp: fireButton }
     ], proxy, oscope, renderer.domElement);
+    
+    var fingerParts = [];
+    var leapCommands = [
+        { name: "handX", axes: [LeapMotionInput.HAND0X], scale: 0.01 },
+        { name: "handY", axes: [LeapMotionInput.HAND0Y], scale: 0.01, offset: -3 },
+        { name: "handZ", axes: [LeapMotionInput.HAND0Z], scale: 0.01, offset: -7 },
+        { name: "fire", buttons: [1], commandUp: fireButton }        
+    ];
+    
+    for(var i = 0; i < LeapMotionInput.NUM_FINGERS / 2; ++i){
+        var finger = "finger" + i;
+        for(var j = 0; j < LeapMotionInput.FINGER_PARTS.length; ++j){
+            if(j === 0 || j === LeapMotionInput.FINGER_PARTS.length - 1){
+                var knuckle = (finger + LeapMotionInput.FINGER_PARTS[j]).toUpperCase();
+                var k = new THREE.Mesh(new THREE.SphereGeometry(0.07, 4, 2), new THREE.MeshPhongMaterial({
+                    color: 0xffff00
+                }));
+                k.name = knuckle;
+                fingerParts.push(k);
+                scene.add(k);
+                leapCommands.push({ name: knuckle + "X", axes: [LeapMotionInput[knuckle + "X"]], scale: 0.01 });
+                leapCommands.push({ name: knuckle + "Y", axes: [LeapMotionInput[knuckle + "Y"]], scale: 0.01, offset: -2 });
+                leapCommands.push({ name: knuckle + "Z", axes: [LeapMotionInput[knuckle + "Z"]], scale: 0.01, offset: -6 });
+            }
+        }
+    }
     
     leap = new LeapMotionInput("leap", [
         { name: "fire", x: -500, y: -500, z: -500, w: 1000, h: 1000, d: 1000 }
-    ], null, [
-        { name: "handX", axes: [LeapMotionInput.HAND0X], scale: 0.02 },
-        { name: "handY", axes: [LeapMotionInput.HAND0Y], scale: 0.02, offset: -2 },
-        { name: "handZ", axes: [LeapMotionInput.HAND0Z], scale: 0.04, offset: -3 },
-        { name: "fire", buttons: [1], commandUp: fireButton }
-    ], proxy, oscope);
+    ], null, leapCommands, proxy, oscope);
             
     touch = new TouchInput("touch", null, null, [
         { name: "heading", axes: [TouchInput.IX0] },
@@ -811,7 +838,7 @@ function postScriptLoad(progress){
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
         { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: resetLocation },
         { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 0.5 },
-        { name: "fire", buttons: [KeyboardInput.CTRL], commandDown: showPointer, commandUp: fireButton },
+        { name: "fire", buttons: [KeyboardInput.CTRL], commandUp: fireButton },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 1 },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
     ], proxy, oscope);
@@ -826,7 +853,7 @@ function postScriptLoad(progress){
         { name: "strafe", axes: [GamepadInput.LSX]},
         { name: "drive", axes: [GamepadInput.LSY]},
         { name: "jump", buttons: [1], commandDown: jump, dt: 0.5 },
-        { name: "fire", buttons: [2], commandDown: showPointer, commandUp: fireButton },
+        { name: "fire", buttons: [2], commandUp: fireButton },
         { name: "options", buttons: [9], commandUp: toggleOptions }
     ], proxy, oscope);
 
