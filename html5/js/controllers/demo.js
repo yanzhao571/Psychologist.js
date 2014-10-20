@@ -915,7 +915,7 @@ function postScriptLoad(progress){
         scene.add(object);
         var cam = mainScene.Camera.children[0];
         camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, drawDistance);
-        audio3d.loadSound3D(
+        audio3d.load3DSound(
             "music/ocean.mp3", true,
             mainScene.Campfire.position.x,
             mainScene.Campfire.position.y,
@@ -932,7 +932,7 @@ function postScriptLoad(progress){
 
     var bearModel = new ModelLoader("models/bear.dae", progress);
 
-    audio3d.loadSoundFixed("music/game1.ogg.break", true, progress, function(snd){
+    audio3d.loadFixedSound("music/game1.ogg.break", true, progress, function(snd){
         snd.volume.gain.value = 1;
         snd.source.start(0);
     });

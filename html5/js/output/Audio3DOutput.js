@@ -94,6 +94,7 @@ Audio3DOutput.prototype.createSound = function(loop, success, buffer){
     };
     snd.source.buffer = buffer;
     snd.source.loop = loop;
+    snd.source.connect(snd.volume);
     success(snd);
 };
 
@@ -102,13 +103,11 @@ Audio3DOutput.prototype.create3DSound = function(x, y, z, success, snd){
     snd.panner.setPosition(x, y, z);
     snd.panner.connect(this.mainVolume);
     snd.volume.connect(snd.panner);
-    snd.source.connect(snd.volume);
     success(snd);  
 };
 
 Audio3DOutput.prototype.createFixedSound = function(success, snd){
     snd.volume.connect(this.mainVolume);
-    snd.source.connect(snd.volume);
     success(snd); 
 };
 
@@ -120,19 +119,19 @@ Audio3DOutput.prototype.loadSoundCascadeSrcList = function(srcs, loop, progress,
     this.loadBufferCascadeSrcList(srcs, progress, this.createSound.bind(this, loop, success));
 };
 
-Audio3DOutput.prototype.loadSound3D = function(src, loop, x, y, z, progress, success){
+Audio3DOutput.prototype.load3DSound = function(src, loop, x, y, z, progress, success){
     this.loadSound(src, loop, progress, this.create3DSound.bind(this, x, y, z, success));
 };
 
-Audio3DOutput.prototype.loadSound3DCascadeSrcList = function(srcs, loop, x, y, z, progress, success){
+Audio3DOutput.prototype.load3DSoundCascadeSrcList = function(srcs, loop, x, y, z, progress, success){
     this.loadSoundCascadeSrcList()(srcs, loop, progress, this.create3DSound.bind(this, x, y, z, success));    
 };
 
-Audio3DOutput.prototype.loadSoundFixed = function(src, loop, progress, success){
+Audio3DOutput.prototype.loadFixedSound = function(src, loop, progress, success){
     this.loadSound(src, loop, progress, this.createFixedSound .bind(this, success));  
 };
 
-Audio3DOutput.prototype.loadSoundFixedCascadeSrcList = function(srcs, loop, progress, success){
+Audio3DOutput.prototype.loadFixedSoundCascadeSrcList = function(srcs, loop, progress, success){
     this.loadSoundCascadeSrcList(srcs, loop, progress, this.createFixedSound .bind(this, success));  
 };
 
