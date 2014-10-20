@@ -415,8 +415,8 @@ function postScriptLoad(progress){
             currentButton = null;
         }
         for(var i = 0; i < fingerParts.length; ++i){
-            var finger = fingerParts[i];
-            var name = finger.name;
+            var knuckle = fingerParts[i];
+            var name = knuckle.name;
             direction.set(
                 leap.getValue(name + "X"),
                 leap.getValue(name + "Y"),
@@ -426,14 +426,14 @@ function postScriptLoad(progress){
 
             testPoint.copy(bears[userName].position);
             testPoint.y += PLAYER_HEIGHT;
-            finger.position.copy(testPoint);
-            finger.position.add(direction);
+            knuckle.position.copy(testPoint);
+            knuckle.position.add(direction);
         
             if(name.indexOf("TIP") > 0){
-            testPoint.copy(finger.position);
+            testPoint.copy(knuckle.position);
             direction.set(0, -1, 0);
                 raycaster.set(testPoint, direction);
-                raycaster.far = 2;
+                raycaster.far = 0.25;
 
                 for(var j = 0; j < mainScene.buttons.length; ++j){
                     var btn = mainScene.buttons[j];
