@@ -144,18 +144,17 @@ NetworkedInput.prototype.makeStateSnapshot = function(){
         var cmdState = this.commandState[cmd.name];
         if(cmdState){
             state += fmt(
-                "$1:$2:$3",
-                i,
-                cmdState.value,
-                (cmdState.pressed ? 0x1 : 0)
-                | (cmdState.fireAgain ? 0x2 : 0)
+                "$1:$2",
+                (i << 2) 
+                | (cmdState.pressed ? 0x1 : 0)
+                | (cmdState.fireAgain ? 0x2 : 0),
+                cmdState.value
             );
             if(i < this.commands.length - 1){
                 state += "|";
             }
         }
     }
-    console.log(state);
     return state;
 };
 
@@ -170,12 +169,15 @@ NetworkedInput.prototype.decodeStateSnapshot = function(snapshot){
         var record = records[i];
         var parts = record.split(":");
         var cmdIndex = parseInt(parts[0], 10);
+        var pressed = (cmdIndex & 0x1) !== 0;
+        var fireAgain = (flags & 0x2) !== 0;
+        cmdIndex >>= 2;
         var cmd = this.commands[cmdIndex];
         var flags = parseInt(parts[2], 10);
         this.commandState[cmd.name] = {
             value: parseFloat(parts[1]),
-            pressed: (flags & 0x1) !== 0,
-            fireAgain: (flags & 0x2) !== 0
+            pressed: pressed,
+            fireAgain: fireAgain
         };
     }
 };
