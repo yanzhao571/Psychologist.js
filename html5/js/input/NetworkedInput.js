@@ -145,32 +145,37 @@ NetworkedInput.prototype.makeStateSnapshot = function(){
         if(cmdState){
             state += fmt(
                 "$1:$2:$3",
-                cmd.name,
+                i,
                 cmdState.value,
-                (cmdState.pressed ? 0x100 : 0) 
-                | (cmdState.wasPressed ? 0x010 : 0) 
-                | (cmdState.fireAgain ? 0x001 : 0)
+                (cmdState.pressed ? 0x1 : 0)
+                | (cmdState.fireAgain ? 0x2 : 0)
             );
             if(i < this.commands.length - 1){
                 state += "|";
             }
         }
     }
+    console.log(state);
     return state;
 };
 
 NetworkedInput.prototype.decodeStateSnapshot = function(snapshot){
+    for(var c = 0; c < this.commands.length; ++c){
+        var cmd = this.commands[c];
+        var cmdState = this.commandState[cmd.name];
+        cmdState.wasPressed = cmdState.pressed;
+    }
     var records = snapshot.split("|");
     for(var i = 0; i < records.length; ++i){
         var record = records[i];
         var parts = record.split(":");
-        var name = parts[0];
-        var flags = parseInt(parts[2]);
-        this.commandState[name] = {
+        var cmdIndex = parseInt(parts[0], 10);
+        var cmd = this.commands[cmdIndex];
+        var flags = parseInt(parts[2], 10);
+        this.commandState[cmd.name] = {
             value: parseFloat(parts[1]),
-            pressed: (flags & 0x100) !== 0,
-            wasPressed: (flags & 0x010) !== 0,
-            fireAgain: (flags & 0x001) !== 0
+            pressed: (flags & 0x1) !== 0,
+            fireAgain: (flags & 0x2) !== 0
         };
     }
 };
