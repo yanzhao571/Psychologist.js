@@ -139,6 +139,9 @@ Audio3DOutput.prototype.loadSoundFixedCascadeSrcList = function(srcs, loop, prog
 Audio3DOutput.prototype.playBufferImmediate = function(buffer){
     this.createSound(false, this.createFixedSound.bind(this, function(snd){        
         snd.volume.gain.value = 1;
+        snd.source.addEventListener("ended", function(evt){
+            snd.volume.disconnect(this.mainVolume);
+        }.bind(this));
         snd.source.start(0);
     }), buffer);
 };
