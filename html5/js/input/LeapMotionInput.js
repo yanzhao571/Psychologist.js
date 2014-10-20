@@ -1,5 +1,6 @@
 function LeapMotionInput(name, buttonBounds, axisConstraints, commands, socket, oscope){
     this.buttonBounds = buttonBounds || [];
+    this.isStreaming = false;
     for(var i = this.buttonBounds.length - 1; i >= 0; --i){
         var b = this.buttonBounds[i];
         b.x2 = b.x + b.w;
@@ -18,23 +19,23 @@ LeapMotionInput.prototype.E = function (e, f){
         this.controller.on(e, f);            
     }
     else{
-        this.controller.on(e, console.log.bind(console, "leap " + e));
+        this.controller.on(e, console.log.bind(console, "Leap Motion Event: " + e));
     }
 };
 
 LeapMotionInput.prototype.start = function(gameUpdateLoop){
-    console.log("starting");
     if(this.isEnabled()){
         if(gameUpdateLoop){
-            console.log("creating fallback");
-            console.log("events setup");
             var alternateLooper = function(t){
                 requestAnimationFrame(alternateLooper);
                 gameUpdateLoop(t);
             };
             var startAlternate = requestAnimationFrame.bind(window, alternateLooper);
             var timeout = setTimeout(startAlternate, LeapMotionInput.CONNECTION_TIMEOUT);
-            var canceller = clearTimeout.bind(window, timeout);
+            var canceller = function(){
+                clearTimeout(timeout);
+                this.isStreaming = true;
+            }.bind(this);
             this.E("connect");
             this.E("focus");
             this.E("blur");
@@ -44,7 +45,6 @@ LeapMotionInput.prototype.start = function(gameUpdateLoop){
             this.E("streamingStopped", startAlternate);
             this.E("deviceStopped");
             this.E("disconnect");
-            console.log("fallback created");
         }  
         this.controller.on("frame", this.setState.bind(this, gameUpdateLoop));  
         this.controller.connect();
@@ -80,6 +80,7 @@ LeapMotionInput.prototype.setState = function(gameUpdateLoop, frame){
         for(var j = 0; j < frame.gestures.length; ++j){
             var gesture = frame.gestures[j];
             if(gesture.type === "keyTap"){
+                help(gesture);
                 var p = gesture.position;
                 if(b.x <= p[0] && p[0] < b.x2
                     && b.y <= p[1] && p[1] < b.y2
