@@ -202,9 +202,6 @@ function postScriptLoad(progress){
                 var evt = new Event("change");
                 ctrls[key].dispatchEvent(evt);
             }
-            else {
-                showHideControls();
-            }
         }
     }
     var hideControlsTimeout = null;
