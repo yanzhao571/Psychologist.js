@@ -25,28 +25,30 @@ LeapMotionInput.prototype.E = function (e, f){
 
 LeapMotionInput.prototype.start = function(gameUpdateLoop){
     if(this.isEnabled()){
+        var canceller = null,
+            startAlternate = null;
         if(gameUpdateLoop){
             var alternateLooper = function(t){
                 requestAnimationFrame(alternateLooper);
                 gameUpdateLoop(t);
             };
-            var startAlternate = requestAnimationFrame.bind(window, alternateLooper);
+            startAlternate = requestAnimationFrame.bind(window, alternateLooper);
             var timeout = setTimeout(startAlternate, LeapMotionInput.CONNECTION_TIMEOUT);
-            var canceller = function(){
+            canceller = function(){
                 clearTimeout(timeout);
                 this.isStreaming = true;
             }.bind(this);
-            this.E("connect");
-            this.E("focus");
-            this.E("blur");
-            this.E("protocol");
-            this.E("deviceStreaming", canceller);
-            this.E("streamingStarted", canceller);
-            this.E("streamingStopped", startAlternate);
-            this.E("deviceStopped");
-            this.E("disconnect");
         }  
-        this.controller.on("frame", this.setState.bind(this, gameUpdateLoop));  
+        this.E("connect");
+        this.E("focus");
+        this.E("blur");
+        this.E("protocol");
+        this.E("deviceStreaming", canceller);
+        this.E("streamingStarted", canceller);
+        this.E("streamingStopped", startAlternate);
+        this.E("deviceStopped");
+        this.E("disconnect");
+        this.E("frame", this.setState.bind(this, gameUpdateLoop));  
         this.controller.connect();
     }
 };
@@ -54,6 +56,12 @@ LeapMotionInput.prototype.start = function(gameUpdateLoop){
 LeapMotionInput.COMPONENTS = ["X", "Y", "Z"];
 
 LeapMotionInput.prototype.setState = function(gameUpdateLoop, frame){
+    var prevFrame = this.controller.history.get(1);
+    if(prevFrame && frame.hands.length !== prevFrame.hands.length){
+        for(var i = 0; i < this.commands.length; ++i){
+            this.enable(this.commands[i].name, frame.hands.length > 0);
+        }
+    }
     for(var i = 0; i < frame.hands.length; ++i){
         var hand = frame.hands[i].palmPosition;
         var handName = "HAND" + i;
@@ -80,7 +88,6 @@ LeapMotionInput.prototype.setState = function(gameUpdateLoop, frame){
         for(var j = 0; j < frame.gestures.length; ++j){
             var gesture = frame.gestures[j];
             if(gesture.type === "keyTap"){
-                help(gesture);
                 var p = gesture.position;
                 if(b.x <= p[0] && p[0] < b.x2
                     && b.y <= p[1] && p[1] < b.y2
