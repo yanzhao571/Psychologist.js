@@ -1,6 +1,7 @@
 function Audio3DOutput(){
     try{
         this.audioContext = new AudioContext();
+        this.sampleRate = this.audioContext.sampleRate;
         this.mainVolume = this.audioContext.createGain();
         this.mainVolume.connect(this.audioContext.destination);
 
@@ -95,6 +96,26 @@ Audio3DOutput.prototype.loadBufferCascadeSrcList = function(srcs, progress, succ
     }
 };
 
+Audio3DOutput.prototype.createRawSound = function(pcmData, success){
+    if(pcmData.length !== 1 && pcmData.length !== 2){
+        throw new Error("Incorrect number of channels. Expected 1 or 2, got " + pcmData.length);
+    }
+    
+    var frameCount = pcmData[0].length;
+    if(pcmData.length > 1 && pcmData[1].length !== frameCount){
+        throw new Error("Second channel is not the same length as the first channel. Expected " + frameCount + ", but was " + pcmData[1].length);
+    }
+    
+    var buffer = this.audioContext.createBuffer(pcmData.length, frameCount, this.sampleRate);
+    for(var c = 0; c < pcmData.length; ++c){
+        var channel = buffer.getChannelData(c);
+        for(var i = 0; i < frameCount; ++i){
+            channel[i] = pcmData[c][i];
+        }
+    }
+    success(buffer);
+};
+
 Audio3DOutput.prototype.createSound = function(loop, success, buffer){
     var snd = {
         volume: this.audioContext.createGain(),
@@ -143,9 +164,9 @@ Audio3DOutput.prototype.loadFixedSoundCascadeSrcList = function(srcs, loop, prog
     this.loadSoundCascadeSrcList(srcs, loop, progress, this.createFixedSound .bind(this, success));  
 };
 
-Audio3DOutput.prototype.playBufferImmediate = function(buffer){
+Audio3DOutput.prototype.playBufferImmediate = function(buffer, volume){
     this.createSound(false, this.createFixedSound.bind(this, function(snd){        
-        snd.volume.gain.value = 1;
+        snd.volume.gain.value = volume;
         snd.source.addEventListener("ended", function(evt){
             snd.volume.disconnect(this.mainVolume);
         }.bind(this));

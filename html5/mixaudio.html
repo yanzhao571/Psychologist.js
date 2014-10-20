@@ -6,16 +6,30 @@
     <title>Playing a sound, overlapped a few times</title>
 </head>
 <body>
+    Q - play a synthesized sound <br>
+    W - play an MP3
     <script type="text/javascript" src="js/output/Audio3DOutput.js"></script>
     <script type="text/javascript">
         var audio = new Audio3DOutput();
-
+        var data = [];
+        for(var i = 1; i <= audio.sampleRate * 0.125; ++i){
+            data.push((Math.sin(i / Math.pow(i, 0.5)) + 1) * 0.5);
+        }
+        
+        audio.createRawSound([data], function(buffer){
+            window.addEventListener("keydown", function(evt){
+                if(evt.keyCode === 81){
+                    audio.playBufferImmediate(buffer, 0.05);
+                }
+            });
+        });
+        
         audio.loadBufferCascadeSrcList(["music/click.mp3", "music/click.ogg"], null, function(buffer){
-            var play = function(evt){
-                audio.playBufferImmediate(buffer);
-            };
-            window.addEventListener("keydown", play);
-            window.addEventListener("touchmove", play);
+            window.addEventListener("keydown", function(evt){
+                if(evt.keyCode === 87){
+                    audio.playBufferImmediate(buffer, 0.25);
+                }
+            });
         });
     </script>
 </body>

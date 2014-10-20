@@ -653,7 +653,7 @@ function postScriptLoad(progress){
                     lastText = textObj;
                     bears[userName].add(textObj);
                     if(clickSound){
-                        audio3d.playBufferImmediate(clickSound);
+                        audio3d.playBufferImmediate(clickSound, 0.5);
                     }
                 }
             }
