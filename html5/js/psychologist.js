@@ -706,6 +706,11 @@ function toggleFullScreen() {
     }
 }
 
+document.exitPointerLock = document.exitPointerLock
+    || document.webkitExitPointerLock
+    || document.mozExitPointerLock
+    || function(){};
+
 /*
  * The StateList is a set of objects that can be mapped to DOM elements
  * in such a way to alter their state. The UI presents a drop down list

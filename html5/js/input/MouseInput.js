@@ -67,11 +67,6 @@ function MouseInput(name, axisConstraints, commands, socket, oscope, DOMElement)
         }
     };
 
-    document.exitPointerLock = document.exitPointerLock
-        || document.webkitExitPointerLock
-        || document.mozExitPointerLock
-        || function(){};
-
     this.exitPointerLock = document.exitPointerLock.bind(document);
 
     this.isPointerLocked = function (){
