@@ -15,54 +15,133 @@ function Audio3DOutput(){
         this.setVelocity = function(){};
         this.setOrientation = function(){};
         this.error = exp;
+        console.error("AudioContext not available. Reason: ", exp.message);
     }
 }
 
-Audio3DOutput.prototype.loadSound = function(src, loop, progress, success){
+Audio3DOutput.prototype.loadBuffer = function(src, progress, success){
+    if(!success){
+        success = progress;
+        progress = null;
+    }
+    
+    if(!success){
+        throw new Error("You need to provide a callback function for when the audio finishes loading");
+    }
+    
+    // just overlook the lack of progress indicator
+    if(!progress){
+        progress = function(){};
+    }
+    
     var error = function(){ 
         progress("error", src); 
     };
+    
     if(this.isAvailable){
         progress("loading", src);
-        GET(src, "arraybuffer", function(evt){ 
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", src);
+        xhr.responseType = "arraybuffer";
+        xhr.onerror = error;
+        xhr.onabort = error;
+        xhr.onprogress = function(evt){ 
             progress("intermediate", src, evt.loaded); 
-        }, error, function(response){
-            progress("success", src);
-            this.audioContext.decodeAudioData(response, function(buffer){
-                var snd = {
-                    volume: this.audioContext.createGain(),
-                    source: this.audioContext.createBufferSource()
-                };
-                snd.source.buffer = buffer;
-                snd.source.loop = loop;
-                success(snd);
-            }.bind(this), error);
-        }.bind(this));
+        };
+        xhr.onload = function () {
+            if (xhr.status < 400) {
+                progress("success", src);
+                this.audioContext.decodeAudioData(xhr.response, success, error);
+            }
+            else {
+                error();
+            }
+        }.bind(this);
+        xhr.send();
     }
     else{
         error();
     }
 };
 
+Audio3DOutput.prototype.loadBufferCascadeSrcList = function(srcs, progress, success, index){
+    index = index || 0;
+    if(index === srcs.length){
+        if(progress){
+            srcs.forEach(function(s){
+                progress("error", s);
+            });
+        }
+    }
+    else{
+        var userProgress = progress;
+        progress = function(type, file, data){
+            if(userProgress){
+                userProgress(type, file, data);
+            }
+            if(type === "error"){
+                setTimeout(this.loadBufferCascadeSrcList.bind(this, srcs, userProgress, success, index + 1), 0);
+            }
+        };
+        this.loadBuffer(srcs[index], progress, success);
+    }
+};
+
+Audio3DOutput.prototype.createSound = function(loop, success, buffer){
+    var snd = {
+        volume: this.audioContext.createGain(),
+        source: this.audioContext.createBufferSource()
+    };
+    snd.source.buffer = buffer;
+    snd.source.loop = loop;
+    success(snd);
+};
+
+Audio3DOutput.prototype.create3DSound = function(x, y, z, success, snd){
+    snd.panner = this.audioContext.createPanner();
+    snd.panner.setPosition(x, y, z);
+    snd.panner.connect(this.mainVolume);
+    snd.volume.connect(snd.panner);
+    snd.source.connect(snd.volume);
+    success(snd);  
+};
+
+Audio3DOutput.prototype.createFixedSound = function(success, snd){
+    snd.volume.connect(this.mainVolume);
+    snd.source.connect(snd.volume);
+    success(snd); 
+};
+
+Audio3DOutput.prototype.loadSound = function(src, loop, progress, success){
+    this.loadBuffer(src, progress, this.createSound.bind(this, loop, success));
+};
+
+Audio3DOutput.prototype.loadSoundCascadeSrcList = function(srcs, loop, progress, success, index){
+    this.loadBufferCascadeSrcList(srcs, progress, this.createSound.bind(this, loop, success));
+};
+
 Audio3DOutput.prototype.loadSound3D = function(src, loop, x, y, z, progress, success){
-    this.loadSound(src, loop, progress, function(snd){
-        snd.panner = this.audioContext.createPanner();
-        snd.panner.setPosition(x, y, z);
-        snd.panner.connect(this.mainVolume);
-        snd.volume.connect(snd.panner);
-        snd.source.connect(snd.volume);
-        success(snd);
-    }.bind(this));
+    this.loadSound(src, loop, progress, this.create3DSound.bind(this, x, y, z, success));
+};
+
+Audio3DOutput.prototype.loadSound3DCascadeSrcList = function(srcs, loop, x, y, z, progress, success){
+    this.loadSoundCascadeSrcList()(srcs, loop, progress, this.create3DSound.bind(this, x, y, z, success));    
 };
 
 Audio3DOutput.prototype.loadSoundFixed = function(src, loop, progress, success){
-    this.loadSound(src, loop, progress, function(snd){
-        snd.volume.connect(this.mainVolume);
-        snd.source.connect(snd.volume);
-        success(snd);
-    }.bind(this));  
+    this.loadSound(src, loop, progress, this.createFixedSound .bind(this, success));  
 };
 
+Audio3DOutput.prototype.loadSoundFixedCascadeSrcList = function(srcs, loop, progress, success){
+    this.loadSoundCascadeSrcList(srcs, loop, progress, this.createFixedSound .bind(this, success));  
+};
+
+Audio3DOutput.prototype.playBufferImmediate = function(buffer){
+    this.createSound(false, this.createFixedSound.bind(this, function(snd){        
+        snd.volume.gain.value = 1;
+        snd.source.start(0);
+    }), buffer);
+};
 /*
 https://www.github.com/capnmidnight/VR
 Copyright (c) 2014 Sean T. McBeth

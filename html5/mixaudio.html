@@ -1,0 +1,20 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
+    <title>Playing a sound, overlapped a few times</title>
+</head>
+<body>
+    <script type="text/javascript" src="js/output/Audio3DOutput.js"></script>
+    <script type="text/javascript">
+        var audio = new Audio3DOutput();
+
+        audio.loadBufferCascadeSrcList(["music/click.mp3", "music/click.ogg"], function(buffer){
+            window.addEventListener("keydown", function(evt){
+                audio.playBufferImmediate(buffer);
+            });
+        });
+    </script>
+</body>
+</html>
