@@ -207,13 +207,18 @@ function postScriptLoad(progress){
             }
         }
     }
+    var hideControlsTimeout = null;
+    function showControls(){
+        ctrls.onScreenControls.style.display = "";
+        if(hideControlsTimeout !== null){
+            clearTimeout(hideControlsTimeout);
+        }
+        hideControlsTimeout = setTimeout(hideControls, 3000);
+    }
     
-    function showHideControls(){
-        ctrls.onScreenControls.style.display = 
-            (ctrls.deviceTypes.value === NO_HMD_SMARTPHONE
-            || !ctrls.defaultDisplay.checked) 
-                ? "" 
-                : "none";
+    function hideControls(){
+        ctrls.onScreenControls.style.display = "none";
+        hideControlsTimeout = null;
     }
 
     function msg(){
@@ -538,6 +543,7 @@ function postScriptLoad(progress){
         if(!show){
             requestFullScreen();
             mouse.requestPointerLock();
+            showControls();
         }
         else{
             mouse.exitPointerLock();
@@ -874,6 +880,14 @@ function postScriptLoad(progress){
     window.addEventListener("resize", function (){
         setSize(window.innerWidth, window.innerHeight);
     }, false);
+    
+    window.addEventListener("touchend", showControls, false);
+    
+    window.addEventListener("mousemove", function(evt){
+        if(!mouse.isPointerLocked()){
+            showControls();
+        }
+    }, false);
 
     function setupModuleEvents(module, name){
         var e = ctrls[name + "Enable"],
@@ -940,15 +954,9 @@ function postScriptLoad(progress){
         clickSound = buffer;
     });
 
-    audio3d.loadFixedSound("music/game1.ogg.break", true, progress, function(snd){
-        snd.volume.gain.value = 1;
-        snd.source.start(0);
-    });
-
     document.body.insertBefore(renderer.domElement, document.body.firstChild);
     renderer.domElement.setAttribute("tabindex", 0);
     setSize(window.innerWidth, window.innerHeight);
-    toggleOptions();    
-    showHideControls();
+    toggleOptions();
     requestAnimationFrame(waitForResources);
 }
