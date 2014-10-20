@@ -57,11 +57,12 @@ FileState.prototype.toString = function () {
     return fmt("$1 ($2.00KB of $3.00KB): $4", this.name, this.progress / 1000, this.size / 1000, FileState.STATE_NAMES[this.state]);
 };
 
-FileState.STATE_NAMES = ["none", "started", "error", null, "success"];
+FileState.STATE_NAMES = ["none", "started", "error", "success", "skipped"];
 FileState.NONE = 0;
 FileState.STARTED = 1;
 FileState.ERRORED = 2;
-FileState.COMPLETE = 4;
+FileState.COMPLETE = 3;
+FileState.SKIPPED = 4;
 
 function LoadingProgress() {
     var args = arr(arguments),
@@ -81,25 +82,25 @@ function LoadingProgress() {
                 var msg = null;
                 if (exp.sourceURL) {
                     msg = fmt(
-                            "<br>$1:<br>[msg] $2<br>[line] $3<br>[col] $4<br>[file] $5",
-                            typeof (exp),
-                            exp.message,
-                            exp.line,
-                            exp.column,
-                            exp.sourceURL.match(/[^\/\\]*$/)[0]);
+                        "<br>$1:<br>[msg] $2<br>[line] $3<br>[col] $4<br>[file] $5",
+                        typeof (exp),
+                        exp.message,
+                        exp.line,
+                        exp.column,
+                        exp.sourceURL.match(/[^\/\\]*$/)[0]);
                 }
                 else if (exp.stack) {
                     msg = fmt(
-                            "<br>$1:<br>[msg] $2<br>[stack] $3",
-                            typeof (exp),
-                            exp.message,
-                            exp.stack.replace(/\n/g, "<br>"));
+                        "<br>$1:<br>[msg] $2<br>[stack] $3",
+                        typeof (exp),
+                        exp.message,
+                        exp.stack.replace(/\n/g, "<br>"));
                 }
                 else {
                     msg = fmt(
-                            "<br>$1: $2",
-                            typeof (exp),
-                            exp.message);
+                        "<br>$1: $2",
+                        typeof (exp),
+                        exp.message);
                 }
                 displayProgress(msg);
                 throw exp;
@@ -131,6 +132,10 @@ function LoadingProgress() {
                     else if (op === "success") {
                         this.fileMap[file].progress = this.fileMap[file].size;
                         this.fileMap[file].state = FileState.COMPLETE;
+                    }
+                    else if (op === "skip") {
+                        this.fileMap[file].progress = this.fileMap[file].size;
+                        this.fileMap[file].state = FileState.SKIPPED;
                     }
                     else if (op === "error") {
                         this.fileMap[file].state = FileState.ERRORED;
@@ -442,7 +447,7 @@ function makeTabSet(elem) {
     var children = arr(elem.children);
     for (var i = 0; i < children.length; i += 2) {
         var title = children[i],
-                content = children[i + 1];
+            content = children[i + 1];
         if (/(H\d|LABEL)/.test(title.tagName)) {
             var headerCell = document.createElement("th");
             headerRow.appendChild(headerCell);

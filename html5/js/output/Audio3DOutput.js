@@ -19,12 +19,7 @@ function Audio3DOutput(){
     }
 }
 
-Audio3DOutput.prototype.loadBuffer = function(src, progress, success){
-    if(!success){
-        success = progress;
-        progress = null;
-    }
-    
+Audio3DOutput.prototype.loadBuffer = function(src, progress, success){    
     if(!success){
         throw new Error("You need to provide a callback function for when the audio finishes loading");
     }
@@ -74,13 +69,26 @@ Audio3DOutput.prototype.loadBufferCascadeSrcList = function(srcs, progress, succ
         }
     }
     else{
-        var userProgress = progress;
+        var userSuccess = success,
+            userProgress = progress;
+        success = function(buffer){
+            if(userProgress){
+                for(var i = index + 1; i < srcs.length; ++i){
+                    console.log("Skipping loading alternate file [" + srcs[i] + "]. [" + srcs[index] + "] has already loaded.");
+                    userProgress("skip", srcs[i], "[" + srcs[index] + "] has already loaded.");
+                }
+            }
+            if(userSuccess){
+                userSuccess(buffer);
+            }
+        };
         progress = function(type, file, data){
             if(userProgress){
                 userProgress(type, file, data);
             }
             if(type === "error"){
-                setTimeout(this.loadBufferCascadeSrcList.bind(this, srcs, userProgress, success, index + 1), 0);
+                console.warn("Failed to decode " + srcs[index]);
+                setTimeout(this.loadBufferCascadeSrcList.bind(this, srcs, userProgress, userSuccess, index + 1), 0);
             }
         };
         this.loadBuffer(srcs[index], progress, success);
@@ -115,7 +123,7 @@ Audio3DOutput.prototype.loadSound = function(src, loop, progress, success){
     this.loadBuffer(src, progress, this.createSound.bind(this, loop, success));
 };
 
-Audio3DOutput.prototype.loadSoundCascadeSrcList = function(srcs, loop, progress, success, index){
+Audio3DOutput.prototype.loadSoundCascadeSrcList = function(srcs, loop, progress, success){
     this.loadBufferCascadeSrcList(srcs, progress, this.createSound.bind(this, loop, success));
 };
 

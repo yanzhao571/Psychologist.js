@@ -10,10 +10,12 @@
     <script type="text/javascript">
         var audio = new Audio3DOutput();
 
-        audio.loadBufferCascadeSrcList(["music/click.mp3", "music/click.ogg"], function(buffer){
-            window.addEventListener("keydown", function(evt){
+        audio.loadBufferCascadeSrcList(["music/click.mp3", "music/click.ogg"], null, function(buffer){
+            var play = function(evt){
                 audio.playBufferImmediate(buffer);
-            });
+            };
+            window.addEventListener("keydown", play);
+            window.addEventListener("touchmove", play);
         });
     </script>
 </body>
