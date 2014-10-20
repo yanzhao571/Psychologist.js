@@ -40,8 +40,6 @@ LeapMotionInput.prototype.start = function(gameUpdateLoop){
             }.bind(this);
         }  
         this.E("connect");
-        this.E("focus");
-        this.E("blur");
         this.E("protocol");
         this.E("deviceStreaming", canceller);
         this.E("streamingStarted", canceller);
@@ -57,7 +55,7 @@ LeapMotionInput.COMPONENTS = ["X", "Y", "Z"];
 
 LeapMotionInput.prototype.setState = function(gameUpdateLoop, frame){
     var prevFrame = this.controller.history.get(1);
-    if(prevFrame && frame.hands.length !== prevFrame.hands.length){
+    if(!prevFrame || frame.hands.length !== prevFrame.hands.length){
         for(var i = 0; i < this.commands.length; ++i){
             this.enable(this.commands[i].name, frame.hands.length > 0);
         }
