@@ -548,8 +548,7 @@ function postScriptLoad(progress){
             mouse.requestPointerLock();
             showControls();
         
-            if((ctrls.renderingStyle.value === "rift" || ctrls.renderingStyle.value === "stereo") 
-                && (head.isEnabled() || head.isReceiving())){
+            if(head.isEnabled() || head.isReceiving()){
                 mouse.enable("pitch", false);
                 gamepad.enable("pitch", false);
             }
