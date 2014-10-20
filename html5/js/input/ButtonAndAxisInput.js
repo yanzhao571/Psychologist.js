@@ -4,6 +4,7 @@ function ButtonAndAxisInput(name, axisConstraints, commands, socket, oscope, off
     this.inputState.axes = [];
     this.inputState.buttons = [];
     this.axisNames = [];
+    this.commandNames = this.commands.map(function(c){ return c.name; });
     this.integrateOnly = !!integrateOnly;
     
     axisConstraints = axisConstraints || [];
@@ -138,12 +139,31 @@ ButtonAndAxisInput.prototype.setButton = function(index, pressed){
     this.inputState.buttons[index] = pressed;
 };    
 
+ButtonAndAxisInput.prototype.getValue = function(name){
+    var i = this.commandNames.indexOf(name);
+    return ((this.enabled || (this.receiving && this.socketReady))
+        && i > -1
+        && !this.commands[i].disabled
+        && this.commandState[name]
+        && this.commandState[name].value) || 0;
+};
+
 ButtonAndAxisInput.prototype.isDown = function(name){
-    return (this.enabled || this.receiving) && this.commandState[name] && this.commandState[name].pressed;
+    var i = this.commandNames.indexOf(name);
+    return (this.enabled || (this.receiving && this.socketReady))
+        && i > -1
+        && !this.commands[i].disabled
+        && this.commandState[name]
+        && this.commandState[name].pressed;
 };
 
 ButtonAndAxisInput.prototype.isUp = function(name){
-    return (this.enabled || this.receiving) && this.commandState[name] && !this.commandState[name].pressed;
+    var i = this.commandNames.indexOf(name);
+    return (this.enabled || (this.receiving && this.socketReady))
+        && i > -1
+        && !this.commands[i].disabled
+        && this.commandState[name]
+        && !this.commandState[name].pressed;
 };
 
 ButtonAndAxisInput.prototype.maybeClone = function(arr){ 

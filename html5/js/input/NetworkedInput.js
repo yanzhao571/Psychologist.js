@@ -182,12 +182,6 @@ NetworkedInput.prototype.decodeStateSnapshot = function(snapshot){
     }
 };
 
-NetworkedInput.prototype.getValue = function(name){
-    return (this.enabled || (this.receiving && this.socketReady)) 
-        && this.commandState[name] 
-        && this.commandState[name].value;
-};
-
 NetworkedInput.prototype.setProperty = function(key, name, value){
     for(var i = 0; i < this.commands.length; ++i){
         if(this.commands[i].name === name){

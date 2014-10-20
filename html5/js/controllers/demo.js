@@ -268,11 +268,13 @@ function postScriptLoad(progress){
         leap.update(dt);
 
         pitch = head.getValue("pitch") 
-            + mouse.getValue("pitch");
+            + mouse.getValue("pitch")
+            + gamepad.getValue("pitch");
         roll = head.getValue("roll");
         heading = head.getValue("heading")
                 + touch.getValue("heading")
                 + mouse.getValue("heading")
+                + gamepad.getValue("heading")
                 + startHeading;
         if(ctrls.defaultDisplay.checked){
             THREE.AnimationHandler.update(dt);
@@ -540,13 +542,23 @@ function postScriptLoad(progress){
         var show = ctrls.options.style.display !== "";
         keyboard.pause(show);
         ctrls.options.style.display = (show ? "" : "none");
-        if(!show){
+        if(show){
+            mouse.exitPointerLock();
+        }
+        else{
             requestFullScreen();
             mouse.requestPointerLock();
             showControls();
-        }
-        else{
-            mouse.exitPointerLock();
+        
+            if((ctrls.renderingStyle.value === "rift" || ctrls.renderingStyle.value === "stereo") 
+                && (head.isEnabled() || head.isReceiving())){
+                mouse.enable("pitch", false);
+                gamepad.enable("pitch", false);
+            }
+            else{
+                mouse.enable("pitch", true);
+                gamepad.enable("pitch", true);            
+            }
         }
     }
 
@@ -573,9 +585,11 @@ function postScriptLoad(progress){
                 type = "regular";
                 break;
         }
+        
         if(ctrls.renderingStyle.value !== type){
             ctrls.renderingStyle.value = type;
         }
+        
         if((lastRenderingType === "rift" || lastRenderingType === "stereo")
             && (type === "anaglyph" || type === "regular")){
             alert("The page must reload to enable the new settings.");
@@ -855,11 +869,12 @@ function postScriptLoad(progress){
         { axis: GamepadInput.LSX, deadzone: 0.2},
         { axis: GamepadInput.LSY, deadzone: 0.2},
         { axis: GamepadInput.RSX, deadzone: 0.2, scale: 1.5},
-        { axis: GamepadInput.RSY, deadzone: 0.2, scale: 1.5},
-        { axis: GamepadInput.IRSY, min: -2, max: 1.3 }
+        { axis: GamepadInput.RSY, deadzone: 0.2, scale: 1.5}
     ], [
         { name: "strafe", axes: [GamepadInput.LSX]},
         { name: "drive", axes: [GamepadInput.LSY]},
+        { name: "heading", axes: [-GamepadInput.IRSX]},
+        { name: "pitch", axes: [GamepadInput.IRSY]},
         { name: "jump", buttons: [1], commandDown: jump, dt: 0.5 },
         { name: "fire", buttons: [2], commandUp: fireButton },
         { name: "options", buttons: [9], commandUp: toggleOptions }
