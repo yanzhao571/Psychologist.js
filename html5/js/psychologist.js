@@ -57,12 +57,11 @@ FileState.prototype.toString = function () {
     return fmt("$1 ($2.00KB of $3.00KB): $4", this.name, this.progress / 1000, this.size / 1000, FileState.STATE_NAMES[this.state]);
 };
 
-FileState.STATE_NAMES = ["none", "started", "error", "success", "skipped"];
+FileState.STATE_NAMES = ["none", "started", "error", null, "success"];
 FileState.NONE = 0;
 FileState.STARTED = 1;
 FileState.ERRORED = 2;
-FileState.COMPLETE = 3;
-FileState.SKIPPED = 4;
+FileState.COMPLETE = 4;
 
 function LoadingProgress() {
     var args = arr(arguments),
@@ -129,13 +128,9 @@ function LoadingProgress() {
                     if (op === "intermediate" && inter) {
                         this.fileMap[file].progress = inter;
                     }
-                    else if (op === "success") {
+                    else if (op === "success" || op === "skip") {
                         this.fileMap[file].progress = this.fileMap[file].size;
                         this.fileMap[file].state = FileState.COMPLETE;
-                    }
-                    else if (op === "skip") {
-                        this.fileMap[file].progress = this.fileMap[file].size;
-                        this.fileMap[file].state = FileState.SKIPPED;
                     }
                     else if (op === "error") {
                         this.fileMap[file].state = FileState.ERRORED;

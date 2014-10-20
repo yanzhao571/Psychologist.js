@@ -159,6 +159,7 @@ function postScriptLoad(progress){
         userName = null,
         chatLines = [],
         audio3d = new Audio3DOutput(),
+        clickSound = null,
         oceanSound = null,
         socket = io.connect(document.location.hostname, {
             "reconnect": true,
@@ -645,6 +646,9 @@ function postScriptLoad(progress){
                         "right");
                     lastText = textObj;
                     bears[userName].add(textObj);
+                    if(clickSound){
+                        audio3d.playBufferImmediate(clickSound);
+                    }
                 }
             }
         }
@@ -931,6 +935,10 @@ function postScriptLoad(progress){
     });
 
     var bearModel = new ModelLoader("models/bear.dae", progress);
+
+    audio3d.loadBufferCascadeSrcList(["music/click.mp3", "music/click.ogg"], progress, function(buffer){
+        clickSound = buffer;
+    });
 
     audio3d.loadFixedSound("music/game1.ogg.break", true, progress, function(snd){
         snd.volume.gain.value = 1;
