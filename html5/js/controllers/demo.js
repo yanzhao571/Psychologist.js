@@ -422,13 +422,14 @@ function postScriptLoad(progress){
             btn.children[0].material.materials[0].color.r = 0.5;
             currentButton = null;
         }
-        for(var i = 0; i < fingerParts.length; ++i){
+        
+        for(var i = 0; i < fingerParts.length / 2; ++i){
             var knuckle = fingerParts[i];
             var name = knuckle.name;
             direction.set(
                 leap.getValue(name + "X"),
                 leap.getValue(name + "Y"),
-                leap.getValue(name + "Z"))
+                leap.getValue(name + "Z") + mouse.getValue("pointerDistance"))
                 .applyAxisAngle(RIGHT, -pitch)
                 .applyAxisAngle(camera.up, bears[userName].heading);
 
@@ -814,10 +815,13 @@ function postScriptLoad(progress){
     mouse = new MouseInput("mouse", [
         { axis: MouseInput.DX, scale: 0.4 },
         { axis: MouseInput.DY, scale: 0.4 },
-        { axis: MouseInput.IY, min: -2, max: 1.3 }
+        { axis: MouseInput.IY, min: -2, max: 1.3 },
+        { axis: MouseInput.DZ, scale: -0.125 },
+        { axis: MouseInput.IZ, min: -20, max: 0  }
     ], [
         { name: "heading", axes: [-MouseInput.IX] },
-        { name: "pitch", axes: [-MouseInput.IY]},
+        { name: "pitch", axes: [-MouseInput.IY] },
+        { name: "pointerDistance", axes: [MouseInput.IZ] },
         { name: "fire", buttons: [1], commandUp: fireButton }
     ], proxy, oscope, renderer.domElement);
     
