@@ -178,7 +178,7 @@ ButtonAndAxisInput.prototype.cloneCommand = function(cmd){
     };
 };
 
-ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState, metaKeysSet, dt){
+ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState, metaKeysSet){
     if(metaKeysSet){
         var pressed = true, value = 0;
 

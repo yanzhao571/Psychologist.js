@@ -430,9 +430,10 @@ function postScriptLoad(progress){
             finger.position.add(direction);
         
             if(name.indexOf("TIP") > 0){
-                direction.normalize();
+            testPoint.copy(finger.position);
+            direction.set(0, -1, 0);
                 raycaster.set(testPoint, direction);
-                raycaster.far = 7;
+                raycaster.far = 2;
 
                 for(var j = 0; j < mainScene.buttons.length; ++j){
                     var btn = mainScene.buttons[j];
@@ -798,26 +799,23 @@ function postScriptLoad(progress){
     
     var fingerParts = [];
     var leapCommands = [
-        { name: "handX", axes: [LeapMotionInput.HAND0X], scale: 0.01 },
-        { name: "handY", axes: [LeapMotionInput.HAND0Y], scale: 0.01, offset: -3 },
-        { name: "handZ", axes: [LeapMotionInput.HAND0Z], scale: 0.01, offset: -7 },
-        { name: "fire", buttons: [1], commandUp: fireButton }        
+        { name: "fire", buttons: [1], commandUp: fireButton }
     ];
     
-    for(var i = 0; i < LeapMotionInput.NUM_FINGERS / 2; ++i){
+    for(var i = 0; i < LeapMotionInput.NUM_FINGERS; ++i){
         var finger = "finger" + i;
         for(var j = 0; j < LeapMotionInput.FINGER_PARTS.length; ++j){
             if(j === 0 || j === LeapMotionInput.FINGER_PARTS.length - 2){
                 var knuckle = (finger + LeapMotionInput.FINGER_PARTS[j]).toUpperCase();
-                var k = new THREE.Mesh(new THREE.SphereGeometry(0.04 + j * 0.01, 4, 4), new THREE.MeshPhongMaterial({
+                var k = new THREE.Mesh(new THREE.SphereGeometry(0.1 + j * 0.005, 4, 4), new THREE.MeshPhongMaterial({
                     color: 0xffff00
                 }));
                 k.name = knuckle;
                 fingerParts.push(k);
                 scene.add(k);
-                leapCommands.push({ name: knuckle + "X", axes: [LeapMotionInput[knuckle + "X"]], scale: 0.01 });
-                leapCommands.push({ name: knuckle + "Y", axes: [LeapMotionInput[knuckle + "Y"]], scale: 0.01, offset: -2 });
-                leapCommands.push({ name: knuckle + "Z", axes: [LeapMotionInput[knuckle + "Z"]], scale: 0.01, offset: -8 });
+                leapCommands.push({ name: knuckle + "X", axes: [LeapMotionInput[knuckle + "X"]], scale: 0.015 });
+                leapCommands.push({ name: knuckle + "Y", axes: [LeapMotionInput[knuckle + "Y"]], scale: 0.015, offset: -4 });
+                leapCommands.push({ name: knuckle + "Z", axes: [LeapMotionInput[knuckle + "Z"]], scale: 0.015, offset: -6 });
             }
         }
     }
