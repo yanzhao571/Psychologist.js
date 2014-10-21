@@ -189,25 +189,69 @@ function ofType(arr, type){
 }
 
 function help(obj){
-    var funcs = [];
-    var props = [];
-    var evnts = [];
+    var funcs = {};
+    var props = {};
+    var evnts = {};
     for(var k in obj){
         if(k.indexOf("on") === 0){
-            evnts.push(k);
+            evnts[k] = obj[k];
         }
         else if(typeof(obj[k]) === "function"){
-            funcs.push(k);
+            funcs[k] = obj[k];
         }
         else{
-            props.push(fmt("$1 = '$2'", k, obj[k]));
+            props[k] = obj[k];
         }
     }
     
-    console.log("object", obj);
-    console.log("events", evnts);
-    console.log("functions", funcs);
-    console.log("properties", props);
+    var type = typeof(obj);
+    if(type === "function"){
+        type = obj.toString().match(/(function [^(]*)/)[1];
+    }
+    else if(type === "object"){
+        type = null;
+        if(obj.constructor){
+            type = obj.constructor.name || null;
+        }
+        if(type === null){
+            var q = [{pre: "", obj: window}];
+            var t = [];
+            while(q.length > 0 && type === null){
+                var c = q.shift();
+                c.___traversed___ = true;
+                t.push(c);
+                for(var k in c.obj){
+                    var o2 = c.obj[k];
+                    if(o2){
+                        if(typeof(o2) === "function"){
+                            if(o2.prototype && obj instanceof o2){
+                                type = c.pre + k;
+                                break;
+                            }
+                        }
+                        else if(!o2.___tried___){
+                            q.push({pre: c.pre + k + ".", obj: o2});
+                        }
+                    }
+                }
+            }
+            t.forEach(function(o){
+                delete o.___traversed___;
+            });
+        }
+    }
+    
+    console.log({
+        type: type,
+        events: evnts,
+        functions: funcs,
+        values:{
+            itself: obj,
+            properties: props
+        }
+    });
+    
+    return type !== null && type !== "object";
 }
 
 /*
