@@ -421,7 +421,6 @@ function startGame(socket, progress){
         // place pointer
         //        
         if(currentButton){
-            console.log(currentButton);
             var btn = mainScene[currentButton];
             btn.position.y = btn.originalY;
             btn.children[0].material.materials[0].color.g = 0;
@@ -631,27 +630,11 @@ function startGame(socket, progress){
     }
     
     function fireButton(){
-        if(currentButton && buttonHandlers[currentButton]){
-            var btn = mainScene[currentButton];
-            buttonHandlers[currentButton](btn);
+        var btn = currentButton && mainScene[currentButton];
+        if(btn.onclick){
+            btn.onclick();
         }
     }
-
-    var buttonHandlers = {
-        button1: function(btn){
-            msg("Clicked $1", currentButton);
-        },
-        button2: function(btn){
-            repeater.speak("That's okay. Try again.");
-        },
-        button3: function(btn){
-            repeater.speak("Incorrect, you get no more chances. You are on the way to destruction. Make your time.");
-        },
-        button4: function(btn){
-            msg("Clicked $1", currentButton);
-            repeater.speak("You clicked the fourth button");
-        }
-    };
 
     function showTyping(isLocal, isComplete, text){
         if(currentUser){
@@ -998,11 +981,24 @@ function startGame(socket, progress){
             }
         );
         var v = 0.55 * drawDistance;
-        mainScene.Skybox.scale.set(v, v, v);        
-    
+        mainScene.Skybox.scale.set(v, v, v);      
+
+        mainScene.button1.onclick = function(){
+            msg("Clicked $1", currentButton);
+        };
+        mainScene.button2.onclick = function(){
+            repeater.speak("That's okay. Try again.");
+        };
+        mainScene.button3.onclick = function(){
+            repeater.speak("Incorrect, you get no more chances. You are on the way to destruction. Make your time.");
+        };
+        mainScene.button4.onclick = function(){
+            msg("Clicked $1", currentButton);
+            repeater.speak("You clicked the fourth button");
+        };
+        
         button = new ModelLoader("models/button.dae", progress, function(){
             for(var i = 0; i < 5; ++i){
-                console.log("button " + i);
                 var b = button.clone();
                 b.position.set(i + 5, 0, 5 - 1);
                 scene.add(b);
@@ -1010,6 +1006,9 @@ function startGame(socket, progress){
                 mainScene.buttons.push(cap);
                 cap.name += "_CLONE_" + i;
                 mainScene[cap.name] = cap;
+                cap.onclick = function(n){
+                    msg("Clicked clone button " + n);
+                }.bind(this, i);
                 delete b.buttons;
             }
         });
