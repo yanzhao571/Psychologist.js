@@ -18,7 +18,7 @@ function User(info){
     if(info.password){
         this.salt = User.makeNewSalt();
         var sha = crypto.createHash("sha512");
-        sha.update(this.salt + this.password);
+        sha.update(this.salt + info.password);
         this.hash = sha.digest("hex").toString();
         console.log("Converted password to hash for", this.state.userName);
     }
