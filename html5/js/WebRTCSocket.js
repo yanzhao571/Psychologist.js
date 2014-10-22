@@ -96,8 +96,7 @@ function WebRTCSocket(proxyServer, isStarHub){
         });
     };   
 
-    window.addEventListener("unload", this.close.bind(this));   
-    
+    window.addEventListener("unload", this.close.bind(this));
 
     this.connect = function(connectionKey){
         socket.emit("handshake", "peer");
@@ -126,6 +125,7 @@ function WebRTCSocket(proxyServer, isStarHub){
                         return {url: "stun:" + o};
                     })
                 });
+                                
                 peers[theirIndex] = peer;
 
                 peer.addEventListener("icecandidate", function (evt) {
@@ -156,7 +156,12 @@ function WebRTCSocket(proxyServer, isStarHub){
                         peers[theirIndex].addIceCandidate(new RTCIceCandidate(ice));
                     }
                 });
+                
                 if (isStarHub === true || (isStarHub === undefined && myIndex < theirIndex)) {
+                    peer.addEventListener("negotiationneeded", function(evt){
+                        peer.createOffer(descriptionCreated, console.error.bind(console, "createOffer error"));
+                    });
+                    
                     var channel = peer.createDataChannel("data-channel-" + myIndex + "-to-" + theirIndex, {
                         id: myIndex,
                         ordered: false,
@@ -170,8 +175,6 @@ function WebRTCSocket(proxyServer, isStarHub){
                             descriptionReceived(answer);
                         }
                     });
-
-                    peer.createOffer(descriptionCreated, console.error.bind(console, "createOffer error"));
                 }
                 else if(isStarHub === false || (isStarHub === undefined && myIndex > theirIndex)) {
                     peer.addEventListener("datachannel", function (evt) {

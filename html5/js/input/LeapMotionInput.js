@@ -38,12 +38,12 @@ LeapMotionInput.prototype.start = function(gameUpdateLoop){
                 clearTimeout(timeout);
                 this.isStreaming = true;
             }.bind(this);
+            this.E("deviceStreaming", canceller);
+            this.E("streamingStarted", canceller);
+            this.E("streamingStopped", startAlternate);
         }  
         this.E("connect");
-        this.E("protocol");
-        this.E("deviceStreaming", canceller);
-        this.E("streamingStarted", canceller);
-        this.E("streamingStopped", startAlternate);
+        //this.E("protocol");
         this.E("deviceStopped");
         this.E("disconnect");
         this.E("frame", this.setState.bind(this, gameUpdateLoop));  
