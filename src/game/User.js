@@ -16,6 +16,8 @@ function User(info){
         userName: info.userName
     };
     if(info.password){
+        // remove this code in a month. Today is 2014-10-22. Remove on/after
+        // 2014-11-22.
         this.salt = User.makeNewSalt();
         var sha = crypto.createHash("sha512");
         sha.update(this.salt + info.password);
