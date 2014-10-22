@@ -65,6 +65,23 @@ function displayProgress(file){
 }
 
 function postScriptLoad(progress){
+    var socket = io.connect(document.location.hostname, {
+        "reconnect": true,
+        "reconnection delay": 1000,
+        "max reconnection attempts": 60
+    });
+    socket.on("handshakeFailed", function(controllers){
+        console.warn("Failed to connect to websocket server. Available socket controllers are:", controllers);
+    });
+    socket.on("handshakeComplete", function(controller){
+        if(controller === "demo"){
+            startGame(socket, progress);
+        }
+    });
+    socket.emit("handshake", "demo");
+}
+    
+function startGame(socket, progress){ 
     var BG_COLOR = 0xafbfff, CHAT_TEXT_SIZE = 0.25, 
         NO_HMD_SMARTPHONE = "Smartphone - no HMD",
         PLAYER_HEIGHT = 6.5,
@@ -157,18 +174,13 @@ function postScriptLoad(progress){
         onground = false,
         head, keyboard, mouse, gamepad, touch, speech, leap,
         dt, lt = 0, frame = 0, dFrame = 0.125,
-        userName = null,
+        userName = null, lastText,
         chatLines = [],
+        users = {}, 
         audio3d = new Audio3DOutput(),
         clickSound = null,
         oceanSound = null,
-        socket = io.connect(document.location.hostname, {
-            "reconnect": true,
-            "reconnection delay": 1000,
-            "max reconnection attempts": 60
-        }),
         oscope = new Oscope("demo"),
-        bears = {}, lastText,
         camera, effect, drawDistance = 500,
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
@@ -186,16 +198,9 @@ function postScriptLoad(progress){
     socket.on("userJoin", addUser);
     socket.on("userState", updateUserState);
     socket.on("userLeft", userLeft);
-    socket.on("handshakeFailed", console.warn.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
-    socket.on("handshakeComplete", function(controller){
-        if(controller === "demo"){
-            console.log("Connected to websocket server.");
-        }
-    });
     socket.on("loginFailed", msg.bind(window, "Incorrect user name or password!"));
     socket.on("userList", listUsers);
     socket.on("disconnect", msg.bind(window));
-    socket.emit("handshake", "demo");
     
     function readSettings(){
         for(var key in ctrls){
@@ -224,7 +229,7 @@ function postScriptLoad(progress){
         if(isDebug){
             console.log(txt);
         }
-        else if(bears[userName]){
+        else if(users[userName]){
             showChat(txt);
         }
         else {
@@ -243,7 +248,7 @@ function postScriptLoad(progress){
         
     function waitForResources(t){
         lt = t;
-        if(camera && userName && bears[userName]){
+        if(camera && userName && users[userName]){
             leap.start();
             requestAnimationFrame(animate);
         }
@@ -281,7 +286,7 @@ function postScriptLoad(progress){
             // update user position and view
             //
 
-            bears[userName].dHeading = (heading - bears[userName].heading) / dt;
+            users[userName].dHeading = (heading - users[userName].heading) / dt;
             strafe = keyboard.getValue("strafeRight")
                 + keyboard.getValue("strafeLeft")
                 + gamepad.getValue("strafe");
@@ -290,7 +295,7 @@ function postScriptLoad(progress){
                 + gamepad.getValue("drive")
                 + touch.getValue("drive");
 
-            if(onground || bears[userName].position.y < -0.5){                
+            if(onground || users[userName].position.y < -0.5){                
                 if(autoWalking){
                     strafe = 0;
                     drive = -0.5;
@@ -304,29 +309,29 @@ function postScriptLoad(progress){
 
                 strafe *= len;
                 drive *= len;
-                len = strafe * Math.cos(bears[userName].heading) + drive * Math.sin(bears[userName].heading);
-                drive = drive * Math.cos(bears[userName].heading) - strafe * Math.sin(bears[userName].heading);
+                len = strafe * Math.cos(users[userName].heading) + drive * Math.sin(users[userName].heading);
+                drive = drive * Math.cos(users[userName].heading) - strafe * Math.sin(users[userName].heading);
                 strafe = len;
-                bears[userName].velocity.x = bears[userName].velocity.x * 0.9 + strafe * 0.1;
-                bears[userName].velocity.z = bears[userName].velocity.z * 0.9 + drive * 0.1;
+                users[userName].velocity.x = users[userName].velocity.x * 0.9 + strafe * 0.1;
+                users[userName].velocity.z = users[userName].velocity.z * 0.9 + drive * 0.1;
             }
 
-            bears[userName].velocity.y -= dt * GRAVITY;
+            users[userName].velocity.y -= dt * GRAVITY;
 
             //
             // "water"
             //
-            if(bears[userName].position.y < -0.5){
-                bears[userName].velocity.multiplyScalar(0.925);
+            if(users[userName].position.y < -0.5){
+                users[userName].velocity.multiplyScalar(0.925);
             }
 
             //
             // do collision detection
             //
-            var len = bears[userName].velocity.length() * dt;
-            direction.copy(bears[userName].velocity);
+            var len = users[userName].velocity.length() * dt;
+            direction.copy(users[userName].velocity);
             direction.normalize();
-            testPoint.copy(bears[userName].position);
+            testPoint.copy(users[userName].position);
             testPoint.y += PLAYER_HEIGHT / 2;
             raycaster.set(testPoint, direction);
             raycaster.far = len;
@@ -336,18 +341,18 @@ function postScriptLoad(progress){
                 if(inter.object.parent.isSolid){
                     testPoint.copy(inter.face.normal);
                     testPoint.applyEuler(inter.object.parent.rotation);
-                    bears[userName].velocity.reflect(testPoint);
+                    users[userName].velocity.reflect(testPoint);
                     var d = testPoint.dot(camera.up);
                     if(d > 0.75){
-                        bears[userName].position.y = inter.point.y + 0.0125;
-                        bears[userName].velocity.y = 0.1;
+                        users[userName].position.y = inter.point.y + 0.0125;
+                        users[userName].velocity.y = 0.1;
                         onground = true;
                     }
                 }
             }
 
             // ground test
-            testPoint.copy(bears[userName].position);
+            testPoint.copy(users[userName].position);
             testPoint.y += 1;
             direction.set(0, -1, 0);
             raycaster.set(testPoint, direction);
@@ -358,8 +363,8 @@ function postScriptLoad(progress){
                 if(inter.object.parent.isSolid){
                     testPoint.copy(inter.face.normal);
                     testPoint.applyEuler(inter.object.parent.rotation);
-                    bears[userName].position.y = inter.point.y + 0.0125;
-                    bears[userName].velocity.y = 0.1;
+                    users[userName].position.y = inter.point.y + 0.0125;
+                    users[userName].velocity.y = 0.1;
                     onground = true;
                 }
             }
@@ -372,17 +377,17 @@ function postScriptLoad(progress){
             if(frame > dFrame){
                 frame -= dFrame;
                 var state = {
-                    x: bears[userName].position.x,
-                    y: bears[userName].position.y,
-                    z: bears[userName].position.z,
-                    dx: bears[userName].velocity.x,
-                    dy: bears[userName].velocity.y,
-                    dz: bears[userName].velocity.z,
-                    heading: bears[userName].heading,
-                    dHeading: (bears[userName].heading - bears[userName].lastHeading) / dFrame,
-                    isRunning: bears[userName].velocity.length() > 0
+                    x: users[userName].position.x,
+                    y: users[userName].position.y,
+                    z: users[userName].position.z,
+                    dx: users[userName].velocity.x,
+                    dy: users[userName].velocity.y,
+                    dz: users[userName].velocity.z,
+                    heading: users[userName].heading,
+                    dHeading: (users[userName].heading - users[userName].lastHeading) / dFrame,
+                    isRunning: users[userName].velocity.length() > 0
                 };
-                bears[userName].lastHeading = bears[userName].heading;
+                users[userName].lastHeading = users[userName].heading;
                 socket.emit("userState", state);
             }
         }
@@ -390,8 +395,8 @@ function postScriptLoad(progress){
         //
         // update avatars
         //
-        for(var key in bears){
-            var bear = bears[key];
+        for(var key in users){
+            var bear = users[key];
             testPoint.copy(bear.velocity);
             testPoint.multiplyScalar(dt);
             bear.position.add(testPoint);
@@ -400,7 +405,7 @@ function postScriptLoad(progress){
             if(key !== userName){ 
                 // we have to offset the rotation of the name so the user
                 // can read it.
-                bear.nameObj.rotation.set(0, bears[userName].heading - bear.heading, 0, "XYZ");
+                bear.nameObj.rotation.set(0, users[userName].heading - bear.heading, 0, "XYZ");
             }
             if(!bear.animation.isPlaying && bear.velocity.length() >= 2){
                 bear.animation.play();                
@@ -429,9 +434,9 @@ function postScriptLoad(progress){
                 leap.getValue(name + "Y"),
                 leap.getValue(name + "Z") + mouse.getValue("pointerDistance"))
                 .applyAxisAngle(RIGHT, -pitch)
-                .applyAxisAngle(camera.up, bears[userName].heading);
+                .applyAxisAngle(camera.up, users[userName].heading);
 
-            testPoint.copy(bears[userName].position);
+            testPoint.copy(users[userName].position);
             testPoint.y += PLAYER_HEIGHT;
             knuckle.position.copy(testPoint);
             knuckle.position.add(direction);
@@ -468,10 +473,10 @@ function postScriptLoad(progress){
         //
         // update audio
         //
-        testPoint.copy(bears[userName].position);
+        testPoint.copy(users[userName].position);
         testPoint.divideScalar(10);
         audio3d.setPosition(testPoint.x, testPoint.y, testPoint.z);
-        audio3d.setVelocity(bears[userName].velocity.x, bears[userName].velocity.y, bears[userName].velocity.z);
+        audio3d.setVelocity(users[userName].velocity.x, users[userName].velocity.y, users[userName].velocity.z);
         testPoint.normalize();
         audio3d.setOrientation(testPoint.x, testPoint.y, testPoint.z, 0, 1, 0);
 
@@ -480,7 +485,7 @@ function postScriptLoad(progress){
         //
         if(mainScene.Skybox){
             skyboxRotation.set(lt*0.00001, 0, 0, "XYZ");
-            mainScene.Skybox.position.copy(bears[userName].position);
+            mainScene.Skybox.position.copy(users[userName].position);
             mainScene.Skybox.setRotationFromEuler(skyboxRotation);
         }
         
@@ -489,7 +494,7 @@ function postScriptLoad(progress){
         //
         orientation.set(pitch, heading, roll, "YZX");
         camera.rotation.copy(orientation);
-        camera.position.copy(bears[userName].position);
+        camera.position.copy(users[userName].position);
         camera.position.y += PLAYER_HEIGHT;
 
         //
@@ -611,15 +616,15 @@ function postScriptLoad(progress){
     }
 
     function jump(){
-        if (onground || bears[userName].position.y < -0.5){
-            bears[userName].velocity.y = 10;
+        if (onground || users[userName].position.y < -0.5){
+            users[userName].velocity.y = 10;
             onground = false;
         }
     }
     
     function resetLocation(){
-        bears[userName].position.set(0, 2, 0);
-        bears[userName].velocity.set(0, 0, 0);
+        users[userName].position.set(0, 2, 0);
+        users[userName].velocity.set(0, 0, 0);
     }
     
     function fireButton(){
@@ -646,9 +651,9 @@ function postScriptLoad(progress){
     };
 
     function showTyping(isLocal, isComplete, text){
-        if(bears[userName]){
+        if(users[userName]){
             if(lastText){
-                bears[userName].remove(lastText);
+                users[userName].remove(lastText);
                 lastText = null;
             }
 
@@ -666,7 +671,7 @@ function postScriptLoad(progress){
                         0, PLAYER_HEIGHT, -4,
                         "right");
                     lastText = textObj;
-                    bears[userName].add(textObj);
+                    users[userName].add(textObj);
                     if(clickSound){
                         audio3d.playBufferImmediate(clickSound, 0.5);
                     }
@@ -687,7 +692,7 @@ function postScriptLoad(progress){
 
     function showChat(msg){
         msg = typeof(msg) === "string" ? msg : fmt("[$1]: $2", msg.userName, msg.text);
-        if(bears[userName]){
+        if(users[userName]){
             if(userName === msg.userName){
                 showTyping(true, false, null);
             }
@@ -695,11 +700,11 @@ function postScriptLoad(progress){
                 msg, CHAT_TEXT_SIZE,
                 "white", "transparent",
                 -2, 0, -5, "left");
-            bears[userName].add(textObj);
+            users[userName].add(textObj);
             chatLines.push(textObj);
             shiftLines();
             setTimeout(function(){
-                bears[userName].remove(textObj);
+                users[userName].remove(textObj);
                 chatLines.shift();
                 shiftLines();
             }, 3000);
@@ -721,7 +726,7 @@ function postScriptLoad(progress){
     }
 
     function updateUserState(userState, firstTime){
-        var bear = bears[userState.userName];
+        var bear = users[userState.userName];
         if(!bear){
             addUser(userState);
         }
@@ -751,7 +756,7 @@ function postScriptLoad(progress){
 
     function addUser(userState){
         var bear = new THREE.Object3D();
-        bears[userState.userName] = bear;
+        users[userState.userName] = bear;
         var model = bearModel.clone();
         bear.animation = model.animation;
         model.position.z = 1.33;
@@ -770,10 +775,10 @@ function postScriptLoad(progress){
     }
     
     function userLeft(userName){
-        if(bears[userName]){
+        if(users[userName]){
             msg("$1 has disconnected", userName);
-            scene.remove(bears[userName]);
-            delete bears[userName];
+            scene.remove(users[userName]);
+            delete users[userName];
         }
     }
     
