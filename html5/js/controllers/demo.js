@@ -421,6 +421,7 @@ function startGame(socket, progress){
         // place pointer
         //        
         if(currentButton){
+            console.log(currentButton);
             var btn = mainScene[currentButton];
             btn.position.y = btn.originalY;
             btn.children[0].material.materials[0].color.g = 0;
@@ -758,7 +759,6 @@ function startGame(socket, progress){
 
     function addUser(userState){
         var user = null;
-        console.log(userState);
         if(!users[userState.userName]){
             if(userName === DEFAULT_USER_NAME
                 || userState.userName !== userName){
@@ -980,7 +980,9 @@ function startGame(socket, progress){
     setupModuleEvents(gamepad, "gamepad");
     setupModuleEvents(speech, "speech");
 
-    var mainScene = new ModelLoader("models/scene.dae", progress, function(object){
+    var mainScene = null;
+    ModelLoader.loadCollada("models/scene.dae", progress, function(object){
+        mainScene = object;
         scene.add(object);
         var cam = mainScene.Camera.children[0];
         camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, drawDistance);
@@ -996,7 +998,21 @@ function startGame(socket, progress){
             }
         );
         var v = 0.55 * drawDistance;
-        mainScene.Skybox.scale.set(v, v, v);
+        mainScene.Skybox.scale.set(v, v, v);        
+    
+        button = new ModelLoader("models/button.dae", progress, function(){
+            for(var i = 0; i < 5; ++i){
+                console.log("button " + i);
+                var b = button.clone();
+                b.position.set(i + 5, 0, 5 - 1);
+                scene.add(b);
+                var cap = b.buttons[0];
+                mainScene.buttons.push(cap);
+                cap.name += "_CLONE_" + i;
+                mainScene[cap.name] = cap;
+                delete b.buttons;
+            }
+        });
     });
 
     var bearModel = new ModelLoader("models/bear.dae", progress, function(){
