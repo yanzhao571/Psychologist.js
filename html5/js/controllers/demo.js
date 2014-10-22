@@ -174,8 +174,10 @@ function startGame(socket, progress){
         onground = false,
         head, keyboard, mouse, gamepad, touch, speech, leap,
         dt, lt = 0, frame = 0, dFrame = 0.125,
-        userName = null, lastText,
+        DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE",
+        userName = DEFAULT_USER_NAME, lastText,
         chatLines = [],
+        currentUser = null,
         users = {}, 
         audio3d = new Audio3DOutput(),
         clickSound = null,
@@ -196,7 +198,7 @@ function startGame(socket, progress){
     socket.on("typing", showTyping.bind(window, false, false));
     socket.on("chat", showChat);    
     socket.on("userJoin", addUser);
-    socket.on("userState", updateUserState);
+    socket.on("userState", updateUserState.bind(window, false));
     socket.on("userLeft", userLeft);
     socket.on("loginFailed", msg.bind(window, "Incorrect user name or password!"));
     socket.on("userList", listUsers);
@@ -229,7 +231,7 @@ function startGame(socket, progress){
         if(isDebug){
             console.log(txt);
         }
-        else if(users[userName]){
+        else if(currentUser){
             showChat(txt);
         }
         else {
@@ -248,7 +250,7 @@ function startGame(socket, progress){
         
     function waitForResources(t){
         lt = t;
-        if(camera && userName && users[userName]){
+        if(camera && currentUser){
             leap.start();
             requestAnimationFrame(animate);
         }
@@ -286,7 +288,7 @@ function startGame(socket, progress){
             // update user position and view
             //
 
-            users[userName].dHeading = (heading - users[userName].heading) / dt;
+            currentUser.dHeading = (heading - currentUser.heading) / dt;
             strafe = keyboard.getValue("strafeRight")
                 + keyboard.getValue("strafeLeft")
                 + gamepad.getValue("strafe");
@@ -295,7 +297,7 @@ function startGame(socket, progress){
                 + gamepad.getValue("drive")
                 + touch.getValue("drive");
 
-            if(onground || users[userName].position.y < -0.5){                
+            if(onground || currentUser.position.y < -0.5){                
                 if(autoWalking){
                     strafe = 0;
                     drive = -0.5;
@@ -309,29 +311,29 @@ function startGame(socket, progress){
 
                 strafe *= len;
                 drive *= len;
-                len = strafe * Math.cos(users[userName].heading) + drive * Math.sin(users[userName].heading);
-                drive = drive * Math.cos(users[userName].heading) - strafe * Math.sin(users[userName].heading);
+                len = strafe * Math.cos(currentUser.heading) + drive * Math.sin(currentUser.heading);
+                drive = drive * Math.cos(currentUser.heading) - strafe * Math.sin(currentUser.heading);
                 strafe = len;
-                users[userName].velocity.x = users[userName].velocity.x * 0.9 + strafe * 0.1;
-                users[userName].velocity.z = users[userName].velocity.z * 0.9 + drive * 0.1;
+                currentUser.velocity.x = currentUser.velocity.x * 0.9 + strafe * 0.1;
+                currentUser.velocity.z = currentUser.velocity.z * 0.9 + drive * 0.1;
             }
 
-            users[userName].velocity.y -= dt * GRAVITY;
+            currentUser.velocity.y -= dt * GRAVITY;
 
             //
             // "water"
             //
-            if(users[userName].position.y < -0.5){
-                users[userName].velocity.multiplyScalar(0.925);
+            if(currentUser.position.y < -0.5){
+                currentUser.velocity.multiplyScalar(0.925);
             }
 
             //
             // do collision detection
             //
-            var len = users[userName].velocity.length() * dt;
-            direction.copy(users[userName].velocity);
+            var len = currentUser.velocity.length() * dt;
+            direction.copy(currentUser.velocity);
             direction.normalize();
-            testPoint.copy(users[userName].position);
+            testPoint.copy(currentUser.position);
             testPoint.y += PLAYER_HEIGHT / 2;
             raycaster.set(testPoint, direction);
             raycaster.far = len;
@@ -341,18 +343,18 @@ function startGame(socket, progress){
                 if(inter.object.parent.isSolid){
                     testPoint.copy(inter.face.normal);
                     testPoint.applyEuler(inter.object.parent.rotation);
-                    users[userName].velocity.reflect(testPoint);
+                    currentUser.velocity.reflect(testPoint);
                     var d = testPoint.dot(camera.up);
                     if(d > 0.75){
-                        users[userName].position.y = inter.point.y + 0.0125;
-                        users[userName].velocity.y = 0.1;
+                        currentUser.position.y = inter.point.y + 0.0125;
+                        currentUser.velocity.y = 0.1;
                         onground = true;
                     }
                 }
             }
 
             // ground test
-            testPoint.copy(users[userName].position);
+            testPoint.copy(currentUser.position);
             testPoint.y += 1;
             direction.set(0, -1, 0);
             raycaster.set(testPoint, direction);
@@ -363,8 +365,8 @@ function startGame(socket, progress){
                 if(inter.object.parent.isSolid){
                     testPoint.copy(inter.face.normal);
                     testPoint.applyEuler(inter.object.parent.rotation);
-                    users[userName].position.y = inter.point.y + 0.0125;
-                    users[userName].velocity.y = 0.1;
+                    currentUser.position.y = inter.point.y + 0.0125;
+                    currentUser.velocity.y = 0.1;
                     onground = true;
                 }
             }
@@ -377,17 +379,17 @@ function startGame(socket, progress){
             if(frame > dFrame){
                 frame -= dFrame;
                 var state = {
-                    x: users[userName].position.x,
-                    y: users[userName].position.y,
-                    z: users[userName].position.z,
-                    dx: users[userName].velocity.x,
-                    dy: users[userName].velocity.y,
-                    dz: users[userName].velocity.z,
-                    heading: users[userName].heading,
-                    dHeading: (users[userName].heading - users[userName].lastHeading) / dFrame,
-                    isRunning: users[userName].velocity.length() > 0
+                    x: currentUser.position.x,
+                    y: currentUser.position.y,
+                    z: currentUser.position.z,
+                    dx: currentUser.velocity.x,
+                    dy: currentUser.velocity.y,
+                    dz: currentUser.velocity.z,
+                    heading: currentUser.heading,
+                    dHeading: (currentUser.heading - currentUser.lastHeading) / dFrame,
+                    isRunning: currentUser.velocity.length() > 0
                 };
-                users[userName].lastHeading = users[userName].heading;
+                currentUser.lastHeading = currentUser.heading;
                 socket.emit("userState", state);
             }
         }
@@ -396,22 +398,22 @@ function startGame(socket, progress){
         // update avatars
         //
         for(var key in users){
-            var bear = users[key];
-            testPoint.copy(bear.velocity);
+            var user = users[key];
+            testPoint.copy(user.velocity);
             testPoint.multiplyScalar(dt);
-            bear.position.add(testPoint);
-            bear.heading += bear.dHeading * dt;
-            bear.rotation.set(0, bear.heading, 0, "XYZ");
-            if(key !== userName){ 
+            user.position.add(testPoint);
+            user.heading += user.dHeading * dt;
+            user.rotation.set(0, user.heading, 0, "XYZ");
+            if(user !== currentUser){ 
                 // we have to offset the rotation of the name so the user
                 // can read it.
-                bear.nameObj.rotation.set(0, users[userName].heading - bear.heading, 0, "XYZ");
+                user.nameObj.rotation.set(0, currentUser.heading - user.heading, 0, "XYZ");
             }
-            if(!bear.animation.isPlaying && bear.velocity.length() >= 2){
-                bear.animation.play();                
+            if(!user.animation.isPlaying && user.velocity.length() >= 2){
+                user.animation.play();                
             }
-            else if(bear.animation.isPlaying && bear.velocity.length() < 2){
-                bear.animation.stop();
+            else if(user.animation.isPlaying && user.velocity.length() < 2){
+                user.animation.stop();
             }
         }
 
@@ -434,9 +436,9 @@ function startGame(socket, progress){
                 leap.getValue(name + "Y"),
                 leap.getValue(name + "Z") + mouse.getValue("pointerDistance"))
                 .applyAxisAngle(RIGHT, -pitch)
-                .applyAxisAngle(camera.up, users[userName].heading);
+                .applyAxisAngle(camera.up, currentUser.heading);
 
-            testPoint.copy(users[userName].position);
+            testPoint.copy(currentUser.position);
             testPoint.y += PLAYER_HEIGHT;
             knuckle.position.copy(testPoint);
             knuckle.position.add(direction);
@@ -473,10 +475,10 @@ function startGame(socket, progress){
         //
         // update audio
         //
-        testPoint.copy(users[userName].position);
+        testPoint.copy(currentUser.position);
         testPoint.divideScalar(10);
         audio3d.setPosition(testPoint.x, testPoint.y, testPoint.z);
-        audio3d.setVelocity(users[userName].velocity.x, users[userName].velocity.y, users[userName].velocity.z);
+        audio3d.setVelocity(currentUser.velocity.x, currentUser.velocity.y, currentUser.velocity.z);
         testPoint.normalize();
         audio3d.setOrientation(testPoint.x, testPoint.y, testPoint.z, 0, 1, 0);
 
@@ -485,7 +487,7 @@ function startGame(socket, progress){
         //
         if(mainScene.Skybox){
             skyboxRotation.set(lt*0.00001, 0, 0, "XYZ");
-            mainScene.Skybox.position.copy(users[userName].position);
+            mainScene.Skybox.position.copy(currentUser.position);
             mainScene.Skybox.setRotationFromEuler(skyboxRotation);
         }
         
@@ -494,7 +496,7 @@ function startGame(socket, progress){
         //
         orientation.set(pitch, heading, roll, "YZX");
         camera.rotation.copy(orientation);
-        camera.position.copy(users[userName].position);
+        camera.position.copy(currentUser.position);
         camera.position.y += PLAYER_HEIGHT;
 
         //
@@ -616,15 +618,15 @@ function startGame(socket, progress){
     }
 
     function jump(){
-        if (onground || users[userName].position.y < -0.5){
-            users[userName].velocity.y = 10;
+        if (onground || currentUser.position.y < -0.5){
+            currentUser.velocity.y = 10;
             onground = false;
         }
     }
     
     function resetLocation(){
-        users[userName].position.set(0, 2, 0);
-        users[userName].velocity.set(0, 0, 0);
+        currentUser.position.set(0, 2, 0);
+        currentUser.velocity.set(0, 0, 0);
     }
     
     function fireButton(){
@@ -651,9 +653,9 @@ function startGame(socket, progress){
     };
 
     function showTyping(isLocal, isComplete, text){
-        if(users[userName]){
+        if(currentUser){
             if(lastText){
-                users[userName].remove(lastText);
+                currentUser.remove(lastText);
                 lastText = null;
             }
 
@@ -671,7 +673,7 @@ function startGame(socket, progress){
                         0, PLAYER_HEIGHT, -4,
                         "right");
                     lastText = textObj;
-                    users[userName].add(textObj);
+                    currentUser.add(textObj);
                     if(clickSound){
                         audio3d.playBufferImmediate(clickSound, 0.5);
                     }
@@ -692,7 +694,7 @@ function startGame(socket, progress){
 
     function showChat(msg){
         msg = typeof(msg) === "string" ? msg : fmt("[$1]: $2", msg.userName, msg.text);
-        if(users[userName]){
+        if(currentUser){
             if(userName === msg.userName){
                 showTyping(true, false, null);
             }
@@ -700,11 +702,11 @@ function startGame(socket, progress){
                 msg, CHAT_TEXT_SIZE,
                 "white", "transparent",
                 -2, 0, -5, "left");
-            users[userName].add(textObj);
+            currentUser.add(textObj);
             chatLines.push(textObj);
             shiftLines();
             setTimeout(function(){
-                users[userName].remove(textObj);
+                currentUser.remove(textObj);
                 chatLines.shift();
                 shiftLines();
             }, 3000);
@@ -725,53 +727,78 @@ function startGame(socket, progress){
         }
     }
 
-    function updateUserState(userState, firstTime){
-        var bear = users[userState.userName];
-        if(!bear){
+    function updateUserState(firstTime, userState){
+        var user = user || users[userState.userName];
+        if(!user){
             addUser(userState);
         }
         else{
             if(firstTime){
-                bear.position.set(
+                user.position.set(
                     userState.x, 
                     // just in case the user falls through the world, 
                     // reloading will get them back to level.
                     Math.max(0, userState.y), 
                     userState.z);
-                bear.lastHeading = bear.heading = userState.heading;
-                bear.dHeading = 0;
+                user.lastHeading = user.heading = userState.heading;
+                user.dHeading = 0;
                 if(userState.userName === userName){
-                    startHeading = bear.heading;
+                    startHeading = user.heading;
                 }
             }
             else{
-                bear.velocity.set(
-                    ((userState.x + userState.dx * dFrame) - bear.position.x) / dFrame,
-                    ((userState.y + userState.dy * dFrame) - bear.position.y) / dFrame,
-                    ((userState.z + userState.dz * dFrame) - bear.position.z) / dFrame);
-                bear.dHeading = ((userState.heading + userState.dHeading * dFrame) - bear.heading) / dFrame;
+                user.velocity.set(
+                    ((userState.x + userState.dx * dFrame) - user.position.x) / dFrame,
+                    ((userState.y + userState.dy * dFrame) - user.position.y) / dFrame,
+                    ((userState.z + userState.dz * dFrame) - user.position.z) / dFrame);
+                user.dHeading = ((userState.heading + userState.dHeading * dFrame) - user.heading) / dFrame;
             }
         }
     }
 
     function addUser(userState){
-        var bear = new THREE.Object3D();
-        users[userState.userName] = bear;
-        var model = bearModel.clone();
-        bear.animation = model.animation;
-        model.position.z = 1.33;
-        bear.add(model);
-        bear.heading = userState.heading;
-        bear.nameObj = new VUI.Text(
-            userState.userName, 0.5,
-            "white", "transparent",
-            0, PLAYER_HEIGHT + 2.5, 0, 
-            "center");
-        bear.add(bear.nameObj);
-        bear.velocity = new THREE.Vector3();
-        updateUserState(userState, true);
-        scene.add(bear);
-        msg("$1 has joined", userState.userName);
+        var user = null;
+        console.log(userState);
+        if(!users[userState.userName]){
+            if(userName === DEFAULT_USER_NAME
+                || userState.userName !== userName){
+                user = new THREE.Object3D();        
+                var model = bearModel.clone();
+                user.animation = model.animation;
+                model.position.z = 1.33;
+                user.add(model);
+
+                user.nameObj = new VUI.Text(
+                    userState.userName, 0.5,
+                    "white", "transparent",
+                    0, PLAYER_HEIGHT + 2.5, 0, 
+                    "center");
+                user.add(user.nameObj);
+
+                user.velocity = new THREE.Vector3();
+
+                if(userState.userName === DEFAULT_USER_NAME){
+                    currentUser = user;
+                }
+                else{
+                    msg("$1 has joined", userState.userName);
+                }
+
+                scene.add(user);
+            }
+            else{                
+                delete users[DEFAULT_USER_NAME];
+                user = currentUser;
+            }
+        }
+        else {
+            user = users[userState.userName];
+        }
+        
+        users[userState.userName] = user;
+        
+        user.heading = userState.heading;
+        updateUserState(true, userState);
     }
     
     function userLeft(userName){
@@ -786,7 +813,7 @@ function startGame(socket, progress){
         proxy.connect(userName);
         users.sort(function(a){ return (a.userName === userName) ? -1 : 1;});
         for(var i = 0; i < users.length; ++i){
-            addUser(users[i]);
+            updateUserState(true, users[i]);
         }
     }
 
@@ -972,7 +999,9 @@ function startGame(socket, progress){
         mainScene.Skybox.scale.set(v, v, v);
     });
 
-    var bearModel = new ModelLoader("models/bear.dae", progress);
+    var bearModel = new ModelLoader("models/bear.dae", progress, function(){
+        addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: userName});
+    });
 
     audio3d.loadBufferCascadeSrcList(["music/click.mp3", "music/click.ogg"], progress, function(buffer){
         clickSound = buffer;
