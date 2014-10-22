@@ -1,4 +1,4 @@
-var types = ["gamepad", "keyboard", "mouse", "touch", "head", "arm", "speech", "typing"],
+var crypto = require("crypto"),
     log = require("../core").log;
 
 function User(info){
@@ -15,9 +15,28 @@ function User(info){
         isRunning: false,
         userName: info.userName
     };
-    this.password = info.password;
+    if(info.password){
+        this.salt = User.makeNewSalt();
+        var sha = crypto.createHash("sha512");
+        sha.update(this.salt + this.password);
+        this.hash = sha.digest("hex").toString();
+        console.log("Converted password to hash for", is.state.userName);
+    }
+    else{
+        this.salt = info.salt;
+        this.hash = info.hash;
+    }
     this.email = info.email;
 }
+
+User.makeNewSalt = function(){
+    var bytes = crypto.randomBytes(256);
+    var salt = "";
+    for(var i = 0; i < bytes.length; ++i){
+        salt += bytes[i].toString(16);
+    }
+    return salt;
+};
 
 User.prototype.addDevice = function(users, socket){
     //
@@ -34,10 +53,6 @@ User.prototype.addDevice = function(users, socket){
     //
     // bind the events
     //
-    for(var i = 0; i < types.length; ++i){
-        socket.on(types[i], User.prototype.emit.bind(this, index, types[i]));
-    }
-
     socket.on("userState", function(state){
         this.state.x = state.x;
         this.state.y = state.y;

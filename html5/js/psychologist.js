@@ -192,15 +192,15 @@ function help(obj){
     var funcs = {};
     var props = {};
     var evnts = {};
-    for(var k in obj){
-        if(k.indexOf("on") === 0){
-            evnts[k] = obj[k];
+    for(var field in obj){
+        if(field.indexOf("on") === 0){
+            evnts[field] = obj[field];
         }
-        else if(typeof(obj[k]) === "function"){
-            funcs[k] = obj[k];
+        else if(typeof(obj[field]) === "function"){
+            funcs[field] = obj[field];
         }
         else{
-            props[k] = obj[k];
+            props[field] = obj[field];
         }
     }
     
@@ -210,32 +210,32 @@ function help(obj){
     }
     else if(type === "object"){
         type = null;
-        if(obj.constructor){
-            type = obj.constructor.name || null;
+        if(obj.constructor && obj.constructor.name){
+            type = obj.constructor.name;
         }
-        if(type === null){
-            var q = [{pre: "", obj: window}];
-            var t = [];
+        else {
+            var q = [{prefix: "", obj: window}];
+            var traversed = [];
             while(q.length > 0 && type === null){
-                var c = q.shift();
-                c.___traversed___ = true;
-                t.push(c);
-                for(var k in c.obj){
-                    var o2 = c.obj[k];
-                    if(o2){
-                        if(typeof(o2) === "function"){
-                            if(o2.prototype && obj instanceof o2){
-                                type = c.pre + k;
+                var parentObject = q.shift();
+                parentObject.___traversed___ = true;
+                traversed.push(parentObject);
+                for(var field in parentObject.obj){
+                    var testObject = parentObject.obj[field];
+                    if(testObject){
+                        if(typeof(testObject) === "function"){
+                            if(testObject.prototype && obj instanceof testObject){
+                                type = parentObject.prefix + field;
                                 break;
                             }
                         }
-                        else if(!o2.___tried___){
-                            q.push({pre: c.pre + k + ".", obj: o2});
+                        else if(!testObject.___tried___){
+                            q.push({prefix: parentObject.prefix + field + ".", obj: testObject});
                         }
                     }
                 }
             }
-            t.forEach(function(o){
+            traversed.forEach(function(o){
                 delete o.___traversed___;
             });
         }

@@ -9,6 +9,7 @@ var isDebug = false, isLocal = document.location.hostname === "localhost",
         "lib/three/ColladaLoader.js",
         "lib/physics/cannon.min.js",
         "lib/leap-0.6.3.min.js",
+        "lib/sha512.js",
         "/socket.io/socket.io.js",
         "js/oscope/oscope.client.js",
         "js/WebRTCSocket.js",
@@ -521,9 +522,12 @@ function postScriptLoad(progress){
             userName = ctrls.userNameField.value;
             var password = ctrls.passwordField.value;
             if(userName && password){
+                socket.once("salt", function(salt){
+                    var hash = CryptoJS.SHA512(salt + password).toString();
+                    socket.emit("hash", hash);
+                });
                 socket.emit("login", {
                     userName: userName,
-                    password: password,
                     email: ctrls.emailField.value
                 });
             }

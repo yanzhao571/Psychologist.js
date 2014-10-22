@@ -12,9 +12,13 @@ fs.readFile("users.json", "utf8", function(err, file){
         log("Reading users from disk.");
         try{
             var userList = JSON.parse(file);
+            var anyHadPassword = false;
             for(var i = 0; i < userList.length; ++i){
-                userList[i].userName = userList[i].userName || userList[i].name; 
+                anyHadPassword = anyHadPassword || !!userList[i].password;
                 users[userList[i].userName.toLocaleUpperCase()] = new User(userList[i]);
+            }
+            if(anyHadPassword){
+                writeUserList();
             }
         }
         catch(exp){
@@ -22,45 +26,65 @@ fs.readFile("users.json", "utf8", function(err, file){
         }
     }
 });
+        
+function writeUserList(){
+    var userList = [];
+    for(var key in users){
+        var user = users[key];
+        userList.push({
+            userName: user.state.userName,
+            salt: user.salt,
+            hash: user.hash,
+            email: user.email
+        });
+    }
+
+    // synchronous so two new users at the same time can't get into
+    // a race condition, right?
+    fs.writeFileSync("users.json", JSON.stringify(userList));            
+}
 
 module.exports = {
     handshake: "demo",
     bindSocket: function(socket){
-        log("starting demo for new user.");        
-        socket.once("login", function (credentials){
-            var key = credentials 
-                && credentials.userName 
-                && credentials.userName.toLocaleUpperCase().trim();
-
-            if(key && !users[key]){
-                log("[$1] > new user", credentials.userName);
-                users[key] = new User(credentials);
-                var userList = [];
-                for(var key in users){
-                    var user = users[key];
-                    userList.push({
-                        userName: user.state.userName,
-                        password: user.password,
-                        email: user.email
-                    });
-                }
-
-                // synchronous so two new users at the same time can't get into
-                // a race condition, right?
-                fs.writeFileSync("users.json", JSON.stringify(userList));
-            }
+        log("starting demo for new user.");
         
-            if(key && users[key].password === credentials.password){
+        function login(identity){
+            var key = identity 
+                && identity.userName 
+                && identity.userName.toLocaleUpperCase().trim();
+            log("Trying to authenticate $1", key);
+            if(!key){
+                socket.emit("loginFailed");
+            }
+            else{
+                var salt = users[key] && users[key].salt || User.makeNewSalt();
+                socket.once("hash", receiveHash.bind(this, identity, key, salt));
+                socket.emit("salt", salt);
+            }
+        }
+        
+        function receiveHash(identity, key, salt, hash){
+            if(!users[key]){
+                log("[$1, $2] > new user", key, identity.userName);
+                identity.salt = salt;
+                identity.hash = hash;
+                users[key] = new User(identity);
+                writeUserList();
+            }
+            
+            if(hash === users[key].hash){
                 if(!users[key].isConnected()){
                     log("[$1] > user login", key);
                 }
-                users[key].email = credentials.email || users[key].email;
+                users[key].email = identity.email || users[key].email;
                 users[key].addDevice(users, socket);
             }
             else{
                 log("[$1] > failed to authenticate", key);
                 socket.emit("loginFailed");
             }
-        });
+        }
+        socket.once("login", login);
     }
 };
