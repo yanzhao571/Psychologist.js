@@ -87,6 +87,7 @@ function startGame(socket, progress){
         PLAYER_HEIGHT = 6.5,
         RIGHT = new THREE.Vector3(-1, 0, 0),
         GRAVITY = 9.8, SPEED = 15,
+        focused = true, wasFocused = false,
         lastRenderingType, currentButton, autoWalking = false,
         startHeading = 0,
         deviceStates = new StateList(ctrls.deviceTypes, ctrls, [
@@ -173,7 +174,7 @@ function startGame(socket, progress){
         skyboxRotation = new THREE.Euler(0, 0, 0, "XYZ"),
         onground = false,
         head, keyboard, mouse, gamepad, touch, speech, leap,
-        dt, lt = 0, frame = 0, dFrame = 0.125,
+        dt = 0, lt = 0, frame = 0, dFrame = 0.125,
         DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE",
         userName = DEFAULT_USER_NAME, lastText,
         chatLines = [],
@@ -263,251 +264,255 @@ function startGame(socket, progress){
         requestAnimationFrame(animate);
         dt = (t - lt) * 0.001;
         lt = t;
+        
+        if(wasFocused && focused){
+            head.update(dt);
+            keyboard.update(dt);
+            mouse.update(dt);
+            gamepad.update(dt);
+            touch.update(dt);
+            speech.update(dt);
+            leap.update(dt);
 
-        head.update(dt);
-        keyboard.update(dt);
-        mouse.update(dt);
-        gamepad.update(dt);
-        touch.update(dt);
-        speech.update(dt);
-        leap.update(dt);
+            pitch = head.getValue("pitch") 
+                + mouse.getValue("pitch")
+                + gamepad.getValue("pitch");
+            roll = head.getValue("roll");
+            heading = head.getValue("heading")
+                    + touch.getValue("heading")
+                    + mouse.getValue("heading")
+                    + gamepad.getValue("heading")
+                    + startHeading;
+            if(ctrls.defaultDisplay.checked){
+                THREE.AnimationHandler.update(dt);
 
-        pitch = head.getValue("pitch") 
-            + mouse.getValue("pitch")
-            + gamepad.getValue("pitch");
-        roll = head.getValue("roll");
-        heading = head.getValue("heading")
-                + touch.getValue("heading")
-                + mouse.getValue("heading")
-                + gamepad.getValue("heading")
-                + startHeading;
-        if(ctrls.defaultDisplay.checked){
-            THREE.AnimationHandler.update(dt);
+                //
+                // update user position and view
+                //
 
-            //
-            // update user position and view
-            //
+                currentUser.dHeading = (heading - currentUser.heading) / dt;
+                strafe = keyboard.getValue("strafeRight")
+                    + keyboard.getValue("strafeLeft")
+                    + gamepad.getValue("strafe");
+                drive = keyboard.getValue("driveBack")
+                    + keyboard.getValue("driveForward")
+                    + gamepad.getValue("drive")
+                    + touch.getValue("drive");
 
-            currentUser.dHeading = (heading - currentUser.heading) / dt;
-            strafe = keyboard.getValue("strafeRight")
-                + keyboard.getValue("strafeLeft")
-                + gamepad.getValue("strafe");
-            drive = keyboard.getValue("driveBack")
-                + keyboard.getValue("driveForward")
-                + gamepad.getValue("drive")
-                + touch.getValue("drive");
+                if(onground || currentUser.position.y < -0.5){                
+                    if(autoWalking){
+                        strafe = 0;
+                        drive = -0.5;
+                    }
+                    if(strafe || drive){
+                        len = SPEED * Math.min(1, 1 / Math.sqrt(drive * drive + strafe * strafe));
+                    }
+                    else{
+                        len = 0;
+                    }
 
-            if(onground || currentUser.position.y < -0.5){                
-                if(autoWalking){
-                    strafe = 0;
-                    drive = -0.5;
+                    strafe *= len;
+                    drive *= len;
+                    len = strafe * Math.cos(currentUser.heading) + drive * Math.sin(currentUser.heading);
+                    drive = drive * Math.cos(currentUser.heading) - strafe * Math.sin(currentUser.heading);
+                    strafe = len;
+                    currentUser.velocity.x = currentUser.velocity.x * 0.9 + strafe * 0.1;
+                    currentUser.velocity.z = currentUser.velocity.z * 0.9 + drive * 0.1;
                 }
-                if(strafe || drive){
-                    len = SPEED * Math.min(1, 1 / Math.sqrt(drive * drive + strafe * strafe));
+
+                currentUser.velocity.y -= dt * GRAVITY;
+
+                //
+                // "water"
+                //
+                if(currentUser.position.y < -0.5){
+                    currentUser.velocity.multiplyScalar(0.925);
                 }
-                else{
-                    len = 0;
+
+                //
+                // do collision detection
+                //
+                var len = currentUser.velocity.length() * dt;
+                direction.copy(currentUser.velocity);
+                direction.normalize();
+                testPoint.copy(currentUser.position);
+                testPoint.y += PLAYER_HEIGHT / 2;
+                raycaster.set(testPoint, direction);
+                raycaster.far = len;
+                intersections = raycaster.intersectObject(scene, true);
+                for(var i = 0; i < intersections.length; ++i){
+                    var inter = intersections[i];
+                    if(inter.object.parent.isSolid){
+                        testPoint.copy(inter.face.normal);
+                        testPoint.applyEuler(inter.object.parent.rotation);
+                        currentUser.velocity.reflect(testPoint);
+                        var d = testPoint.dot(camera.up);
+                        if(d > 0.75){
+                            currentUser.position.y = inter.point.y + 0.0125;
+                            currentUser.velocity.y = 0.1;
+                            onground = true;
+                        }
+                    }
                 }
 
-                strafe *= len;
-                drive *= len;
-                len = strafe * Math.cos(currentUser.heading) + drive * Math.sin(currentUser.heading);
-                drive = drive * Math.cos(currentUser.heading) - strafe * Math.sin(currentUser.heading);
-                strafe = len;
-                currentUser.velocity.x = currentUser.velocity.x * 0.9 + strafe * 0.1;
-                currentUser.velocity.z = currentUser.velocity.z * 0.9 + drive * 0.1;
-            }
-
-            currentUser.velocity.y -= dt * GRAVITY;
-
-            //
-            // "water"
-            //
-            if(currentUser.position.y < -0.5){
-                currentUser.velocity.multiplyScalar(0.925);
-            }
-
-            //
-            // do collision detection
-            //
-            var len = currentUser.velocity.length() * dt;
-            direction.copy(currentUser.velocity);
-            direction.normalize();
-            testPoint.copy(currentUser.position);
-            testPoint.y += PLAYER_HEIGHT / 2;
-            raycaster.set(testPoint, direction);
-            raycaster.far = len;
-            intersections = raycaster.intersectObject(scene, true);
-            for(var i = 0; i < intersections.length; ++i){
-                var inter = intersections[i];
-                if(inter.object.parent.isSolid){
-                    testPoint.copy(inter.face.normal);
-                    testPoint.applyEuler(inter.object.parent.rotation);
-                    currentUser.velocity.reflect(testPoint);
-                    var d = testPoint.dot(camera.up);
-                    if(d > 0.75){
+                // ground test
+                testPoint.copy(currentUser.position);
+                testPoint.y += 1;
+                direction.set(0, -1, 0);
+                raycaster.set(testPoint, direction);
+                raycaster.far = 1;
+                intersections = raycaster.intersectObject(scene, true);
+                for(var i = 0; i < intersections.length; ++i){
+                    var inter = intersections[i];
+                    if(inter.object.parent.isSolid){
+                        testPoint.copy(inter.face.normal);
+                        testPoint.applyEuler(inter.object.parent.rotation);
                         currentUser.position.y = inter.point.y + 0.0125;
                         currentUser.velocity.y = 0.1;
                         onground = true;
                     }
                 }
-            }
 
-            // ground test
-            testPoint.copy(currentUser.position);
-            testPoint.y += 1;
-            direction.set(0, -1, 0);
-            raycaster.set(testPoint, direction);
-            raycaster.far = 1;
-            intersections = raycaster.intersectObject(scene, true);
-            for(var i = 0; i < intersections.length; ++i){
-                var inter = intersections[i];
-                if(inter.object.parent.isSolid){
-                    testPoint.copy(inter.face.normal);
-                    testPoint.applyEuler(inter.object.parent.rotation);
-                    currentUser.position.y = inter.point.y + 0.0125;
-                    currentUser.velocity.y = 0.1;
-                    onground = true;
+                //
+                // send a network update of the user's position, if it's been enough 
+                // time since the last update (don'dt want to flood the server).
+                //
+                frame += dt;
+                if(frame > dFrame){
+                    frame -= dFrame;
+                    var state = {
+                        x: currentUser.position.x,
+                        y: currentUser.position.y,
+                        z: currentUser.position.z,
+                        dx: currentUser.velocity.x,
+                        dy: currentUser.velocity.y,
+                        dz: currentUser.velocity.z,
+                        heading: currentUser.heading,
+                        dHeading: (currentUser.heading - currentUser.lastHeading) / dFrame,
+                        isRunning: currentUser.velocity.length() > 0
+                    };
+                    currentUser.lastHeading = currentUser.heading;
+                    socket.emit("userState", state);
                 }
             }
 
             //
-            // send a network update of the user's position, if it's been enough 
-            // time since the last update (don't want to flood the server).
+            // update avatars
             //
-            frame += dt;
-            if(frame > dFrame){
-                frame -= dFrame;
-                var state = {
-                    x: currentUser.position.x,
-                    y: currentUser.position.y,
-                    z: currentUser.position.z,
-                    dx: currentUser.velocity.x,
-                    dy: currentUser.velocity.y,
-                    dz: currentUser.velocity.z,
-                    heading: currentUser.heading,
-                    dHeading: (currentUser.heading - currentUser.lastHeading) / dFrame,
-                    isRunning: currentUser.velocity.length() > 0
-                };
-                currentUser.lastHeading = currentUser.heading;
-                socket.emit("userState", state);
+            for(var key in users){
+                var user = users[key];
+                testPoint.copy(user.velocity);
+                testPoint.multiplyScalar(dt);
+                user.position.add(testPoint);
+                user.heading += user.dHeading * dt;
+                user.rotation.set(0, user.heading, 0, "XYZ");
+                if(user !== currentUser){ 
+                    // we have to offset the rotation of the name so the user
+                    // can read it.
+                    user.nameObj.rotation.set(0, currentUser.heading - user.heading, 0, "XYZ");
+                }
+                if(!user.animation.isPlaying && user.velocity.length() >= 2){
+                    user.animation.play();                
+                }
+                else if(user.animation.isPlaying && user.velocity.length() < 2){
+                    user.animation.stop();
+                }
             }
-        }
 
-        //
-        // update avatars
-        //
-        for(var key in users){
-            var user = users[key];
-            testPoint.copy(user.velocity);
-            testPoint.multiplyScalar(dt);
-            user.position.add(testPoint);
-            user.heading += user.dHeading * dt;
-            user.rotation.set(0, user.heading, 0, "XYZ");
-            if(user !== currentUser){ 
-                // we have to offset the rotation of the name so the user
-                // can read it.
-                user.nameObj.rotation.set(0, currentUser.heading - user.heading, 0, "XYZ");
+            //
+            // place pointer
+            //        
+            if(currentButton){
+                var btn = mainScene[currentButton];
+                btn.position.y = btn.originalY;
+                btn.children[0].material.materials[0].color.g = 0;
+                btn.children[0].material.materials[0].color.r = 0.5;
+                currentButton = null;
             }
-            if(!user.animation.isPlaying && user.velocity.length() >= 2){
-                user.animation.play();                
-            }
-            else if(user.animation.isPlaying && user.velocity.length() < 2){
-                user.animation.stop();
-            }
-        }
 
-        //
-        // place pointer
-        //        
-        if(currentButton){
-            var btn = mainScene[currentButton];
-            btn.position.y = btn.originalY;
-            btn.children[0].material.materials[0].color.g = 0;
-            btn.children[0].material.materials[0].color.r = 0.5;
-            currentButton = null;
-        }
-        
-        for(var i = 0; i < fingerParts.length / 2; ++i){
-            var knuckle = fingerParts[i];
-            var name = knuckle.name;
-            direction.set(
-                leap.getValue(name + "X"),
-                leap.getValue(name + "Y"),
-                leap.getValue(name + "Z") + mouse.getValue("pointerDistance"))
-                .applyAxisAngle(RIGHT, -pitch)
-                .applyAxisAngle(camera.up, currentUser.heading);
+            for(var i = 0; i < fingerParts.length / 2; ++i){
+                var knuckle = fingerParts[i];
+                var name = knuckle.name;
+                direction.set(
+                    leap.getValue(name + "X"),
+                    leap.getValue(name + "Y"),
+                    leap.getValue(name + "Z") + mouse.getValue("pointerDistance"))
+                    .applyAxisAngle(RIGHT, -pitch)
+                    .applyAxisAngle(camera.up, currentUser.heading);
 
-            testPoint.copy(currentUser.position);
-            testPoint.y += PLAYER_HEIGHT;
-            knuckle.position.copy(testPoint);
-            knuckle.position.add(direction);
-        
-            if(name.indexOf("TIP") > 0){
-            testPoint.copy(knuckle.position);
-            direction.set(0, -1, 0);
-                raycaster.set(testPoint, direction);
-                raycaster.far = 0.25;
+                testPoint.copy(currentUser.position);
+                testPoint.y += PLAYER_HEIGHT;
+                knuckle.position.copy(testPoint);
+                knuckle.position.add(direction);
 
-                for(var j = 0; j < mainScene.buttons.length; ++j){
-                    var btn = mainScene.buttons[j];
-                    var intersections = raycaster.intersectObject(btn.children[0]);
-                    if(intersections.length === 1){
-                        var inter = intersections[0];
-                        if(currentButton){
-                            var btn = mainScene[currentButton];
-                            btn.position.y = btn.originalY;
-                            btn.children[0].material.materials[0].color.g = 0;
-                            btn.children[0].material.materials[0].color.r = 0.5;
-                            currentButton = null;
+                if(name.indexOf("TIP") > 0){
+                testPoint.copy(knuckle.position);
+                direction.set(0, -1, 0);
+                    raycaster.set(testPoint, direction);
+                    raycaster.far = 0.25;
+
+                    for(var j = 0; j < mainScene.buttons.length; ++j){
+                        var btn = mainScene.buttons[j];
+                        var intersections = raycaster.intersectObject(btn.children[0]);
+                        if(intersections.length === 1){
+                            var inter = intersections[0];
+                            if(currentButton){
+                                var btn = mainScene[currentButton];
+                                btn.position.y = btn.originalY;
+                                btn.children[0].material.materials[0].color.g = 0;
+                                btn.children[0].material.materials[0].color.r = 0.5;
+                                currentButton = null;
+                            }
+                            currentButton = btn.name;
+                            btn.originalY = btn.position.y;
+                            btn.position.y = btn.originalY - 0.05;
+                            inter.object.material.materials[0].color.g = 0.5;
+                            inter.object.material.materials[0].color.r = 0.0;
+                            break;
                         }
-                        currentButton = btn.name;
-                        btn.originalY = btn.position.y;
-                        btn.position.y = btn.originalY - 0.05;
-                        inter.object.material.materials[0].color.g = 0.5;
-                        inter.object.material.materials[0].color.r = 0.0;
-                        break;
                     }
                 }
             }
-        }
 
-        //
-        // update audio
-        //
-        testPoint.copy(currentUser.position);
-        testPoint.divideScalar(10);
-        audio3d.setPosition(testPoint.x, testPoint.y, testPoint.z);
-        audio3d.setVelocity(currentUser.velocity.x, currentUser.velocity.y, currentUser.velocity.z);
-        testPoint.normalize();
-        audio3d.setOrientation(testPoint.x, testPoint.y, testPoint.z, 0, 1, 0);
+            //
+            // update audio
+            //
+            testPoint.copy(currentUser.position);
+            testPoint.divideScalar(10);
+            audio3d.setPosition(testPoint.x, testPoint.y, testPoint.z);
+            audio3d.setVelocity(currentUser.velocity.x, currentUser.velocity.y, currentUser.velocity.z);
+            testPoint.normalize();
+            audio3d.setOrientation(testPoint.x, testPoint.y, testPoint.z, 0, 1, 0);
 
-        //
-        // place the skybox centered to the camera
-        //
-        if(mainScene.Skybox){
-            skyboxRotation.set(lt*0.00001, 0, 0, "XYZ");
-            mainScene.Skybox.position.copy(currentUser.position);
-            mainScene.Skybox.setRotationFromEuler(skyboxRotation);
+            //
+            // place the skybox centered to the camera
+            //
+            if(mainScene.Skybox){
+                skyboxRotation.set(lt*0.00001, 0, 0, "XYZ");
+                mainScene.Skybox.position.copy(currentUser.position);
+                mainScene.Skybox.setRotationFromEuler(skyboxRotation);
+            }
+
+            //
+            // update the camera
+            //
+            orientation.set(pitch, heading, roll, "YZX");
+            camera.rotation.copy(orientation);
+            camera.position.copy(currentUser.position);
+            camera.position.y += PLAYER_HEIGHT;
+
+            //
+            // draw
+            //
+            if (effect){
+                effect.render(scene, camera);
+            }
+            else {
+                renderer.render(scene, camera);
+            }
         }
         
-        //
-        // update the camera
-        //
-        orientation.set(pitch, heading, roll, "YZX");
-        camera.rotation.copy(orientation);
-        camera.position.copy(currentUser.position);
-        camera.position.y += PLAYER_HEIGHT;
-
-        //
-        // draw
-        //
-        if (effect){
-            effect.render(scene, camera);
-        }
-        else {
-            renderer.render(scene, camera);
-        }
+        wasFocused = focused;
     }
 
     function setSize(w, h){
@@ -631,7 +636,7 @@ function startGame(socket, progress){
     
     function fireButton(){
         var btn = currentButton && mainScene[currentButton];
-        if(btn.onclick){
+        if(btn && btn.onclick){
             btn.onclick();
         }
     }
@@ -921,6 +926,22 @@ function startGame(socket, progress){
         if(!mouse.isPointerLocked()){
             showControls();
         }
+    }, false);
+    
+    window.addEventListener("focus", function(){
+        focused = true;
+    }, false);
+    
+    window.addEventListener("blur", function(){
+        focused = false;
+    }, false);
+    
+    document.addEventListener("focus", function(){
+        focused = true;
+    }, false);
+    
+    document.addEventListener("blur", function(){
+        focused = false;
     }, false);
 
     function setupModuleEvents(module, name){
