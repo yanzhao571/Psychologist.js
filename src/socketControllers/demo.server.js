@@ -10,8 +10,14 @@ fs.readFile("users.json", "utf8", function(err, file){
     }
     else{
         log("Reading users from disk.");
+        var userList = null;
         try{
-            var userList = JSON.parse(file);
+            userList = JSON.parse(file);
+        }
+        catch(exp){
+            log("User file corrupted");
+        }
+        if(userList !== null){
             var anyHadPassword = false;
             for(var i = 0; i < userList.length; ++i){
                 anyHadPassword = anyHadPassword || !!userList[i].password;
@@ -20,9 +26,6 @@ fs.readFile("users.json", "utf8", function(err, file){
             if(anyHadPassword){
                 writeUserList();
             }
-        }
-        catch(exp){
-            log("User file corrupted");
         }
     }
 });
