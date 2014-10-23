@@ -58,6 +58,11 @@ applicationCache.addEventListener("noupdate", function(){
     closeReloadMessage(true);
 }, false);
 
+applicationCache.addEventListener("cached", function(){ 
+    ctrls.appCacheMessage.innerHTML = "Application cached.";
+    closeReloadMessage(true);
+}, false);
+
 applicationCache.addEventListener("checking", function(){ 
     ctrls.appCacheMessage.innerHTML = "Checking for application update... please wait.";
 }, false);
