@@ -37,6 +37,8 @@ function findFilesInFiles(paths, success, error, accum, index){
         var next = function(){
             setImmediate(findFilesInFiles(paths, success, error, accum, index + 1));
         };
+        
+        // only read certain types of files
         if(/\.(html|css|js|dae)$/.test(paths[index])){
             findFilesInFile(paths[index], function(files){
                 files.filter(function(f){
@@ -146,6 +148,14 @@ function sendAppCache(mainFileTime, sendData, files){
     getFileDescriptions(files, true, function(descriptions){
         var data = fmt("CACHE MANIFEST\n# $1\nCACHE:", mainFileTime);
         for(var i = 0; i < descriptions.length; ++i){
+            // Appending these timestamps to the manifest will change the byte
+            // signature of the manifest when the timestamps update, i.e. newer
+            // versions of the files are uploaded. This then indicates to the
+            // browser that a new app update needs to be downloaded.
+            //
+            // We could hash the contents of the files instead, in case the file
+            // was touched but not updated, but that isn't likely to occur on
+            // the server and this is quicker and easier.
             data += fmt("\n# $1\n../$2", descriptions[i].stamp, descriptions[i].name);
         }
         data += "\nNETWORK:\n*";
