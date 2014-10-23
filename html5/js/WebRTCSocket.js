@@ -46,7 +46,7 @@ function WebRTCSocket(proxyServer, isStarHub){
             }
         }, false);
 
-        function closer() {
+        function connectionLost() {
             channels[index] = null;
             peers[index] = null;
             var closed = (filter(channels, function (c) {
@@ -62,8 +62,8 @@ function WebRTCSocket(proxyServer, isStarHub){
             }
         }
 
-        channels[index].addEventListener("error", closer, false);
-        channels[index].addEventListener("close", closer, false);
+        channels[index].addEventListener("error", connectionLost, false);
+        channels[index].addEventListener("close", connectionLost, false);
     }
     
     this.on = function(evt, thunk){
