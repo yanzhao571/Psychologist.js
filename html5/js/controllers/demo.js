@@ -1150,7 +1150,7 @@ function startGame(socket, progress){
     
     if(window.Notification && Notification.permission !== "denied") {
         Notification.requestPermission(function (permission) {
-            if (Notification.permission) {
+            if (!Notification.permission) {
                 Notification.permission = permission;
             }
         });
