@@ -32,6 +32,7 @@ var isDebug = false, isLocal = document.location.hostname === "localhost",
 function closeReloadMessage(showLogin){
     ctrls.appCacheMessage.style.display = "none";
     ctrls.loginForm.style.display = showLogin ? "" : "none";
+    prog.start();
 }
         
 function showReload(message){    
@@ -66,8 +67,6 @@ applicationCache.addEventListener("cached", function(){
 applicationCache.addEventListener("checking", function(){ 
     ctrls.appCacheMessage.innerHTML = "Checking for application update... please wait.";
 }, false);
-        
-prog.start();
 
 function displayProgress(file){
     ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
@@ -751,11 +750,41 @@ function startGame(socket, progress){
                 shiftLines();
             }, 3000);
         }
+        
         var div = document.createElement("div");
         div.appendChild(document.createTextNode(msg));
         ctrls.chatLog.appendChild(div);
-        ctrls.chatLog.scrollTop = ctrls.chatLog.scrollHeight; 
-   }
+        ctrls.chatLog.scrollTop = ctrls.chatLog.scrollHeight;
+        
+        if(!focused && window.Notification){
+            if (!makeNotification(msg) && Notification.permission !== "denied") {
+                Notification.requestPermission(function (permission) {
+                    if (Notification.permission) {
+                        Notification.permission = permission;
+                    }
+                    makeNotification(msg);
+                });
+            }
+        }
+    }
+    var lastNote = null;
+    function makeNotification(msg){
+        if (Notification.permission === "granted") {
+            if(lastNote !== null){
+                msg = lastNote.body + "\n" + msg;
+                lastNote.close();
+                lastNote = null;
+            }
+            lastNote = new Notification(document.title, {
+                icon: "../ico/chat.png",
+                body: msg
+            });
+            lastNote.addEventListener("close", function(){
+                lastNote = null;
+            }, false);
+            return lastNote;
+        }
+    };
 
     function reload(){
         if (isFullScreenMode()){
@@ -943,6 +972,7 @@ function startGame(socket, progress){
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 1 },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
     ], proxy, oscope);
+    keyboard.pause(true);
 
     gamepad = new GamepadInput("gamepad", [
         { axis: GamepadInput.LSX, deadzone: 0.2},
