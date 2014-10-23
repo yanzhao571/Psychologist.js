@@ -2,7 +2,7 @@ var ctrls = findEverything(),
     formState = getSetting("formState"),
 	prog = new LoadingProgress(
 		"manifest/js/oscope/oscope.viewer.js",
-		"/socket.io/socket.io.js",
+		"lib/socket.io.js",
 		displayProgress,
 		postScriptLoad);
 

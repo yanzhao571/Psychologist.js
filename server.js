@@ -10,10 +10,9 @@ var format = require("util").format,
     webServer = require("./src/webServer"),
     webSocketServer = require("./src/webSocketServer"),
     options = require("./src/options").parse(process.argv, {
-        v: true,
+        v: "false",
         h: "localhost"
     }),
-
     srcDir = "html5",
     startPage = "",
     port = 8080,

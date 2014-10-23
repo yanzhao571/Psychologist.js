@@ -50,9 +50,7 @@ td > .button, td > input
     }
 }
 
-
-
-@media(min-width:640px){
+@media(min-width:641px){
     section{
         padding: 2em;
         padding: 3em;
@@ -76,7 +74,7 @@ td > .button, td > input
     width:0;
 }
 
-#menuButton, #talkButton
+#onScreenControls > .button
 {
     position: fixed;
     bottom: 10px;
@@ -88,6 +86,12 @@ td > .button, td > input
 {
     left: 10px;
     background-image:url(../ico/menu.png);
+}
+
+#fsButton
+{
+    left: 50px;
+    background-image:url(../ico/fs.png);
 }
 
 #textEntry
@@ -134,31 +138,57 @@ canvas, video, .overlay, .progressBar
     position: fixed;
 }
 
+a.blue.button{
+    background-color: #123197;
+    border-color: #123197;
+    color: #fff;
+}
+
+    a.blue.button:hover
+    {
+        background-color: #3555bd;
+        border-color: #3555bd;
+    }
+
+    a.blue.button:active
+    {
+        background-color: #1b2c63;
+        border-color: #1b2c63;
+    }
+
+a.red.button{
+    background-color: #d00;
+    border-color: #d00;
+    color: #fff;
+}
+    a.red.button:hover
+    {
+        background-color: #e00;
+        border-color: #e00;
+    }
+
+    a.red.button:active
+    {
+        background-color: #e00;
+        border-color: #e00;
+    }
+
 a.button
 {
-    background-color: #123197;
     border-radius: 7px;
-    color: #fff;
     cursor: pointer;
     display: inline-block;
     text-align: center;
     text-decoration: none;
     border-width: 10px;
     border-style: solid;
-    border-color: #123197;
 }
 
-    a.button:hover
-    {
-        background-color: #3555bd;
-    }
+a.button:hover{
+    box-shadow: 0px 0px 15px #bbb;
+}
 
-    a.button:active
-    {
-        background-color: #1b2c63;
-    }
-
-section, .altClose
+section, .altClose, .loadBar
 {
     position: absolute;
 }

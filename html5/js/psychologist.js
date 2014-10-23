@@ -64,86 +64,94 @@ FileState.ERRORED = 2;
 FileState.COMPLETE = 4;
 
 function LoadingProgress() {
-    var args = arr(arguments),
-        version = ofType(args, "number").reduce(function (a, b) {
-            return b;
-        }, 0),
-        paths = ofType(args, "string"),
-        callbacks = ofType(args, "function"),
-        manifest = paths.shift(),
-        displayProgress = callbacks.shift(),
-        userPostScriptLoad = callbacks.shift(),
-        postScriptLoad = function (progress) {
-            try {
-                userPostScriptLoad(progress);
-            }
-            catch (exp) {
-                var msg = null;
-                if (exp.sourceURL) {
-                    msg = fmt(
-                        "<br>$1:<br>[msg] $2<br>[line] $3<br>[col] $4<br>[file] $5",
-                        typeof (exp),
-                        exp.message,
-                        exp.line,
-                        exp.column,
-                        exp.sourceURL.match(/[^\/\\]*$/)[0]);
-                }
-                else if (exp.stack) {
-                    msg = fmt(
-                        "<br>$1:<br>[msg] $2<br>[stack] $3",
-                        typeof (exp),
-                        exp.message,
-                        exp.stack.replace(/\n/g, "<br>"));
-                }
-                else {
-                    msg = fmt(
-                        "<br>$1: $2",
-                        typeof (exp),
-                        exp.message);
-                }
-                displayProgress(msg);
-                throw exp;
-            }
-        };
+    var args = arr(arguments), 
+        callbacks = ofType(args, "function");
 
-    getObject(manifest, function (files) {
-        this.files = files.map(function (f) {
-            return new FileState(f);
-        });
-        this.totalFileSize = this.sum(FileState.NONE, "size");
-        this.fileMap = this.files.reduce(function (a, b) {
-            a[b.name] = b;
-            return a;
-        }, {});
+    this.version = ofType(args, "number").reduce(function (a, b) {
+        return b;
+    }, 0);
+        
+    this.paths = ofType(args, "string");    
+    this.manifest = this.paths.shift();
+    this.displayProgress = callbacks.shift();    
+    this.userPostScriptLoad = callbacks.shift();
+}
+    
+LoadingProgress.prototype.postScriptLoad = function (progress) {
+    delete this.manifest;
+    try {
+        this.userPostScriptLoad(progress);
+    }
+    catch (exp) {
+        var msg = null;
+        if (exp.sourceURL) {
+            msg = fmt(
+                "<br>$1:<br>[msg] $2<br>[line] $3<br>[col] $4<br>[file] $5",
+                typeof (exp),
+                exp.message,
+                exp.line,
+                exp.column,
+                exp.sourceURL.match(/[^\/\\]*$/)[0]);
+        }
+        else if (exp.stack) {
+            msg = fmt(
+                "<br>$1:<br>[msg] $2<br>[stack] $3",
+                typeof (exp),
+                exp.message,
+                exp.stack.replace(/\n/g, "<br>"));
+        }
+        else {
+            msg = fmt(
+                "<br>$1: $2",
+                typeof (exp),
+                exp.message);
+        }
+        this.displayProgress(msg);
+        throw exp;
+    }
+};
 
-        function progress(op, file, inter) {
-            if (op === "loading") {
-                if (this.fileMap[file]) {
-                    this.fileMap[file].state = FileState.STARTED;
-                }
-                displayProgress(file);
+LoadingProgress.prototype.start = function(){
+    if(this.manifest){
+        getObject(this.manifest, function (files) {
+            this.files = files.map(function (f) {
+                return new FileState(f);
+            });
+            this.totalFileSize = this.sum(FileState.NONE, "size");
+            this.fileMap = this.files.reduce(function (a, b) {
+                a[b.name] = b;
+                return a;
+            }, {});
+
+            include(this.version, this.paths, this.progress.bind(this), this.postScriptLoad.bind(this));
+        }.bind(this));
+    }
+};
+
+LoadingProgress.prototype.progress = function(op, file, inter){
+    if (op === "loading") {
+        if (this.fileMap[file]) {
+            this.fileMap[file].state = FileState.STARTED;
+        }
+        this.displayProgress(file);
+    }
+    else {
+        if (this.fileMap[file]) {
+            if (op === "intermediate" && inter) {
+                this.fileMap[file].progress = inter;
             }
-            else {
-                if (this.fileMap[file]) {
-                    if (op === "intermediate" && inter) {
-                        this.fileMap[file].progress = inter;
-                    }
-                    else if (op === "success" || op === "skip") {
-                        this.fileMap[file].progress = this.fileMap[file].size;
-                        this.fileMap[file].state = FileState.COMPLETE;
-                    }
-                    else if (op === "error") {
-                        this.fileMap[file].state = FileState.ERRORED;
-                    }
-                }
-
-                displayProgress(file);
+            else if (op === "success" || op === "skip") {
+                this.fileMap[file].progress = this.fileMap[file].size;
+                this.fileMap[file].state = FileState.COMPLETE;
+            }
+            else if (op === "error") {
+                this.fileMap[file].state = FileState.ERRORED;
             }
         }
 
-        include(version, paths, progress.bind(this), postScriptLoad);
-    }.bind(this));
-}
+        this.displayProgress(file);
+    }
+};
 
 LoadingProgress.prototype.isDone = function () {
     var done = this.sum(FileState.COMPLETE, "size");
@@ -191,10 +199,10 @@ function ofType(arr, type){
 function help(obj){
     var funcs = {};
     var props = {};
-    var evnts = {};
+    var evnts = [];
     for(var field in obj){
         if(field.indexOf("on") === 0){
-            evnts[field] = obj[field];
+            evnts.push(field.substring(2));
         }
         else if(typeof(obj[field]) === "function"){
             funcs[field] = obj[field];
@@ -241,7 +249,7 @@ function help(obj){
         }
     }
     
-    console.log({
+    var obj = {
         type: type,
         events: evnts,
         functions: funcs,
@@ -249,9 +257,11 @@ function help(obj){
             itself: obj,
             properties: props
         }
-    });
+    };
     
-    return type !== null && type !== "object";
+    console.debug(obj);
+    
+    return obj;
 }
 
 /*

@@ -10,7 +10,7 @@ var isDebug = false, isLocal = document.location.hostname === "localhost",
         "lib/physics/cannon.min.js",
         "lib/leap-0.6.3.min.js",
         "lib/sha512.js",
-        "/socket.io/socket.io.js",
+        "lib/socket.io.js",
         "js/oscope/oscope.client.js",
         "js/WebRTCSocket.js",
         "js/ModelLoader.js",
@@ -28,6 +28,41 @@ var isDebug = false, isLocal = document.location.hostname === "localhost",
         "js/vui/vui.js",
         displayProgress,
         postScriptLoad);
+        
+function closeReloadMessage(showLogin){
+    ctrls.appCacheMessage.style.display = "none";
+    ctrls.loginForm.style.display = showLogin ? "" : "none";
+}
+        
+function showReload(message){    
+    ctrls.appCacheMessage.innerHTML = "";
+    var reloadButton = document.createElement("a");
+    reloadButton.innerHTML = message;
+    reloadButton.className = "blue button";
+    reloadButton.addEventListener("click", function(){
+        document.location = document.location.href;
+    }, false);
+    ctrls.appCacheMessage.appendChild(reloadButton);
+};
+
+applicationCache.addEventListener("error", showReload.bind(window, "Error downloading update. Try again."), false);
+
+applicationCache.addEventListener("updateready", showReload.bind(window, "Download complete. Reload application."), false);
+
+applicationCache.addEventListener("downloading", function(){ 
+    ctrls.appCacheMessage.innerHTML = "Downloading update now... please wait.";
+}, false);
+
+applicationCache.addEventListener("noupdate", function(){ 
+    ctrls.appCacheMessage.innerHTML = "No update found.";
+    closeReloadMessage(true);
+}, false);
+
+applicationCache.addEventListener("checking", function(){ 
+    ctrls.appCacheMessage.innerHTML = "Checking for application update... please wait.";
+}, false);
+        
+prog.start();
 
 function displayProgress(file){
     ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
@@ -57,6 +92,7 @@ function displayProgress(file){
         }, 2000);
 
         if(ctrls.autoLogin.checked
+            && ctrls.loginForm.style.display === ""
             && ctrls.userNameField.value.length > 0
             && ctrls.passwordField.value.length > 0){
             login();
@@ -551,27 +587,37 @@ function startGame(socket, progress){
             msg("No socket available");
         }
     };
+    
+    function showOptions(){
+        keyboard.pause(true);
+        ctrls.options.style.display = "";
+        mouse.exitPointerLock();
+    }
+    
+    function hideOptions(){        
+        keyboard.pause(false);
+        ctrls.options.style.display = "none";
+        requestFullScreen();
+        mouse.requestPointerLock();
+        showControls();
+
+        if(head.isEnabled() || head.isReceiving()){
+            mouse.enable("pitch", false);
+            gamepad.enable("pitch", false);
+        }
+        else{
+            mouse.enable("pitch", true);
+            gamepad.enable("pitch", true);            
+        }
+    }
 
     function toggleOptions(){
         var show = ctrls.options.style.display !== "";
-        keyboard.pause(show);
-        ctrls.options.style.display = (show ? "" : "none");
         if(show){
-            mouse.exitPointerLock();
+            showOptions();
         }
         else{
-            requestFullScreen();
-            mouse.requestPointerLock();
-            showControls();
-        
-            if(head.isEnabled() || head.isReceiving()){
-                mouse.enable("pitch", false);
-                gamepad.enable("pitch", false);
-            }
-            else{
-                mouse.enable("pitch", true);
-                gamepad.enable("pitch", true);            
-            }
+            hideOptions();
         }
     }
 
@@ -807,7 +853,7 @@ function startGame(socket, progress){
 
     var closers = document.getElementsByClassName("closeSectionButton");
     for(var i = 0; i < closers.length; ++i){
-        closers[i].addEventListener("click", toggleOptions, false);
+        closers[i].addEventListener("click", hideOptions, false);
     }
 
     window.addEventListener("keyup", function(evt){
@@ -816,9 +862,13 @@ function startGame(socket, progress){
         }
     }, false);
 
-    ctrls.menuButton.addEventListener("click", toggleOptions, false);
+    ctrls.menuButton.addEventListener("click", showOptions, false);
+    ctrls.fsButton.addEventListener("click", function(){
+        requestFullScreen();
+        mouse.requestPointerLock();
+    }, false);
     ctrls.textEntry.addEventListener("change", readChatBox, false);
-    ctrls.pointerLockButton.addEventListener("click", toggleOptions, false);
+    ctrls.pointerLockButton.addEventListener("click", hideOptions, false);
     ctrls.fullScreenButton.addEventListener("click", toggleFullScreen, false);
     ctrls.renderingStyle.addEventListener("change", function(){
         chooseRenderingEffect(ctrls.renderingStyle.value);
@@ -1046,6 +1096,5 @@ function startGame(socket, progress){
     document.body.insertBefore(renderer.domElement, document.body.firstChild);
     renderer.domElement.setAttribute("tabindex", 0);
     setSize(window.innerWidth, window.innerHeight);
-    toggleOptions();
     requestAnimationFrame(waitForResources);
 }

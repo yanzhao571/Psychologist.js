@@ -1,5 +1,5 @@
 include(0,
-    ["/socket.io/socket.io.js",
+    ["lib/socket.io.js",
     "js/WebRTCSocket.js",
     "js/input/NetworkedInput.js",
     "js/input/ButtonAndAxisInput.js",
