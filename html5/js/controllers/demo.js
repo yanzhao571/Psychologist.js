@@ -122,14 +122,13 @@ function postScriptLoad(progress){
 }
     
 function startGame(socket, progress){ 
-    var BG_COLOR = 0xafbfff, CHAT_TEXT_SIZE = 0.25, 
+    var BG_COLOR = 0xafbfff,
+        CHAT_TEXT_SIZE = 0.25, 
         NO_HMD_SMARTPHONE = "Smartphone - no HMD",
         PLAYER_HEIGHT = 6.5,
         RIGHT = new THREE.Vector3(-1, 0, 0),
-        GRAVITY = 9.8, SPEED = 15,
-        focused = true, wasFocused = false,
-        lastRenderingType, currentButton, autoWalking = false,
-        startHeading = 0,
+        GRAVITY = 9.8, 
+        SPEED = 15,
         deviceStates = new StateList(ctrls.deviceTypes, ctrls, [
             { name: "-- select device type --" },
             { name: "PC", values:{
@@ -206,28 +205,51 @@ function startGame(socket, progress){
             }}
         ], readSettings),
         formState = getSetting("formState"),
-        heading = 0, pitch = 0, roll = 0, strafe = 0, drive = 0,
         testPoint = new THREE.Vector3(),
         raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7),
         direction = new THREE.Vector3(),
         orientation = new THREE.Euler(0, 0, 0, "YZX"),
-        skyboxRotation = new THREE.Euler(0, 0, 0, "XYZ"),
-        onground = false,
-        head, keyboard, mouse, gamepad, touch, speech, leap,
-        dt = 0, lt = 0, frame = 0, dFrame = 0.125,
+        skyboxRotation = new THREE.Euler(0, 0, 0, "XYZ"),        
+        focused = true,
+        wasFocused = false,
+        autoWalking = false,
+        startHeading = 0,
+        dt = 0, 
+        lt = 0, 
+        frame = 0, 
+        dFrame = 0.125,
+        heading = 0, 
+        pitch = 0, 
+        roll = 0, 
+        strafe = 0, 
+        drive = 0,
         DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE",
-        userName = DEFAULT_USER_NAME, lastText,
+        drawDistance = 500,
+        userName = DEFAULT_USER_NAME, 
         chatLines = [],
-        currentUser = null,
         users = {}, 
+        onground = false,
         audio3d = new Audio3DOutput(),
-        clickSound = null,
-        oceanSound = null,
         oscope = new Oscope("demo"),
-        camera, effect, drawDistance = 500,
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
         repeater = new SpeechOutput.Character(),
+        lastText = null,
+        lastNote = null,
+        lastRenderingType = null,
+        currentButton = null,
+        currentUser = null,
+        clickSound = null,
+        oceanSound = null,
+        camera = null, 
+        effect = null,
+        head = null,
+        keyboard = null,
+        mouse = null,
+        gamepad = null,
+        touch = null,
+        speech = null,
+        leap = null,
         proxy = null;
 
     tabs.style.width = pct(100);
@@ -757,17 +779,10 @@ function startGame(socket, progress){
         ctrls.chatLog.scrollTop = ctrls.chatLog.scrollHeight;
         
         if(!focused && window.Notification){
-            if (!makeNotification(msg) && Notification.permission !== "denied") {
-                Notification.requestPermission(function (permission) {
-                    if (Notification.permission) {
-                        Notification.permission = permission;
-                    }
-                    makeNotification(msg);
-                });
-            }
+            makeNotification(msg);
         }
     }
-    var lastNote = null;
+    
     function makeNotification(msg){
         if (Notification.permission === "granted") {
             if(lastNote !== null){
@@ -1132,4 +1147,12 @@ function startGame(socket, progress){
     renderer.domElement.setAttribute("tabindex", 0);
     setSize(window.innerWidth, window.innerHeight);
     requestAnimationFrame(waitForResources);
+    
+    if(window.Notification && Notification.permission !== "denied") {
+        Notification.requestPermission(function (permission) {
+            if (Notification.permission) {
+                Notification.permission = permission;
+            }
+        });
+    }
 }
