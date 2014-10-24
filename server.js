@@ -7,7 +7,7 @@ var format = require("util").format,
     zlib = require("zlib"),
     log = require("./src/core").log,
     starter = require("./src/starter"),
-    webServer = require("./src/webServer"),
+    webServer = require("./src/webServer").webServer,
     webSocketServer = require("./src/webSocketServer"),
     options = require("./src/options").parse(process.argv, {
         v: "false",

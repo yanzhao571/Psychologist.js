@@ -1,5 +1,6 @@
 var fmt = require("../core").fmt,
-    fs = require("fs");
+    fs = require("fs"),
+    findController = require("../webServer").findController;
     
 module.exports = {
     pattern: /^\/manifest\/([\w.]+(?:\/[\w.]+)*\.(appcache|js))(?:\?)?/,
@@ -56,19 +57,26 @@ function findFilesInFiles(paths, success, error, accum, index){
 }
 
 function findFilesInFile(path, success, error, accum){
-    fs.readFile("html5/" + path, {encoding: "utf8"}, function(err, file){
-        if(err && error){
-            console.error(path, err);
-            error(500, err);
-        }
-        else if(!err){
-            if(/\.js$/.test(path)){
-                file = file.replace(/\\"/g, "{ESCAPED_QUOTE}");
-            }
-            extractFileReferences(path, file, success, accum);
+    fs.exists("html5/" + path, function(yes){
+        if(yes){
+            fs.readFile("html5/" + path, {encoding: "utf8"}, function(err, file){
+                if(err && error){
+                    console.error(path, err);
+                    error(500, err);
+                }
+                else if(!err){
+                    if(/\.js$/.test(path)){
+                        file = file.replace(/\\"/g, "{ESCAPED_QUOTE}");
+                    }
+                    extractFileReferences(path, file, success, accum);
+                }
+                else{
+                    success([]);
+                }
+            });
         }
         else{
-            success([]);
+            success([path]);
         }
     });
 }
@@ -98,7 +106,7 @@ function filterFiles(strings, done, accum, index){
     }
     else{
         fs.exists("html5/" + strings[index], function(yes){
-            if(yes){
+            if(yes || findController("/" + strings[index], "GET")){
                 accum.push(strings[index]);
             }
             setImmediate(filterFiles, strings, done, accum, index + 1);
@@ -131,6 +139,9 @@ function getFileDescription(path, includeTime, done){
                 obj.stamp = stats.atime.getTime() + stats.ctime.getTime() + stats.mtime.getTime();
             }
         }
+        else if(!(/\.appcache$/.test(path))){
+            obj = {name: path, size: -1, stamp: -1 };
+        }
         done(obj);
     });
 }
@@ -156,6 +167,7 @@ function sendAppCache(mainFileTime, sendData, files){
             // the server and this is quicker and easier.
             data += fmt("\n# $1\n../$2", descriptions[i].stamp, descriptions[i].name);
         }
+            console.log(data);
         data += "\nNETWORK:\n*";
         sendData("text/cache-manifest", data, data.length);
     });

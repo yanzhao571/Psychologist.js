@@ -30,28 +30,36 @@ function serverError(res, url, code) {
     res.end(msg);
 }
 
-function matchController(req, res, url, method) {
-    var found = false;
-    for (var i = 0; i < routes.length && !found; ++i) {
+function findController(url, method){
+    for (var i = 0; i < routes.length; ++i) {
         var matches = url.match(routes[i].pattern);
         if (matches) {
-            found = true;
             matches.shift();
             var handler = routes[i][method];
             if(!handler){
                 serverError(res, url, 405);
             }
             else{
-                handler(
-                    matches,
-                    sendData.bind(this, req, res),
-                    sendStaticFile.bind(this, req, res, url),
-                    serverError.bind(this, res, url)
-                );
+                return {
+                    handler: handler,
+                    parameters: matches
+                }
             }
         }
+    }    
+}
+
+function matchController(req, res, url, method) {
+    var controller = findController(url, method);
+    if(controller){
+        controller.handler(
+            controller.parameters,
+            sendData.bind(this, req, res),
+            sendStaticFile.bind(this, req, res, url),
+            serverError.bind(this, res, url));
+        return true;
     }
-    return found;
+    return false;
 }
 
 function useGZIP(req){
@@ -183,7 +191,7 @@ function isNumber(v) { return isFinite(v) && !isNaN(v); }
         - number: the port number to redirect to, keeping the request the same, otherwise.
         - string: the directory from which to serve static files.
 */
-module.exports = function webServer(host, target) {
+function webServer(host, target) {
     IS_LOCAL = host === "localhost";
     if (!isString(host)) {
         throw new Error("`host` parameter not a supported type. Excpected string. Given: " + host + ", type: " + typeof (host));
@@ -198,3 +206,6 @@ module.exports = function webServer(host, target) {
         return redirectPort.bind(this, host, target);
     }
 };
+
+module.exports.webServer = webServer;
+module.exports.findController = findController;
