@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
-    <title>VR Holodeck</title>
+    <title>Psychologist.js</title>
     <link type="text/css" rel="stylesheet" href="css/style.css">
     <link type="text/css" rel="stylesheet" href="css/holodeck.css">
 </head>
@@ -13,12 +13,13 @@
         <a class="primary button" id="fsButton" title="fullscreen"></a>
     </div>
     <div id="loading" class="loadBar">
-        <div class="progressBar" id="progress" style="background-color:#000"></div>
+        <div class="progressBar" id="loadingProgress" style="width:100%; opacity: 1"></div>
+        <div class="progressBar" id="downloadProgress" style="width:100%; background-color:#000; opacity: 1"></div>
     </div>
     <section id="options">
         <a class="primary button closeSectionButton altClose">X</a>
 
-        <h1>Psychologist.js: a WebGL VR Framework </h1>
+        <h1>Psychologist.js: a WebGL VR Framework</h1>
 
         <div class="tabSet">
 

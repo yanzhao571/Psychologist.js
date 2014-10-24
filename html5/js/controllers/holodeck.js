@@ -30,6 +30,7 @@ var isDebug = false, isLocal = document.location.hostname === "localhost",
         postScriptLoad);
         
 function closeReloadMessage(showLogin){
+    ctrls.downloadProgress.style.opacity = 0;
     ctrls.appCacheMessage.style.display = "none";
     ctrls.loginForm.style.display = showLogin ? "" : "none";
     prog.start();
@@ -72,9 +73,8 @@ applicationCache.addEventListener("cached", function(){
 
 applicationCache.addEventListener("progress", function(evt){ 
     var p = evt.loaded / evt.total,
-        c = Math.floor(255 * p),
-        q = pct(sigfig(100 * p, 1));
-    ctrls.progress.style.backgroundColor = fmt("rbg($1, $1, $1)", c);
+        q = sigfig(p, 2);
+    ctrls.downloadProgress.style.opacity = 1 - q;
     ctrls.appCacheMessage.innerHTML = fmt("Checking for application update %1... please wait", q);
 }, false);
 
@@ -83,9 +83,9 @@ applicationCache.addEventListener("checking", function(){
 }, false);
 
 function displayProgress(file){
-    var p = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress", false);
-    var q = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress", true);
-    ctrls.progress.style.opacity = q;
+    var p = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress", true);
+    var q = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress", false);
+    ctrls.loadingProgress.style.opacity = p;
     if(typeof(file) !== "string"){
         file = fmt(
             "<br>$1:<br>[msg] $2<br>[line] $3<br>[col] $4<br>[file] $5",
@@ -98,7 +98,7 @@ function displayProgress(file){
     }
     ctrls.loadingMessage.innerHTML
         = ctrls.connectButton.innerHTML
-        = fmt("Loading, please wait... $1 $2", file, p);
+        = fmt("Loading, please wait... $1 $2", file, q);
     if(prog.isDone()){
         ctrls.loading.style.display = "none";
         ctrls.connectButton.addEventListener("click", login, false);
@@ -887,6 +887,8 @@ function startGame(socket, progress){
     }
     
     function listUsers(users){
+        ctrls.connectButton.className = "secondary button";
+        ctrls.connectButton.innerHTML = "Connected";
         proxy.connect(userName);
         users.sort(function(a){ return (a.userName === userName) ? -1 : 1;});
         for(var i = 0; i < users.length; ++i){
@@ -1088,6 +1090,11 @@ function startGame(socket, progress){
 
     audio3d.loadBuffer("music/click.mp3", progress, function(buffer){
         clickSound = buffer;
+    });
+    
+    audio3d.load3DSound("music/ambient.mp3", true, 0, 0, 0, progress, function(amb){
+        amb.volume.gain.value = 0.07;
+        amb.source.start(0);
     });
 
     document.body.insertBefore(renderer.domElement, document.body.firstChild);
