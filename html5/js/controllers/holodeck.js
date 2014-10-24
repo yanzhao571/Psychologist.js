@@ -103,6 +103,7 @@ function displayProgress(file){
         ctrls.loading.style.display = "none";
         ctrls.connectButton.addEventListener("click", login, false);
         ctrls.connectButton.innerHTML = "Connect";
+        ctrls.connectButton.className = "primary button";
         ctrls.loadingMessage.innerHTML = "Loading complete!";
         setTimeout(function(){
             ctrls.loadingMessage.style.visibility = "hidden";
@@ -278,7 +279,7 @@ function startGame(socket, progress){
     socket.on("userJoin", addUser);
     socket.on("userState", updateUserState.bind(window, false));
     socket.on("userLeft", userLeft);
-    socket.on("loginFailed", msg.bind(window, "Incorrect user name or password!"));
+    socket.on("loginFailed", loginFailed);
     socket.on("userList", listUsers);
     socket.on("disconnect", msg.bind(window));
     
@@ -289,6 +290,12 @@ function startGame(socket, progress){
                 ctrls[key].dispatchEvent(evt);
             }
         }
+    }
+    
+    function loginFailed(){
+        ctrls.connectButton.innerHTML = "Login failed. Try again.";
+        ctrls.connectButton.className = "primary button";
+        msg("Incorrect user name or password!");
     }
     
     function showControls(){
@@ -608,6 +615,8 @@ function startGame(socket, progress){
                     var hash = CryptoJS.SHA512(salt + password).toString();
                     socket.emit("hash", hash);
                 });
+                ctrls.connectButton.innerHTML = "Connecting...";
+                ctrls.connectButton.className = "secondary button";
                 socket.emit("login", {
                     userName: userName,
                     email: ctrls.emailField.value
