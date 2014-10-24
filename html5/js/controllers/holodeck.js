@@ -1,33 +1,3 @@
-applicationCache.addEventListener("noupdate", function(){ 
-    ctrls.appCacheMessage.innerHTML = "No update found.";
-    closeReloadMessage(true);
-}, false);
-
-applicationCache.addEventListener("checking", function(){ 
-    ctrls.appCacheMessage.innerHTML = "Checking for application update... please wait.";
-}, false);
-
-applicationCache.addEventListener("error", showReload.bind(window, "Error downloading update. Try again."), false);
-
-applicationCache.addEventListener("updateready", showReload.bind(window, "Download complete. Restart application."), false);
-
-applicationCache.addEventListener("downloading", function(){ 
-    ctrls.appCacheMessage.innerHTML = "Downloading update now... please wait.";
-}, false);
-
-applicationCache.addEventListener("cached", function(){ 
-    ctrls.appCacheMessage.innerHTML = "Application cached.";
-    closeReloadMessage(true);
-}, false);
-
-applicationCache.addEventListener("progress", function(evt){ 
-    var p = evt.loaded / evt.total,
-        q = sigfig(p, 3);
-    ctrls.downloadProgress.style.opacity = 1 - q;
-    ctrls.appCacheMessage.innerHTML = fmt("Checking for application update $1... please wait", pct(q * 100));
-}, false);
-
-
 var isDebug = false, isLocal = document.location.hostname === "localhost",
     ctrls = findEverything(), tabs = makeTabSet(ctrls.options), login,
     prog = new LoadingProgress(
@@ -82,6 +52,34 @@ function showReload(message){
     dismissButton.addEventListener("click", closeReloadMessage.bind(window, false), false);
     ctrls.appCacheMessage.appendChild(dismissButton);
 };
+applicationCache.addEventListener("noupdate", function(){ 
+    ctrls.appCacheMessage.innerHTML = "No update found.";
+    closeReloadMessage(true);
+}, false);
+
+applicationCache.addEventListener("checking", function(){ 
+    ctrls.appCacheMessage.innerHTML = "Checking for application update... please wait.";
+}, false);
+
+applicationCache.addEventListener("error", showReload.bind(window, "Error downloading update. Try again.", false), false);
+
+applicationCache.addEventListener("updateready", showReload.bind(window, "Download complete. Restart application.", false), false);
+
+applicationCache.addEventListener("downloading", function(){ 
+    ctrls.appCacheMessage.innerHTML = "Downloading update now... please wait.";
+}, false);
+
+applicationCache.addEventListener("cached", function(){ 
+    ctrls.appCacheMessage.innerHTML = "Application cached.";
+    closeReloadMessage(true);
+}, false);
+
+applicationCache.addEventListener("progress", function(evt){ 
+    var p = evt.loaded / evt.total,
+        q = sigfig(p, 3);
+    ctrls.downloadProgress.style.opacity = 1 - q;
+    ctrls.appCacheMessage.innerHTML = fmt("Checking for application update $1... please wait", pct(q * 100));
+}, false);
 
 function displayProgress(file){
     var p = prog.makeProportion(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE);
