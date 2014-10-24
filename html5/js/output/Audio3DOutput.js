@@ -1,14 +1,35 @@
 function Audio3DOutput(){
     try{
-        this.audioContext = new AudioContext();
-        this.sampleRate = this.audioContext.sampleRate;
-        this.mainVolume = this.audioContext.createGain();
-        this.mainVolume.connect(this.audioContext.destination);
+        this.context = new AudioContext();
+        this.sampleRate = this.context.sampleRate;
+        this.mainVolume = this.context.createGain();
+        this.mainVolume.connect(this.context.destination);
 
-        this.setPosition = this.audioContext.listener.setPosition.bind(this.audioContext.listener);
-        this.setVelocity = this.audioContext.listener.setVelocity.bind(this.audioContext.listener);
-        this.setOrientation = this.audioContext.listener.setOrientation.bind(this.audioContext.listener);
+        this.setPosition = this.context.listener.setPosition.bind(this.context.listener);
+        this.setVelocity = this.context.listener.setVelocity.bind(this.context.listener);
+        this.setOrientation = this.context.listener.setOrientation.bind(this.context.listener);
         this.isAvailable = true;
+        
+        
+        var base = Math.pow(2, 1/12);
+        
+        function piano(n){
+            return 440 * Math.pow(base, n - 49);
+        }
+        
+        this.oscillators = [];
+        
+        for(var i = 0; i < 88; ++i){
+            var gn = this.context.createGain();
+            gn.gain.value = 0;
+            var osc = this.context.createOscillator();
+            osc.frequency.value = piano(i + 1);
+            osc.type = "sine";
+            osc.start();
+            osc.connect(gn);
+            gn.connect(this.mainVolume);
+            this.oscillators.push(gn);
+        }
     }
     catch(exp){
         this.isAvailable = false;
@@ -19,6 +40,19 @@ function Audio3DOutput(){
         console.error("AudioContext not available. Reason: ", exp.message);
     }
 }
+
+Audio3DOutput.prototype.sawtooth = function(i, volume, duration){
+    var osc = this.oscillators[i];
+    if(osc.timeout){
+        clearTimeout(osc.timeout);
+        osc.timeout = null;
+    }
+    osc.gain.value = volume;
+    osc.timeout = setTimeout(function(){
+        osc.gain.value = 0;
+        osc.timeout = null;
+    }, duration * 1000);
+};
 
 Audio3DOutput.prototype.loadBuffer = function(src, progress, success){    
     if(!success){
@@ -47,7 +81,7 @@ Audio3DOutput.prototype.loadBuffer = function(src, progress, success){
         xhr.onload = function () {
             if (xhr.status < 400) {
                 progress("success", src);
-                this.audioContext.decodeAudioData(xhr.response, success, error);
+                this.context.decodeAudioData(xhr.response, success, error);
             }
             else {
                 error();
@@ -106,7 +140,7 @@ Audio3DOutput.prototype.createRawSound = function(pcmData, success){
         throw new Error("Second channel is not the same length as the first channel. Expected " + frameCount + ", but was " + pcmData[1].length);
     }
     
-    var buffer = this.audioContext.createBuffer(pcmData.length, frameCount, this.sampleRate);
+    var buffer = this.context.createBuffer(pcmData.length, frameCount, this.sampleRate);
     for(var c = 0; c < pcmData.length; ++c){
         var channel = buffer.getChannelData(c);
         for(var i = 0; i < frameCount; ++i){
@@ -118,8 +152,8 @@ Audio3DOutput.prototype.createRawSound = function(pcmData, success){
 
 Audio3DOutput.prototype.createSound = function(loop, success, buffer){
     var snd = {
-        volume: this.audioContext.createGain(),
-        source: this.audioContext.createBufferSource()
+        volume: this.context.createGain(),
+        source: this.context.createBufferSource()
     };
     snd.source.buffer = buffer;
     snd.source.loop = loop;
@@ -128,7 +162,7 @@ Audio3DOutput.prototype.createSound = function(loop, success, buffer){
 };
 
 Audio3DOutput.prototype.create3DSound = function(x, y, z, success, snd){
-    snd.panner = this.audioContext.createPanner();
+    snd.panner = this.context.createPanner();
     snd.panner.setPosition(x, y, z);
     snd.panner.connect(this.mainVolume);
     snd.volume.connect(snd.panner);

@@ -1,7 +1,7 @@
 var isDebug = false, isLocal = document.location.hostname === "localhost",
     ctrls = findEverything(), tabs = makeTabSet(ctrls.options), login,
     prog = new LoadingProgress(
-        "manifest/js/controllers/demo.js",
+        "manifest/js/controllers/holodeck.js",
         "lib/three/three.js",
         "lib/three/StereoEffect.js",
         "lib/three/OculusRiftEffect.js",
@@ -122,7 +122,7 @@ function postScriptLoad(progress){
 }
     
 function startGame(socket, progress){ 
-    var BG_COLOR = 0xafbfff,
+    var BG_COLOR = 0x000000,
         CHAT_TEXT_SIZE = 0.25, 
         NO_HMD_SMARTPHONE = "Smartphone - no HMD",
         PLAYER_HEIGHT = 6.5,
@@ -208,8 +208,7 @@ function startGame(socket, progress){
         testPoint = new THREE.Vector3(),
         raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7),
         direction = new THREE.Vector3(),
-        orientation = new THREE.Euler(0, 0, 0, "YZX"),
-        skyboxRotation = new THREE.Euler(0, 0, 0, "XYZ"),        
+        orientation = new THREE.Euler(0, 0, 0, "YZX"),      
         focused = true,
         wasFocused = false,
         autoWalking = false,
@@ -237,10 +236,8 @@ function startGame(socket, progress){
         lastText = null,
         lastNote = null,
         lastRenderingType = null,
-        currentButton = null,
         currentUser = null,
         clickSound = null,
-        oceanSound = null,
         camera = null, 
         effect = null,
         head = null,
@@ -250,7 +247,9 @@ function startGame(socket, progress){
         touch = null,
         speech = null,
         leap = null,
-        proxy = null;
+        hand = null,
+        proxy = null,
+        hideControlsTimeout = null;
 
     tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
@@ -275,7 +274,7 @@ function startGame(socket, progress){
             }
         }
     }
-    var hideControlsTimeout = null;
+    
     function showControls(){
         ctrls.onScreenControls.style.display = "";
         if(hideControlsTimeout !== null){
@@ -385,13 +384,6 @@ function startGame(socket, progress){
                 currentUser.velocity.y -= dt * GRAVITY;
 
                 //
-                // "water"
-                //
-                if(currentUser.position.y < -0.5){
-                    currentUser.velocity.multiplyScalar(0.925);
-                }
-
-                //
                 // do collision detection
                 //
                 var len = currentUser.velocity.length() * dt;
@@ -483,56 +475,53 @@ function startGame(socket, progress){
 
             //
             // place pointer
-            //        
-            if(currentButton){
-                var btn = mainScene[currentButton];
-                btn.position.y = btn.originalY;
-                btn.children[0].material.materials[0].color.g = 0;
-                btn.children[0].material.materials[0].color.r = 0.5;
-                currentButton = null;
-            }
+            //
+            direction.set(
+                leap.getValue("HAND0X"),
+                leap.getValue("HAND0Y"),
+                leap.getValue("HAND0Z") + mouse.getValue("pointerDistance"))
+                .applyAxisAngle(RIGHT, -pitch)
+                .applyAxisAngle(camera.up, currentUser.heading);
 
-            for(var i = 0; i < fingerParts.length / 2; ++i){
-                var knuckle = fingerParts[i];
-                var name = knuckle.name;
-                direction.set(
-                    leap.getValue(name + "X"),
-                    leap.getValue(name + "Y"),
-                    leap.getValue(name + "Z") + mouse.getValue("pointerDistance"))
-                    .applyAxisAngle(RIGHT, -pitch)
-                    .applyAxisAngle(camera.up, currentUser.heading);
+            testPoint.copy(currentUser.position);
+            testPoint.y += PLAYER_HEIGHT;
+            hand.position.copy(testPoint);
+            hand.position.add(direction);
 
-                testPoint.copy(currentUser.position);
-                testPoint.y += PLAYER_HEIGHT;
-                knuckle.position.copy(testPoint);
-                knuckle.position.add(direction);
-
-                if(name.indexOf("TIP") > 0){
-                testPoint.copy(knuckle.position);
+            for(var j = 0; j < mainScene.buttons.length; ++j){
+                var btn = mainScene.buttons[j];
+                btn.wasTouched = btn.touched;
+                btn.wasPressed = btn.pressed;
+                btn.touched = false;
+                btn.pressed = false;
+                btn.color.g = 0;
+                btn.color.r = 0.5;
+                btn.cap.position.y = btn.rest.y;
+                
+                testPoint.copy(hand.position);
+                var TEST_HEIGHT = 5;
+                var MAX_PRESS = -0.1;
+                testPoint.y += TEST_HEIGHT;
                 direction.set(0, -1, 0);
-                    raycaster.set(testPoint, direction);
-                    raycaster.far = 0.25;
-
-                    for(var j = 0; j < mainScene.buttons.length; ++j){
-                        var btn = mainScene.buttons[j];
-                        var intersections = raycaster.intersectObject(btn.children[0]);
-                        if(intersections.length === 1){
-                            var inter = intersections[0];
-                            if(currentButton){
-                                var btn = mainScene[currentButton];
-                                btn.position.y = btn.originalY;
-                                btn.children[0].material.materials[0].color.g = 0;
-                                btn.children[0].material.materials[0].color.r = 0.5;
-                                currentButton = null;
-                            }
-                            currentButton = btn.name;
-                            btn.originalY = btn.position.y;
-                            btn.position.y = btn.originalY - 0.05;
-                            inter.object.material.materials[0].color.g = 0.5;
-                            inter.object.material.materials[0].color.r = 0.0;
-                            break;
-                        }
+                raycaster.set(testPoint, direction);
+                raycaster.far = TEST_HEIGHT * 2;
+                var intersections = raycaster.intersectObject(btn.cap.children[0]);
+                if(intersections.length > 0){
+                    var inter = intersections[0];
+                    var pressY = Math.max(MAX_PRESS, (hand.position.y - inter.point.y));
+                    if(MAX_PRESS <= pressY && pressY <= 0){
+                        btn.touched = true;
+                        btn.color.g = pressY * 0.5 / MAX_PRESS;
+                        btn.color.r = 0.5 - btn.color.g;
+                        btn.cap.position.y = btn.rest.y + pressY;
+                        btn.pressed = pressY === MAX_PRESS;
                     }
+                }
+                if(btn.pressed){
+                    btn.fireEvents("click");
+                }
+                if(btn.wasTouched && !btn.touched){
+                    btn.cap.position.y = btn.rest.y;
                 }
             }
 
@@ -545,15 +534,6 @@ function startGame(socket, progress){
             audio3d.setVelocity(currentUser.velocity.x, currentUser.velocity.y, currentUser.velocity.z);
             testPoint.normalize();
             audio3d.setOrientation(testPoint.x, testPoint.y, testPoint.z, 0, 1, 0);
-
-            //
-            // place the skybox centered to the camera
-            //
-            if(mainScene.Skybox){
-                skyboxRotation.set(lt*0.00001, 0, 0, "XYZ");
-                mainScene.Skybox.position.copy(currentUser.position);
-                mainScene.Skybox.setRotationFromEuler(skyboxRotation);
-            }
 
             //
             // update the camera
@@ -693,24 +673,10 @@ function startGame(socket, progress){
         var state = readForm(ctrls);
         setSetting("formState", state);
     }
-
-    function jump(){
-        if (onground || currentUser.position.y < -0.5){
-            currentUser.velocity.y = 10;
-            onground = false;
-        }
-    }
     
     function resetLocation(){
         currentUser.position.set(0, 2, 0);
         currentUser.velocity.set(0, 0, 0);
-    }
-    
-    function fireButton(){
-        var btn = currentButton && mainScene[currentButton];
-        if(btn && btn.onclick){
-            btn.onclick();
-        }
     }
 
     function showTyping(isLocal, isComplete, text){
@@ -940,32 +906,19 @@ function startGame(socket, progress){
     ], [
         { name: "heading", axes: [-MouseInput.IX] },
         { name: "pitch", axes: [-MouseInput.IY] },
-        { name: "pointerDistance", axes: [MouseInput.IZ] },
-        { name: "fire", buttons: [1], commandUp: fireButton }
+        { name: "pointerDistance", axes: [MouseInput.IZ] }
     ], proxy, oscope, renderer.domElement);
     
-    var fingerParts = [];
-    var leapCommands = [
-        { name: "fire", buttons: [1], commandUp: fireButton }
-    ];
+    var leapCommands = [];
     
-    for(var i = 0; i < LeapMotionInput.NUM_FINGERS; ++i){
-        var finger = "finger" + i;
-        for(var j = 0; j < LeapMotionInput.FINGER_PARTS.length; ++j){
-            if(j === 0 || j === LeapMotionInput.FINGER_PARTS.length - 2){
-                var knuckle = (finger + LeapMotionInput.FINGER_PARTS[j]).toUpperCase();
-                var k = new THREE.Mesh(new THREE.SphereGeometry(0.1 + j * 0.005, 4, 4), new THREE.MeshPhongMaterial({
-                    color: 0xffff00
-                }));
-                k.name = knuckle;
-                fingerParts.push(k);
-                scene.add(k);
-                leapCommands.push({ name: knuckle + "X", axes: [LeapMotionInput[knuckle + "X"]], scale: 0.015 });
-                leapCommands.push({ name: knuckle + "Y", axes: [LeapMotionInput[knuckle + "Y"]], scale: 0.015, offset: -4 });
-                leapCommands.push({ name: knuckle + "Z", axes: [LeapMotionInput[knuckle + "Z"]], scale: 0.015, offset: -6 });
-            }
-        }
-    }
+    hand = new THREE.Mesh(new THREE.SphereGeometry(0.1 + i * 0.005, 4, 4), new THREE.MeshPhongMaterial({
+        color: 0xffff00
+    }));
+    hand.name = "HAND0";
+    scene.add(hand);
+    leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput["HAND0X"]], scale: 0.015 });
+    leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput["HAND0Y"]], scale: 0.015, offset: -4 });
+    leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput["HAND0Z"]], scale: 0.015, offset: -6 });
     
     leap = new LeapMotionInput("leap", [
         { name: "fire", x: -500, y: -500, z: -500, w: 1000, h: 1000, d: 1000 }
@@ -982,8 +935,6 @@ function startGame(socket, progress){
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
         { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: resetLocation },
-        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: jump, dt: 0.5 },
-        { name: "fire", buttons: [KeyboardInput.CTRL], commandUp: fireButton },
         { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 1 },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
     ], proxy, oscope);
@@ -999,13 +950,10 @@ function startGame(socket, progress){
         { name: "drive", axes: [GamepadInput.LSY]},
         { name: "heading", axes: [-GamepadInput.IRSX]},
         { name: "pitch", axes: [GamepadInput.IRSY]},
-        { name: "jump", buttons: [1], commandDown: jump, dt: 0.5 },
-        { name: "fire", buttons: [2], commandUp: fireButton },
         { name: "options", buttons: [9], commandUp: toggleOptions }
     ], proxy, oscope);
 
     speech = new SpeechInput("speech", [
-        { name: "jump", keywords: ["jump"], commandUp: jump },
         { name: "options", keywords: ["options"], commandUp: toggleOptions },
         { name: "chat", preamble: true, keywords: ["message"], commandUp: speechChat }
     ], proxy, oscope);
@@ -1090,38 +1038,20 @@ function startGame(socket, progress){
         scene.add(object);
         var cam = mainScene.Camera.children[0];
         camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, drawDistance);
-        if(mainScene.SkyBox){
-            var v = 0.55 * drawDistance;
-            mainScene.Skybox.scale.set(v, v, v);  
-            
-            mainScene.button1.onclick = function(){
-                msg("Clicked $1", currentButton);
-            };
-            mainScene.button2.onclick = function(){
-                repeater.speak("That's okay. Try again.");
-            };
-            mainScene.button3.onclick = function(){
-                repeater.speak("Incorrect, you get no more chances. You are on the way to destruction. Make your time.");
-            };
-            mainScene.button4.onclick = function(){
-                msg("Clicked $1", currentButton);
-                repeater.speak("You clicked the fourth button");
-            };
-        }
-        
-        button = new ModelLoader("models/button2.dae", progress, function(){
-            for(var i = 0; i < 5; ++i){
-                var b = button.clone();
-                b.position.set(i * 2 - 5, 0, 5);
-                scene.add(b);
-                var cap = b.buttons[0];
-                mainScene.buttons.push(cap);
-                cap.name += "_CLONE_" + i;
-                mainScene[cap.name] = cap;
-                cap.onclick = function(n){
-                    msg("Clicked clone button " + n);
-                }.bind(this, i);
-                delete b.buttons;
+        var button = new ModelLoader("models/button2.dae", progress, function(obj){ 
+            var COUNT = 5
+            for(var i = -COUNT; i <= COUNT; ++i){
+                var btn = new VUI.Button(button, "button" + (i + 3));
+                var angle = Math.PI * i * 10 / 180;
+                var r = 9;
+                btn.position.set(Math.cos(angle) * r, Math.cos(i * Math.PI) * 0.5, Math.sin(-angle) * r);
+                btn.rotation.set(0, angle - Math.PI, 0, "XYZ");
+                mainScene.buttons.push(btn);
+                mainScene[btn.name] = btn;
+                btn.addEventListener("click", function(n){
+                    audio3d.sawtooth(40 - n * 5, 0.1, 0.25);
+                }.bind(this, i));
+                scene.add(btn.base);
             }
         });
     });
@@ -1130,7 +1060,7 @@ function startGame(socket, progress){
         addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: userName});
     });
 
-    audio3d.loadBufferCascadeSrcList(["music/click.mp3", "music/click.ogg"], progress, function(buffer){
+    audio3d.loadBuffer("music/click.mp3", progress, function(buffer){
         clickSound = buffer;
     });
 

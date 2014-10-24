@@ -6,9 +6,14 @@
     <title>Playing a sound, overlapped a few times</title>
 </head>
 <body>
-    Q - play a synthesized sound <br>
-    W - play an MP3
+    A - play an oscillator sound<br>
+    S - play an oscillator sound<br>
+    D - play an oscillator sound<br>
+    F - play an oscillator sound<br>
+    G - play an oscillator sound
+    
     <script type="text/javascript" src="js/output/Audio3DOutput.js"></script>
+    <script type="text/javascript" src="js/psychologist.js"></script>
     <script type="text/javascript">
         var audio = new Audio3DOutput();
         var data = [];
@@ -16,20 +21,16 @@
             data.push((Math.sin(i / Math.pow(i, 0.5)) + 1) * 0.5);
         }
         
-        audio.createRawSound([data], function(buffer){
-            window.addEventListener("keydown", function(evt){
-                if(evt.keyCode === 81){
-                    audio.playBufferImmediate(buffer, 0.05);
-                }
-            });
-        });
+        audio.mainVolume.gain.value = 0.05;
         
-        audio.loadBufferCascadeSrcList(["music/click.mp3", "music/click.ogg"], null, function(buffer){
-            window.addEventListener("keydown", function(evt){
-                if(evt.keyCode === 87){
-                    audio.playBufferImmediate(buffer, 0.25);
-                }
-            });
+        window.addEventListener("keydown", function(evt){
+            switch(evt.keyCode){
+                case 65: audio.piano(40, 1, 0.25); break; //A
+                case 83: audio.piano(47, 1, 0.25); break; //S
+                case 68: audio.piano(54, 1, 0.25); break; //D
+                case 70: audio.piano(61, 1, 0.25); break; //F
+                case 71: audio.piano(68, 1, 0.25); break; //G
+            }
         });
     </script>
 </body>

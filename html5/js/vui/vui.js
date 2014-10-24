@@ -45,3 +45,35 @@ VUI.Text = function(text, size, fgcolor, bgcolor, x, y, z, hAlign){
     textMesh.position.set(x, y, z);
     return textMesh;
 };
+
+VUI.Button = function(template, name){
+    this.listeners = { click: [] };
+    this.base = template.clone();
+    this.position = this.base.position;
+    this.rotation = this.base.rotation;
+    this.name = name;
+    this.cap = this.base.buttons[0];
+    this.cap.name = name;
+    this.rest = this.cap.position.clone();
+    this.color = this.cap.children[0].material.materials[0].color;
+    this.touched = false;
+    this.wasTouched = false;
+    this.pressed = false;
+    this.wasPressed = false;
+    delete this.base.buttons;
+};
+
+VUI.Button.prototype.addEventListener = function(event, func){
+    if(this.listeners[event]){
+        this.listeners[event].push(func);
+    }
+};
+
+VUI.Button.prototype.fireEvents = function(event){
+    var ls = this.listeners[event];
+    if(ls){
+        for(var i = 0; i < ls.length; ++i){
+            ls[i].call(this);
+        }
+    }
+};
