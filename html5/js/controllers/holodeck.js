@@ -73,9 +73,9 @@ applicationCache.addEventListener("cached", function(){
 
 applicationCache.addEventListener("progress", function(evt){ 
     var p = evt.loaded / evt.total,
-        q = sigfig(p, 2);
+        q = sigfig(p, 3);
     ctrls.downloadProgress.style.opacity = 1 - q;
-    ctrls.appCacheMessage.innerHTML = fmt("Checking for application update %1... please wait", q);
+    ctrls.appCacheMessage.innerHTML = fmt("Checking for application update %1... please wait", q * 100);
 }, false);
 
 applicationCache.addEventListener("checking", function(){ 
