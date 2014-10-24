@@ -39,11 +39,17 @@ function showReload(message){
     ctrls.appCacheMessage.innerHTML = "";
     var reloadButton = document.createElement("a");
     reloadButton.innerHTML = message;
-    reloadButton.className = "blue button";
+    reloadButton.className = "primary button";
     reloadButton.addEventListener("click", function(){
         document.location = document.location.href;
     }, false);
     ctrls.appCacheMessage.appendChild(reloadButton);
+    
+    var dismissButton = document.createElement("a");
+    dismissButton.innerHTML = "Dismiss.";
+    dismissButton.className = "secondary button";
+    dismissButton.addEventListener("click", closeReloadMessage.bind(window, false), false);
+    ctrls.appCacheMessage.appendChild(dismissButton);
 };
 
 applicationCache.addEventListener("error", showReload.bind(window, "Error downloading update. Try again."), false);
@@ -64,14 +70,22 @@ applicationCache.addEventListener("cached", function(){
     closeReloadMessage(true);
 }, false);
 
+applicationCache.addEventListener("progress", function(evt){ 
+    var p = evt.loaded / evt.total,
+        c = Math.floor(255 * p),
+        q = pct(sigfig(100 * p, 1));
+    ctrls.progress.style.backgroundColor = fmt("rbg($1, $1, $1)", c);
+    ctrls.appCacheMessage.innerHTML = fmt("Checking for application update %1... please wait", q);
+}, false);
+
 applicationCache.addEventListener("checking", function(){ 
     ctrls.appCacheMessage.innerHTML = "Checking for application update... please wait.";
 }, false);
 
 function displayProgress(file){
-    ctrls.triedSoFar.style.width = prog.makeSize(FileState.NONE, "size");
-    ctrls.processedSoFar.style.width = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
-    ctrls.loadedSoFar.style.width = prog.makeSize(FileState.COMPLETE, "size");
+    var p = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress", false);
+    var q = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress", true);
+    ctrls.progress.style.opacity = q;
     if(typeof(file) !== "string"){
         file = fmt(
             "<br>$1:<br>[msg] $2<br>[line] $3<br>[col] $4<br>[file] $5",
@@ -84,8 +98,7 @@ function displayProgress(file){
     }
     ctrls.loadingMessage.innerHTML
         = ctrls.connectButton.innerHTML
-        = fmt("Loading, please wait... $1 $2", file, ctrls.processedSoFar.style.width);
-    ctrls.loadedSoFar.style.left = ctrls.errorSoFar.style.width = prog.makeSize(FileState.ERRORED, "size");
+        = fmt("Loading, please wait... $1 $2", file, p);
     if(prog.isDone()){
         ctrls.loading.style.display = "none";
         ctrls.connectButton.addEventListener("click", login, false);
@@ -153,7 +166,8 @@ function startGame(socket, progress){
                 headEnable: {checked: false},
                 headTransmit: {checked: false},
                 headReceive: {checked: true},
-                renderingStyle: {value: "regular" }
+                renderingStyle: {value: "regular" },
+                defaultDisplay: {checked: true}
             }},
             { name: "Smartphone HMD", values:{
                 speechEnable: {checked: false},
@@ -177,7 +191,8 @@ function startGame(socket, progress){
                 headEnable: {checked: true},
                 headTransmit: {checked: true},
                 headReceive: {checked: false},
-                renderingStyle: {value: "rift" }
+                renderingStyle: {value: "rift" },
+                defaultDisplay: {checked: false}
             }},
             { name: NO_HMD_SMARTPHONE, values:{
                 speechEnable: {checked: false},
@@ -201,7 +216,8 @@ function startGame(socket, progress){
                 headEnable: {checked: true},
                 headTransmit: {checked: true},
                 headReceive: {checked: false},
-                renderingStyle: {value: "regular" }
+                renderingStyle: {value: "regular" },
+                defaultDisplay: {checked: true}
             }}
         ], readSettings),
         formState = getSetting("formState"),
@@ -476,52 +492,64 @@ function startGame(socket, progress){
             //
             // place pointer
             //
+            var pointerDistance = leap.getValue("HAND0Z") + mouse.getValue("pointerDistance") + 10;
             direction.set(
                 leap.getValue("HAND0X"),
                 leap.getValue("HAND0Y"),
-                leap.getValue("HAND0Z") + mouse.getValue("pointerDistance"))
+                -pointerDistance)
                 .applyAxisAngle(RIGHT, -pitch)
                 .applyAxisAngle(camera.up, currentUser.heading);
 
             testPoint.copy(currentUser.position);
             testPoint.y += PLAYER_HEIGHT;
-            hand.position.copy(testPoint);
-            hand.position.add(direction);
+            hand.position.copy(testPoint)
+                .add(direction);
 
             for(var j = 0; j < mainScene.buttons.length; ++j){
                 var btn = mainScene.buttons[j];
-                btn.wasTouched = btn.touched;
                 btn.wasPressed = btn.pressed;
-                btn.touched = false;
                 btn.pressed = false;
                 btn.color.g = 0;
                 btn.color.r = 0.5;
                 btn.cap.position.y = btn.rest.y;
                 
-                testPoint.copy(hand.position);
-                var TEST_HEIGHT = 5;
-                var MAX_PRESS = -0.1;
-                testPoint.y += TEST_HEIGHT;
-                direction.set(0, -1, 0);
-                raycaster.set(testPoint, direction);
-                raycaster.far = TEST_HEIGHT * 2;
-                var intersections = raycaster.intersectObject(btn.cap.children[0]);
-                if(intersections.length > 0){
-                    var inter = intersections[0];
-                    var pressY = Math.max(MAX_PRESS, (hand.position.y - inter.point.y));
-                    if(MAX_PRESS <= pressY && pressY <= 0){
-                        btn.touched = true;
-                        btn.color.g = pressY * 0.5 / MAX_PRESS;
-                        btn.color.r = 0.5 - btn.color.g;
-                        btn.cap.position.y = btn.rest.y + pressY;
-                        btn.pressed = pressY === MAX_PRESS;
+                direction.copy(btn.cap.position)
+                    .add(btn.position)
+                    .sub(camera.position);
+                var len = direction.length();
+                var box = 0.5;
+                if(pointerDistance - box <= len && len <= pointerDistance + box){
+                    btn.color.g = 0.5;
+                
+                    testPoint.copy(hand.position)
+                        .sub(camera.position)
+                        .normalize();
+
+                    direction.normalize();
+                    var dot = direction.dot(testPoint);
+                    if(0.99 < dot){
+                        testPoint.copy(hand.position);
+                        var TEST_HEIGHT = 3;
+                        var MAX_PRESS = -0.1;
+                        testPoint.y += TEST_HEIGHT;
+                        direction.set(0, -1, 0);
+                        raycaster.set(testPoint, direction);
+                        raycaster.far = TEST_HEIGHT * 2;
+                        var intersections = raycaster.intersectObject(btn.cap.children[0]);
+                        if(intersections.length > 0){
+                            var inter = intersections[0];
+                            var pressY = Math.max(MAX_PRESS, (hand.position.y - inter.point.y));
+                            if(MAX_PRESS <= pressY && pressY <= 0){
+                                btn.color.r = (1 + pressY) * 0.5 / MAX_PRESS;
+                                btn.cap.position.y = btn.rest.y + pressY;
+                                btn.pressed = pressY === MAX_PRESS;
+                            }
+                            hand.position.copy(inter.point);
+                        }
                     }
                 }
-                if(btn.pressed){
+                if(!btn.wasPressed && btn.pressed){
                     btn.fireEvents("click");
-                }
-                if(btn.wasTouched && !btn.touched){
-                    btn.cap.position.y = btn.rest.y;
                 }
             }
 
@@ -901,12 +929,12 @@ function startGame(socket, progress){
         { axis: MouseInput.DX, scale: 0.4 },
         { axis: MouseInput.DY, scale: 0.4 },
         { axis: MouseInput.IY, min: -2, max: 1.3 },
-        { axis: MouseInput.DZ, scale: -0.125 },
-        { axis: MouseInput.IZ, min: -20, max: 0  }
+        { axis: MouseInput.DZ, scale: 0.125 },
+        { axis: MouseInput.IZ, min: 0, max: 20  }
     ], [
         { name: "heading", axes: [-MouseInput.IX] },
         { name: "pitch", axes: [-MouseInput.IY] },
-        { name: "pointerDistance", axes: [MouseInput.IZ], offset: -10 }
+        { name: "pointerDistance", axes: [MouseInput.IZ] }
     ], proxy, oscope, renderer.domElement);
     
     var leapCommands = [];
@@ -918,11 +946,9 @@ function startGame(socket, progress){
     scene.add(hand);
     leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput["HAND0X"]], scale: 0.015 });
     leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput["HAND0Y"]], scale: 0.015, offset: -4 });
-    leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput["HAND0Z"]], scale: 0.015, offset: -6 });
+    leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput["HAND0Z"]], scale: -0.015, offset: 3 });
     
-    leap = new LeapMotionInput("leap", [
-        { name: "fire", x: -500, y: -500, z: -500, w: 1000, h: 1000, d: 1000 }
-    ], null, leapCommands, proxy, oscope);
+    leap = new LeapMotionInput("leap", null, null, leapCommands, proxy, oscope);
             
     touch = new TouchInput("touch", null, null, [
         { name: "heading", axes: [TouchInput.IX0] },
@@ -1039,12 +1065,12 @@ function startGame(socket, progress){
         var cam = mainScene.Camera.children[0];
         camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, drawDistance);
         var button = new ModelLoader("models/button2.dae", progress, function(obj){ 
-            var COUNT = 5
+            var COUNT = 5;
             for(var i = -COUNT; i <= COUNT; ++i){
-                var btn = new VUI.Button(button, "button" + (i + 3));
+                var btn = new VUI.Button(button, "button" + (i + COUNT + 1));
                 var angle = Math.PI * i * 10 / 180;
-                var r = 9;
-                btn.position.set(Math.cos(angle) * r, Math.cos(i * Math.PI) * 0.5, Math.sin(-angle) * r);
+                var r = 10;
+                btn.position.set(Math.cos(angle) * r, Math.cos(i * Math.PI) * 0.25, Math.sin(-angle) * r);
                 btn.rotation.set(0, angle - Math.PI, 0, "XYZ");
                 mainScene.buttons.push(btn);
                 mainScene[btn.name] = btn;

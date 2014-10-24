@@ -5,22 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
     <title>VR Holodeck</title>
     <link type="text/css" rel="stylesheet" href="css/style.css">
+    <link type="text/css" rel="stylesheet" href="css/holodeck.css">
 </head>
 <body>
     <div id="onScreenControls">
-        <a class="blue button" id="menuButton" title="menu"></a>
-        <a class="blue button" id="fsButton" title="fullscreen"></a>
+        <a class="primary button" id="menuButton" title="menu"></a>
+        <a class="primary button" id="fsButton" title="fullscreen"></a>
     </div>
     <div id="loading" class="loadBar">
-        <div class="progressBar" id="triedSoFar" style="background-color:#333"></div>
-        <div class="progressBar" id="processedSoFar" style="background-color:#666"></div>
-        <div class="progressBar" id="loadedSoFar" style="background-color:#999"></div>
-        <div class="progressBar" id="errorSoFar" style="background-color: #700"></div>
+        <div class="progressBar" id="progress" style="background-color:#000"></div>
     </div>
     <section id="options">
-        <a class="blue button closeSectionButton altClose">X</a>
+        <a class="primary button closeSectionButton altClose">X</a>
 
-        <h1>Virtual Reality on the Web</h1>
+        <h1>Psychologist.js: a WebGL VR Framework </h1>
 
         <div class="tabSet">
 
@@ -34,17 +32,17 @@
                     <input type="password" id="passwordField" placeholder="<password>"><br />
                     <select id="deviceTypes"></select><br />
                     <input type="checkbox" id="defaultDisplay" checked>
-                    <label for="defaultDisplay">Use this device as the default display.</label><br>
+                    <label for="defaultDisplay" title="Generally deselect this on a smartphone that you are pairing with a PC.">Use this device as the default display.</label><br>
                     <input type="checkbox" id="autoLogin" checked>
                     <label for="autoLogin">Stay logged in.</label><br>
-                    <a class="blue button" id="connectButton">Connect to Server</a>
+                    <a class="primary button" id="connectButton">Connect to Server</a>
                 </div>
                 <p>
                     If this is you're first time joining, a new user account 
                     will be created for you.
                 </p>
                 <p>
-                    Login from multiple devices to share use them together, 
+                    Login from multiple devices to use them together, 
                     e.g. combine keyboard and mouse actions from your PC with
                     motion tracking and VR view on your smartphone.
                 </p>
@@ -235,21 +233,21 @@
                         <td><input type="checkbox" id="gamepadEnable" checked /></td>
                         <td><input type="checkbox" id="gamepadTransmit" checked /></td>
                         <td><input type="checkbox" id="gamepadReceive" checked /></td>
-                        <td><a class="blue button" id="gamepadZero">Zero</a></td>
+                        <td><a class="primary button" id="gamepadZero">Zero</a></td>
                     </tr>
                     <tr>
                         <td>Touch</td>
                         <td><input type="checkbox" id="touchEnable" checked /></td>
                         <td><input type="checkbox" id="touchTransmit" checked /></td>
                         <td><input type="checkbox" id="touchReceive" checked /></td>
-                        <td><a class="blue button" id="touchZero">Zero</a></td>
+                        <td><a class="primary button" id="touchZero">Zero</a></td>
                     </tr>
                     <tr>
                         <td>Head</td>
                         <td><input type="checkbox" id="headEnable" checked /></td>
                         <td><input type="checkbox" id="headTransmit" checked /></td>
                         <td><input type="checkbox" id="headReceive" checked /></td>
-                        <td><a class="blue button" id="headZero">Zero</a></td>
+                        <td><a class="primary button" id="headZero">Zero</a></td>
                     </tr>
                 </tbody>
             </table>
@@ -263,12 +261,12 @@
                         <option value="anaglyph">Use Cyan/Red Anaglyph Rendering</option>
                         <option value="stereo">Use Basic Stereo Rendering</option>
                     </select></td></tr>                        
-                    <tr><td><a class="blue button" id="fullScreenButton">Toggle Full Screen</a></td></tr>
-                    <tr><td><a class="blue button" id="pointerLockButton">Set Pointer Lock (and close options window)</a></td></tr>
+                    <tr><td><a class="primary button" id="fullScreenButton">Toggle Full Screen</a></td></tr>
+                    <tr><td><a class="primary button" id="pointerLockButton">Set Pointer Lock (and close options window)</a></td></tr>
                 </tbody>
             </table>
         </div>
-        <a class="blue button closeSectionButton">Close</a>
+        <a class="primary button closeSectionButton">Close</a>
     </section>
     <script type="text/javascript" src="js/psychologist.js"></script>
     <script type="text/javascript" src="js/controllers/holodeck.js"></script>

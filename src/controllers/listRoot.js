@@ -23,7 +23,7 @@ module.exports = {
                     })
                 )
                 .map(function(file){
-                    return fmt("<a class=\"blue button\" href=\"$1\" style=\"width:100%\">$2</a><br>", file, file.replace(".html", ""));
+                    return fmt("<a class=\"primary button\" href=\"$1\" style=\"width:100%\">$2</a><br>", file, file.replace(".html", ""));
                 })
                 .join("");
 

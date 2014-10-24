@@ -167,8 +167,19 @@ LoadingProgress.prototype.sum = function (state, prop) {
     }, 0);
 };
 
-LoadingProgress.prototype.makeSize = function (state, prop) {
-    return pct(sigfig(100 * this.sum(state, prop) / this.totalFileSize, 1));
+LoadingProgress.prototype.makeHex = function (state, prop) {
+    return sigfig(255 * this.sum(state, prop) / this.totalFileSize, 0);
+};
+
+LoadingProgress.prototype.makeSize = function (state, prop, invert) {
+    var value = sigfig(100 * this.sum(state, prop) / this.totalFileSize, 1);
+    if(invert){
+        value = 1 - (value * 0.01);
+    }
+    else{
+        value = pct(value);
+    }
+    return value;
 };
 
 // Applying Array's slice method to array-like objects. Called with

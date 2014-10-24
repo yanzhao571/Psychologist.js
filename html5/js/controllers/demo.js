@@ -39,7 +39,7 @@ function showReload(message){
     ctrls.appCacheMessage.innerHTML = "";
     var reloadButton = document.createElement("a");
     reloadButton.innerHTML = message;
-    reloadButton.className = "blue button";
+    reloadButton.className = "primary button";
     reloadButton.addEventListener("click", function(){
         document.location = document.location.href;
     }, false);
