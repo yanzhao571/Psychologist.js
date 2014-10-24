@@ -48,7 +48,7 @@ function showReload(message){
 
 applicationCache.addEventListener("error", showReload.bind(window, "Error downloading update. Try again."), false);
 
-applicationCache.addEventListener("updateready", showReload.bind(window, "Download complete. Reload application."), false);
+applicationCache.addEventListener("updateready", showReload.bind(window, "Download complete. Restart application."), false);
 
 applicationCache.addEventListener("downloading", function(){ 
     ctrls.appCacheMessage.innerHTML = "Downloading update now... please wait.";
