@@ -906,7 +906,7 @@ function startGame(socket, progress){
     ], [
         { name: "heading", axes: [-MouseInput.IX] },
         { name: "pitch", axes: [-MouseInput.IY] },
-        { name: "pointerDistance", axes: [MouseInput.IZ] }
+        { name: "pointerDistance", axes: [MouseInput.IZ], offset: -10 }
     ], proxy, oscope, renderer.domElement);
     
     var leapCommands = [];
