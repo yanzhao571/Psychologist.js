@@ -42,7 +42,6 @@ function findFilesInFiles(paths, success, error, accum, index){
         if(/\.(html|css|js|dae)$/.test(paths[index])){
             findFilesInFile(paths[index], function(files){
                 files.filter(function(f){
-                    //var isGood = /\.(html|css|js|dae|ogg|mp3|png|jpg|jpeg)$/.test(f);
                     return paths.indexOf(f) === -1;// && isGood;
                 }).forEach(function(f){
                     paths.push(f);
@@ -66,7 +65,7 @@ function findFilesInFile(path, success, error, accum){
             if(/\.js$/.test(path)){
                 file = file.replace(/\\"/g, "{ESCAPED_QUOTE}");
             }
-            extractFileReferences(file, success, accum);
+            extractFileReferences(path, file, success, accum);
         }
         else{
             success([]);
@@ -74,21 +73,20 @@ function findFilesInFile(path, success, error, accum){
     });
 }
 
-function extractFileReferences(file, success, accum){
-    var strings = file.match(/"[^"]*"/g);
-    if(strings){
-        strings = strings.map(function(a){
-            return a.substring(1, a.length - 1);
-        }).sort();
-
-        strings = strings.filter(function(a, i){
-            return a.length > 0 
-                && (i === 0 || a !== strings[i-1])
-                && /^[^.].+\.\w+$/.test(a);
-        }).map(function(s){
-            return s;
-        });
-    }
+function extractFileReferences(path, file, success, accum){
+    var isCSS = /\.css$/.test(path);
+    var pattern = isCSS ? /url\(\.\.\/([^)]+)\)/g : /"([^"]*)"/g;
+    var strings = [];
+    file.replace(pattern, function(match, capture){
+        strings.push(capture);
+        return match;
+    });
+    strings.sort();
+    strings = strings.filter(function(a, i){
+        return a.length > 0 
+            && (i === 0 || a !== strings[i-1])
+            && /^[^.].+\.\w+$/.test(a);
+    });
     filterFiles(strings || [], success, accum);   
 }
 

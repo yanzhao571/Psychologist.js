@@ -159,6 +159,12 @@ LoadingProgress.prototype.isDone = function () {
     return (done + error) === this.totalFileSize;
 };
 
+LoadingProgress.prototype.makeProportion = function (state) {
+    return this.files.filter(function (f) {
+        return (f.state & state) !== 0 || (state === 0);
+    }).length / this.files.length;
+};
+
 LoadingProgress.prototype.sum = function (state, prop) {
     return this.files.filter(function (f) {
         return (f.state & state) !== 0 || (state === 0);
@@ -171,15 +177,9 @@ LoadingProgress.prototype.makeHex = function (state, prop) {
     return sigfig(255 * this.sum(state, prop) / this.totalFileSize, 0);
 };
 
-LoadingProgress.prototype.makeSize = function (state, prop, invert) {
+LoadingProgress.prototype.makeSize = function (state, prop) {
     var value = sigfig(100 * this.sum(state, prop) / this.totalFileSize, 1);
-    if(invert){
-        value = 1 - (value * 0.01);
-    }
-    else{
-        value = pct(value);
-    }
-    return value;
+    return pct(value);
 };
 
 // Applying Array's slice method to array-like objects. Called with

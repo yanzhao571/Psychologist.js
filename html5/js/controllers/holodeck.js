@@ -1,3 +1,33 @@
+applicationCache.addEventListener("noupdate", function(){ 
+    ctrls.appCacheMessage.innerHTML = "No update found.";
+    closeReloadMessage(true);
+}, false);
+
+applicationCache.addEventListener("checking", function(){ 
+    ctrls.appCacheMessage.innerHTML = "Checking for application update... please wait.";
+}, false);
+
+applicationCache.addEventListener("error", showReload.bind(window, "Error downloading update. Try again."), false);
+
+applicationCache.addEventListener("updateready", showReload.bind(window, "Download complete. Restart application."), false);
+
+applicationCache.addEventListener("downloading", function(){ 
+    ctrls.appCacheMessage.innerHTML = "Downloading update now... please wait.";
+}, false);
+
+applicationCache.addEventListener("cached", function(){ 
+    ctrls.appCacheMessage.innerHTML = "Application cached.";
+    closeReloadMessage(true);
+}, false);
+
+applicationCache.addEventListener("progress", function(evt){ 
+    var p = evt.loaded / evt.total,
+        q = sigfig(p, 3);
+    ctrls.downloadProgress.style.opacity = 1 - q;
+    ctrls.appCacheMessage.innerHTML = fmt("Checking for application update $1... please wait", pct(q * 100));
+}, false);
+
+
 var isDebug = false, isLocal = document.location.hostname === "localhost",
     ctrls = findEverything(), tabs = makeTabSet(ctrls.options), login,
     prog = new LoadingProgress(
@@ -30,13 +60,13 @@ var isDebug = false, isLocal = document.location.hostname === "localhost",
         postScriptLoad);
         
 function closeReloadMessage(showLogin){
-    ctrls.downloadProgress.style.opacity = 0;
     ctrls.appCacheMessage.style.display = "none";
     ctrls.loginForm.style.display = showLogin ? "" : "none";
+    ctrls.downloadProgress.opacity = 0;
     prog.start();
 }
         
-function showReload(message){    
+function showReload(message){
     ctrls.appCacheMessage.innerHTML = "";
     var reloadButton = document.createElement("a");
     reloadButton.innerHTML = message;
@@ -53,39 +83,11 @@ function showReload(message){
     ctrls.appCacheMessage.appendChild(dismissButton);
 };
 
-applicationCache.addEventListener("error", showReload.bind(window, "Error downloading update. Try again."), false);
-
-applicationCache.addEventListener("updateready", showReload.bind(window, "Download complete. Restart application."), false);
-
-applicationCache.addEventListener("downloading", function(){ 
-    ctrls.appCacheMessage.innerHTML = "Downloading update now... please wait.";
-}, false);
-
-applicationCache.addEventListener("noupdate", function(){ 
-    ctrls.appCacheMessage.innerHTML = "No update found.";
-    closeReloadMessage(true);
-}, false);
-
-applicationCache.addEventListener("cached", function(){ 
-    ctrls.appCacheMessage.innerHTML = "Application cached.";
-    closeReloadMessage(true);
-}, false);
-
-applicationCache.addEventListener("progress", function(evt){ 
-    var p = evt.loaded / evt.total,
-        q = sigfig(p, 3);
-    ctrls.downloadProgress.style.opacity = 1 - q;
-    ctrls.appCacheMessage.innerHTML = fmt("Checking for application update $1... please wait", pct(q * 100));
-}, false);
-
-applicationCache.addEventListener("checking", function(){ 
-    ctrls.appCacheMessage.innerHTML = "Checking for application update... please wait.";
-}, false);
-
 function displayProgress(file){
-    var p = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress", true);
-    var q = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress", false);
-    ctrls.loadingProgress.style.opacity = p;
+    var p = prog.makeProportion(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE);
+    var q = prog.makeSize(FileState.STARTED | FileState.ERRORED | FileState.COMPLETE , "progress");
+
+    ctrls.loadingProgress.style.opacity = 1 - p;
     if(typeof(file) !== "string"){
         file = fmt(
             "<br>$1:<br>[msg] $2<br>[line] $3<br>[col] $4<br>[file] $5",
@@ -872,7 +874,7 @@ function startGame(socket, progress){
 
                 scene.add(user);
             }
-            else{                
+            else{
                 delete users[DEFAULT_USER_NAME];
                 user = currentUser;
             }
@@ -882,8 +884,6 @@ function startGame(socket, progress){
         }
         
         users[userState.userName] = user;
-        
-        user.heading = userState.heading;
         updateUserState(true, userState);
     }
     
