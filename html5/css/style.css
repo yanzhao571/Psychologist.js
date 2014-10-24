@@ -143,7 +143,10 @@ section, .altClose, .loadBar
     top: 0;
 }
 
-
+li > em{
+    font-weight: bold;
+    font-style: inherit;
+}
     
 table{
     border-width: 1px;
