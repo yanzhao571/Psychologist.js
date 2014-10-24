@@ -139,7 +139,7 @@ function getFileDescription(path, includeTime, done){
                 obj.stamp = stats.atime.getTime() + stats.ctime.getTime() + stats.mtime.getTime();
             }
         }
-        else if(!(/\.appcache$/.test(path))){
+        else if(!(/\.appcache$/.test(path)) && includeTime){
             obj = {name: path, size: -1, stamp: -1 };
         }
         done(obj);
