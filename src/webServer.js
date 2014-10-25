@@ -43,7 +43,7 @@ function findController(url, method){
                 return {
                     handler: handler,
                     parameters: matches
-                }
+                };
             }
         }
     }    

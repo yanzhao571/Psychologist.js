@@ -14,6 +14,7 @@ function closeReloadMessage(showLogin){
         
 function showReload(message){
     ctrls.appCacheMessage.innerHTML = "";
+    
     var reloadButton = document.createElement("a");
     reloadButton.innerHTML = message;
     reloadButton.className = "primary button";
