@@ -2,30 +2,6 @@ var isDebug = false, isLocal = document.location.hostname === "localhost",
     ctrls = findEverything(), tabs = makeTabSet(ctrls.options), login,
     prog = new LoadingProgress(
         "manifest/js/controllers/holodeck.js",
-        "lib/three/three.js",
-        "lib/three/StereoEffect.js",
-        "lib/three/OculusRiftEffect.js",
-        "lib/three/AnaglyphEffect.js",
-        "lib/three/ColladaLoader.js",
-        "lib/physics/cannon.min.js",
-        "lib/leap-0.6.3.min.js",
-        "lib/sha512.js",
-        "lib/socket.io.js",
-        "js/oscope/oscope.client.js",
-        "js/WebRTCSocket.js",
-        "js/ModelLoader.js",
-        "js/input/NetworkedInput.js",
-        "js/input/ButtonAndAxisInput.js",
-        "js/input/SpeechInput.js",
-        "js/input/GamepadInput.js",
-        "js/input/KeyboardInput.js",
-        "js/input/MotionInput.js",
-        "js/input/MouseInput.js",
-        "js/input/TouchInput.js",
-        "js/input/LeapMotionInput.js",
-        "js/output/Audio3DOutput.js",
-        "js/output/SpeechOutput.js",
-        "js/vui/vui.js",
         displayProgress,
         postScriptLoad);
         
@@ -885,7 +861,7 @@ function startGame(socket, progress){
         updateUserState(true, userState);
         
         if(!skipMakingChatList){
-            makeUserList();
+            makeChatList();
         }
     }
     
@@ -895,7 +871,7 @@ function startGame(socket, progress){
             scene.remove(users[userName]);
             help(ctrls.userList);
             delete users[userName];
-            makeUserList();
+            makeChatList();
         }
     }
     
@@ -907,10 +883,10 @@ function startGame(socket, progress){
         for(var i = 0; i < users.length; ++i){
             addUser(users[i], true);
         }
-        makeUserList();
+        makeChatList();
     }
     
-    function makeUserList(){
+    function makeChatList(){
         var list = [];
         for(var k in users){
             list.push(k);
