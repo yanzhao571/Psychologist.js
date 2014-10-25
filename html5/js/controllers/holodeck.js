@@ -249,8 +249,8 @@ function startGame(socket, progress){
     renderer.setClearColor(BG_COLOR);
     writeForm(ctrls, formState);
     
-    oscope = new Oscope(socket, "demo");
-    oscope.connect();
+//    oscope = new Oscope(socket, "demo");
+//    oscope.connect();
     
     proxy = new WebRTCSocket(socket, ctrls.defaultDisplay.checked);
     
@@ -480,17 +480,15 @@ function startGame(socket, progress){
             //
             // place pointer
             //
-            var pointerDistance = leap.getValue("HAND0Z") + mouse.getValue("pointerDistance") + 10;
+            var pointerDistance = leap.getValue("HAND0Z") + mouse.getValue("pointerDistance") + 2;
             direction.set(
                 leap.getValue("HAND0X"),
-                leap.getValue("HAND0Y"),
+                leap.getValue("HAND0Y") + 4,
                 -pointerDistance)
-                .applyAxisAngle(RIGHT, -pitch)
-                .applyAxisAngle(camera.up, heading);
+                .applyAxisAngle(RIGHT, -(pitch + mouse.getValue("pointerPitch")))
+                .applyAxisAngle(camera.up, heading + mouse.getValue("pointerHeading"));
 
-            testPoint.copy(currentUser.position);
-            testPoint.y += PLAYER_HEIGHT;
-            hand.position.copy(testPoint)
+            hand.position.copy(camera.position)
                 .add(direction);
 
             for(var j = 0; j < mainScene.buttons.length; ++j){
@@ -932,18 +930,23 @@ function startGame(socket, progress){
     ], proxy, oscope);
 
     mouse = new MouseInput("mouse", [
-        { name: "heading", axes: [-MouseInput.X], scale: 0.01 },
+        { name: "dx", axes: [-MouseInput.X], delta: true },
+        { name: "heading", commands: ["dx"], metaKeys: [-NetworkedInput.SHIFT], integrate: true },
+        { name: "pointerHeading", commands: ["dx"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.2, max: Math.PI * 0.2 },
         { name: "dy", axes: [-MouseInput.Y], delta: true },
-        { name: "pitch", commands: ["dy"], integrate: true, min: -Math.PI * 0.5, max: Math.PI * 0.5 },
+        { name: "pitch", commands: ["dy"], metaKeys: [-NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.5, max: Math.PI * 0.5 },
+        { name: "pointerPitch", commands: ["dy"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.125, max: Math.PI * 0.125 },
         { name: "dz", axes: [MouseInput.Z], delta: true },
-        { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: -10, max: 20 }
+        { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: 0, max: 10 }
     ], proxy, oscope, renderer.domElement);
     
     var leapCommands = [];
     
-    hand = new THREE.Mesh(new THREE.SphereGeometry(0.1 + i * 0.005, 4, 4), new THREE.MeshPhongMaterial({
-        color: 0xffff00
-    }));
+    hand = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1 + i * 0.005, 4, 4), 
+        new THREE.MeshPhongMaterial({color: 0xffff00, emissive: 0x7f7f00})
+    );
+    hand.add(new THREE.PointLight(0xffff00, 1, 7));
     hand.name = "HAND0";
     scene.add(hand);
     leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput["HAND0X"]], scale: 0.015 });

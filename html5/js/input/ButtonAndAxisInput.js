@@ -185,9 +185,6 @@ ButtonAndAxisInput.prototype.evalCommand = function(cmd, cmdState, metaKeysSet, 
             cmdState.lv = ov;
         }
         
-        if(this.name === "mouse" && cmd.name === "pointerDistance"){
-            console.log(cmd.min, value, cmd.max);
-        }
         if(cmd.min !== undefined){
             value = Math.max(cmd.min, value);
         }
