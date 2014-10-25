@@ -415,18 +415,19 @@ function startGame(socket, progress){
 
                 // ground test
                 testPoint.copy(currentUser.position);
-                testPoint.y += 1;
+                var GROUND_TEST_HEIGHT = 3;
+                testPoint.y += GROUND_TEST_HEIGHT;
                 direction.set(0, -1, 0);
                 raycaster.set(testPoint, direction);
-                raycaster.far = 1;
+                raycaster.far = GROUND_TEST_HEIGHT * 2;
                 intersections = raycaster.intersectObject(scene, true);
                 for(var i = 0; i < intersections.length; ++i){
                     var inter = intersections[i];
                     if(inter.object.parent.isSolid){
                         testPoint.copy(inter.face.normal);
                         testPoint.applyEuler(inter.object.parent.rotation);
-                        currentUser.position.y = inter.point.y + 0.0125;
-                        currentUser.velocity.y = 0.1;
+                        currentUser.position.y = inter.point.y;
+                        currentUser.velocity.y = 0;
                         onground = true;
                     }
                 }
