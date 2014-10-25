@@ -77,16 +77,34 @@ td > .button, td > input
 
 #textEntry
 {
-    margin:10px;
+    width:100%;
+}
+
+#chatStatus{
+    position:relative;
+    width: 100%;
+    height:10em;
+}
+
+#chatLog, #userList{
+    position:absolute;
+    box-sizing:border-box;
+    display:inline-block;
+    border: solid 1px #ccc;
+    padding: 1em;
+    height:10em;
+    overflow-y: scroll;
+    color:#666;
 }
 
 #chatLog{
-    border: solid 1px #ccc;
-    padding: 1em;
-    margin-top:2em;
-    height:10em;
-    overflow-y: scroll;
-    color:#666
+    left:0;
+    right:25%;
+}
+
+#userList{
+    left:75%;
+    right: 0;
 }
 
 body

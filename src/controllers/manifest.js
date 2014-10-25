@@ -167,7 +167,6 @@ function sendAppCache(mainFileTime, sendData, files){
             // the server and this is quicker and easier.
             data += fmt("\n# $1\n../$2", descriptions[i].stamp, descriptions[i].name);
         }
-            console.log(data);
         data += "\nNETWORK:\n*";
         sendData("text/cache-manifest", data, data.length);
     });

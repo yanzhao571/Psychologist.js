@@ -843,7 +843,7 @@ function startGame(socket, progress){
         }
     }
 
-    function addUser(userState){
+    function addUser(userState, skipMakingChatList){
         var user = null;
         if(!users[userState.userName]){
             if(userName === DEFAULT_USER_NAME
@@ -883,13 +883,19 @@ function startGame(socket, progress){
         
         users[userState.userName] = user;
         updateUserState(true, userState);
+        
+        if(!skipMakingChatList){
+            makeUserList();
+        }
     }
     
     function userLeft(userName){
         if(users[userName]){
             msg("$1 has disconnected", userName);
             scene.remove(users[userName]);
+            help(ctrls.userList);
             delete users[userName];
+            makeUserList();
         }
     }
     
@@ -899,7 +905,24 @@ function startGame(socket, progress){
         proxy.connect(userName);
         users.sort(function(a){ return (a.userName === userName) ? -1 : 1;});
         for(var i = 0; i < users.length; ++i){
-            updateUserState(true, users[i]);
+            addUser(users[i], true);
+        }
+        makeUserList();
+    }
+    
+    function makeUserList(){
+        var list = [];
+        for(var k in users){
+            list.push(k);
+        }
+        list.sort();
+        ctrls.userList.innerHTML = "";
+        for(var i = 0; i < list.length; ++i){
+            if(list[i] !== DEFAULT_USER_NAME){
+                var entry = document.createElement("div");
+                entry.appendChild(document.createTextNode(list[i]));
+                ctrls.userList.appendChild(entry);
+            }
         }
     }
 

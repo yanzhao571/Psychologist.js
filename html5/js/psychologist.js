@@ -283,10 +283,7 @@ function help(obj){
         type: type,
         events: evnts,
         functions: funcs,
-        values:{
-            itself: obj,
-            properties: props
-        }
+        properties: props
     };
     
     console.debug(obj);
