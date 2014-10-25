@@ -1,6 +1,6 @@
-function MouseInput(name, axisConstraints, commands, socket, oscope, DOMElement){
+function MouseInput(name, commands, socket, oscope, DOMElement){
     DOMElement = DOMElement || document.documentElement;
-    ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, oscope, 1, MouseInput.AXES);
+    ButtonAndAxisInput.call(this, name, commands, socket, oscope, 1, MouseInput.AXES);
 
     this.setLocation = function(x, y){
         this.setAxis("X", x);
@@ -8,8 +8,8 @@ function MouseInput(name, axisConstraints, commands, socket, oscope, DOMElement)
     };
 
     this.setMovement = function(dx, dy){
-        this.incAxis("X", dx);
-        this.incAxis("Y", dy);
+        this.setAxis("X", dx + this.getAxis("X"));
+        this.setAxis("Y", dy + this.getAxis("Y"));
     };
 
     this.readEvent = function(event){
@@ -36,7 +36,7 @@ function MouseInput(name, axisConstraints, commands, socket, oscope, DOMElement)
     DOMElement.addEventListener("mousemove", this.readEvent.bind(this), false);
 
     DOMElement.addEventListener("mousewheel", function(event){
-        this.incAxis("Z", event.wheelDelta);
+        this.setAxis("Z", this.getAxis("Z") + event.wheelDelta);
         this.readEvent(event);
     }.bind(this), false);
 
@@ -85,7 +85,5 @@ function MouseInput(name, axisConstraints, commands, socket, oscope, DOMElement)
     };
 }
 
-inherit(MouseInput, ButtonAndAxisInput);
-
 MouseInput.AXES = ["X", "Y", "Z"];
-ButtonAndAxisInput.fillAxes(MouseInput);
+ButtonAndAxisInput.inherit(MouseInput);

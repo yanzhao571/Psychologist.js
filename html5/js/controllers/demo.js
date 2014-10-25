@@ -925,19 +925,13 @@ function startGame(socket, progress){
 
     window.addEventListener("beforeunload", shutdown, false);
 
-    head = new MotionInput("head", null, [
+    head = new MotionInput("head", [
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] }
     ], proxy, oscope);
 
     mouse = new MouseInput("mouse", [
-        { axis: MouseInput.DX, scale: 0.4 },
-        { axis: MouseInput.DY, scale: 0.4 },
-        { axis: MouseInput.IY, min: -2, max: 1.3 },
-        { axis: MouseInput.DZ, scale: -0.125 },
-        { axis: MouseInput.IZ, min: -20, max: 0  }
-    ], [
         { name: "heading", axes: [-MouseInput.IX] },
         { name: "pitch", axes: [-MouseInput.IY] },
         { name: "pointerDistance", axes: [MouseInput.IZ] },
@@ -969,9 +963,9 @@ function startGame(socket, progress){
     
     leap = new LeapMotionInput("leap", [
         { name: "fire", x: -500, y: -500, z: -500, w: 1000, h: 1000, d: 1000 }
-    ], null, leapCommands, proxy, oscope);
+    ], leapCommands, proxy, oscope);
             
-    touch = new TouchInput("touch", null, null, [
+    touch = new TouchInput("touch", null, [
         { name: "heading", axes: [TouchInput.IX0] },
         { name: "drive", axes: [-TouchInput.DY0] }
     ], proxy, oscope, renderer.domElement);
@@ -990,11 +984,6 @@ function startGame(socket, progress){
     keyboard.pause(true);
 
     gamepad = new GamepadInput("gamepad", [
-        { axis: GamepadInput.LSX, deadzone: 0.2},
-        { axis: GamepadInput.LSY, deadzone: 0.2},
-        { axis: GamepadInput.RSX, deadzone: 0.2, scale: 1.5},
-        { axis: GamepadInput.RSY, deadzone: 0.2, scale: 1.5}
-    ], [
         { name: "strafe", axes: [GamepadInput.LSX]},
         { name: "drive", axes: [GamepadInput.LSY]},
         { name: "heading", axes: [-GamepadInput.IRSX]},
@@ -1063,7 +1052,7 @@ function startGame(socket, progress){
             module.receive(r.checked);
         });
 
-        if(z){
+        if(z && module.zeroAxes){
             z.addEventListener("click", module.zeroAxes.bind(module), false);
         }
 

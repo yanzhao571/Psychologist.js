@@ -793,20 +793,32 @@ function toggleFullScreen() {
     }
 }
 
-function addFullScreenShim(elem){
-    var events = help(elem).events;
+function addFullScreenShim(elems){
+    elems = elems.map(function(e){
+        return {
+            elem: e,
+            events: help(e).events
+        };
+    });
+    
     function removeFullScreenShim(){
-        events.forEach(function(e){
-            elem.removeEventListener(e, fullScreenShim);
+        elems.forEach(function(elem){
+            elem.events.forEach(function(e){            
+                elem.removeEventListener(e, fullScreenShim);
+            });
         });
     }
+    
     function fullScreenShim(evt){
         requestFullScreen(removeFullScreenShim);
     }
-    events.forEach(function(e){
-        if(e.indexOf("fullscreenerror") < 0){
-            elem.addEventListener(e, fullScreenShim, false);
-        }
+    
+    elems.forEach(function(elem){
+        elem.events.forEach(function(e){
+            if(e.indexOf("fullscreenerror") < 0){
+                elem.addEventListener(e, fullScreenShim, false);
+            }
+        });
     });
 }
 

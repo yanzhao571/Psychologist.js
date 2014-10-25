@@ -278,7 +278,7 @@ include(0,
     speechButton.addEventListener("click", toggleSpeech, false);
     fullScreenButton.addEventListener("click", goFullscreen, false);
 
-    motion = new MotionInput("motion", null, [
+    motion = new MotionInput("motion", [
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] }

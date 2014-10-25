@@ -12,7 +12,7 @@ function motionTest(){
         }).concat(MotionInput.AXES.map(function(name){
             return {name: "I" + name, axes: [MotionInput["I" + name]] };
         })),
-        motion = new MotionInput("motion", null, commands);
+        motion = new MotionInput("motion", commands);
 
     zeroButton.addEventListener("click", motion.zeroAxes.bind(motion), false);
 

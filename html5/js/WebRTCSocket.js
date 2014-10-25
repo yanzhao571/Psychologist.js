@@ -172,6 +172,8 @@ function WebRTCSocket(proxyServer, isStarHub){
 
                 socket.on("ice", function (ice) {
                     if (ice.fromIndex === theirIndex) {
+                        delete ice.fromIndex;
+                        delete ice.toIndex;
                         peers[theirIndex].addIceCandidate(new RTCIceCandidate(ice));
                     }
                 });

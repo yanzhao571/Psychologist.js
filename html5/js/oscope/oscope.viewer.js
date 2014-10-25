@@ -3,8 +3,10 @@ var ctrls = findEverything(),
 	prog = new LoadingProgress(
 		"manifest/js/oscope/oscope.viewer.js",
 		"lib/socket.io.js",
+		"js/WebRTCSocket.js",
 		displayProgress,
 		postScriptLoad);
+
 
 function displayProgress(file){
     ctrls.status.innerHTML = fmt(
@@ -14,13 +16,14 @@ function displayProgress(file){
     );
 }
 
-function postScriptLoad(progress){
+function postScriptLoad(){
     var SLIDE_SPEED = 40,
-        socket = io.connect(document.location.hostname, {
+        webSocket = io.connect(document.location.hostname, {
             "reconnect": true,
             "reconnection delay": 1000,
             "max reconnection attempts": 60
-        }), 
+        }),
+        socket = new WebRTCSocket(webSocket),
         gScope = ctrls.scope.getContext("2d"),
         gNames = ctrls.names.getContext("2d"),        
         valueState = {},
@@ -28,7 +31,7 @@ function postScriptLoad(progress){
         max = Number.MIN_VALUE, lastMax = Number.MIN_VALUE,
         lt = 0, accum = 0;
 
-    socket.emit("handshake", "oscope");
+    socket.connect("oscope");
 
     function lerp(v){
         if(min === max){
@@ -120,35 +123,13 @@ function postScriptLoad(progress){
         valueState[value.name].current = value.value;
     }
     
-    function setAppKey(){
-        if(ctrls.appKey.value){
-            socket.emit("appKey", ctrls.appKey.value);
-            valueState = {};
-            ctrls.setAppKeyButton.style.display = "none";
-        }
-        else{
-            alert("Please enter an app key first");
-        }
-    }
+    socket.on("value", setValue);  
 
-    socket.on("handshakeFailed", console.warn.bind(console));
-    socket.on("disconnect", console.error.bind(console));
-    socket.on("value", setValue);
-
-    ctrls.setAppKeyButton.addEventListener("click", setAppKey.bind(this), false);
-    
-    window.addEventListener("beforeunload", function(){
-        var state = readForm(ctrls);
-        setSetting("formState", state);
-    }, false);    
-
-    writeForm(ctrls, formState);
-    if(ctrls.appKey.value.length > 0){
-        setAppKey();
-    }
     gScope.fillStyle = "#ffffff";
     gScope.lineWidth = 2;
     gNames.font = "12px Arial";
     ctrls.status.style.display = "none";
     requestAnimationFrame(animate);
 }
+
+prog.start();

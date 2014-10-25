@@ -36,9 +36,7 @@ function postScriptLoad(){
             { name: "dx", axes: [MouseInput.DX] },
             { name: "ix", axes: [MouseInput.IX] }
         ],
-        mouse = new MouseInput("mouse", [
-            {axis: MouseInput.IX, min: -1, max: 1 }
-        ], commands);
+        mouse = new MouseInput("mouse", commands);
 
     var lt = 0;
     function loop(t){

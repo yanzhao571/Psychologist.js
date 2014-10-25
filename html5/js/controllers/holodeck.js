@@ -211,8 +211,8 @@ function startGame(socket, progress){
         lt = 0, 
         frame = 0, 
         dFrame = 0.125,
-        heading = 0, 
-        pitch = 0, 
+        heading = 0,
+        pitch = 0,
         roll = 0, 
         strafe = 0, 
         drive = 0,
@@ -223,10 +223,10 @@ function startGame(socket, progress){
         users = {}, 
         onground = false,
         audio3d = new Audio3DOutput(),
-        oscope = new Oscope("demo"),
         scene = new THREE.Scene(),
         renderer = new THREE.WebGLRenderer({ antialias: true }),
         repeater = new SpeechOutput.Character(),
+        oscope = null,
         lastText = null,
         lastNote = null,
         lastRenderingType = null,
@@ -248,7 +248,10 @@ function startGame(socket, progress){
     tabs.style.width = pct(100);
     renderer.setClearColor(BG_COLOR);
     writeForm(ctrls, formState);
+    
+    oscope = new Oscope(socket, "demo");
     oscope.connect();
+    
     proxy = new WebRTCSocket(socket, ctrls.defaultDisplay.checked);
     
     socket.on("typing", showTyping.bind(window, false, false));
@@ -334,16 +337,17 @@ function startGame(socket, progress){
             touch.update(dt);
             speech.update(dt);
             leap.update(dt);
-
-            pitch = head.getValue("pitch") 
-                + mouse.getValue("pitch")
-                + gamepad.getValue("pitch");
+            
             roll = head.getValue("roll");
-            heading = head.getValue("heading")
-                    + touch.getValue("heading")
-                    + mouse.getValue("heading")
-                    + gamepad.getValue("heading")
-                    + startHeading;
+            pitch = head.getValue("pitch")
+                + gamepad.getValue("pitch")
+                + mouse.getValue("pitch");
+            heading = head.getValue("heading") 
+                + gamepad.getValue("heading")
+                + touch.getValue("heading")
+                + mouse.getValue("heading")
+                + startHeading;
+            
             if(ctrls.defaultDisplay.checked){
                 THREE.AnimationHandler.update(dt);
 
@@ -482,7 +486,7 @@ function startGame(socket, progress){
                 leap.getValue("HAND0Y"),
                 -pointerDistance)
                 .applyAxisAngle(RIGHT, -pitch)
-                .applyAxisAngle(camera.up, currentUser.heading);
+                .applyAxisAngle(camera.up, heading);
 
             testPoint.copy(currentUser.position);
             testPoint.y += PLAYER_HEIGHT;
@@ -511,7 +515,7 @@ function startGame(socket, progress){
 
                     direction.normalize();
                     var dot = direction.dot(testPoint);
-                    if(0.99 < dot){
+                    if(0.98 < dot){
                         testPoint.copy(hand.position);
                         var TEST_HEIGHT = 3;
                         var MAX_PRESS = -0.1;
@@ -620,15 +624,6 @@ function startGame(socket, progress){
         requestFullScreen();
         mouse.requestPointerLock();
         showControls();
-
-        if(head.isEnabled() || head.isReceiving()){
-            mouse.enable("pitch", false);
-            gamepad.enable("pitch", false);
-        }
-        else{
-            mouse.enable("pitch", true);
-            gamepad.enable("pitch", true);            
-        }
     }
 
     function toggleOptions(){
@@ -908,8 +903,7 @@ function startGame(socket, progress){
         closers[i].addEventListener("click", hideOptions, false);
     }
     
-    addFullScreenShim(window);
-    addFullScreenShim(document);
+    //addFullScreenShim([window, document]);
 
     window.addEventListener("keyup", function(evt){
         if(evt.keyCode === KeyboardInput.GRAVEACCENT){
@@ -931,22 +925,18 @@ function startGame(socket, progress){
 
     window.addEventListener("beforeunload", shutdown, false);
 
-    head = new MotionInput("head", null, [
+    head = new MotionInput("head", [
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] }
     ], proxy, oscope);
 
     mouse = new MouseInput("mouse", [
-        { axis: MouseInput.DX, scale: 0.4 },
-        { axis: MouseInput.DY, scale: 0.4 },
-        { axis: MouseInput.IY, min: -2, max: 1.3 },
-        { axis: MouseInput.DZ, scale: 0.125 },
-        { axis: MouseInput.IZ, min: 0, max: 20  }
-    ], [
-        { name: "heading", axes: [-MouseInput.IX] },
-        { name: "pitch", axes: [-MouseInput.IY] },
-        { name: "pointerDistance", axes: [MouseInput.IZ] }
+        { name: "heading", axes: [-MouseInput.X], scale: 0.01 },
+        { name: "dy", axes: [-MouseInput.Y], delta: true },
+        { name: "pitch", commands: ["dy"], integrate: true, min: -Math.PI * 0.5, max: Math.PI * 0.5 },
+        { name: "dz", axes: [MouseInput.Z], delta: true },
+        { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: -10, max: 20 }
     ], proxy, oscope, renderer.domElement);
     
     var leapCommands = [];
@@ -960,10 +950,10 @@ function startGame(socket, progress){
     leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput["HAND0Y"]], scale: 0.015, offset: -4 });
     leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput["HAND0Z"]], scale: -0.015, offset: 3 });
     
-    leap = new LeapMotionInput("leap", null, null, leapCommands, proxy, oscope);
+    leap = new LeapMotionInput("leap", null, leapCommands, proxy, oscope);
             
-    touch = new TouchInput("touch", null, null, [
-        { name: "heading", axes: [TouchInput.IX0] },
+    touch = new TouchInput("touch", null, [
+        { name: "heading", axes: [TouchInput.DX0], integrate: true },
         { name: "drive", axes: [-TouchInput.DY0] }
     ], proxy, oscope, renderer.domElement);
 
@@ -979,15 +969,10 @@ function startGame(socket, progress){
     keyboard.pause(true);
 
     gamepad = new GamepadInput("gamepad", [
-        { axis: GamepadInput.LSX, deadzone: 0.2},
-        { axis: GamepadInput.LSY, deadzone: 0.2},
-        { axis: GamepadInput.RSX, deadzone: 0.2, scale: 1.5},
-        { axis: GamepadInput.RSY, deadzone: 0.2, scale: 1.5}
-    ], [
         { name: "strafe", axes: [GamepadInput.LSX]},
         { name: "drive", axes: [GamepadInput.LSY]},
-        { name: "heading", axes: [-GamepadInput.IRSX]},
-        { name: "pitch", axes: [GamepadInput.IRSY]},
+        { name: "heading", axes: [-GamepadInput.RSX], integrate: true},
+        { name: "pitch", axes: [GamepadInput.RSY], integrate: true},
         { name: "options", buttons: [9], commandUp: toggleOptions }
     ], proxy, oscope);
 
@@ -1049,7 +1034,7 @@ function startGame(socket, progress){
             module.receive(r.checked);
         });
 
-        if(z){
+        if(z && module.zeroAxes){
             z.addEventListener("click", module.zeroAxes.bind(module), false);
         }
 

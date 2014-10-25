@@ -12,10 +12,7 @@ function gamepadTest(){
             { name: "ilhoriz", axes: [GamepadInput.ILSX] },
             { name: "ilvert", axes: [GamepadInput.ILSY] },
         ],
-        gamepad = new GamepadInput("gamepad", [
-            { axis: GamepadInput.LSX, deadzone: 0.01 },
-            { axis: GamepadInput.LSY, deadzone: 0.01 }
-        ], commands);
+        gamepad = new GamepadInput("gamepad", commands);
 
     gamepad.addEventListener("gamepadconnected", function (id){
         gamepad.setGamepad(id);

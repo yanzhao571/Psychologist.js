@@ -1,4 +1,4 @@
-function LeapMotionInput(name, buttonBounds, axisConstraints, commands, socket, oscope){
+function LeapMotionInput(name, buttonBounds, commands, socket, oscope){
     this.buttonBounds = buttonBounds || [];
     this.isStreaming = false;
     for(var i = this.buttonBounds.length - 1; i >= 0; --i){
@@ -7,11 +7,33 @@ function LeapMotionInput(name, buttonBounds, axisConstraints, commands, socket, 
         b.y2 = b.y + b.h;
         b.z2 = b.z + b.d;
     }
-    ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, oscope, 1, LeapMotionInput.AXES);
+    ButtonAndAxisInput.call(this, name, commands, socket, oscope, 1, LeapMotionInput.AXES);
     
     this.controller = new Leap.Controller({ enableGestures: true });
 }
-inherit(LeapMotionInput, ButtonAndAxisInput);
+
+LeapMotionInput.AXES = [];
+LeapMotionInput.COMPONENTS = ["X", "Y", "Z"];
+LeapMotionInput.NUM_HANDS = 2;
+for(var i = 0; i < LeapMotionInput.NUM_HANDS; ++i){
+    var h = "HAND" + i;
+    LeapMotionInput.COMPONENTS.forEach(function(c){
+        LeapMotionInput.AXES.push(h + c);
+    });
+}
+
+LeapMotionInput.NUM_FINGERS = 10;
+LeapMotionInput.FINGER_PARTS = ["tip", "dip", "pip", "mcp", "carp"];
+for(var i = 0; i < LeapMotionInput.NUM_FINGERS; ++i){
+    LeapMotionInput.FINGER_PARTS.map(function(p){
+        return "FINGER" + i + p.toUpperCase();
+    }).forEach(function(f){
+        LeapMotionInput.COMPONENTS.forEach(function(c){
+            LeapMotionInput.AXES.push(f + c);
+        });
+    });
+}
+ButtonAndAxisInput.inherit(LeapMotionInput);
 
 LeapMotionInput.CONNECTION_TIMEOUT = 5000;
 LeapMotionInput.prototype.E = function (e, f){
@@ -50,8 +72,6 @@ LeapMotionInput.prototype.start = function(gameUpdateLoop){
         this.controller.connect();
     }
 };
-
-LeapMotionInput.COMPONENTS = ["X", "Y", "Z"];
 
 LeapMotionInput.prototype.setState = function(gameUpdateLoop, frame){
     var prevFrame = this.controller.history.get(1);
@@ -100,26 +120,3 @@ LeapMotionInput.prototype.setState = function(gameUpdateLoop, frame){
         gameUpdateLoop(frame.timestamp * 0.001);
     }
 };
-
-LeapMotionInput.AXES = [];
-LeapMotionInput.NUM_HANDS = 2;
-for(var i = 0; i < LeapMotionInput.NUM_HANDS; ++i){
-    var h = "HAND" + i;
-    LeapMotionInput.AXES.push(h + "X");
-    LeapMotionInput.AXES.push(h + "Y");
-    LeapMotionInput.AXES.push(h + "Z");
-}
-
-LeapMotionInput.NUM_FINGERS = 10;
-LeapMotionInput.FINGER_PARTS = ["tip", "dip", "pip", "mcp", "carp"];
-for(var i = 0; i < LeapMotionInput.NUM_FINGERS; ++i){
-    LeapMotionInput.FINGER_PARTS.map(function(p){
-        return "FINGER" + i + p.toUpperCase();
-    }).forEach(function(f){
-        LeapMotionInput.AXES.push(f + "X");
-        LeapMotionInput.AXES.push(f + "Y");
-        LeapMotionInput.AXES.push(f + "Z");
-    });
-}
-
-ButtonAndAxisInput.fillAxes(LeapMotionInput);

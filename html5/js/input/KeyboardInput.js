@@ -14,7 +14,7 @@ function KeyboardInput(name, commands, socket, oscope, DOMElement){
         }
     }
 
-    ButtonAndAxisInput.call(this, name, null, commands, socket, oscope, 0, 0);
+    ButtonAndAxisInput.call(this, name, commands, socket, oscope, 0, 0);
 
     var textEntry = false,
         onTextEntry = null,
@@ -84,7 +84,7 @@ function KeyboardInput(name, commands, socket, oscope, DOMElement){
     DOMElement.addEventListener("keyup", execute.bind(this, false), false);
 }
 
-inherit(KeyboardInput, ButtonAndAxisInput);
+ButtonAndAxisInput.inherit(KeyboardInput);
 
 KeyboardInput.BACKSPACE = 8;
 KeyboardInput.TAB = 9;

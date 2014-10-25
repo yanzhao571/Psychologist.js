@@ -287,8 +287,8 @@ MotionCorrector.ZERO_EULER = {gamma: 90, alpha: 270, beta: 0};
 // Behavior of other browsers hasn't been tested.
 MotionCorrector.BROWSER_IS_GOOGLE_CHROME = !!window.chrome && !window.opera && navigator.userAgent.indexOf(' OPR/') < 0;
 
-function MotionInput(name, axisConstraints, commands, socket, oscope){
-    ButtonAndAxisInput.call(this, name, axisConstraints, commands, socket, oscope, 1, MotionInput.AXES);
+function MotionInput(name, commands, socket, oscope){
+    ButtonAndAxisInput.call(this, name, commands, socket, oscope, 1, MotionInput.AXES);
     
     var corrector = new MotionCorrector(MotionCorrector.BROWSER_IS_GOOGLE_CHROME);
     corrector.addEventListener("deviceorientation", function (evt){
@@ -301,7 +301,5 @@ function MotionInput(name, axisConstraints, commands, socket, oscope){
     this.zeroAxes = corrector.zeroAxes.bind(corrector);
 }
 
-inherit(MotionInput, ButtonAndAxisInput);
-
 MotionInput.AXES = ["HEADING", "PITCH", "ROLL", "D_HEADING", "D_PITCH", "D_ROLL", "ACCELX", "ACCELY", "ACCELZ"];
-ButtonAndAxisInput.fillAxes(MotionInput);
+ButtonAndAxisInput.inherit(MotionInput);

@@ -87,12 +87,9 @@ NetworkedInput.META_KEYS.forEach(function(key, index){
 });
 
 NetworkedInput.prototype.cloneCommand = function(cmd){ throw new Error("cloneCommand function must be defined in subclass"); };
-NetworkedInput.prototype.preupdate = function(dt){};
 
 NetworkedInput.prototype.update = function(dt){
     if(this.ready && this.enabled && this.inPhysicalUse && !this.paused){
-        this.preupdate(dt);
-
         for(var c = 0; c < this.commands.length; ++c){
             var cmd = this.commands[c];
             var cmdState = this.commandState[cmd.name];
@@ -110,7 +107,7 @@ NetworkedInput.prototype.update = function(dt){
                     }
                 }
                 
-                this.evalCommand(cmd, cmdState, metaKeysSet);
+                this.evalCommand(cmd, cmdState, metaKeysSet, dt);
 
                 cmdState.lt += dt;
                 if(cmdState.lt >= cmd.dt){
