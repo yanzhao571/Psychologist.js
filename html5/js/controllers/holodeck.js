@@ -907,6 +907,9 @@ function startGame(socket, progress){
     for(var i = 0; i < closers.length; ++i){
         closers[i].addEventListener("click", hideOptions, false);
     }
+    
+    addFullScreenShim(window);
+    addFullScreenShim(document);
 
     window.addEventListener("keyup", function(evt){
         if(evt.keyCode === KeyboardInput.GRAVEACCENT){

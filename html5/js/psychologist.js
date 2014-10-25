@@ -758,15 +758,21 @@ function isFullScreenMode() {
             || document.msFullscreenElement);
 }
 
-function requestFullScreen() {
+function requestFullScreen(success) {
     if (!isFullScreenMode()) {
         document.documentElement.requestFullscreen();
         var interval = setInterval(function () {
             if (isFullScreenMode()) {
                 clearInterval(interval);
                 screen.lockOrientation("landscape-primary");
+                if(success){
+                    success();
+                }
             }
         }, 1000);
+    }
+    else if(success){
+        success();
     }
 }
 
@@ -785,6 +791,23 @@ function toggleFullScreen() {
             requestFullScreen();
         }
     }
+}
+
+function addFullScreenShim(elem){
+    var events = help(elem).events;
+    function removeFullScreenShim(){
+        events.forEach(function(e){
+            elem.removeEventListener(e, fullScreenShim);
+        });
+    }
+    function fullScreenShim(evt){
+        requestFullScreen(removeFullScreenShim);
+    }
+    events.forEach(function(e){
+        if(e.indexOf("fullscreenerror") < 0){
+            elem.addEventListener(e, fullScreenShim, false);
+        }
+    });
 }
 
 document.exitPointerLock = document.exitPointerLock
