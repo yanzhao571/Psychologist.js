@@ -30,10 +30,10 @@ VUI.Text = function(text, size, fgcolor, bgcolor, x, y, z, hAlign){
 
     textCanvas.width = width;
     textCanvas.height = height;
-    textContext.font = height + "px Arial";
+    textContext.font = height * 0.8 + "px Arial";
     if(bgcolor !== "transparent"){
-        textContent.fillStyle = bgcolor;
-        textContent.fillRect(0, 0, textCanvas.width, textCanvas.height);
+        textContext.fillStyle = bgcolor;
+        textContext.fillRect(0, 0, textCanvas.width, textCanvas.height);
     }
     textContext.fillStyle = fgcolor;
     textContext.textBaseline = "top";

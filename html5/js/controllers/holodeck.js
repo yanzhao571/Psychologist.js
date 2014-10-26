@@ -212,6 +212,7 @@ function startGame(socket, progress){
         frame = 0, 
         dFrame = 0.125,
         heading = 0,
+        pointerHeading = 0,
         pitch = 0,
         roll = 0, 
         strafe = 0, 
@@ -347,6 +348,8 @@ function startGame(socket, progress){
                 + touch.getValue("heading")
                 + mouse.getValue("heading")
                 + startHeading;
+        
+            pointerHeading = heading + mouse.getValue("pointerHeading");
             
             if(ctrls.defaultDisplay.checked){
                 THREE.AnimationHandler.update(dt);
@@ -378,8 +381,8 @@ function startGame(socket, progress){
 
                     strafe *= len;
                     drive *= len;
-                    len = strafe * Math.cos(currentUser.heading) + drive * Math.sin(currentUser.heading);
-                    drive = drive * Math.cos(currentUser.heading) - strafe * Math.sin(currentUser.heading);
+                    len = strafe * Math.cos(pointerHeading) + drive * Math.sin(pointerHeading);
+                    drive = drive * Math.cos(pointerHeading) - strafe * Math.sin(pointerHeading);
                     strafe = len;
                     currentUser.velocity.x = currentUser.velocity.x * 0.9 + strafe * 0.1;
                     currentUser.velocity.z = currentUser.velocity.z * 0.9 + drive * 0.1;
@@ -487,7 +490,7 @@ function startGame(socket, progress){
                 leap.getValue("HAND0Y") + 4,
                 -pointerDistance)
                 .applyAxisAngle(RIGHT, -(pitch + mouse.getValue("pointerPitch")))
-                .applyAxisAngle(camera.up, heading + mouse.getValue("pointerHeading"));
+                .applyAxisAngle(camera.up, pointerHeading);
 
             hand.position.copy(camera.position)
                 .add(direction);
