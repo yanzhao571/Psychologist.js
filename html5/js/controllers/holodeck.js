@@ -485,10 +485,7 @@ function startGame(socket, progress){
             // place pointer
             //
             var pointerDistance = leap.getValue("HAND0Z") + mouse.getValue("pointerDistance") + 2;
-            direction.set(
-                leap.getValue("HAND0X"),
-                leap.getValue("HAND0Y") + 4,
-                -pointerDistance)
+            direction.set(0, 0, -pointerDistance)
                 .applyAxisAngle(RIGHT, -(pitch + mouse.getValue("pointerPitch")))
                 .applyAxisAngle(camera.up, pointerHeading);
 
@@ -496,50 +493,9 @@ function startGame(socket, progress){
                 .add(direction);
 
             for(var j = 0; j < mainScene.buttons.length; ++j){
-                var btn = mainScene.buttons[j];
-                btn.wasPressed = btn.pressed;
-                btn.pressed = false;
-                btn.color.g = 0;
-                btn.color.r = 0.5;
-                btn.cap.position.y = btn.rest.y;
-                
-                direction.copy(btn.cap.position)
-                    .add(btn.position)
-                    .sub(camera.position);
-                var len = direction.length();
-                var box = 0.5;
-                if(pointerDistance - box <= len && len <= pointerDistance + box){
-                    btn.color.g = 0.5;
-                
-                    testPoint.copy(hand.position)
-                        .sub(camera.position)
-                        .normalize();
-
-                    direction.normalize();
-                    var dot = direction.dot(testPoint);
-                    if(0.98 < dot){
-                        testPoint.copy(hand.position);
-                        var TEST_HEIGHT = 3;
-                        var MAX_PRESS = -0.1;
-                        testPoint.y += TEST_HEIGHT;
-                        direction.set(0, -1, 0);
-                        raycaster.set(testPoint, direction);
-                        raycaster.far = TEST_HEIGHT * 2;
-                        var intersections = raycaster.intersectObject(btn.cap.children[0]);
-                        if(intersections.length > 0){
-                            var inter = intersections[0];
-                            var pressY = Math.max(MAX_PRESS, (hand.position.y - inter.point.y));
-                            if(MAX_PRESS <= pressY && pressY <= 0){
-                                btn.color.r = (1 + pressY) * 0.5 / MAX_PRESS;
-                                btn.cap.position.y = btn.rest.y + pressY;
-                                btn.pressed = pressY === MAX_PRESS;
-                            }
-                            hand.position.copy(inter.point);
-                        }
-                    }
-                }
-                if(!btn.wasPressed && btn.pressed){
-                    btn.fireEvents("click");
+                var tag = mainScene.buttons[j].test(camera.position, hand.position);
+                if(tag){
+                    hand.position.copy(tag);
                 }
             }
 
@@ -934,10 +890,10 @@ function startGame(socket, progress){
     ], proxy, oscope);
 
     mouse = new MouseInput("mouse", [
-        { name: "dx", axes: [-MouseInput.X], delta: true },
+        { name: "dx", axes: [-MouseInput.X], delta: true, scale: 0.5 },
         { name: "heading", commands: ["dx"], metaKeys: [-NetworkedInput.SHIFT], integrate: true },
         { name: "pointerHeading", commands: ["dx"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.2, max: Math.PI * 0.2 },
-        { name: "dy", axes: [-MouseInput.Y], delta: true },
+        { name: "dy", axes: [-MouseInput.Y], delta: true, scale: 0.5 },
         { name: "pitch", commands: ["dy"], metaKeys: [-NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.5, max: Math.PI * 0.5 },
         { name: "pointerPitch", commands: ["dy"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.125, max: Math.PI * 0.125 },
         { name: "dz", axes: [MouseInput.Z], delta: true },
@@ -1068,16 +1024,27 @@ function startGame(socket, progress){
         scene.add(object);
         var cam = mainScene.Camera.children[0];
         camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, drawDistance);
-        var button = new ModelLoader("models/button2.dae", progress, function(obj){ 
+        var buttonFactory1 = new VUI.ButtonFactory(
+                mainScene, 
+                "models/button2.dae", {
+                    maxThrow: 0.1,
+                    minDeflection: 10,
+                    colorUnpressed: 0x7f0000,
+                    colorPressed: 0x007f00,
+                    toggle: true
+                },
+                progress, function(){
             var COUNT = 5;
+            var buttonFactory2 = buttonFactory1.clone({
+                toggle: false
+            });
+            var factories = [buttonFactory1, buttonFactory2];
             for(var i = -COUNT; i <= COUNT; ++i){
-                var btn = new VUI.Button(button, "button" + (i + COUNT + 1));
+                var btn = factories[(i+COUNT)%2].create();
                 var angle = Math.PI * i * 10 / 180;
                 var r = 10;
                 btn.position.set(Math.cos(angle) * r, Math.cos(i * Math.PI) * 0.25, Math.sin(-angle) * r);
                 btn.rotation.set(0, angle - Math.PI, 0, "XYZ");
-                mainScene.buttons.push(btn);
-                mainScene[btn.name] = btn;
                 btn.addEventListener("click", function(n){
                     audio3d.sawtooth(40 - n * 5, 0.1, 0.25);
                 }.bind(this, i));
