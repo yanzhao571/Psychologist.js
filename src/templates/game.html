@@ -9,56 +9,6 @@
     <link rel="author" href="https://plus.google.com/+SeanMcBeth/posts">
     <meta property="og:locale" content="en_US">
     <script type="text/javascript" src="js/psychologist/core.js"></script>
-    <script type="text/javascript">
-        var ctrls;
-        psych(function(){
-            ctrls = ctrls || findEverything();
-            
-            function closeReloadMessage(showLogin){
-                ctrls.appCacheStatus.style.display = "none";
-                ctrls.downloadProgress.style.display = "none";
-                ctrls.loginForm.style.display = showLogin ? "" : "none";
-                if(showLogin){
-                    waitFor(
-                        function(){ return ctrls.tryLogin; },
-                        function(){ ctrls.tryLogin(); }, 
-                        125, 8
-                    );
-                }
-            }
-
-            function showReload(message){
-                ctrls.appCacheMessage.style.display = "none";
-                ctrls.appCacheReload.style.display = "";
-                ctrls.reloadAppButton.innerHTML = message;
-                E(ctrls.reloadAppButton, "click", reloadPage, false);                
-                E(ctrls.dismissAppUpdateButton, "click", closeReloadMessage.bind(window, false), false);
-            };
-            
-            function showAppCacheMessage(msg){
-                ctrls.appCacheMessage.innerHTML = msg;
-            }
-            
-            function appCacheReady(msg){
-                showAppCacheMessage(msg);
-                closeReloadMessage(true);
-            }
-            
-            function showAppCacheProgress(evt){ 
-                var p = evt.loaded / evt.total;
-                ctrls.downloadProgress.style.opacity = 1 - p;
-                showAppCacheMessage(fmt("Checking for application update $1.0%... please wait", 100 * p));
-            }
-            
-            E(applicationCache, "checking", showAppCacheMessage.bind(window, "Checking for application update... please wait."), false);
-            E(applicationCache, "downloading", showAppCacheMessage.bind(window, "Downloading update now... please wait."), false); 
-            E(applicationCache, "progress", showAppCacheProgress.bind(window), false);
-            E(applicationCache, "error", showReload.bind(window, "Error downloading update. Try again.", false), false);
-            E(applicationCache, "updateready", showReload.bind(window, "Download complete. Restart application.", false), false);           
-            E(applicationCache, "noupdate", appCacheReady.bind(window, "No update found."), false);            
-            E(applicationCache, "cached", appCacheReady.bind(window, "Application cached."), false);
-        }.bind(window));
-    </script>
 </head>
 <body>
     <div id="onScreenControls">
@@ -329,6 +279,46 @@
         </div>
         <a class="primary button closeSectionButton">Close</a>
     </section>
+    <script type="text/javascript">
+        var ctrls = findEverything();
+            
+        function closeReloadMessage(showLogin){
+            ctrls.appCacheStatus.style.display = "none";
+            ctrls.downloadProgress.style.display = "none";
+            ctrls.loginForm.style.display = showLogin ? "" : "none";
+        }
+
+        function showReload(message){
+            ctrls.appCacheMessage.style.display = "none";
+            ctrls.appCacheReload.style.display = "";
+            ctrls.reloadAppButton.innerHTML = message;
+            E(ctrls.reloadAppButton, "click", reloadPage, false);                
+            E(ctrls.dismissAppUpdateButton, "click", closeReloadMessage.bind(window, false), false);
+        };
+
+        function showAppCacheMessage(msg){
+            ctrls.appCacheMessage.innerHTML = msg;
+        }
+
+        function appCacheReady(msg){
+            showAppCacheMessage(msg);
+            closeReloadMessage(true);
+        }
+
+        function showAppCacheProgress(evt){ 
+            var p = evt.loaded / evt.total;
+            ctrls.downloadProgress.style.opacity = 1 - p;
+            showAppCacheMessage(fmt("Checking for application update $1.0%... please wait", 100 * p));
+        }
+
+        E(applicationCache, "checking", showAppCacheMessage.bind(window, "Checking for application update... please wait."), false);
+        E(applicationCache, "downloading", showAppCacheMessage.bind(window, "Downloading update now... please wait."), false); 
+        E(applicationCache, "progress", showAppCacheProgress.bind(window), false);
+        E(applicationCache, "error", showReload.bind(window, "Error downloading update. Try again.", false), false);
+        E(applicationCache, "updateready", showReload.bind(window, "Download complete. Restart application.", false), false);           
+        E(applicationCache, "noupdate", appCacheReady.bind(window, "No update found."), false);            
+        E(applicationCache, "cached", appCacheReady.bind(window, "Application cached."), false);
+    </script>
     <script type="text/javascript" src="lib/three/three.js"></script>
     <script type="text/javascript" src="lib/three/StereoEffect.js"></script>
     <script type="text/javascript" src="lib/three/OculusRiftEffect.js"></script>

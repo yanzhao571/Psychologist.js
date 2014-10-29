@@ -15,7 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-function Application(appName, ctrls){
+function Application(appName){
+    var ctrls = findEverything();
+    
     new TabSet(ctrls.options).DOMElement.style.width = pct(100);
     
     var NO_HMD_SMARTPHONE = "Smartphone - no HMD";
@@ -96,8 +98,7 @@ function Application(appName, ctrls){
             renderingStyle: {value: "regular" },
             defaultDisplay: {checked: true}
         }}
-    ]);
-    
+    ]);    
 
     this.setupModuleEvents = function(module, name){
         var e = ctrls[name + "Enable"],

@@ -381,28 +381,6 @@ function findEverything(elem, obj) {
     return obj;
 }
 
-function waitFor(test, thunk, every, limit){
-    var count = 0;
-    every = every || 125;
-    limit = limit || 1;
-    var interval = setInterval(function(){
-        ++count;
-        var ok = test();
-        if(ok || count >= limit){
-            clearInterval(interval);
-            if(ok){
-                thunk();
-            }
-        }
-    }, every);    
-}
-
-function psych(thunk){
-    waitFor(function(){
-        return document.body;
-    }, thunk, 125, 8);
-}
-
 function inherit(classType, parentType) {
     classType.prototype = Object.create(parentType.prototype);
     classType.prototype.constructor = classType;

@@ -1,6 +1,4 @@
-ctrls = ctrls || findEverything();
-
-var app = new Application("holodeck", ctrls),
+var app = new Application("holodeck"),
     BG_COLOR = 0x000000,
     CHAT_TEXT_SIZE = 0.25, 
     PLAYER_HEIGHT = 6.5,
@@ -712,15 +710,13 @@ speech = new SpeechInput("speech", [
     { name: "chat", preamble: true, keywords: ["message"], commandUp: speechChat }
 ], proxy);
 
-
-
-    app.setupModuleEvents(head, "head");
-    app.setupModuleEvents(mouse, "mouse");
-    app.setupModuleEvents(leap, "leap");
-    app.setupModuleEvents(touch, "touch");
-    app.setupModuleEvents(keyboard, "keyboard");
-    app.setupModuleEvents(gamepad, "gamepad");
-    app.setupModuleEvents(speech, "speech");
+app.setupModuleEvents(head, "head");
+app.setupModuleEvents(mouse, "mouse");
+app.setupModuleEvents(leap, "leap");
+app.setupModuleEvents(touch, "touch");
+app.setupModuleEvents(keyboard, "keyboard");
+app.setupModuleEvents(gamepad, "gamepad");
+app.setupModuleEvents(speech, "speech");
 
 gamepad.addEventListener("gamepadconnected", function (id){
     if (!gamepad.isGamepadSet() && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))){
@@ -855,4 +851,4 @@ socket.on("handshakeComplete", function(controller){
     }
 });
 
-ctrls.tryLogin = socket.emit.bind(socket, "handshake", "demo");
+socket.emit("handshake", "demo");
