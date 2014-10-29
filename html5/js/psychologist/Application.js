@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-function Application(ctrls){
+function Application(appName, ctrls){
     new TabSet(ctrls.options).DOMElement.style.width = pct(100);
     
     var NO_HMD_SMARTPHONE = "Smartphone - no HMD";
@@ -97,4 +97,12 @@ function Application(ctrls){
             defaultDisplay: {checked: true}
         }}
     ]);
+    
+    var formStateKey = appName + " - formState";
+    var formState = getSetting(formStateKey);
+    window.addEventListener("beforeunload", function(){
+        var state = readForm(ctrls);
+        setSetting(formStateKey, state);
+    }, false);
+    writeForm(ctrls, formState);
 }

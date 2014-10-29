@@ -1,6 +1,6 @@
 ctrls = ctrls || findEverything();
 
-var app = new Application(ctrls),
+var app = new Application("holodeck", ctrls),
     BG_COLOR = 0x000000,
     CHAT_TEXT_SIZE = 0.25, 
     PLAYER_HEIGHT = 6.5,
@@ -12,7 +12,6 @@ var app = new Application(ctrls),
         "reconnection delay": 1000,
         "max reconnection attempts": 60
     }),
-    formState = getSetting("formState"),
     testPoint = new THREE.Vector3(),
     raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7),
     direction = new THREE.Vector3(),
@@ -418,8 +417,6 @@ function readChatBox(){
 
 function shutdown(){
     speech.enable(false);
-    var state = readForm(ctrls);
-    setSetting("formState", state);
 }
 
 function resetLocation(){
@@ -764,7 +761,6 @@ document.addEventListener("blur", function(){
 }, false);
 
 renderer.setClearColor(BG_COLOR);
-writeForm(ctrls, formState);
 
 function setupModuleEvents(module, name){
     var e = ctrls[name + "Enable"],
