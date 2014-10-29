@@ -49,13 +49,13 @@ function findController(url, method){
     }    
 }
 
-function matchController(req, res, url, method) {
+function matchController(srcDir, zipDir, req, res, url, method) {
     var controller = findController(url, method);
     if(controller){
         controller.handler(
             controller.parameters,
             sendData.bind(this, req, res),
-            sendStaticFile.bind(this, req, res, url),
+            sendStaticFile.bind(this, srcDir, zipDir, req, res, url),
             serverError.bind(this, res, url));
         return true;
     }
@@ -69,7 +69,7 @@ function useGZIP(req){
         && req.headers["accept-encoding"].indexOf("gzip") > -1;
 }
 
-function sendStaticFile(req, res, url, path) {
+function sendStaticFile(srcDir, zipDir, req, res, url, path) {
     var mimeType = mime.lookup(path);
     var send = function(p){
         fs.stat(p, function(err, stats){
@@ -81,10 +81,11 @@ function sendStaticFile(req, res, url, path) {
             }
         });
     };
+
     fs.exists(path, function (yes) {
         if (yes) {
             if(useGZIP(req)){
-                var t = path.replace(/^html5/, "zipcache") + ".gz";
+                var t = path.replace(new RegExp("^" + srcDir), zipDir) + ".gz";
                 fs.exists(t, function(yes){
                     if(!IS_LOCAL && yes){
                         send(t);
@@ -133,7 +134,7 @@ function sendData(req, res, mimeType, data, length) {
                 headers["content-length"] = d.length;
                 res.writeHead(200, headers);
                 res.end(d);
-            }
+            };
             if(useGZIP(req)){
                 zlib.gzip(data, function(err, data){
                     if(err){
@@ -151,12 +152,12 @@ function sendData(req, res, mimeType, data, length) {
     }
 }
 
-function serveRequest(target, req, res) {
-    if (!matchController(req, res, req.url, req.method) && req.method == "GET") {
-        if (req.url.indexOf("..") == -1) {
-            var path = target + req.url,
+function serveRequest(srcDir, zipDir, req, res) {
+    if (!matchController(srcDir, zipDir, req, res, req.url, req.method) && req.method === "GET") {
+        if (req.url.indexOf("..") === -1) {
+            var path = srcDir + req.url,
                 file = path.match(filePattern)[1];
-            sendStaticFile(req, res, req.url, file);
+            sendStaticFile(srcDir, zipDir, req, res, req.url, file);
         }
         else {
             serverError(res, req.url, 403);
@@ -168,7 +169,7 @@ function redirectPort(host, target, req, res) {
     var reqHost = req.headers.host && req.headers.host.replace(/(:\d+|$)/, ":" + target);
     var url = "https://" + reqHost + req.url;
     if (reqHost
-        && (host == "localhost" || reqHost == host + ":" + target)
+        && (host === "localhost" || reqHost === host + ":" + target)
         && !/https?:/.test(req.url)) {
         res.writeHead(307, { "Location": url });
     }
@@ -182,16 +183,19 @@ function isString(v) { return typeof (v) === "string" || v instanceof String; }
 function isNumber(v) { return isFinite(v) && !isNaN(v); }
 
 /*
-    Creates a callback function that listens for requests and either redirects them
-    to the port specified by `target` (if `target` is a number) or serves applications
-    and static files from the directory named by `target` (if `target` is a string).
+    Creates a callback function that listens for requests and either redirects
+    them to the port specified by `target` (if `target` is a number) or serves
+    applications and static files from the directory named by `target` (if 
+    `target` is a string).
     
     `host`: the name of the host to validate against the HTTP header on request.
     `target`: a number or a string.
         - number: the port number to redirect to, keeping the request the same, otherwise.
         - string: the directory from which to serve static files.
+    `zipDir`: the name of the directory from which to serve the GZip'ed version
+        of files. This parameter is not used if `target` is a port number.
 */
-function webServer(host, target) {
+function webServer(host, target, zipDir) {
     IS_LOCAL = host === "localhost";
     if (!isString(host)) {
         throw new Error("`host` parameter not a supported type. Excpected string. Given: " + host + ", type: " + typeof (host));
@@ -200,7 +204,7 @@ function webServer(host, target) {
         throw new Error("`target` parameter not a supported type. Excpected number or string. Given: " + target + ", type: " + typeof (target));
     }
     else if (isString(target)) {
-        return serveRequest.bind(this, target);
+        return serveRequest.bind(this, target, zipDir);
     }
     else {
         return redirectPort.bind(this, host, target);

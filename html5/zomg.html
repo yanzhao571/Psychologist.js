@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html manifest="holodeck.appcache">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
+    <title>Archive.org media player</title>
+    <link type="text/css" rel="stylesheet" href="css/style.css">
+    <link type="text/css" rel="stylesheet" href="css/zomg.css">
+    <link rel="author" href="https://plus.google.com/+SeanMcBeth/posts">
+    <meta property="og:locale" content="en_US">
+</head>
+<body>
+    <div id="onScreenControls">
+        <a id="github" href="https://github.com/capnmidnight/VR"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub"></a>
+        <a class="primary button" id="menuButton" title="menu"></a>
+        <a class="primary button" id="fsButton" title="fullscreen"></a>
+    </div>
+    <div id="loading" class="loadBar">
+        <div class="progressBar" id="loadingProgress" style="width:100%; opacity: 1"></div>
+        <div class="progressBar" id="downloadProgress" style="width:100%; background-color:#000; opacity: 1"></div>
+    </div>
+    <section id="options">
+        <div class="tabSet">
+            <label>Play</label>
+            <div>
+                
+            </div>
+            
+            <label>Chat</label>
+            <div>
+                <div id="chatStatus">
+                    <div id="chatLog"></div>
+                    <div id="userList" data-skipcache="true"></div>
+                </div>
+                <input type="text" id="textEntry" placeholder="<type message and hit enter>" size="30" data-skipcache="true" />
+            </div>
+            
+            <label>About</label>
+            <div>                
+                <div id="appCacheMessage"></div>
+                <div id="loadingMessage">Loading, please wait...</div>
+                <div id="loginForm" style="display:none;">
+                    <input type="text" id="emailField" placeholder="<register e-mail for updates>"><a class="secondary button" id="connectButton">Submit</a>
+                </div>
+                
+                <p>Browse and automatically stream audio files from Archive.org.</p>
+            </div>
+        </div>
+    </section>
+    <script type="text/javascript" src="js/psychologist.js"></script>
+    <script type="text/javascript" src="lib/leap-0.6.3.min.js"></script>
+    <script type="text/javascript" src="lib/sha512.js"></script>
+    <script type="text/javascript" src="lib/socket.io.js"></script>
+    <script type="text/javascript" src="js/WebRTCSocket.js"></script>
+    <script type="text/javascript" src="js/input/NetworkedInput.js"></script>
+    <script type="text/javascript" src="js/input/ButtonAndAxisInput.js"></script>
+    <script type="text/javascript" src="js/input/SpeechInput.js"></script>
+    <script type="text/javascript" src="js/input/GamepadInput.js"></script>
+    <script type="text/javascript" src="js/input/KeyboardInput.js"></script>
+    <script type="text/javascript" src="js/input/MotionInput.js"></script>
+    <script type="text/javascript" src="js/input/MouseInput.js"></script>
+    <script type="text/javascript" src="js/input/TouchInput.js"></script>
+    <script type="text/javascript" src="js/input/LeapMotionInput.js"></script>
+    <script type="text/javascript" src="js/output/Audio3DOutput.js"></script>
+    <script type="text/javascript" src="js/output/SpeechOutput.js"></script>
+    <script type="text/javascript" src="js/controllers/zomg.js"></script>
+</body>
+</html>

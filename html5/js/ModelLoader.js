@@ -19,10 +19,10 @@ All rights reserved.
 
 var COLLADA = new THREE.ColladaLoader();
 COLLADA.options.convertUpAxis = true;
-function ModelLoader(src, progress, success){
+function ModelLoader(src, success){
     this.buttons = [];
     if(src){
-        ModelLoader.loadCollada(src, progress, function(object){
+        ModelLoader.loadCollada(src, function(object){
             this.template = object;
             if(success){
                 success(object);
@@ -58,16 +58,12 @@ ModelLoader.setProperties = function(object){
     });
 };
 
-ModelLoader.loadCollada = function(src, progress, success){
-    progress("loading", src);
+ModelLoader.loadCollada = function(src, success){
     COLLADA.load(src, function(collada){
         ModelLoader.setProperties(collada.scene);
         if(success){
             success(collada.scene);
         }
-        progress("success", src);
-    }, function(prog){
-        progress("intermediate", src, prog.loaded);
     });
 };
 

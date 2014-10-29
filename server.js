@@ -33,39 +33,46 @@ var format = require("util").format,
         h: "localhost"
     }),
     srcDir = "html5",
+    zipDir = srcDir + "_zipcache",
     startPage = "",
     port = 8080,
     app, redir, io;
 
-var files = fs.readdirSync(srcDir).map(function(f){ return srcDir + "/" + f; });
+var files = fs.readdirSync(srcDir);
 var toZip = [];
 while(files.length > 0){
     var file = files.shift();
-    var stat = fs.statSync(file);
+    var p = srcDir + "/" + file;
+    var stat = fs.statSync(p);
     if(stat.isDirectory()){
-        var nextfiles = fs.readdirSync(file);
+        var nextfiles = fs.readdirSync(p);
         for(var i = 0; i < nextfiles.length; ++i){
             files.push(file + "/" + nextfiles[i]);
         }
     }
-    else if(stat.isFile()){
-        if(/\.gz$/.test(file)){
-            fs.unlinkSync(file);
-        }
-        else{
-            toZip.push(file);
-        }
+    else if(stat.isFile() && !/\.gz$/.test(file)){
+        toZip.push(file);
+    }
+}
+
+function fillInDirectories(dir){
+    var cur = dir;
+    var stack = [];
+    while(!fs.existsSync(cur)){
+        stack.push(cur);
+        cur = path.dirname(cur);
+    }
+    while(stack.length > 0){
+        cur = stack.pop();
+        fs.mkdirSync(cur);
     }
 }
 
 toZip.forEach(function(file){
-    zlib.gzip(fs.readFileSync(file), function(err, zip){
+    zlib.gzip(fs.readFileSync(srcDir + "/" + file), function(err, zip){
         if(!err){
-            var p = file.replace(/^html5/, "zipcache") + ".gz";
-            var dir = path.dirname(p);
-            if(!fs.existsSync(dir)){
-                fs.mkdirSync(dir);
-            }
+            var p = zipDir + "/" + file + ".gz";
+            fillInDirectories(path.dirname(p));
             fs.writeFileSync(p, zip);
         }
     });
@@ -81,7 +88,7 @@ function start(key, cert, ca){
                 cert: cert, 
                 ca: ca
             }, 
-            webServer(options.h, srcDir)
+            webServer(options.h, srcDir, zipDir)
         );
         redir = http.createServer(webServer(options.h, port + 1));
         redir.listen(port);
@@ -89,7 +96,7 @@ function start(key, cert, ca){
     }
     else{
         log("insecure");
-        app = http.createServer(webServer(options.h, srcDir));
+        app = http.createServer(webServer(options.h, srcDir, zipDir));
         app.listen(port);
     }
     io = socketio.listen(app);

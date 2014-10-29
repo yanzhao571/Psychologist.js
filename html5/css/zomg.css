@@ -1,0 +1,73 @@
+section
+{
+    color: #0e0e0e;
+}
+
+th.tab, table > tfoot
+{
+    background-color: #eee;
+}
+
+th.tab
+{
+	border: solid 0px #ccc;
+}
+
+th.selectedTab{
+	border-bottom: none;
+}
+
+section, th.selectedTab, table > tbody, #loadingProgress
+{
+    background-color: #fbfcfd;
+}
+
+table > tbody > tr.alternateRow
+{
+    background-color:#f7f7f7;
+}
+
+table{
+    border-color: #aaa;
+}
+
+    table, table > thead
+    {
+        background-color: #ccc;
+    }
+
+
+a.primary.button{
+    background-color: #7f0000;
+    border-color: #7f0000;
+    color: #fff;
+}
+
+    a.primary.button:hover
+    {
+        background-color: #7f2020;
+        border-color: #7f2020;
+    }
+
+    a.primary.button:active
+    {
+        background-color: #7f4040;
+        border-color: #7f4040;
+    }
+
+a.secondary.button{
+    background-color: #ddd;
+    border-color: #ddd;
+    color: #fff;
+}
+    a.secondary.button:hover
+    {
+        background-color: #eee;
+        border-color: #eee;
+    }
+
+    a.secondary.button:active
+    {
+        background-color: #eee;
+        border-color: #eee;
+    }
