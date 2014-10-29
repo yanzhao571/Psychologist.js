@@ -1012,7 +1012,7 @@ function startGame(socket, progress){
     window.addEventListener("touchend", showControls, false);
     
     window.addEventListener("mousemove", function(evt){
-        if(!mouse.isPointerLocked()){
+        if(!MouseInput.isPointerLocked()){
             showControls();
         }
     }, false);

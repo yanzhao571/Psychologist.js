@@ -105,4 +105,26 @@ function Application(appName, ctrls){
         setSetting(formStateKey, state);
     }, false);
     writeForm(ctrls, formState);
+    
+    var hideControlsTimeout = null;
+    this.showOnscreenControls = function(){
+        ctrls.onScreenControls.style.display = "";
+        if(hideControlsTimeout !== null){
+            clearTimeout(hideControlsTimeout);
+        }
+        hideControlsTimeout = setTimeout(hideOnscreenControls, 3000);
+    };
+    
+    function hideOnscreenControls(){
+        ctrls.onScreenControls.style.display = "none";
+        hideControlsTimeout = null;
+    };
+    
+    window.addEventListener("touchend", this.showOnscreenControls.bind(this), false);
+    
+    window.addEventListener("mousemove", function(){
+        if(!MouseInput.isPointerLocked()){
+            this.showOnscreenControls();
+        }
+    }.bind(this), false);
 }

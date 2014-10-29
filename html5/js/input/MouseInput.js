@@ -13,7 +13,7 @@ function MouseInput(name, commands, socket, oscope, DOMElement){
     };
 
     this.readEvent = function(event){
-        if(this.isPointerLocked()){
+        if(MouseInput.isPointerLocked()){
             this.setMovement(
                 event.webkitMovementX || event.mozMovementX || event.movementX || 0,
                 event.webkitMovementY || event.mozMovementY || event.movementY || 0);
@@ -62,21 +62,15 @@ function MouseInput(name, commands, socket, oscope, DOMElement){
         || function(){};
 
     this.requestPointerLock = function(){
-        if(!this.isPointerLocked()){
+        if(!MouseInput.isPointerLocked()){
             DOMElement.requestPointerLock();
         }
     };
 
     this.exitPointerLock = document.exitPointerLock.bind(document);
 
-    this.isPointerLocked = function (){
-        return document.pointerLockElement === DOMElement
-            || document.webkitPointerLockElement === DOMElement
-            || document.mozPointerLockElement === DOMElement;
-    };
-
     this.togglePointerLock = function(){
-        if(this.isPointerLocked()){
+        if(MouseInput.isPointerLocked()){
             this.exitPointerLock();
         }
         else{
@@ -85,5 +79,10 @@ function MouseInput(name, commands, socket, oscope, DOMElement){
     };
 }
 
+MouseInput.isPointerLocked = function (){
+    return !!(document.pointerLockElement
+        || document.webkitPointerLockElement
+        || document.mozPointerLockElement);
+};
 MouseInput.AXES = ["X", "Y", "Z"];
 ButtonAndAxisInput.inherit(MouseInput);

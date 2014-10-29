@@ -36,7 +36,7 @@ var app = new Application("holodeck", ctrls),
     chatLines = [],
     users = {}, 
     onground = false,
-    audio3d = new Audio3DOutput(),
+    audio = new Audio3DOutput(),
     scene = new THREE.Scene(),
     renderer = new THREE.WebGLRenderer({ antialias: true }),
     repeater = new SpeechOutput.Character(),
@@ -55,26 +55,12 @@ var app = new Application("holodeck", ctrls),
     speech = null,
     leap = null,
     hand = null,
-    proxy = null,
-    hideControlsTimeout = null;
+    proxy = null;
 
 function loginFailed(){
     ctrls.connectButton.innerHTML = "Login failed. Try again.";
     ctrls.connectButton.className = "primary button";
     msg("Incorrect user name or password!");
-}
-
-function showControls(){
-    ctrls.onScreenControls.style.display = "";
-    if(hideControlsTimeout !== null){
-        clearTimeout(hideControlsTimeout);
-    }
-    hideControlsTimeout = setTimeout(hideControls, 3000);
-}
-
-function hideControls(){
-    ctrls.onScreenControls.style.display = "none";
-    hideControlsTimeout = null;
 }
 
 function msg(){
@@ -284,10 +270,10 @@ function animate(t){
         //
         testPoint.copy(currentUser.position);
         testPoint.divideScalar(10);
-        audio3d.setPosition(testPoint.x, testPoint.y, testPoint.z);
-        audio3d.setVelocity(currentUser.velocity.x, currentUser.velocity.y, currentUser.velocity.z);
+        audio.setPosition(testPoint.x, testPoint.y, testPoint.z);
+        audio.setVelocity(currentUser.velocity.x, currentUser.velocity.y, currentUser.velocity.z);
         testPoint.normalize();
-        audio3d.setOrientation(testPoint.x, testPoint.y, testPoint.z, 0, 1, 0);
+        audio.setOrientation(testPoint.x, testPoint.y, testPoint.z, 0, 1, 0);
 
         //
         // update the camera
@@ -361,7 +347,7 @@ function hideOptions(){
     ctrls.options.style.display = "none";
     requestFullScreen();
     mouse.requestPointerLock();
-    showControls();
+    app.showOnscreenControls();
 }
 
 function toggleOptions(){
@@ -447,7 +433,7 @@ function showTyping(isLocal, isComplete, text){
                 lastText = textObj;
                 currentUser.add(textObj);
                 if(clickSound){
-                    audio3d.playBufferImmediate(clickSound, 0.5);
+                    audio.playBufferImmediate(clickSound, 0.5);
                 }
             }
         }
@@ -736,14 +722,6 @@ window.addEventListener("resize", function (){
     setSize(window.innerWidth, window.innerHeight);
 }, false);
 
-window.addEventListener("touchend", showControls, false);
-
-window.addEventListener("mousemove", function(evt){
-    if(!mouse.isPointerLocked()){
-        showControls();
-    }
-}, false);
-
 window.addEventListener("focus", function(){
     focused = true;
 }, false);
@@ -831,7 +809,7 @@ ModelLoader.loadCollada("models/scene2.dae", function(object){
             btn.position.set(Math.cos(angle) * r, Math.cos(i * Math.PI) * 0.25, Math.sin(-angle) * r);
             btn.rotation.set(0, angle - Math.PI, 0, "XYZ");
             btn.addEventListener("click", function(n){
-                audio3d.sawtooth(40 - n * 5, 0.1, 0.25);
+                audio.sawtooth(40 - n * 5, 0.1, 0.25);
             }.bind(this, i));
             scene.add(btn.base);
         }
@@ -866,11 +844,11 @@ var bearModel = new ModelLoader("models/bear.dae", function(){
     addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: userName});
 });
 
-audio3d.loadBuffer("music/click.mp3", null, function(buffer){
+audio.loadBuffer("music/click.mp3", null, function(buffer){
     clickSound = buffer;
 });
 
-audio3d.load3DSound("music/ambient.mp3", true, 0, 0, 0, null, function(amb){
+audio.load3DSound("music/ambient.mp3", true, 0, 0, 0, null, function(amb){
     amb.volume.gain.value = 0.07;
     amb.source.start(0);
 });

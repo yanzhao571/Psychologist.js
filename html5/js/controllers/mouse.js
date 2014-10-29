@@ -11,7 +11,7 @@ function postScriptLoad(){
             { name: "fire", buttons: [1], meta: [-1], commandDown: console.log.bind(console, "Fire"), dt: 0.250 },
             { name: "alternate fire", buttons: [1], meta: [1], commandDown: console.log.bind(console, "Alternate fire"), dt: 0.250 },
             { name: "middle", buttons: [2], commandUp: function (){
-                    if (mouse.isPointerLocked()){
+                    if (MouseInput.isPointerLocked()){
                         mouse.exitPointerLock();
                     }
                     else {
