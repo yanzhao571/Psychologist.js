@@ -30,7 +30,7 @@ function findFilesInFiles(paths, skipURL, success, error, accum, index){
         };
         
         // only read certain types of files
-        if(/\.(html|css|js|dae)$/.test(paths[index])){
+        if(/\.(html|css|js|json|dae)$/.test(paths[index])){
             findFilesInFile(paths[index], skipURL, function(files){
                 files.filter(function(f){
                     return paths.indexOf(f) === -1;// && isGood;

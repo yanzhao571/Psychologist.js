@@ -1,4 +1,5 @@
-var app = new Application("holodeck"),
+var ctrls = findEverything(),
+    app = new Application("holodeck"),
     BG_COLOR = 0x000000,
     CHAT_TEXT_SIZE = 0.25, 
     PLAYER_HEIGHT = 6.5,
@@ -17,6 +18,7 @@ var app = new Application("holodeck"),
     focused = true,
     wasFocused = false,
     autoWalking = false,
+    onground = false,
     startHeading = 0,
     dt = 0, 
     lt = 0, 
@@ -29,15 +31,13 @@ var app = new Application("holodeck"),
     strafe = 0, 
     drive = 0,
     DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE",
-    drawDistance = 500,
-    userName = DEFAULT_USER_NAME, 
+    userName = DEFAULT_USER_NAME,
+    drawDistance = 500, 
     chatLines = [],
     users = {}, 
-    onground = false,
     audio = new Audio3DOutput(),
     scene = new THREE.Scene(),
     renderer = new THREE.WebGLRenderer({ antialias: true }),
-    repeater = new SpeechOutput.Character(),
     lastText = null,
     lastNote = null,
     lastRenderingType = null,
@@ -53,7 +53,9 @@ var app = new Application("holodeck"),
     speech = null,
     leap = null,
     hand = null,
-    proxy = null;
+    proxy = null,
+    mainScene = null,
+    factories = null;
 
 function loginFailed(){
     ctrls.connectButton.innerHTML = "Login failed. Try again.";
@@ -746,8 +748,6 @@ document.addEventListener("blur", function(){
 
 renderer.setClearColor(BG_COLOR);
 
-var mainScene = null,
-    factories = null;
 ModelLoader.loadCollada("models/scene2.dae", function(object){
     mainScene = object;
     scene.add(object);
