@@ -1,15 +1,13 @@
 <!DOCTYPE html>
-<html manifest="holodeck.appcache">
+<html manifest="$1.appcache">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
-    <title>Psychologist.js</title>
+    <title>$2</title>
     <link type="text/css" rel="stylesheet" href="css/style.css">
-    <link type="text/css" rel="stylesheet" href="css/holodeck.css">
+    <link type="text/css" rel="stylesheet" href="css/$1.css">
     <link rel="author" href="https://plus.google.com/+SeanMcBeth/posts">
     <meta property="og:locale" content="en_US">
-    <meta property="og:image" content="img/screenshot2.png">
-    <meta property="twitter:image" content="img/screenshot2.png">
     <script type="text/javascript" src="js/psychologist/core.js"></script>
     <script type="text/javascript">
         var ctrls;
@@ -72,7 +70,7 @@
     <section id="options">
         <a class="primary button closeSectionButton altClose">X</a>
 
-        <h1>Psychologist.js: a WebGL VR Framework</h1>
+        <h1>$2</h1>
 
         <div class="tabSet">
             <label>Login</label>
@@ -105,29 +103,7 @@
                     Login from multiple devices to use them together, 
                     e.g. combine keyboard and mouse actions from your PC with
                     motion tracking and VR view on your smartphone.
-                </p>
-            </div><label>About</label>
-            <div>
-                <p>Psychologist.js is a framework for rapidly prototyping virtual reality applications using standard HTML5 technologies. It keeps you sane while bending your mind.</p>
-                <p>[<a href="https://github.com/capnmidnight/VR" target="_blank">Github</a>
-                    | <a href="https://github.com/capnmidnight/VR/issues" target="_blank">Issues</a>
-                    | <a href="mailto:sean@seanmcbeth.com?subject=Psychologist.js">Contact</a>]</p>
-                <h2>Features:</h2>
-                <ul>
-                    <li><em>Google Cardboard compatible:</em> use your smartphone as a head-mounted display,</li>
-                    <li><em>Multiplayer:</em> share the experience and collaborate in cyberspace,</li>
-                    <li><em>Leap Motion support:</em> control objects with natural movement,</li>
-                    <li><em>Game pad support:</em> create fast-action games,</li>
-                    <li><em>Speech recognition:</em> hands free interactions,</li>
-                    <li><em>Peer-2-peer input sharing:</em> use devices connected to your PC with your Google Cardboard,</li>
-                    <li><em>3D Audio:</em> create fully immersive environments,</li>
-                    <li><em>App Cache support:</em> save bandwidth,</li>
-                    <li><em>Blender-based workflow:</em> no proprietary tools to learn,</li>
-                    <li><em>Cross-platform:</em> works in Mozilla Firefox and Google Chrome on Windows, Linux, and Android,</li>
-                    <li><em>Oculus Rift support (coming soon):</em> the cutting edge of head-mounted display technology.</li>
-                </ul>
-                <h2>Screenshot</h2>
-                <img src="img/screenshot2.png" alt="screenshot" style="width:100%" title="really, the only reason I have this here is so social media sites see it and can auto-tag the image when I post" />
+                </p>                
             </div>
             
             <label>Chat</label>
@@ -380,6 +356,6 @@
     <script type="text/javascript" src="js/psychologist/ui/html/TabSet.js"></script>
     <script type="text/javascript" src="js/psychologist/ui/vr/Text.js"></script>
     <script type="text/javascript" src="js/psychologist/ui/vr/Button.js"></script>
-    <script type="text/javascript" src="js/controllers/holodeck.js"></script>
+    <script type="text/javascript" src="js/controllers/$1.js"></script>
 </body>
 </html>

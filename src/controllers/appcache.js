@@ -1,21 +1,15 @@
 var fmt = require("../core").fmt,
     fs = require("fs"),
-    fr = require("../fileReferences");
+    fr = require("../fileReferences"),
+    findControllers = require("../webServer").findController;
     
 module.exports = {
     pattern: /^\/([\w.]+(?:\/[\w.]+)*\.appcache)(?:\?)?/,
     GET: function(params, sendData, sendStaticFile, serverError){
         var skipURL = params[0];
             fileURL = skipURL.replace("appcache", "html");
-        fs.exists("html5/" + fileURL, function(yes){
-            if(!yes){
-                serverError(404);
-            }
-            else{
-                fr.getFileDescription(fileURL, null, function(desc){
-                    fr.findFilesInFiles([fileURL], skipURL, sendAppCache.bind(this,  desc.stamp, sendData), serverError);
-                });
-            }
+        fr.getFileDescription(fileURL, null, function(desc){
+            fr.findFilesInFiles([fileURL], skipURL, sendAppCache.bind(this,  desc.stamp, sendData), serverError);
         });
     }
 };

@@ -142,13 +142,16 @@ function getFileDescription(path, data, done){
         else{
             var ctrl = findController("/" + path, "GET");
             if(ctrl){
-                ctrl.handler(ctrl.parameters, function(type, file, length){
-                    done({
-                        name: path, 
-                        size: length,
-                        stamp: length
-                    });
-                });
+                ctrl.handler(
+                    ctrl.parameters, 
+                    function(type, file, length){
+                        done({
+                            name: path, 
+                            size: length,
+                            stamp: length
+                        });
+                    }
+                );
             }
             else{
                 done(null);
