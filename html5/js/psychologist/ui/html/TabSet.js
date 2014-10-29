@@ -77,8 +77,7 @@ function TabSet(id) {
 }
 
 TabSet.makeAll = function(){
-    var sets = document.querySelectorAll(".tabSet");
-    for (var i = 0; i < sets.length; ++i) {
-        new TabSet(sets[i]);
-    }
+    return map(document.querySelectorAll(".tabSet"), function(s){
+        return new TabSet(s);
+    });
 };

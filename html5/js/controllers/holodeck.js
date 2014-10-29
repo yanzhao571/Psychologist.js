@@ -1,93 +1,12 @@
 ctrls = ctrls || findEverything();
 
-var isDebug = false, 
-    isLocal = document.location.hostname === "localhost",
-    tabs = new TabSet(ctrls.options).DOMElement,
+var app = new Application(ctrls),
     BG_COLOR = 0x000000,
     CHAT_TEXT_SIZE = 0.25, 
-    NO_HMD_SMARTPHONE = "Smartphone - no HMD",
     PLAYER_HEIGHT = 6.5,
     RIGHT = new THREE.Vector3(-1, 0, 0),
     GRAVITY = 9.8, 
     SPEED = 15,
-    deviceStates = new StateList(ctrls.deviceTypes, ctrls, [
-        { name: "-- select device type --" },
-        { name: "PC", values:{
-            speechEnable: {checked: false},
-            speechTransmit: {checked: false},
-            speechReceive: {checked: false},
-            keyboardEnable: {checked: true},
-            keyboardTransmit: {checked: true},
-            keyboardReceive: {checked: false},
-            mouseEnable: {checked: true},
-            mouseTransmit: {checked: true},
-            mouseReceive: {checked: false},
-            gamepadEnable: {checked: true},
-            gamepadTransmit: {checked: true},
-            gamepadReceive: {checked: false},
-            leapEnable: {checked: true},
-            leapTransmit: {checked: true},
-            leapReceive: {checked: false},
-            touchEnable: {checked: false},
-            touchTransmit: {checked: false},
-            touchReceive: {checked: true},
-            headEnable: {checked: false},
-            headTransmit: {checked: false},
-            headReceive: {checked: true},
-            renderingStyle: {value: "regular" },
-            defaultDisplay: {checked: true}
-        }},
-        { name: "Smartphone HMD", values:{
-            speechEnable: {checked: false},
-            speechTransmit: {checked: false},
-            speechReceive: {checked: true},
-            keyboardEnable: {checked: false},
-            keyboardTransmit: {checked: false},
-            keyboardReceive: {checked: true},
-            mouseEnable: {checked: false},
-            mouseTransmit: {checked: false},
-            mouseReceive: {checked: true},
-            gamepadEnable: {checked: false},
-            gamepadTransmit: {checked: false},
-            gamepadReceive: {checked: true},
-            leapEnable: {checked: false},
-            leapTransmit: {checked: false},
-            leapReceive: {checked: true},
-            touchEnable: {checked: false},
-            touchTransmit: {checked: false},
-            touchReceive: {checked: true},
-            headEnable: {checked: true},
-            headTransmit: {checked: true},
-            headReceive: {checked: false},
-            renderingStyle: {value: "rift" },
-            defaultDisplay: {checked: false}
-        }},
-        { name: NO_HMD_SMARTPHONE, values:{
-            speechEnable: {checked: false},
-            speechTransmit: {checked: false},
-            speechReceive: {checked: true},
-            keyboardEnable: {checked: false},
-            keyboardTransmit: {checked: false},
-            keyboardReceive: {checked: true},
-            mouseEnable: {checked: false},
-            mouseTransmit: {checked: false},
-            mouseReceive: {checked: true},
-            gamepadEnable: {checked: false},
-            gamepadTransmit: {checked: false},
-            gamepadReceive: {checked: true},
-            leapEnable: {checked: false},
-            leapTransmit: {checked: false},
-            leapReceive: {checked: true},
-            touchEnable: {checked: true},
-            touchTransmit: {checked: true},
-            touchReceive: {checked: false},
-            headEnable: {checked: true},
-            headTransmit: {checked: true},
-            headReceive: {checked: false},
-            renderingStyle: {value: "regular" },
-            defaultDisplay: {checked: true}
-        }}
-    ], readSettings),
     socket = io.connect(document.location.hostname, {
         "reconnect": true,
         "reconnection delay": 1000,
@@ -140,15 +59,6 @@ var isDebug = false,
     proxy = null,
     hideControlsTimeout = null;
 
-function readSettings(){
-    for(var key in ctrls){
-        if(key !== "deviceTypes"){
-            var evt = new Event("change");
-            ctrls[key].dispatchEvent(evt);
-        }
-    }
-}
-
 function loginFailed(){
     ctrls.connectButton.innerHTML = "Login failed. Try again.";
     ctrls.connectButton.className = "primary button";
@@ -170,23 +80,11 @@ function hideControls(){
 
 function msg(){
     var txt = fmt.apply(window, map(arguments, function(v){ return v ? v.toString() : ""; }));
-    if(isDebug){
-        console.log(txt);
-    }
-    else if(currentUser){
+    if(currentUser){
         showChat(txt);
     }
     else {
         alert(txt);
-    }
-}
-
-function ask(txt, force){
-    if(isDebug){
-        return force;
-    }
-    else{
-        return confirm(txt);
     }
 }
 
@@ -832,7 +730,7 @@ speech = new SpeechInput("speech", [
 ], proxy);
 
 gamepad.addEventListener("gamepadconnected", function (id){
-    if (!gamepad.isGamepadSet() && ask(fmt("Would you like to use this gamepad? \"$1\"", id), true)){
+    if (!gamepad.isGamepadSet() && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))){
         gamepad.setGamepad(id);
     }
 }, false);
@@ -865,7 +763,6 @@ document.addEventListener("blur", function(){
     focused = false;
 }, false);
 
-tabs.style.width = pct(100);
 renderer.setClearColor(BG_COLOR);
 writeForm(ctrls, formState);
 

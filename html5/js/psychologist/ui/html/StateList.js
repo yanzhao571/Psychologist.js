@@ -35,7 +35,7 @@ All rights reserved.
  *      
  *  The states paramareter should be an array of such objects
  */
-function StateList(id, ctrls, states, callback, parent){
+function StateList(id, ctrls, states, parent){
     var select = cascadeElement(id, "select", HTMLSelectElement);
     for(var i = 0; i < states.length; ++i){
         var opt = document.createElement("option");
@@ -55,13 +55,17 @@ function StateList(id, ctrls, states, callback, parent){
                     }
                 }
             }
-            if(callback){
-                callback();
+            for(var key in ctrls){
+                if(key !== select.id){
+                    var evt = new Event("change");
+                    ctrls[key].dispatchEvent(evt);
+                }
             }
         }
     }.bind(this), false);
-    this.DOMElement = select;
-    if(parent){
-        parent.appendChild(this.DOMElement);
+    if(parent && !select.parentElement){
+        parent.appendChild(select);
     }
+    
+    this.DOMElement = select;
 }
