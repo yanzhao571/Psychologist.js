@@ -1,11 +1,15 @@
 var ctrls = findEverything(),
     app = new Application("holodeck"),
     BG_COLOR = 0x000000,
-    CHAT_TEXT_SIZE = 0.25, 
+    DRAW_DISTANCE = 500,
+    CHAT_TEXT_SIZE = 0.25,
     PLAYER_HEIGHT = 6.5,
     RIGHT = new THREE.Vector3(-1, 0, 0),
     GRAVITY = 9.8, 
     SPEED = 15,
+    DFRAME = 0.125,
+    DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE",
+    userName = DEFAULT_USER_NAME,
     socket = io.connect(document.location.hostname, {
         "reconnect": true,
         "reconnection delay": 1000,
@@ -14,36 +18,32 @@ var ctrls = findEverything(),
     testPoint = new THREE.Vector3(),
     raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7),
     direction = new THREE.Vector3(),
-    orientation = new THREE.Euler(0, 0, 0, "YZX"),      
+    orientation = new THREE.Euler(0, 0, 0, "YZX"),
+    scene = new THREE.Scene(),
+    renderer = new THREE.WebGLRenderer({ antialias: true }),
+    audio = new Audio3DOutput(),  
     focused = true,
     wasFocused = false,
     autoWalking = false,
     onground = false,
     startHeading = 0,
-    dt = 0, 
-    lt = 0, 
-    frame = 0, 
-    dFrame = 0.125,
+    dt = 0,
+    lt = 0,
+    frame = 0,
     heading = 0,
     pointerHeading = 0,
     pitch = 0,
-    roll = 0, 
-    strafe = 0, 
+    roll = 0,
+    strafe = 0,
     drive = 0,
-    DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE",
-    userName = DEFAULT_USER_NAME,
-    drawDistance = 500, 
     chatLines = [],
-    users = {}, 
-    audio = new Audio3DOutput(),
-    scene = new THREE.Scene(),
-    renderer = new THREE.WebGLRenderer({ antialias: true }),
+    users = {},
     lastText = null,
     lastNote = null,
     lastRenderingType = null,
     currentUser = null,
     clickSound = null,
-    camera = null, 
+    camera = null,
     effect = null,
     head = null,
     keyboard = null,
@@ -199,8 +199,8 @@ function animate(t){
             // time since the last update (don'dt want to flood the server).
             //
             frame += dt;
-            if(frame > dFrame){
-                frame -= dFrame;
+            if(frame > DFRAME){
+                frame -= DFRAME;
                 var state = {
                     x: currentUser.position.x,
                     y: currentUser.position.y,
@@ -209,7 +209,7 @@ function animate(t){
                     dy: currentUser.velocity.y,
                     dz: currentUser.velocity.z,
                     heading: currentUser.heading,
-                    dHeading: (currentUser.heading - currentUser.lastHeading) / dFrame,
+                    dHeading: (currentUser.heading - currentUser.lastHeading) / DFRAME,
                     isRunning: currentUser.velocity.length() > 0
                 };
                 currentUser.lastHeading = currentUser.heading;
@@ -529,10 +529,10 @@ function updateUserState(firstTime, userState){
         }
         else{
             user.velocity.set(
-                ((userState.x + userState.dx * dFrame) - user.position.x) / dFrame,
-                ((userState.y + userState.dy * dFrame) - user.position.y) / dFrame,
-                ((userState.z + userState.dz * dFrame) - user.position.z) / dFrame);
-            user.dHeading = ((userState.heading + userState.dHeading * dFrame) - user.heading) / dFrame;
+                ((userState.x + userState.dx * DFRAME) - user.position.x) / DFRAME,
+                ((userState.y + userState.dy * DFRAME) - user.position.y) / DFRAME,
+                ((userState.z + userState.dz * DFRAME) - user.position.z) / DFRAME);
+            user.dHeading = ((userState.heading + userState.dHeading * DFRAME) - user.heading) / DFRAME;
         }
     }
 }
@@ -752,7 +752,7 @@ ModelLoader.loadCollada("models/scene2.dae", function(object){
     mainScene = object;
     scene.add(object);
     var cam = mainScene.Camera.children[0];
-    camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, drawDistance);
+    camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, DRAW_DISTANCE);
     var buttonFactory1 = new VUI.ButtonFactory(
             mainScene, 
             "models/button2.dae", {
