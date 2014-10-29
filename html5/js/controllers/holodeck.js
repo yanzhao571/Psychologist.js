@@ -850,7 +850,7 @@ socket.on("handshakeComplete", function(controller){
     }
 });
 
-if(ctrls.appCacheReload.style.display === "none"){
+if(ctrls.appCacheReload.style.display === "none" && navigator.onLine){
     ctrls.loginForm.style.display = "";
     socket.emit("handshake", "demo");
 }
