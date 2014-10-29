@@ -1014,6 +1014,4 @@ socket.on("handshakeComplete", function(controller){
     }
 });
 
-ctrls.tryLogin = function(){
-    socket.emit("handshake", "demo");
-};
+ctrls.tryLogin = socket.emit.bind(socket, "handshake", "demo");
