@@ -98,6 +98,39 @@ function Application(appName, ctrls){
         }}
     ]);
     
+
+    this.setupModuleEvents = function(module, name){
+        var e = ctrls[name + "Enable"],
+            t = ctrls[name + "Transmit"],
+            r = ctrls[name + "Receive"];
+            z = ctrls[name + "Zero"];
+        e.addEventListener("change", function(){
+            module.enable(e.checked);
+            t.disabled = !e.checked;
+            if(t.checked && t.disabled){
+                t.checked = false;
+            }
+        });
+        t.addEventListener("change", function(){
+            module.transmit(t.checked);
+        });
+        r.addEventListener("change", function(){
+            module.receive(r.checked);
+        });
+
+        if(z && module.zeroAxes){
+            z.addEventListener("click", module.zeroAxes.bind(module), false);
+        }
+
+        module.enable(e.checked);
+        module.transmit(t.checked);
+        module.receive(r.checked);
+        t.disabled = !e.checked;
+        if(t.checked && t.disabled){
+            t.checked = false;
+        }
+    };
+    
     var formStateKey = appName + " - formState";
     var formState = getSetting(formStateKey);
     window.addEventListener("beforeunload", function(){

@@ -712,6 +712,16 @@ speech = new SpeechInput("speech", [
     { name: "chat", preamble: true, keywords: ["message"], commandUp: speechChat }
 ], proxy);
 
+
+
+    app.setupModuleEvents(head, "head");
+    app.setupModuleEvents(mouse, "mouse");
+    app.setupModuleEvents(leap, "leap");
+    app.setupModuleEvents(touch, "touch");
+    app.setupModuleEvents(keyboard, "keyboard");
+    app.setupModuleEvents(gamepad, "gamepad");
+    app.setupModuleEvents(speech, "speech");
+
 gamepad.addEventListener("gamepadconnected", function (id){
     if (!gamepad.isGamepadSet() && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))){
         gamepad.setGamepad(id);
@@ -739,46 +749,6 @@ document.addEventListener("blur", function(){
 }, false);
 
 renderer.setClearColor(BG_COLOR);
-
-function setupModuleEvents(module, name){
-    var e = ctrls[name + "Enable"],
-        t = ctrls[name + "Transmit"],
-        r = ctrls[name + "Receive"];
-        z = ctrls[name + "Zero"];
-    e.addEventListener("change", function(){
-        module.enable(e.checked);
-        t.disabled = !e.checked;
-        if(t.checked && t.disabled){
-            t.checked = false;
-        }
-    });
-    t.addEventListener("change", function(){
-        module.transmit(t.checked);
-    });
-    r.addEventListener("change", function(){
-        module.receive(r.checked);
-    });
-
-    if(z && module.zeroAxes){
-        z.addEventListener("click", module.zeroAxes.bind(module), false);
-    }
-
-    module.enable(e.checked);
-    module.transmit(t.checked);
-    module.receive(r.checked);
-    t.disabled = !e.checked;
-    if(t.checked && t.disabled){
-        t.checked = false;
-    }
-}
-
-setupModuleEvents(head, "head");
-setupModuleEvents(mouse, "mouse");
-setupModuleEvents(leap, "leap");
-setupModuleEvents(touch, "touch");
-setupModuleEvents(keyboard, "keyboard");
-setupModuleEvents(gamepad, "gamepad");
-setupModuleEvents(speech, "speech");
 
 var mainScene = null,
     factories = null;
