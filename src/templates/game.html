@@ -11,12 +11,12 @@
     <script type="text/javascript" src="js/psychologist/core.js"></script>
 </head>
 <body>
+    <div class="progressBar" id="downloadProgress" style="width:100%; opacity: 1"></div>
     <div id="onScreenControls">
         <a id="github" href="https://github.com/capnmidnight/VR"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub"></a>
         <a class="primary button" id="menuButton" title="menu"></a>
         <a class="primary button" id="fsButton" title="fullscreen"></a>
     </div>
-    <div class="progressBar" id="downloadProgress" style="width:100%; background-color:#000; opacity: 1"></div>
     <section id="options">
         <a class="primary button closeSectionButton altClose">X</a>
 
@@ -281,28 +281,73 @@
     </section>
     <script type="text/javascript">
         var ctrls = findEverything();
+        
+        function loadLibs(libs, index){
+            index = index || 0;
+            if(index < libs.length){
+                var next = loadLibs.bind(window, libs, index + 1);
+                var s = document.createElement("script");
+                s.type = "text/javascript";
+                document.body.appendChild(s);
+                s.onload = next;
+                s.onerror = next;
+                s.onabort = next;
+                s.src = libs[index];
+            }
+        }
             
-        function closeReloadMessage(showLogin){
+        function closeReloadMessage(successfulLoad){
             ctrls.appCacheStatus.style.display = "none";
             ctrls.downloadProgress.style.display = "none";
-            ctrls.loginForm.style.display = showLogin ? "" : "none";
+            if(successfulLoad){
+                applicationCache.successfulLoad();
+            }
+            loadLibs([
+                "lib/three/three.js",
+                "lib/three/StereoEffect.js",
+                "lib/three/OculusRiftEffect.js",
+                "lib/three/AnaglyphEffect.js",
+                "lib/three/ColladaLoader.js",
+                "lib/leap-0.6.3.min.js",
+                "lib/sha512.js",
+                "lib/socket.io.js",
+                "js/WebRTCSocket.js",
+                "js/ModelLoader.js",
+                "js/input/NetworkedInput.js",
+                "js/input/ButtonAndAxisInput.js",
+                "js/input/SpeechInput.js",
+                "js/input/GamepadInput.js",
+                "js/input/KeyboardInput.js",
+                "js/input/MotionInput.js",
+                "js/input/MouseInput.js",
+                "js/input/TouchInput.js",
+                "js/input/LeapMotionInput.js",
+                "js/output/Audio3DOutput.js",
+                "js/output/SpeechOutput.js",
+                "js/psychologist/Application.js",
+                "js/psychologist/ui/html/StateList.js",
+                "js/psychologist/ui/html/TabSet.js",
+                "js/psychologist/ui/vr/Text.js",
+                "js/psychologist/ui/vr/Button.js",
+                "js/controllers/$1.js"
+            ]);
         }
 
-        function showReload(message){
+        function showReload(message, successfulLoad){
             ctrls.appCacheMessage.style.display = "none";
             ctrls.appCacheReload.style.display = "";
             ctrls.reloadAppButton.innerHTML = message;
             E(ctrls.reloadAppButton, "click", reloadPage, false);                
-            E(ctrls.dismissAppUpdateButton, "click", closeReloadMessage.bind(window, false), false);
+            E(ctrls.dismissAppUpdateButton, "click", closeReloadMessage.bind(window, successfulLoad), false);
         };
 
         function showAppCacheMessage(msg){
             ctrls.appCacheMessage.innerHTML = msg;
         }
 
-        function appCacheReady(msg){
+        function appCacheReady(msg, successfulLoad){
             showAppCacheMessage(msg);
-            closeReloadMessage(true);
+            closeReloadMessage(successfulLoad);
         }
 
         function showAppCacheProgress(evt){ 
@@ -315,38 +360,9 @@
         E(applicationCache, "downloading", showAppCacheMessage.bind(window, "Downloading update now... please wait."), false); 
         E(applicationCache, "progress", showAppCacheProgress.bind(window), false);
         E(applicationCache, "error", showReload.bind(window, "Error downloading update. Try again.", false), false);
-        E(applicationCache, "updateready", showReload.bind(window, "Download complete. Restart application.", false), false);           
-        E(applicationCache, "noupdate", appCacheReady.bind(window, "No update found."), false);            
-        E(applicationCache, "cached", appCacheReady.bind(window, "Application cached."), false);
+        E(applicationCache, "updateready", showReload.bind(window, "Download complete. Restart application.", true), false);           
+        E(applicationCache, "noupdate", appCacheReady.bind(window, "No update found.", false), false);            
+        E(applicationCache, "cached", appCacheReady.bind(window, "Application cached.", false), false);
     </script>
-    <script type="text/javascript" src="lib/three/three.js"></script>
-    <script type="text/javascript" src="lib/three/StereoEffect.js"></script>
-    <script type="text/javascript" src="lib/three/OculusRiftEffect.js"></script>
-    <script type="text/javascript" src="lib/three/AnaglyphEffect.js"></script>
-    <script type="text/javascript" src="lib/three/ColladaLoader.js"></script>
-    <script type="text/javascript" src="lib/physics/cannon.min.js"></script>
-    <script type="text/javascript" src="lib/leap-0.6.3.min.js"></script>
-    <script type="text/javascript" src="lib/sha512.js"></script>
-    <script type="text/javascript" src="lib/socket.io.js"></script>
-    <script type="text/javascript" src="js/oscope/oscope.client.js"></script>
-    <script type="text/javascript" src="js/WebRTCSocket.js"></script>
-    <script type="text/javascript" src="js/ModelLoader.js"></script>
-    <script type="text/javascript" src="js/input/NetworkedInput.js"></script>
-    <script type="text/javascript" src="js/input/ButtonAndAxisInput.js"></script>
-    <script type="text/javascript" src="js/input/SpeechInput.js"></script>
-    <script type="text/javascript" src="js/input/GamepadInput.js"></script>
-    <script type="text/javascript" src="js/input/KeyboardInput.js"></script>
-    <script type="text/javascript" src="js/input/MotionInput.js"></script>
-    <script type="text/javascript" src="js/input/MouseInput.js"></script>
-    <script type="text/javascript" src="js/input/TouchInput.js"></script>
-    <script type="text/javascript" src="js/input/LeapMotionInput.js"></script>
-    <script type="text/javascript" src="js/output/Audio3DOutput.js"></script>
-    <script type="text/javascript" src="js/output/SpeechOutput.js"></script>
-    <script type="text/javascript" src="js/psychologist/Application.js"></script>
-    <script type="text/javascript" src="js/psychologist/ui/html/StateList.js"></script>
-    <script type="text/javascript" src="js/psychologist/ui/html/TabSet.js"></script>
-    <script type="text/javascript" src="js/psychologist/ui/vr/Text.js"></script>
-    <script type="text/javascript" src="js/psychologist/ui/vr/Button.js"></script>
-    <script type="text/javascript" src="js/controllers/$1.js"></script>
 </body>
 </html>

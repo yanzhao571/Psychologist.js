@@ -17,7 +17,7 @@ th.selectedTab{
 	border-bottom: none;
 }
 
-section, th.selectedTab, table > tbody, #loadingProgress
+section, th.selectedTab, table > tbody, #downloadProgress
 {
     background-color: #fbfcfd;
 }

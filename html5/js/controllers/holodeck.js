@@ -843,7 +843,6 @@ socket.on("disconnect", msg.bind(window));
 socket.on("handshakeFailed", console.error.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
 socket.on("handshakeComplete", function(controller){
     if(controller === "demo"
-        && ctrls.loginForm.style.display === ""
         && ctrls.autoLogin.checked
         && ctrls.userNameField.value.length > 0
         && ctrls.passwordField.value.length > 0){
@@ -851,4 +850,7 @@ socket.on("handshakeComplete", function(controller){
     }
 });
 
-socket.emit("handshake", "demo");
+if(ctrls.appCacheReload.style.display === "none"){
+    ctrls.loginForm.style.display = "";
+    socket.emit("handshake", "demo");
+}

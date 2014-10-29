@@ -17,7 +17,6 @@
 
 function Application(appName){
     var ctrls = findEverything();
-    
     new TabSet(ctrls.options).DOMElement.style.width = pct(100);
     
     var NO_HMD_SMARTPHONE = "Smartphone - no HMD";
