@@ -76,7 +76,7 @@
             ctrls.appCacheMessage.style.display = "none";
             ctrls.appCacheReload.style.display = "";
             ctrls.reloadAppButton.innerHTML = message;
-            ctrls.reloadAppButton.addEventListener("click", reloadPage, false);                
+            ctrls.reloadAppButton.addEventListener("click", document.location.reload.bind(document.location), false);                
             ctrls.dismissAppUpdateButton.addEventListener("click", closeReloadMessage.bind(window, successfulLoad), false);
         };
 
