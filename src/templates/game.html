@@ -73,6 +73,7 @@
                     get("js/game.libs.json", "json", function(libs){                   
                         libs.push("js/controllers/$1.js");
                         loadLibs(libs, function(){
+                            TabSet.makeAll();
                             $1();
                         });
                     });

@@ -18,7 +18,7 @@
 function TabSet(id) {
     var elem = id;
     if(typeof(elem) === "string"){
-        elem = document.getElementByID(elem);
+        elem = document.getElementById(elem);
     }
     if(elem === null){
         throw new Error(fmt("Couldn't find tabset \"$1\"", id));

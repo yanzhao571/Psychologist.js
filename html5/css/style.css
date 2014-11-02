@@ -194,6 +194,10 @@ table>tbody>tr>td:first-child
     border-left: none;
 }
 
+table.tabSet{
+    width: 100%;
+}
+
         table.tabSet > tbody > tr > td
         {
             padding: 0.5em;

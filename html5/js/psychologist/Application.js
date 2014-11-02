@@ -17,9 +17,12 @@
 
 function Application(appName){
     var ctrls = findEverything();
-    ctrls.gameTitle.innerHTML = document.title;
-    new TabSet(ctrls.options).DOMElement.style.width = pct(100);
     
+    //
+    // The various options, and packs of them when selecting from a dropdown
+    // list. This makes it easy to preconfigure the program to certain specs
+    // and let the user override the others.
+    //
     var NO_HMD_SMARTPHONE = "Smartphone - no HMD";
     new StateList(ctrls.deviceTypes, ctrls, [
         { name: "-- select device type --" },
@@ -132,6 +135,9 @@ function Application(appName){
         }
     };
     
+    //
+    // restoring the options the user selected
+    //
     var formStateKey = appName + " - formState";
     var formState = getSetting(formStateKey);
     window.addEventListener("beforeunload", function(){
@@ -140,6 +146,9 @@ function Application(appName){
     }, false);
     writeForm(ctrls, formState);
     
+    //
+    // the touch-screen and mouse-controls for accessing the options screen
+    //
     var hideControlsTimeout = null;
     this.showOnscreenControls = function(){
         ctrls.onScreenControls.style.display = "";
