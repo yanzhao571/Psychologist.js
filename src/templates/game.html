@@ -67,7 +67,7 @@
             }
             get("game.ui.html", "text", function(content){
                 ctrls.appCacheStatus.style.display = "none";
-                document.body.innerHTML += content;
+                document.body.innerHTML += content.replace("[ABOUT]", "$3");
                 get("js/game.libs.json", "json", function(libs){                   
                     libs.push("js/controllers/$1.js");
                     loadLibs(libs, function(){

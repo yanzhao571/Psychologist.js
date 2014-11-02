@@ -34,7 +34,10 @@ module.exports = {
                         "src/templates/game.html", 
                         "holodeck",
                         "Psychologist.js: a WebGL VR Framework", 
-                        about);
+                        about.replace(/\\/g, "\\\\")
+                            .replace(/\r/g, "")
+                            .replace(/\n/g, "\\r\\n")
+                            .replace(/"/g, "\\\""));
                 }
             }
         );
