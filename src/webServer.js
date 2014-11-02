@@ -41,7 +41,7 @@ function findController(url, method){
             }
             else{
                 return {
-                    handler: handler,
+                    handler: handler.bind(routes[i]),
                     parameters: matches
                 };
             }

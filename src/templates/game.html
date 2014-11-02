@@ -66,13 +66,15 @@
             if(successfulLoad){
                 applicationCache.swapCache();
             }
-            get("game.ui.html", "text", function(content){
-                ctrls.appCacheStatus.style.display = "none";
-                document.body.innerHTML += content.replace("[ABOUT]", "$3");
-                get("js/game.libs.json", "json", function(libs){                   
-                    libs.push("js/controllers/$1.js");
-                    loadLibs(libs, function(){
-                        $1();
+            get("templates/game.ui.html", "text", function(content){
+                get("templates/$1.about.html", "text", function(about){
+                    ctrls.appCacheStatus.style.display = "none";
+                    document.body.innerHTML += content.replace("[ABOUT]", about);
+                    get("js/game.libs.json", "json", function(libs){                   
+                        libs.push("js/controllers/$1.js");
+                        loadLibs(libs, function(){
+                            $1();
+                        });
                     });
                 });
             });

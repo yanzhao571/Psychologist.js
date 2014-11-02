@@ -15,31 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-var fmt = require("../core").fmt,
-    master = require("../master"),
-    fs = require("fs");
-
-module.exports = {
-    path: "holodeck.html",
-    pattern: /^\/holodeck.html$/,
-    GET: function(params, sendData, sendStaticFile, serverError){
-        fs.readFile("src/templates/holodeck.about.html", 
-            {encoding: "utf8"}, 
-            function(err, about){
-                if(err){
-                    serverError(500, err);
-                }
-                else{
-                    master.build(sendData, serverError, 
-                        "src/templates/game.html", 
-                        "holodeck",
-                        "Psychologist.js: a WebGL VR Framework", 
-                        about.replace(/\\/g, "\\\\")
-                            .replace(/\r/g, "")
-                            .replace(/\n/g, "\\r\\n")
-                            .replace(/"/g, "\\\""));
-                }
-            }
-        );
-    }
-};
+module.exports = new (require("../gameController"))(
+    "holodeck", 
+    "Psychologist.js: a WebGL VR Framework");

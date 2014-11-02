@@ -24,8 +24,10 @@ module.exports = {
                 )
                 .map(function(file){
                     return fmt("<a class=\"primary button\" href=\"$1\" style=\"width:100%\">$2</a><br>", file, file.replace(".html", ""));
-                })
-                .join("");
+                });
+                
+                paths.sort();                
+                paths = paths.join("");
 
                 master.build(sendData, serverError, 
                     "src/templates/master.html", 
