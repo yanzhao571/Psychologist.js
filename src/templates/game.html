@@ -34,10 +34,13 @@
             closeReloadMessage(successfulLoad);
         }
                 
-        function loadLibs(libs, index){
+        function loadLibs(libs, done, index){
             index = index || 0;
-            if(index < libs.length){
-                var next = loadLibs.bind(window, libs, index + 1);
+            if(index === libs.length){
+                done();
+            }
+            else{
+                var next = loadLibs.bind(window, libs, done, index + 1);
                 var s = document.createElement("script");
                 s.type = "text/javascript";
                 s.onload = next;
@@ -67,7 +70,9 @@
                 document.body.innerHTML += content;
                 get("js/game.libs.json", "json", function(libs){                   
                     libs.push("js/controllers/$1.js");
-                    loadLibs(libs);
+                    loadLibs(libs, function(){
+                        $1();
+                    });
                 });
             });
         }
