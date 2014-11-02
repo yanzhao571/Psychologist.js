@@ -16,7 +16,8 @@
  */
 
 function Application(appName){
-    var ctrls = findEverything();
+    this.hideControlsTimeout = null;
+    this.ctrls = findEverything();
     
     //
     // The various options, and packs of them when selecting from a dropdown
@@ -24,7 +25,7 @@ function Application(appName){
     // and let the user override the others.
     //
     var NO_HMD_SMARTPHONE = "Smartphone - no HMD";
-    new StateList(ctrls.deviceTypes, ctrls, [
+    this.stateList = new StateList(this.ctrls.deviceTypes, this.ctrls, [
         { name: "-- select device type --" },
         { name: "PC", values:{
             speechEnable: {checked: false},
@@ -101,39 +102,7 @@ function Application(appName){
             renderingStyle: {value: "regular" },
             defaultDisplay: {checked: true}
         }}
-    ]);    
-
-    this.setupModuleEvents = function(module, name){
-        var e = ctrls[name + "Enable"],
-            t = ctrls[name + "Transmit"],
-            r = ctrls[name + "Receive"];
-            z = ctrls[name + "Zero"];
-        e.addEventListener("change", function(){
-            module.enable(e.checked);
-            t.disabled = !e.checked;
-            if(t.checked && t.disabled){
-                t.checked = false;
-            }
-        });
-        t.addEventListener("change", function(){
-            module.transmit(t.checked);
-        });
-        r.addEventListener("change", function(){
-            module.receive(r.checked);
-        });
-
-        if(z && module.zeroAxes){
-            z.addEventListener("click", module.zeroAxes.bind(module), false);
-        }
-
-        module.enable(e.checked);
-        module.transmit(t.checked);
-        module.receive(r.checked);
-        t.disabled = !e.checked;
-        if(t.checked && t.disabled){
-            t.checked = false;
-        }
-    };
+    ]);
     
     //
     // restoring the options the user selected
@@ -141,27 +110,10 @@ function Application(appName){
     var formStateKey = appName + " - formState";
     var formState = getSetting(formStateKey);
     window.addEventListener("beforeunload", function(){
-        var state = readForm(ctrls);
+        var state = readForm(this.ctrls);
         setSetting(formStateKey, state);
     }, false);
-    writeForm(ctrls, formState);
-    
-    //
-    // the touch-screen and mouse-controls for accessing the options screen
-    //
-    var hideControlsTimeout = null;
-    this.showOnscreenControls = function(){
-        ctrls.onScreenControls.style.display = "";
-        if(hideControlsTimeout !== null){
-            clearTimeout(hideControlsTimeout);
-        }
-        hideControlsTimeout = setTimeout(hideOnscreenControls, 3000);
-    };
-    
-    function hideOnscreenControls(){
-        ctrls.onScreenControls.style.display = "none";
-        hideControlsTimeout = null;
-    };
+    writeForm(this.ctrls, formState);
     
     window.addEventListener("touchend", this.showOnscreenControls.bind(this), false);
     
@@ -171,3 +123,51 @@ function Application(appName){
         }
     }.bind(this), false);
 }
+    
+//
+// the touch-screen and mouse-controls for accessing the options screen
+//
+Application.prototype.hideOnscreenControls = function(){
+    this.ctrls.onScreenControls.style.display = "none";
+    this.hideControlsTimeout = null;
+};
+    
+Application.prototype.showOnscreenControls = function(){
+    this.ctrls.onScreenControls.style.display = "";
+    if(this.hideControlsTimeout !== null){
+        clearTimeout(this.hideControlsTimeout);
+    }
+    this.hideControlsTimeout = setTimeout(this.hideOnscreenControls.bind(this), 3000);
+};
+
+Application.prototype.setupModuleEvents = function(module, name){
+    var e = this.ctrls[name + "Enable"],
+        t = this.ctrls[name + "Transmit"],
+        r = this.ctrls[name + "Receive"];
+        z = this.ctrls[name + "Zero"];
+    e.addEventListener("change", function(){
+        module.enable(e.checked);
+        t.disabled = !e.checked;
+        if(t.checked && t.disabled){
+            t.checked = false;
+        }
+    });
+    t.addEventListener("change", function(){
+        module.transmit(t.checked);
+    });
+    r.addEventListener("change", function(){
+        module.receive(r.checked);
+    });
+
+    if(z && module.zeroAxes){
+        z.addEventListener("click", module.zeroAxes.bind(module), false);
+    }
+
+    module.enable(e.checked);
+    module.transmit(t.checked);
+    module.receive(r.checked);
+    t.disabled = !e.checked;
+    if(t.checked && t.disabled){
+        t.checked = false;
+    }
+};
