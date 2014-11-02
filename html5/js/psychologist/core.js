@@ -157,65 +157,72 @@ function help(obj){
     var funcs = {};
     var props = {};
     var evnts = [];
-    for(var field in obj){
-        if(field.indexOf("on") === 0){
-            evnts.push(field.substring(2));
+    if(obj){
+        for(var field in obj){
+            if(field.indexOf("on") === 0 
+                // this is a known element that is not an event, but looks like
+                // an event to the most basic assumption.
+                && (obj !== navigator || field !== "onLine")){
+                evnts.push(field.substring(2));
+            }
+            else if(typeof(obj[field]) === "function"){
+                funcs[field] = obj[field];
+            }
+            else{
+                props[field] = obj[field];
+            }
         }
-        else if(typeof(obj[field]) === "function"){
-            funcs[field] = obj[field];
+
+        var type = typeof(obj);
+        if(type === "function"){
+            type = obj.toString().match(/(function [^(]*)/)[1];
         }
-        else{
-            props[field] = obj[field];
-        }
-    }
-    
-    var type = typeof(obj);
-    if(type === "function"){
-        type = obj.toString().match(/(function [^(]*)/)[1];
-    }
-    else if(type === "object"){
-        type = null;
-        if(obj.constructor && obj.constructor.name){
-            type = obj.constructor.name;
-        }
-        else {
-            var q = [{prefix: "", obj: window}];
-            var traversed = [];
-            while(q.length > 0 && type === null){
-                var parentObject = q.shift();
-                parentObject.___traversed___ = true;
-                traversed.push(parentObject);
-                for(var field in parentObject.obj){
-                    var testObject = parentObject.obj[field];
-                    if(testObject){
-                        if(typeof(testObject) === "function"){
-                            if(testObject.prototype && obj instanceof testObject){
-                                type = parentObject.prefix + field;
-                                break;
+        else if(type === "object"){
+            type = null;
+            if(obj.constructor && obj.constructor.name){
+                type = obj.constructor.name;
+            }
+            else {
+                var q = [{prefix: "", obj: window}];
+                var traversed = [];
+                while(q.length > 0 && type === null){
+                    var parentObject = q.shift();
+                    parentObject.___traversed___ = true;
+                    traversed.push(parentObject);
+                    for(var field in parentObject.obj){
+                        var testObject = parentObject.obj[field];
+                        if(testObject){
+                            if(typeof(testObject) === "function"){
+                                if(testObject.prototype && obj instanceof testObject){
+                                    type = parentObject.prefix + field;
+                                    break;
+                                }
                             }
-                        }
-                        else if(!testObject.___tried___){
-                            q.push({prefix: parentObject.prefix + field + ".", obj: testObject});
+                            else if(!testObject.___tried___){
+                                q.push({prefix: parentObject.prefix + field + ".", obj: testObject});
+                            }
                         }
                     }
                 }
+                traversed.forEach(function(o){
+                    delete o.___traversed___;
+                });
             }
-            traversed.forEach(function(o){
-                delete o.___traversed___;
-            });
         }
+        var obj = {
+            type: type,
+            events: evnts,
+            functions: funcs,
+            properties: props
+        };
+
+        console.debug(obj);
+
+        return obj;
     }
-    
-    var obj = {
-        type: type,
-        events: evnts,
-        functions: funcs,
-        properties: props
-    };
-    
-    console.debug(obj);
-    
-    return obj;
+    else{
+        console.warn("Object was falsey.");
+    }
 }
 
 /*
