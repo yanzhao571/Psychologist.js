@@ -135,6 +135,7 @@ html, body, canvas, video, img
 canvas, video, .overlay, .progressBar
 {
     position: fixed;
+    pointer-events: none;
 }
 
 a.button

@@ -21,7 +21,7 @@ function holodeck(){
         direction = new THREE.Vector3(),
         orientation = new THREE.Euler(0, 0, 0, "YZX"),
         scene = new THREE.Scene(),
-        renderer = new THREE.WebGLRenderer({ antialias: true }),
+        renderer = new THREE.WebGLRenderer({ antialias: true, canvas: ctrls.frontBuffer }),
         audio = new Audio3DOutput(),  
         focused = true,
         wasFocused = false,
@@ -667,7 +667,7 @@ function holodeck(){
         { name: "dz", axes: [MouseInput.Z], delta: true },
         { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: 0, max: 10 },
         { name: "pointerPress", buttons: [1], integrate: true, scale: -10, offset: 5, min: -0.4, max: 0 }
-    ], proxy, null, renderer.domElement);
+    ], proxy);
 
     var leapCommands = [];
 
@@ -687,7 +687,7 @@ function holodeck(){
     touch = new TouchInput("touch", null, [
         { name: "heading", axes: [TouchInput.DX0], integrate: true },
         { name: "drive", axes: [-TouchInput.DY0] }
-    ], proxy, null, renderer.domElement);
+    ], proxy);
 
     keyboard = new KeyboardInput("keyboard", [
         { name: "strafeLeft", buttons: [-KeyboardInput.A, -KeyboardInput.LEFTARROW] },
@@ -820,8 +820,6 @@ function holodeck(){
         amb.source.start(0);
     });
 
-    document.body.insertBefore(renderer.domElement, document.body.firstChild);
-    renderer.domElement.setAttribute("tabindex", 0);
     setSize(window.innerWidth, window.innerHeight);
     requestAnimationFrame(waitForResources);
 
