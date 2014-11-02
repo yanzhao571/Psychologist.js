@@ -28,6 +28,16 @@ function GameController(name, title){
     this.pattern = new RegExp(fmt("^\\/$1.(html|appcache)$", name));
 };
 
+GameController.prototype.GET = function(params, sendData, sendStaticFile, serverError){
+    var f = this[params[0]];
+    if(typeof(f) === "function"){
+        f.call(this, sendData, sendStaticFile, serverError);
+    }
+    else{
+        serverError(500, "no handler for " + params[0]);
+    }
+};
+
 GameController.prototype.html = function(sendData, sendStaticFile, serverError){
     master.build(
         sendData, 
@@ -215,15 +225,5 @@ function sendAppCache(mainFileTime, sendData, files){
         sendData("text/cache-manifest", data, data.length); 
     });
 }
-
-GameController.prototype.GET = function(params, sendData, sendStaticFile, serverError){
-    var f = this[params[0]];
-    if(typeof(f) === "function"){
-        f.call(this, sendData, sendStaticFile, serverError);
-    }
-    else{
-        serverError(500, "no handler for " + params[0]);
-    }
-};
 
 module.exports = GameController;
