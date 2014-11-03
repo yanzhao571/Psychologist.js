@@ -77,7 +77,7 @@ include(0,
     
     ////////// buttons
     function hideButtonsLater(){
-        if(buttonsTimeout !== null && buttonsTimeout !== undefined){
+        if(buttonsTimeout){
             clearTimeout(buttonsTimeout);
         }
         buttonsTimeout = setTimeout(hideButtons, 3000);

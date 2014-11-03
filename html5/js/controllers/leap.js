@@ -43,7 +43,7 @@ E("deviceStreaming");
 E("deviceStopped");
 E("ready");
 E("frame", function(frame){
-    if(lt !== null){
+    if(lt){
         dt = (frame.timestamp - lt) * 0.000001;
     }
     lt = frame.timestamp;

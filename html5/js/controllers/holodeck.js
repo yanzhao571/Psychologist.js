@@ -5,7 +5,6 @@ function holodeck(){
         direction = new THREE.Vector3(),
         autoWalking = false,
         onground = false,
-        startHeading = 0,
         dt = 0,
         lt = 0,
         frame = 0,
@@ -15,28 +14,17 @@ function holodeck(){
         roll = 0,
         strafe = 0,
         drive = 0,
-        chatLines = [],
-        lastText = null,
-        lastNote = null,
-        currentUser = null,
-        clickSound = null,
         mainScene = null,
         factories = null,
-        app = null;
-
-    function msg(){
-        var txt = fmt.apply(window, map(arguments, function(v){ return v ? v.toString() : ""; }));
-        if(currentUser){
-            showChat(txt);
-        }
-        else {
-            alert(txt);
-        }
-    }
+        app = new Application("holodeck", {
+            avatarModel: "models/bear.dae",
+            clickSound: "music/click.mp3",
+            ambientSound: "music/ambient.mp3"
+        });
 
     function waitForResources(t){
         lt = t;
-        if(app.camera && currentUser){
+        if(app.camera && app.currentUser){
             app.leap.start();
             requestAnimationFrame(animate);
         }
@@ -60,8 +48,7 @@ function holodeck(){
             heading = app.head.getValue("heading") 
                 + app.gamepad.getValue("heading")
                 + app.touch.getValue("heading")
-                + app.mouse.getValue("heading")
-                + startHeading;
+                + app.mouse.getValue("heading");
 
             pointerHeading = heading + app.mouse.getValue("pointerHeading");
 
@@ -70,7 +57,7 @@ function holodeck(){
                 // update user position and view
                 //
 
-                currentUser.dHeading = (heading - currentUser.heading) / dt;
+                app.currentUser.dHeading = (heading - app.currentUser.heading) / dt;
                 strafe = app.keyboard.getValue("strafeRight")
                     + app.keyboard.getValue("strafeLeft")
                     + app.gamepad.getValue("strafe");
@@ -79,7 +66,7 @@ function holodeck(){
                     + app.gamepad.getValue("drive")
                     + app.touch.getValue("drive");
 
-                if(onground || currentUser.position.y < -0.5){                
+                if(onground || app.currentUser.position.y < -0.5){                
                     if(autoWalking){
                         strafe = 0;
                         drive = -0.5;
@@ -96,19 +83,19 @@ function holodeck(){
                     len = strafe * Math.cos(pointerHeading) + drive * Math.sin(pointerHeading);
                     drive = drive * Math.cos(pointerHeading) - strafe * Math.sin(pointerHeading);
                     strafe = len;
-                    currentUser.velocity.x = currentUser.velocity.x * 0.9 + strafe * 0.1;
-                    currentUser.velocity.z = currentUser.velocity.z * 0.9 + drive * 0.1;
+                    app.currentUser.velocity.x = app.currentUser.velocity.x * 0.9 + strafe * 0.1;
+                    app.currentUser.velocity.z = app.currentUser.velocity.z * 0.9 + drive * 0.1;
                 }
 
-                currentUser.velocity.y -= dt * GRAVITY;
+                app.currentUser.velocity.y -= dt * GRAVITY;
 
                 //
                 // do collision detection
                 //
-                var len = currentUser.velocity.length() * dt;
-                direction.copy(currentUser.velocity);
+                var len = app.currentUser.velocity.length() * dt;
+                direction.copy(app.currentUser.velocity);
                 direction.normalize();
-                testPoint.copy(currentUser.position);
+                testPoint.copy(app.currentUser.position);
                 testPoint.y += PLAYER_HEIGHT / 2;
                 raycaster.set(testPoint, direction);
                 raycaster.far = len;
@@ -118,18 +105,18 @@ function holodeck(){
                     if(inter.object.parent.isSolid){
                         testPoint.copy(inter.face.normal);
                         testPoint.applyEuler(inter.object.parent.rotation);
-                        currentUser.velocity.reflect(testPoint);
+                        app.currentUser.velocity.reflect(testPoint);
                         var d = testPoint.dot(app.camera.up);
                         if(d > 0.75){
-                            currentUser.position.y = inter.point.y + 0.0125;
-                            currentUser.velocity.y = 0.1;
+                            app.currentUser.position.y = inter.point.y + 0.0125;
+                            app.currentUser.velocity.y = 0.1;
                             onground = true;
                         }
                     }
                 }
 
                 // ground test
-                testPoint.copy(currentUser.position);
+                testPoint.copy(app.currentUser.position);
                 var GROUND_TEST_HEIGHT = 3;
                 testPoint.y += GROUND_TEST_HEIGHT;
                 direction.set(0, -1, 0);
@@ -141,8 +128,8 @@ function holodeck(){
                     if(inter.object.parent.isSolid){
                         testPoint.copy(inter.face.normal);
                         testPoint.applyEuler(inter.object.parent.rotation);
-                        currentUser.position.y = inter.point.y;
-                        currentUser.velocity.y = 0;
+                        app.currentUser.position.y = inter.point.y;
+                        app.currentUser.velocity.y = 0;
                         onground = true;
                     }
                 }
@@ -155,17 +142,17 @@ function holodeck(){
                 if(frame > DFRAME){
                     frame -= DFRAME;
                     var state = {
-                        x: currentUser.position.x,
-                        y: currentUser.position.y,
-                        z: currentUser.position.z,
-                        dx: currentUser.velocity.x,
-                        dy: currentUser.velocity.y,
-                        dz: currentUser.velocity.z,
-                        heading: currentUser.heading,
-                        dHeading: (currentUser.heading - currentUser.lastHeading) / DFRAME,
-                        isRunning: currentUser.velocity.length() > 0
+                        x: app.currentUser.position.x,
+                        y: app.currentUser.position.y,
+                        z: app.currentUser.position.z,
+                        dx: app.currentUser.velocity.x,
+                        dy: app.currentUser.velocity.y,
+                        dz: app.currentUser.velocity.z,
+                        heading: app.currentUser.heading,
+                        dHeading: (app.currentUser.heading - app.currentUser.lastHeading) / DFRAME,
+                        isRunning: app.currentUser.velocity.length() > 0
                     };
-                    currentUser.lastHeading = currentUser.heading;
+                    app.currentUser.lastHeading = app.currentUser.heading;
                     if(app.socket){
                         app.socket.emit("userState", state);
                     }
@@ -182,10 +169,10 @@ function holodeck(){
                 user.position.add(testPoint);
                 user.heading += user.dHeading * dt;
                 user.rotation.set(0, user.heading, 0, "XYZ");
-                if(user !== currentUser){ 
+                if(user !== app.currentUser){ 
                     // we have to offset the rotation of the name so the user
                     // can read it.
-                    user.nameObj.rotation.set(0, currentUser.heading - user.heading, 0, "XYZ");
+                    user.nameObj.rotation.set(0, app.currentUser.heading - user.heading, 0, "XYZ");
                 }
                 if(!user.animation.isPlaying && user.velocity.length() >= 2){
                     user.animation.play();                
@@ -220,209 +207,15 @@ function holodeck(){
                 }
             }
 
-            app.render(pitch, heading, roll, currentUser);
+            app.render(pitch, heading, roll, app.currentUser);
         }
 
         app.wasFocused = app.focused;
     }
 
-    function resetLocation(){
-        currentUser.position.set(0, 2, 0);
-        currentUser.velocity.set(0, 0, 0);
-    }
-
-    function showTyping(isLocal, isComplete, text){
-        if(currentUser){
-            if(lastText){
-                currentUser.remove(lastText);
-                lastText = null;
-            }
-
-            if(isComplete){
-                if(app.socket){
-                    app.socket.emit("chat", text);
-                }
-            }
-            else{
-                if(isLocal && app.socket){
-                    app.socket.emit("typing", text);
-                }
-                if(text !== null && text !== undefined){
-                    var textObj= new VUI.Text(
-                        text, 0.125,
-                        "white", "transparent",
-                        0, PLAYER_HEIGHT, -4,
-                        "right");
-                    lastText = textObj;
-                    currentUser.add(textObj);
-                    if(clickSound){
-                        app.audio.playBufferImmediate(clickSound, 0.5);
-                    }
-                }
-            }
-        }
-    }
-
-    function shiftLines(){
-        for(var i = 0; i < chatLines.length; ++i){
-            chatLines[i].position.y = PLAYER_HEIGHT + (chatLines.length - i) * CHAT_TEXT_SIZE * 1.333 - 1;
-        }
-    }
-
-    function showChat(msg){
-        msg = typeof(msg) === "string" ? msg : fmt("[$1]: $2", msg.userName, msg.text);
-        if(currentUser){
-            if(app.userName === msg.userName){
-                showTyping(true, false, null);
-            }
-            var textObj= new VUI.Text(
-                msg, CHAT_TEXT_SIZE,
-                "white", "transparent",
-                -2, 0, -5, "left");
-            currentUser.add(textObj);
-            chatLines.push(textObj);
-            shiftLines();
-            setTimeout(function(){
-                currentUser.remove(textObj);
-                chatLines.shift();
-                shiftLines();
-            }, 3000);
-        }
-
-        var div = document.createElement("div");
-        div.appendChild(document.createTextNode(msg));
-        ctrls.chatLog.appendChild(div);
-        ctrls.chatLog.scrollTop = ctrls.chatLog.scrollHeight;
-
-        if(!app.focused && window.Notification){
-            makeNotification(msg);
-        }
-    }
-
-    function makeNotification(msg){
-        if (Notification.permission === "granted") {
-            if(lastNote !== null){
-                msg = lastNote.body + "\n" + msg;
-                lastNote.close();
-                lastNote = null;
-            }
-            lastNote = new Notification(document.title, {
-                icon: "../ico/chat.png",
-                body: msg
-            });
-            lastNote.addEventListener("close", function(){
-                lastNote = null;
-            }, false);
-            return lastNote;
-        }
-    };
-
-    function updateUserState(firstTime, userState){
-        var user = user || app.users[userState.userName];
-        if(!user){
-            setTimeout(addUser.bind(this, userState), 1);
-        }
-        else{
-            if(firstTime){
-                user.position.set(
-                    userState.x, 
-                    // just in case the user falls through the world, 
-                    // reloading will get them back to level.
-                    Math.max(0, userState.y), 
-                    userState.z);
-                user.lastHeading = user.heading = userState.heading;
-                user.dHeading = 0;
-                if(userState.userName === app.userName){
-                    startHeading = user.heading;
-                }
-            }
-            else{
-                user.velocity.set(
-                    ((userState.x + userState.dx * DFRAME) - user.position.x) / DFRAME,
-                    ((userState.y + userState.dy * DFRAME) - user.position.y) / DFRAME,
-                    ((userState.z + userState.dz * DFRAME) - user.position.z) / DFRAME);
-                user.dHeading = ((userState.heading + userState.dHeading * DFRAME) - user.heading) / DFRAME;
-            }
-        }
-    }
-
-    function addUser(userState, skipMakingChatList){
-        var user = null;
-        if(!app.users[userState.userName]){
-            if(app.userName === DEFAULT_USER_NAME
-                || userState.userName !== app.userName){
-                user = new THREE.Object3D();        
-                var model = bearModel.clone();
-                user.animation = model.animation;
-                model.position.z = 1.33;
-                user.add(model);
-
-                user.nameObj = new VUI.Text(
-                    userState.userName, 0.5,
-                    "white", "transparent",
-                    0, PLAYER_HEIGHT + 2.5, 0, 
-                    "center");
-                user.add(user.nameObj);
-
-                user.velocity = new THREE.Vector3();
-
-                if(userState.userName === DEFAULT_USER_NAME){
-                    currentUser = user;
-                }
-                else{
-                    msg("$1 has joined", userState.userName);
-                }
-
-                app.scene.add(user);
-            }
-            else{
-                delete app.users[DEFAULT_USER_NAME];
-                user = currentUser;
-            }
-        }
-        else {
-            user = app.users[userState.userName];
-        }
-
-        app.users[userState.userName] = user;
-        updateUserState(true, userState);
-
-        if(!skipMakingChatList){
-            makeChatList();
-        }
-    }
-
-    function userLeft(userName){
-        if(app.users[userName]){
-            msg("$1 has disconnected", userName);
-            app.scene.remove(app.users[userName]);
-            delete app.users[userName];
-            makeChatList();
-        }
-    }
-
-    function makeChatList(){
-        var list = [];
-        for(var k in app.users){
-            list.push(k);
-        }
-        list.sort();
-        ctrls.userList.innerHTML = "";
-        for(var i = 0; i < list.length; ++i){
-            if(list[i] !== DEFAULT_USER_NAME){
-                var entry = document.createElement("div");
-                entry.appendChild(document.createTextNode(list[i]));
-                ctrls.userList.appendChild(entry);
-            }
-        }
-    }
-    
-    app = new Application("holodeck", resetLocation, showTyping, showChat, addUser, updateUserState, userLeft, makeChatList, msg);
-
     ModelLoader.loadCollada("models/scene2.dae", function(object){
         mainScene = object;
         app.scene.add(object);
-        app.scene.add(app.hand);
         var cam = mainScene.Camera.children[0];
         app.camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, DRAW_DISTANCE);
         var buttonFactory1 = new VUI.ButtonFactory(
@@ -477,19 +270,6 @@ function holodeck(){
         mesh.position.set(x / 2, y / 2, z / 2);
         return mesh;
     }
-
-    var bearModel = new ModelLoader("models/bear.dae", function(){
-        addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: app.userName});
-    });
-
-    app.audio.loadBuffer("music/click.mp3", null, function(buffer){
-        clickSound = buffer;
-    });
-
-    app.audio.load3DSound("music/ambient.mp3", true, 0, 0, 0, null, function(amb){
-        amb.volume.gain.value = 0.07;
-        amb.source.start(0);
-    });
 
     requestAnimationFrame(waitForResources);
 }

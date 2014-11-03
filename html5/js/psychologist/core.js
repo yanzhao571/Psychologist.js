@@ -449,9 +449,9 @@ function writeForm(ctrls, state) {
         for (var name in ctrls) {
             var c = ctrls[name];
             if (state[name] !== null
-                    && state[name] !== undefined
-                    && (c.tagName === "INPUT" || c.tagName === "SELECT")
-                    && (!c.dataset || !c.dataset.skipcache)) {
+                && state[name] !== undefined
+                && (c.tagName === "INPUT" || c.tagName === "SELECT")
+                && (!c.dataset || !c.dataset.skipcache)) {
                 if (c.type === "text" || c.type === "password" || c.tagName === "SELECT") {
                     c.value = state[name];
                 }

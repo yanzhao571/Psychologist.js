@@ -24,15 +24,42 @@ var BG_COLOR = 0x000000,
     DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE",
     RIGHT = new THREE.Vector3(-1, 0, 0);
         
-function Application(thisName, resetLocation, showTyping, showChat, addUser, updateUserState, userLeft, makeChatList, msg){
+function Application(name, options){
     this.ctrls = findEverything();
-    this.hideControlsTimeout = null;
     this.focused = true;
     this.wasFocused = false;
-    this.msg = msg;
     this.userName = DEFAULT_USER_NAME;
     this.users = {};
+    this.chatLines = [];
+    this.currentUser = null;
+    this.avatar = new ModelLoader(options.avatarModel, function(){
+        this.addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: this.userName});
+    }.bind(this));
+        
+    //
+    // Setup THREE.js
+    //
+    this.scene = new THREE.Scene();
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.ctrls.frontBuffer }),
+    this.renderer.setClearColor(BG_COLOR);
+    this.setSize(window.innerWidth, window.innerHeight);
+    this.testPoint = new THREE.Vector3();
     
+    //
+    // Setup audio
+    //
+    this.audio = new Audio3DOutput();
+    this.audio.loadBuffer(options.clickSound, null, function(buffer){
+        this.clickSound = buffer;
+    }.bind(this));
+    this.audio.load3DSound(options.ambientSound, true, 0, 0, 0, null, function(amb){
+        amb.volume.gain.value = 0.07;
+        amb.source.start(0);
+    }.bind(this));
+    
+    //
+    // Setup networking
+    //
     if(this.ctrls.appCacheReload.style.display === "none" && navigator.onLine){
         this.ctrls.loginForm.style.display = "";
         this.ctrls.connectButton.addEventListener("click", this.login.bind(this), false);
@@ -42,15 +69,22 @@ function Application(thisName, resetLocation, showTyping, showChat, addUser, upd
             "reconnection delay": 1000,
             "max reconnection attempts": 60
         });
-        this.socket.on("typing", showTyping.bind(window, false, false));
-        this.socket.on("chat", showChat);    
-        this.socket.on("userJoin", addUser);
-        this.socket.on("userState", updateUserState.bind(window, false));
-        this.socket.on("userLeft", userLeft);
+        this.socket.on("typing", this.showTyping.bind(this, false, false));
+        this.socket.on("chat", this.showChat.bind(this));    
+        this.socket.on("userJoin", this.addUser.bind(this));
+        this.socket.on("userState", this.updateUserState.bind(this, false));
+        this.socket.on("userLeft", function (userName){
+            if(this.users[userName]){
+                this.showMessage("$1 has disconnected", userName);
+                this.scene.remove(this.users[userName]);
+                delete this.users[userName];
+                this.makeChatList();
+            }
+        }.bind(this));
         this.socket.on("loginFailed", function(){
             this.ctrls.connectButton.innerHTML = "Login failed. Try again.";
             this.ctrls.connectButton.className = "primary button";
-            msg("Incorrect user name or password!");
+            this.showMessage("Incorrect user name or password!");
         }.bind(this));
         this.socket.on("userList", function (newUsers){
             this.ctrls.connectButton.className = "secondary button";
@@ -58,11 +92,11 @@ function Application(thisName, resetLocation, showTyping, showChat, addUser, upd
             this.proxy.connect(this.userName);
             newUsers.sort(function(a){ return (a.userName === this.userName) ? -1 : 1;});
             for(var i = 0; i < newUsers.length; ++i){
-                addUser(newUsers[i], true);
+                this.addUser(newUsers[i], true);
             }
-            makeChatList();
+            this.makeChatList();
         }.bind(this));
-        this.socket.on("disconnect", msg.bind(window));
+        this.socket.on("disconnect", this.showMessage.bind(window));
         this.socket.on("handshakeFailed", console.error.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
         this.socket.on("handshakeComplete", function(controller){
             if(controller === "demo"
@@ -164,7 +198,7 @@ function Application(thisName, resetLocation, showTyping, showChat, addUser, upd
     //
     // restoring the options the user selected
     //
-    var formStateKey = thisName + " - formState";
+    var formStateKey = name + " - formState";
     var formState = getSetting(formStateKey);
     writeForm(this.ctrls, formState);
     window.addEventListener("beforeunload", function(){
@@ -179,7 +213,7 @@ function Application(thisName, resetLocation, showTyping, showChat, addUser, upd
     this.speech = new SpeechInput("speech", [
         { name: "options", keywords: ["options"], commandUp: this.toggleOptions.bind(this) },
         { name: "chat", preamble: true, keywords: ["message"], commandUp: function (){ 
-            showTyping(true, true, this.speech.getValue("chat")); 
+            this.showTyping(true, true, this.speech.getValue("chat")); 
         }.bind(this)}
     ], this.proxy);    
     this.setupModuleEvents(this.speech, "speech");
@@ -192,8 +226,11 @@ function Application(thisName, resetLocation, showTyping, showChat, addUser, upd
         { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHTARROW] },
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
-        { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: resetLocation },
-        { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
+        { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: function (){
+            this.currentUser.position.set(0, 2, 0);
+            this.currentUser.velocity.set(0, 0, 0);
+        }.bind(this) },
+        { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: this.showTyping.bind(this, true)}
     ], this.proxy);    
     this.keyboard.pause(true);
     this.setupModuleEvents(this.keyboard, "keyboard");
@@ -259,6 +296,7 @@ function Application(thisName, resetLocation, showTyping, showChat, addUser, upd
     );
     this.hand.name = "HAND0";
     this.hand.add(new THREE.PointLight(0xffff00, 1, 7));
+    this.scene.add(this.hand);
     var leapCommands = [];
     leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput["HAND0X"]], scale: 0.015 });
     leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput["HAND0Y"]], scale: 0.015, offset: -4 });
@@ -315,7 +353,7 @@ function Application(thisName, resetLocation, showTyping, showChat, addUser, upd
     }.bind(this), false);
     
     this.ctrls.textEntry.addEventListener("change", function (){
-        showTyping(true, true, this.ctrls.textEntry.value);
+        this.showTyping(true, true, this.ctrls.textEntry.value);
         this.ctrls.textEntry.value = "";
     }.bind(this), false);
 
@@ -323,20 +361,6 @@ function Application(thisName, resetLocation, showTyping, showChat, addUser, upd
     for(var i = 0; i < closers.length; ++i){
         closers[i].addEventListener("click", this.hideOptions.bind(this), false);
     }
-    
-    //
-    // Audio setup
-    //
-    this.audio = new Audio3DOutput();
-    
-    //
-    // THREE.js setup
-    //
-    this.scene = new THREE.Scene();
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.ctrls.frontBuffer }),
-    this.renderer.setClearColor(BG_COLOR);
-    this.setSize(window.innerWidth, window.innerHeight);
-    this.testPoint = new THREE.Vector3();
 }
 
 Application.prototype.update = function(dt){
@@ -416,7 +440,7 @@ Application.prototype.hideOnscreenControls = function(){
     
 Application.prototype.showOnscreenControls = function(){
     this.ctrls.onScreenControls.style.display = "";
-    if(this.hideControlsTimeout !== null){
+    if(this.hideControlsTimeout){
         clearTimeout(this.hideControlsTimeout);
     }
     this.hideControlsTimeout = setTimeout(this.hideOnscreenControls.bind(this), 3000);
@@ -518,10 +542,194 @@ Application.prototype.login = function(){
             });
         }
         else{
-            this.msg("Please complete the form.");
+            this.showMessage("Please complete the form.");
         }
     }
     else{
-        this.msg("No socket available.");
+        this.showMessage("No socket available.");
+    }
+};
+
+Application.prototype.addUser = function(userState, skipMakingChatList){
+    var user = null;
+    if(!this.users[userState.userName]){
+        if(this.userName === DEFAULT_USER_NAME
+            || userState.userName !== this.userName){
+            user = new THREE.Object3D();        
+            var model = this.avatar.clone();
+            user.animation = model.animation;
+            model.position.z = 1.33;
+            user.add(model);
+
+            user.nameObj = new VUI.Text(
+                userState.userName, 0.5,
+                "white", "transparent",
+                0, PLAYER_HEIGHT + 2.5, 0, 
+                "center");
+            user.add(user.nameObj);
+
+            user.velocity = new THREE.Vector3();
+
+            if(userState.userName === DEFAULT_USER_NAME){
+                this.currentUser = user;
+            }
+            else{
+                this.showMessage("$1 has joined", userState.userName);
+            }
+
+            this.scene.add(user);
+        }
+        else{
+            delete this.users[DEFAULT_USER_NAME];
+            user = this.currentUser;
+        }
+    }
+    else {
+        user = this.users[userState.userName];
+    }
+
+    this.users[userState.userName] = user;
+    this.updateUserState(true, userState);
+
+    if(!skipMakingChatList){
+        this.makeChatList();
+    }
+};
+
+Application.prototype.updateUserState = function(firstTime, userState){
+    var user = user || this.users[userState.userName];
+    if(!user){
+        setTimeout(this.addUser.bind(this, userState), 1);
+    }
+    else{
+        if(firstTime){
+            user.position.set(
+                userState.x, 
+                // just in case the user falls through the world, 
+                // reloading will get them back to level.
+                Math.max(0, userState.y), 
+                userState.z);
+            user.lastHeading = user.heading = userState.heading;
+            user.dHeading = 0;
+        }
+        else{
+            user.velocity.set(
+                ((userState.x + userState.dx * DFRAME) - user.position.x) / DFRAME,
+                ((userState.y + userState.dy * DFRAME) - user.position.y) / DFRAME,
+                ((userState.z + userState.dz * DFRAME) - user.position.z) / DFRAME);
+            user.dHeading = ((userState.heading + userState.dHeading * DFRAME) - user.heading) / DFRAME;
+        }
+    }
+};
+
+Application.prototype.makeChatList = function(){
+    var list = [];
+    for(var k in this.users){
+        list.push(k);
+    }
+    list.sort();
+    this.ctrls.userList.innerHTML = "";
+    for(var i = 0; i < list.length; ++i){
+        if(list[i] !== DEFAULT_USER_NAME){
+            var entry = document.createElement("div");
+            entry.appendChild(document.createTextNode(list[i]));
+            this.ctrls.userList.appendChild(entry);
+        }
+    }
+};
+
+Application.prototype.showMessage = function(){
+    var msg = fmt.apply(window, map(arguments, function(v){ return v ? v.toString() : ""; }));
+    if(this.currentUser){
+        this.showChat(msg);
+    }
+    else {
+        alert(msg);
+    }
+};
+
+Application.prototype.showTyping = function(isLocal, isComplete, text){
+    if(this.currentUser){
+        if(this.lastText){
+            this.currentUser.remove(this.lastText);
+            this.lastText = null;
+        }
+
+        if(isComplete){
+            if(this.socket){
+                this.socket.emit("chat", text);
+            }
+        }
+        else{
+            if(isLocal && this.socket){
+                this.socket.emit("typing", text);
+            }
+            if(text){
+                var textObj= new VUI.Text(
+                    text, 0.125,
+                    "white", "transparent",
+                    0, PLAYER_HEIGHT, -4,
+                    "right");
+                this.lastText = textObj;
+                this.currentUser.add(textObj);
+                if(this.clickSound){
+                    this.audio.playBufferImmediate(this.clickSound, 0.5);
+                }
+            }
+        }
+    }
+};
+
+Application.prototype.shiftLines = function(){
+    for(var i = 0; i < this.chatLines.length; ++i){
+        this.chatLines[i].position.y = PLAYER_HEIGHT + (this.chatLines.length - i) * CHAT_TEXT_SIZE * 1.333 - 1;
+    }
+};
+
+Application.prototype.showChat = function(msg){
+    msg = typeof(msg) === "string" ? msg : fmt("[$1]: $2", msg.userName, msg.text);
+    if(this.currentUser){
+        if(this.userName === msg.userName){
+            this.showTyping(true, false, null);
+        }
+        var textObj= new VUI.Text(
+            msg, CHAT_TEXT_SIZE,
+            "white", "transparent",
+            -2, 0, -5, "left");
+        this.currentUser.add(textObj);
+        this.chatLines.push(textObj);
+        this.shiftLines();
+        setTimeout(function(){
+            this.currentUser.remove(textObj);
+            this.chatLines.shift();
+            this.shiftLines();
+        }.bind(this), 3000);
+    }
+
+    var div = document.createElement("div");
+    div.appendChild(document.createTextNode(msg));
+    this.ctrls.chatLog.appendChild(div);
+    this.ctrls.chatLog.scrollTop = this.ctrls.chatLog.scrollHeight;
+
+    if(!this.focused && window.Notification){
+        this.makeNotification(msg);
+    }
+};
+
+Application.prototype.makeNotification = function(msg){
+    if (Notification.permission === "granted") {
+        if(this.lastNote){
+            msg = this.lastNote.body + "\n" + msg;
+            this.lastNote.close();
+            this.lastNote = null;
+        }
+        this.lastNote = new Notification(document.title, {
+            icon: "../ico/chat.png",
+            body: msg
+        });
+        this.lastNote.addEventListener("close", function(){
+            this.lastNote = null;
+        }.bind(this), false);
+        return this.lastNote;
     }
 };
