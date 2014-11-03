@@ -16,7 +16,6 @@ function holodeck(){
         strafe = 0,
         drive = 0,
         chatLines = [],
-        users = {},
         lastText = null,
         lastNote = null,
         currentUser = null,
@@ -176,8 +175,8 @@ function holodeck(){
             //
             // update avatars
             //
-            for(var key in users){
-                var user = users[key];
+            for(var key in app.users){
+                var user = app.users[key];
                 testPoint.copy(user.velocity);
                 testPoint.multiplyScalar(dt);
                 user.position.add(testPoint);
@@ -319,7 +318,7 @@ function holodeck(){
     };
 
     function updateUserState(firstTime, userState){
-        var user = user || users[userState.userName];
+        var user = user || app.users[userState.userName];
         if(!user){
             setTimeout(addUser.bind(this, userState), 1);
         }
@@ -349,7 +348,7 @@ function holodeck(){
 
     function addUser(userState, skipMakingChatList){
         var user = null;
-        if(!users[userState.userName]){
+        if(!app.users[userState.userName]){
             if(app.userName === DEFAULT_USER_NAME
                 || userState.userName !== app.userName){
                 user = new THREE.Object3D();        
@@ -377,15 +376,15 @@ function holodeck(){
                 app.scene.add(user);
             }
             else{
-                delete users[DEFAULT_USER_NAME];
+                delete app.users[DEFAULT_USER_NAME];
                 user = currentUser;
             }
         }
         else {
-            user = users[userState.userName];
+            user = app.users[userState.userName];
         }
 
-        users[userState.userName] = user;
+        app.users[userState.userName] = user;
         updateUserState(true, userState);
 
         if(!skipMakingChatList){
@@ -394,29 +393,17 @@ function holodeck(){
     }
 
     function userLeft(userName){
-        if(users[userName]){
+        if(app.users[userName]){
             msg("$1 has disconnected", userName);
-            app.scene.remove(users[userName]);
-            help(ctrls.userList);
-            delete users[userName];
+            app.scene.remove(app.users[userName]);
+            delete app.users[userName];
             makeChatList();
         }
     }
 
-    function listUsers(newUsers){
-        ctrls.connectButton.className = "secondary button";
-        ctrls.connectButton.innerHTML = "Connected";
-        app.proxy.connect(app.userName);
-        newUsers.sort(function(a){ return (a.userName === app.userName) ? -1 : 1;});
-        for(var i = 0; i < newUsers.length; ++i){
-            addUser(newUsers[i], true);
-        }
-        makeChatList();
-    }
-
     function makeChatList(){
         var list = [];
-        for(var k in users){
+        for(var k in app.users){
             list.push(k);
         }
         list.sort();
@@ -430,7 +417,7 @@ function holodeck(){
         }
     }
     
-    app = new Application("holodeck", resetLocation, showTyping, showChat, addUser, updateUserState, userLeft, listUsers, msg);
+    app = new Application("holodeck", resetLocation, showTyping, showChat, addUser, updateUserState, userLeft, makeChatList, msg);
 
     ModelLoader.loadCollada("models/scene2.dae", function(object){
         mainScene = object;

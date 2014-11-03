@@ -52,26 +52,28 @@
             }
         }
         
+        
         function get(url, type, done){
             var xhr = new XMLHttpRequest();
-            xhr.onload = function(){
-                done(xhr.response);
-            };
-            xhr.responseType = type;
             xhr.open("GET", url);
+            xhr.responseType = type;
+            xhr.addEventListener("load", function(){
+                done(xhr.response);
+            }, false);
             xhr.send();
+            return xhr;
         }
             
         function closeReloadMessage(successfulLoad){
             if(successfulLoad){
                 applicationCache.swapCache();
             }
-            get("templates/game.ui.html", "text", function(content){
-                get("templates/$1.about.html", "text", function(about){
+            var a = get("templates/game.ui.html", "text", function(content){
+                var b = get("templates/$1.about.html", "text", function(about){
                     ctrls.appCacheStatus.style.display = "none";
                     document.body.innerHTML += content.replace("[ABOUT]", about);
                     document.getElementById("gameTitle").innerHTML = "$2";
-                    get("js/game.libs.json", "json", function(libs){                   
+                    var c = get("js/game.libs.json", "json", function(libs){ 
                         libs.push("js/controllers/$1.js");
                         loadLibs(libs, function(){
                             TabSet.makeAll();

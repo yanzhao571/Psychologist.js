@@ -24,13 +24,14 @@ var BG_COLOR = 0x000000,
     DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE",
     RIGHT = new THREE.Vector3(-1, 0, 0);
         
-function Application(thisName, resetLocation, showTyping, showChat, addUser, updateUserState, userLeft, listUsers, msg){
+function Application(thisName, resetLocation, showTyping, showChat, addUser, updateUserState, userLeft, makeChatList, msg){
     this.ctrls = findEverything();
     this.hideControlsTimeout = null;
     this.focused = true;
     this.wasFocused = false;
     this.msg = msg;
     this.userName = DEFAULT_USER_NAME;
+    this.users = {};
     
     if(this.ctrls.appCacheReload.style.display === "none" && navigator.onLine){
         this.ctrls.loginForm.style.display = "";
@@ -51,7 +52,16 @@ function Application(thisName, resetLocation, showTyping, showChat, addUser, upd
             this.ctrls.connectButton.className = "primary button";
             msg("Incorrect user name or password!");
         }.bind(this));
-        this.socket.on("userList", listUsers);
+        this.socket.on("userList", function (newUsers){
+            this.ctrls.connectButton.className = "secondary button";
+            this.ctrls.connectButton.innerHTML = "Connected";
+            this.proxy.connect(this.userName);
+            newUsers.sort(function(a){ return (a.userName === this.userName) ? -1 : 1;});
+            for(var i = 0; i < newUsers.length; ++i){
+                addUser(newUsers[i], true);
+            }
+            makeChatList();
+        }.bind(this));
         this.socket.on("disconnect", msg.bind(window));
         this.socket.on("handshakeFailed", console.error.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
         this.socket.on("handshakeComplete", function(controller){
@@ -305,7 +315,7 @@ function Application(thisName, resetLocation, showTyping, showChat, addUser, upd
     }.bind(this), false);
     
     this.ctrls.textEntry.addEventListener("change", function (){
-        this.showTyping(true, true, this.ctrls.textEntry.value);
+        showTyping(true, true, this.ctrls.textEntry.value);
         this.ctrls.textEntry.value = "";
     }.bind(this), false);
 
