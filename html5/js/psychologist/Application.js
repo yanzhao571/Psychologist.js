@@ -109,7 +109,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     // Setup networking
     //
     if(this.ctrls.appCacheReload.style.display === "none" && navigator.onLine){
-        this.ctrls.loginForm.style.display = "";
         this.ctrls.connectButton.addEventListener("click", this.login.bind(this), false);
         
         this.socket = io.connect(document.location.hostname, {
@@ -117,6 +116,10 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
             "reconnection delay": 1000,
             "max reconnection attempts": 60
         });
+        this.socket.on("connect", function(){
+            this.ctrls.connectButton.innerHTML = Application.DISCONNECTED_TEXT;
+            this.ctrls.connectButton.className = "primary button";
+        }.bind(this));
         this.socket.on("typing", this.showTyping.bind(this, false, false));
         this.socket.on("chat", this.showChat.bind(this));    
         this.socket.on("userJoin", this.addUser.bind(this));
@@ -135,8 +138,8 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
             this.showMessage("Incorrect user name or password!");
         }.bind(this));
         this.socket.on("userList", function (newUsers){
-            this.ctrls.connectButton.className = "secondary button";
-            this.ctrls.connectButton.innerHTML = "Connected";
+            this.ctrls.connectButton.innerHTML = Application.CONNECTED_TEXT;
+            this.ctrls.connectButton.className = "primary button";
             this.proxy.connect(this.userName);
             newUsers.sort(function(a){ return (a.userName === this.userName) ? -1 : 1;});
             for(var i = 0; i < newUsers.length; ++i){
@@ -144,7 +147,11 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
             }
             this.makeChatList();
         }.bind(this));
-        this.socket.on("disconnect", this.showMessage.bind(this));
+        this.socket.on("disconnect", function(reason){
+            this.ctrls.connectButton.className = "secondary button";
+            this.ctrls.connectButton.innerHTML = fmt("Disconnected: $1", reason);
+            this.showMessage(reason);
+        }.bind(this));
         this.socket.on("handshakeFailed", console.error.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
         this.socket.on("handshakeComplete", function(controller){
             if(controller === "demo"
@@ -283,7 +290,8 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         { name: "pointerPitch", commands: ["dy"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.125, max: Math.PI * 0.125 },
         { name: "dz", axes: [MouseInput.Z], delta: true },
         { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: 0, max: 10 },
-        { name: "pointerPress", buttons: [1], integrate: true, scale: -10, offset: 5, min: -0.4, max: 0 }
+        { name: "pointerPress", buttons: [1], integrate: true, scale: -10, offset: 5, min: -0.4, max: 0 },
+        { name: "click1", buttons: [1], commandUp: this.showMessage.bind(this, "cmdUp") }
     ], this.proxy);
     this.setupModuleEvents(this.mouse, "mouse");
     
@@ -407,6 +415,8 @@ Application.DEFAULTS = {
     dtNetworkUpdate: 0.125 // the amount of time to allow to elapse between sending state to teh server
 };
 
+Application.CONNECTED_TEXT = "Disconnect";
+Application.DISCONNECTED_TEXT = "Connect";
 Application.DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE";
 Application.RIGHT = new THREE.Vector3(-1, 0, 0);
 
@@ -582,24 +592,35 @@ Application.prototype.setSize = function(w, h){
 };
 
 Application.prototype.login = function(){
-    if(this.socket && this.ctrls.connectButton.classList.contains("primary")){
-        this.userName = this.ctrls.userNameField.value;
-        var password = this.ctrls.passwordField.value;
-        if(this.userName && password){
-            this.socket.once("salt", function(salt){
-                var hash = CryptoJS.SHA512(salt + password).toString();
-                this.socket.emit("hash", hash);
-            }.bind(this));
-            this.ctrls.connectButton.innerHTML = "Connecting...";
-            this.ctrls.connectButton.className = "secondary button";
-            this.socket.emit("login", {
-                userName: this.userName,
-                email: this.ctrls.emailField.value
-            });
+    if(this.socket 
+        && this.socket.connected
+        && this.ctrls.connectButton.classList.contains("primary")){
+        console.log(this.ctrls.connectButton.innerHTML);
+        if(this.ctrls.connectButton.innerHTML === Application.DISCONNECTED_TEXT){
+            console.log("connecting");
+            this.userName = this.ctrls.userNameField.value;
+            var password = this.ctrls.passwordField.value;
+            if(this.userName && password){
+                this.socket.once("salt", function(salt){
+                    var hash = CryptoJS.SHA512(salt + password).toString();
+                    this.socket.emit("hash", hash);
+                }.bind(this));
+                this.ctrls.connectButton.innerHTML = "Connecting...";
+                this.ctrls.connectButton.className = "secondary button";
+                this.socket.emit("login", {
+                    userName: this.userName,
+                    email: this.ctrls.emailField.value
+                });
+            }
+            else{
+                this.showMessage("Please complete the form.");
+            }
         }
-        else{
-            this.showMessage("Please complete the form.");
-        }
+        else if(this.ctrls.connectButton.innerHTML === Application.CONNECTED_TEXT){ 
+           console.log("disconnecting");
+           this.socket.emit("logout");
+           this.ctrls.connectButton.innerHTML = Application.DISCONNECTED_TEXT;
+        }        
     }
     else{
         this.showMessage("No socket available.");

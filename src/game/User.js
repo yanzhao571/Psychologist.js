@@ -3,6 +3,7 @@ var crypto = require("crypto"),
 
 function User(info){
     this.devices = [];
+    this.handlers = [];
     this.state = {
         x: 0,
         y: 0,
@@ -55,18 +56,23 @@ User.prototype.addDevice = function(users, socket){
     //
     // bind the events
     //
-    socket.on("userState", function(state){
-        this.state.x = state.x;
-        this.state.y = state.y;
-        this.state.z = state.z;
-        this.state.heading = state.heading;
-        this.state.isRunning = state.isRunning;
-        this.broadcast(users, index, "userState", this.state);
-    }.bind(this));
-
-    socket.on("chat", User.prototype.chat.bind(this, users, index));
-
-    socket.on("disconnect", User.prototype.disconnect.bind(this, users, index));
+    var handlers = {
+        onUserState: function(state){
+            this.state.x = state.x;
+            this.state.y = state.y;
+            this.state.z = state.z;
+            this.state.heading = state.heading;
+            this.state.isRunning = state.isRunning;
+            this.broadcast(users, index, "userState", this.state);
+        }.bind(this),
+        onChat: User.prototype.chat.bind(this, users),
+        onDisconnect: User.prototype.disconnect.bind(this, users, index)
+    };
+    socket.on("userState", handlers.onUserState);
+    socket.on("chat", handlers.onChat);
+    socket.on("logout", handlers.onDisconnect);
+    socket.on("disconnect", handlers.onDisconnect);
+    this.handlers[index] = handlers;
     
     //
     // notify the new client of all of the users currently logged in
@@ -124,7 +130,7 @@ User.prototype.isConnected = function(){
     return devicesLeft > 0;
 };
 
-User.prototype.chat = function(users, index, text){
+User.prototype.chat = function(users, text){
     log("[$1]: $2", this.state.userName, text);
     this.broadcast(users, -1, "chat", {
         userName: this.state.userName,
@@ -133,7 +139,12 @@ User.prototype.chat = function(users, index, text){
 };
 
 User.prototype.disconnect = function(users, index){
+    this.devices[index].removeListener("userState", this.handlers[index].onUserState);
+    this.devices[index].removeListener("chat", this.handlers[index].onChat);
+    this.devices[index].removeListener("logout", this.handlers[index].onDisconnect);
+    this.devices[index].removeListener("disconnect", this.handlers[index].onDisconnect);
     this.devices[index] = null;
+    this.handlers[index] = null;
     if(this.isConnected()){
         log("Device #$1 lost for $2.", index, this.state.userName);
         this.emit(index, "deviceLost");

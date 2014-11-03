@@ -50,22 +50,7 @@ function writeUserList(){
 module.exports = {
     handshake: "demo",
     bindSocket: function(socket){
-        log("starting demo for new user.");
-        
-        function login(identity){
-            var key = identity 
-                && identity.userName 
-                && identity.userName.toLocaleUpperCase().trim();
-            log("Trying to authenticate $1", key);
-            if(!key){
-                socket.emit("loginFailed");
-            }
-            else{
-                var salt = users[key] && users[key].salt || User.makeNewSalt();
-                socket.once("hash", receiveHash.bind(this, identity, key, salt));
-                socket.emit("salt", salt);
-            }
-        }
+        log("starting demo for new user.");        
         
         function receiveHash(identity, key, salt, hash){
             if(!users[key]){
@@ -88,6 +73,21 @@ module.exports = {
                 socket.emit("loginFailed");
             }
         }
-        socket.once("login", login);
+        
+        function login(identity){
+            var key = identity 
+                && identity.userName 
+                && identity.userName.toLocaleUpperCase().trim();
+            log("Trying to authenticate $1", key);
+            if(!key){
+                socket.emit("loginFailed");
+            }
+            else{
+                var salt = users[key] && users[key].salt || User.makeNewSalt();
+                socket.once("hash", receiveHash.bind(this, identity, key, salt));
+                socket.emit("salt", salt);
+            }
+        }
+        socket.on("login", login);
     }
 };
