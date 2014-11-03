@@ -17,9 +17,43 @@
 var BG_COLOR = 0x000000,
     PLAYER_HEIGHT = 6.5;
         
-function Application(thisName, resetLocation, showTyping, proxy){
-    this.hideControlsTimeout = null;
+function Application(thisName, resetLocation, showTyping, showChat, addUser, updateUserState, userLeft, listUsers, msg){
     this.ctrls = findEverything();
+    this.hideControlsTimeout = null;
+    this.focused = true;
+    this.wasFocused = false;
+    if(this.ctrls.appCacheReload.style.display === "none" && navigator.onLine){
+        this.ctrls.loginForm.style.display = "";
+        
+        this.socket = io.connect(document.location.hostname, {
+            "reconnect": true,
+            "reconnection delay": 1000,
+            "max reconnection attempts": 60
+        });
+        this.socket.on("typing", showTyping.bind(window, false, false));
+        this.socket.on("chat", showChat);    
+        this.socket.on("userJoin", addUser);
+        this.socket.on("userState", updateUserState.bind(window, false));
+        this.socket.on("userLeft", userLeft);
+        this.socket.on("loginFailed", function(){
+            this.ctrls.connectButton.innerHTML = "Login failed. Try again.";
+            this.ctrls.connectButton.className = "primary button";
+            msg("Incorrect user name or password!");
+        }.bind(this));
+        this.socket.on("userList", listUsers);
+        this.socket.on("disconnect", msg.bind(window));
+        this.socket.on("handshakeFailed", console.error.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
+        this.socket.on("handshakeComplete", function(controller){
+            if(controller === "demo"
+                && this.ctrls.autoLogin.checked
+                && this.ctrls.userNameField.value.length > 0
+                && this.ctrls.passwordField.value.length > 0){
+                this.ctrls.connectButton.click();
+            }
+        }.bind(this));
+        this.socket.emit("handshake", "demo");
+    }
+    this.proxy = new WebRTCSocket(this.socket, this.ctrls.defaultDisplay.checked);
     
     //
     // The various options, and packs of them when selecting from a dropdown
@@ -126,7 +160,7 @@ function Application(thisName, resetLocation, showTyping, proxy){
         { name: "chat", preamble: true, keywords: ["message"], commandUp: function (){ 
             showTyping(true, true, this.speech.getValue("chat")); 
         }.bind(this)}
-    ], proxy);    
+    ], this.proxy);    
     this.setupModuleEvents(this.speech, "speech");
     
     //
@@ -139,7 +173,7 @@ function Application(thisName, resetLocation, showTyping, proxy){
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
         { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: resetLocation },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
-    ], proxy);    
+    ], this.proxy);    
     this.keyboard.pause(true);
     this.setupModuleEvents(this.keyboard, "keyboard");
     
@@ -156,7 +190,7 @@ function Application(thisName, resetLocation, showTyping, proxy){
         { name: "dz", axes: [MouseInput.Z], delta: true },
         { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: 0, max: 10 },
         { name: "pointerPress", buttons: [1], integrate: true, scale: -10, offset: 5, min: -0.4, max: 0 }
-    ], proxy);
+    ], this.proxy);
     this.setupModuleEvents(this.mouse, "mouse");
     
     //
@@ -166,7 +200,7 @@ function Application(thisName, resetLocation, showTyping, proxy){
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
         { name: "roll", axes: [-MotionInput.ROLL] }
-    ], proxy);
+    ], this.proxy);
     this.setupModuleEvents(this.head, "head");
     
     //
@@ -175,7 +209,7 @@ function Application(thisName, resetLocation, showTyping, proxy){
     this.touch = new TouchInput("touch", null, [
         { name: "heading", axes: [TouchInput.DX0], integrate: true },
         { name: "drive", axes: [-TouchInput.DY0] }
-    ], proxy);
+    ], this.proxy);
     this.setupModuleEvents(this.touch, "touch");
     
     //
@@ -187,7 +221,7 @@ function Application(thisName, resetLocation, showTyping, proxy){
         { name: "heading", axes: [-GamepadInput.RSX], integrate: true},
         { name: "pitch", axes: [GamepadInput.RSY], integrate: true},
         { name: "options", buttons: [9], commandUp: this.toggleOptions.bind(this) }
-    ], proxy);
+    ], this.proxy);
     this.setupModuleEvents(this.gamepad, "gamepad");
     this.gamepad.addEventListener("gamepadconnected", function (id){
         if (!this.gamepad.isGamepadSet() && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))){
@@ -199,7 +233,7 @@ function Application(thisName, resetLocation, showTyping, proxy){
     // Leap Motion input
     //
     this.hand = new THREE.Mesh(
-        new THREE.SphereGeometry(0.1 + i * 0.005, 4, 4), 
+        new THREE.SphereGeometry(0.1, 4, 4), 
         new THREE.MeshPhongMaterial({color: 0xffff00, emissive: 0x7f7f00})
     );
     this.hand.name = "HAND0";
@@ -208,7 +242,7 @@ function Application(thisName, resetLocation, showTyping, proxy){
     leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput["HAND0X"]], scale: 0.015 });
     leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput["HAND0Y"]], scale: 0.015, offset: -4 });
     leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput["HAND0Z"]], scale: -0.015, offset: 3 });
-    this.leap = new LeapMotionInput("leap", null, leapCommands, proxy);
+    this.leap = new LeapMotionInput("leap", null, leapCommands, this.proxy);
     this.setupModuleEvents(this.leap, "leap");
     
     //
@@ -230,6 +264,22 @@ function Application(thisName, resetLocation, showTyping, proxy){
     
     window.addEventListener("resize", function (){
         this.setSize(window.innerWidth, window.innerHeight);
+    }.bind(this), false);
+    
+    window.addEventListener("focus", function(){
+        this.focused = true;
+    }.bind(this), false);
+
+    window.addEventListener("blur", function(){
+        this.focused = false;
+    }.bind(this), false);
+
+    document.addEventListener("focus", function(){
+        this.focused = true;
+    }.bind(this), false);
+
+    document.addEventListener("blur", function(){
+        this.focused = false;
     }.bind(this), false);
     
     this.ctrls.fullScreenButton.addEventListener("click", function(){

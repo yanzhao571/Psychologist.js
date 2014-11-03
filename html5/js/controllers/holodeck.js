@@ -11,8 +11,6 @@ function holodeck(){
         testPoint = new THREE.Vector3(),
         raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7),
         direction = new THREE.Vector3(),
-        focused = true,
-        wasFocused = false,
         autoWalking = false,
         onground = false,
         startHeading = 0,
@@ -27,52 +25,13 @@ function holodeck(){
         drive = 0,
         chatLines = [],
         users = {},
-        socket = null,
         lastText = null,
         lastNote = null,
-        lastRenderingType = null,
         currentUser = null,
         clickSound = null,
-        proxy = null,
         mainScene = null,
         factories = null,
         app = null;
-
-    if(ctrls.appCacheReload.style.display === "none" && navigator.onLine){
-        ctrls.loginForm.style.display = "";
-        
-        socket = io.connect(document.location.hostname, {
-            "reconnect": true,
-            "reconnection delay": 1000,
-            "max reconnection attempts": 60
-        });
-        socket.on("typing", showTyping.bind(window, false, false));
-        socket.on("chat", showChat);    
-        socket.on("userJoin", addUser);
-        socket.on("userState", updateUserState.bind(window, false));
-        socket.on("userLeft", userLeft);
-        socket.on("loginFailed", loginFailed);
-        socket.on("userList", listUsers);
-        socket.on("disconnect", msg.bind(window));
-        socket.on("handshakeFailed", console.error.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
-        socket.on("handshakeComplete", function(controller){
-            if(controller === "demo"
-                && ctrls.autoLogin.checked
-                && ctrls.userNameField.value.length > 0
-                && ctrls.passwordField.value.length > 0){
-                ctrls.connectButton.click();
-            }
-        });
-        socket.emit("handshake", "demo");
-
-        proxy = new WebRTCSocket(socket, ctrls.defaultDisplay.checked);
-    }
-
-    function loginFailed(){
-        ctrls.connectButton.innerHTML = "Login failed. Try again.";
-        ctrls.connectButton.className = "primary button";
-        msg("Incorrect user name or password!");
-    }
 
     function msg(){
         var txt = fmt.apply(window, map(arguments, function(v){ return v ? v.toString() : ""; }));
@@ -100,7 +59,7 @@ function holodeck(){
         dt = (t - lt) * 0.001;
         lt = t;
 
-        if(wasFocused && focused){
+        if(app.wasFocused && app.focused){
             app.update(dt);
 
             roll = app.head.getValue("roll");
@@ -216,8 +175,8 @@ function holodeck(){
                         isRunning: currentUser.velocity.length() > 0
                     };
                     currentUser.lastHeading = currentUser.heading;
-                    if(socket){
-                        socket.emit("userState", state);
+                    if(app.socket){
+                        app.socket.emit("userState", state);
                     }
                 }
             }
@@ -273,21 +232,21 @@ function holodeck(){
             app.render(pitch, heading, roll, currentUser);
         }
 
-        wasFocused = focused;
+        app.wasFocused = app.focused;
     }
 
     function login(){
-        if(socket && ctrls.connectButton.classList.contains("primary")){
+        if(app.socket && ctrls.connectButton.classList.contains("primary")){
             userName = ctrls.userNameField.value;
             var password = ctrls.passwordField.value;
             if(userName && password){
-                socket.once("salt", function(salt){
+                app.socket.once("salt", function(salt){
                     var hash = CryptoJS.SHA512(salt + password).toString();
-                    socket.emit("hash", hash);
+                    app.socket.emit("hash", hash);
                 });
                 ctrls.connectButton.innerHTML = "Connecting...";
                 ctrls.connectButton.className = "secondary button";
-                socket.emit("login", {
+                app.socket.emit("login", {
                     userName: userName,
                     email: ctrls.emailField.value
                 });
@@ -319,13 +278,13 @@ function holodeck(){
             }
 
             if(isComplete){
-                if(socket){
-                    socket.emit("chat", text);
+                if(app.socket){
+                    app.socket.emit("chat", text);
                 }
             }
             else{
-                if(isLocal && socket){
-                    socket.emit("typing", text);
+                if(isLocal && app.socket){
+                    app.socket.emit("typing", text);
                 }
                 if(text !== null && text !== undefined){
                     var textObj= new VUI.Text(
@@ -374,7 +333,7 @@ function holodeck(){
         ctrls.chatLog.appendChild(div);
         ctrls.chatLog.scrollTop = ctrls.chatLog.scrollHeight;
 
-        if(!focused && window.Notification){
+        if(!app.focused && window.Notification){
             makeNotification(msg);
         }
     }
@@ -482,13 +441,13 @@ function holodeck(){
         }
     }
 
-    function listUsers(users){
+    function listUsers(newUsers){
         ctrls.connectButton.className = "secondary button";
         ctrls.connectButton.innerHTML = "Connected";
-        proxy.connect(userName);
-        users.sort(function(a){ return (a.userName === userName) ? -1 : 1;});
-        for(var i = 0; i < users.length; ++i){
-            addUser(users[i], true);
+        app.proxy.connect(userName);
+        newUsers.sort(function(a){ return (a.userName === userName) ? -1 : 1;});
+        for(var i = 0; i < newUsers.length; ++i){
+            addUser(newUsers[i], true);
         }
         makeChatList();
     }
@@ -512,23 +471,7 @@ function holodeck(){
     ctrls.textEntry.addEventListener("change", readChatBox, false);
     ctrls.connectButton.addEventListener("click", login, false);
     
-    app = new Application("holodeck", resetLocation, showTyping, proxy);
-    
-    window.addEventListener("focus", function(){
-        focused = true;
-    }, false);
-
-    window.addEventListener("blur", function(){
-        focused = false;
-    }, false);
-
-    document.addEventListener("focus", function(){
-        focused = true;
-    }, false);
-
-    document.addEventListener("blur", function(){
-        focused = false;
-    }, false);
+    app = new Application("holodeck", resetLocation, showTyping, showChat, addUser, updateUserState, userLeft, listUsers, msg);
 
 
     ModelLoader.loadCollada("models/scene2.dae", function(object){
