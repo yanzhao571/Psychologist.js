@@ -1,11 +1,5 @@
 function holodeck(){
     var ctrls = findEverything(),
-        DRAW_DISTANCE = 500,
-        CHAT_TEXT_SIZE = 0.25,
-        RIGHT = new THREE.Vector3(-1, 0, 0),
-        GRAVITY = 9.8, 
-        SPEED = 15,
-        DFRAME = 0.125,
         testPoint = new THREE.Vector3(),
         raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7),
         direction = new THREE.Vector3(),
@@ -233,11 +227,6 @@ function holodeck(){
         app.wasFocused = app.focused;
     }
 
-    function readChatBox(){
-        showTyping(true, true, ctrls.textEntry.value);
-        ctrls.textEntry.value = "";
-    }
-
     function resetLocation(){
         currentUser.position.set(0, 2, 0);
         currentUser.velocity.set(0, 0, 0);
@@ -440,11 +429,8 @@ function holodeck(){
             }
         }
     }
-
-    ctrls.textEntry.addEventListener("change", readChatBox, false);
     
     app = new Application("holodeck", resetLocation, showTyping, showChat, addUser, updateUserState, userLeft, listUsers, msg);
-
 
     ModelLoader.loadCollada("models/scene2.dae", function(object){
         mainScene = object;

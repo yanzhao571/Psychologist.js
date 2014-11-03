@@ -16,14 +16,20 @@
  */
 var BG_COLOR = 0x000000,
     PLAYER_HEIGHT = 6.5,
-    DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE";
+    DRAW_DISTANCE = 500,
+    CHAT_TEXT_SIZE = 0.25,
+    GRAVITY = 9.8, 
+    SPEED = 15,
+    DFRAME = 0.125,
+    DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE",
+    RIGHT = new THREE.Vector3(-1, 0, 0);
         
 function Application(thisName, resetLocation, showTyping, showChat, addUser, updateUserState, userLeft, listUsers, msg){
     this.ctrls = findEverything();
     this.hideControlsTimeout = null;
     this.focused = true;
     this.wasFocused = false;
-    this.msg = msg,
+    this.msg = msg;
     this.userName = DEFAULT_USER_NAME;
     
     if(this.ctrls.appCacheReload.style.display === "none" && navigator.onLine){
@@ -296,6 +302,11 @@ function Application(thisName, resetLocation, showTyping, showChat, addUser, upd
     
     this.ctrls.renderingStyle.addEventListener("change", function(){
         this.chooseRenderingEffect(this.ctrls.renderingStyle.value);
+    }.bind(this), false);
+    
+    this.ctrls.textEntry.addEventListener("change", function (){
+        this.showTyping(true, true, this.ctrls.textEntry.value);
+        this.ctrls.textEntry.value = "";
     }.bind(this), false);
 
     var closers = document.getElementsByClassName("closeSectionButton");
