@@ -61,111 +61,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.onground = false;
     
     //
-    // restoring the options the user selected
-    //
-    var formStateKey = name + " - formState";
-    var formState = getSetting(formStateKey);
-    writeForm(this.ctrls, formState);
-    window.addEventListener("beforeunload", function(){
-        var state = readForm(this.ctrls);
-        setSetting(formStateKey, state);
-        this.speech.enable(false);
-    }.bind(this), false);
-        
-    //
-    // Setup THREE.js
-    //
-    this.scene = new THREE.Scene();
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.ctrls.frontBuffer }),
-    this.renderer.setClearColor(this.options.backgroundColor);
-    this.setSize(window.innerWidth, window.innerHeight);
-    this.testPoint = new THREE.Vector3();
-    this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7);
-    this.direction = new THREE.Vector3();
-    this.buttonFactory = new VUI.ButtonFactory(buttonModel, buttonOptions);
-    this.avatar = new ModelLoader(avatarModel, function(){
-        this.addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: this.userName});
-    }.bind(this));    
-    ModelLoader.loadCollada(sceneModel, function(sceneGraph){
-        this.mainScene = sceneGraph;
-        this.scene.add(sceneGraph);
-        var cam = this.mainScene.Camera.children[0];
-        this.camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, this.options.drawDistance);
-    }.bind(this));
-    
-    //
-    // Setup audio
-    //
-    this.audio = new Audio3DOutput();
-    this.audio.loadBuffer(clickSound, null, function(buffer){
-        this.clickSound = buffer;
-    }.bind(this));
-    this.audio.load3DSound(ambientSound, true, 0, 0, 0, null, function(amb){
-        amb.volume.gain.value = 0.07;
-        amb.source.start(0);
-    }.bind(this));
-    
-    //
-    // Setup networking
-    //
-    if(this.ctrls.appCacheReload.style.display === "none" && navigator.onLine){
-        this.ctrls.connectButton.addEventListener("click", this.login.bind(this), false);
-        
-        this.socket = io.connect(document.location.hostname, {
-            "reconnect": true,
-            "reconnection delay": 1000,
-            "max reconnection attempts": 60
-        });
-        this.socket.on("connect", function(){
-            this.ctrls.connectButton.innerHTML = Application.DISCONNECTED_TEXT;
-            this.ctrls.connectButton.className = "primary button";
-        }.bind(this));
-        this.socket.on("typing", this.showTyping.bind(this, false, false));
-        this.socket.on("chat", this.showChat.bind(this));    
-        this.socket.on("userJoin", this.addUser.bind(this));
-        this.socket.on("userState", this.updateUserState.bind(this, false));
-        this.socket.on("userLeft", function (userName){
-            if(this.users[userName]){
-                this.showMessage("$1 has disconnected", userName);
-                this.scene.remove(this.users[userName]);
-                delete this.users[userName];
-                this.makeChatList();
-            }
-        }.bind(this));
-        this.socket.on("loginFailed", function(){
-            this.ctrls.connectButton.innerHTML = "Login failed. Try again.";
-            this.ctrls.connectButton.className = "primary button";
-            this.showMessage("Incorrect user name or password!");
-        }.bind(this));
-        this.socket.on("userList", function (newUsers){
-            this.ctrls.connectButton.innerHTML = Application.CONNECTED_TEXT;
-            this.ctrls.connectButton.className = "primary button";
-            this.proxy.connect(this.userName);
-            newUsers.sort(function(a){ return (a.userName === this.userName) ? -1 : 1;});
-            for(var i = 0; i < newUsers.length; ++i){
-                this.addUser(newUsers[i], true);
-            }
-            this.makeChatList();
-        }.bind(this));
-        this.socket.on("disconnect", function(reason){
-            this.ctrls.connectButton.className = "secondary button";
-            this.ctrls.connectButton.innerHTML = fmt("Disconnected: $1", reason);
-            this.showMessage(reason);
-        }.bind(this));
-        this.socket.on("handshakeFailed", console.error.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
-        this.socket.on("handshakeComplete", function(controller){
-            if(controller === "demo"
-                && this.ctrls.autoLogin.checked
-                && this.ctrls.userNameField.value.length > 0
-                && this.ctrls.passwordField.value.length > 0){
-                this.ctrls.connectButton.click();
-            }
-        }.bind(this));
-        this.socket.emit("handshake", "demo");
-        this.proxy = new WebRTCSocket(this.socket, this.ctrls.defaultDisplay.checked);
-    }
-    
-    //
     // The various options, and packs of them when selecting from a dropdown
     // list. This makes it easy to preconfigure the program to certain specs
     // and let the user override the others.
@@ -249,6 +144,108 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
             defaultDisplay: {checked: true}
         }}
     ]);
+    
+    //
+    // restoring the options the user selected
+    //
+    var formStateKey = name + " - formState";
+    var formState = getSetting(formStateKey);
+    writeForm(this.ctrls, formState);
+    window.addEventListener("beforeunload", function(){
+        var state = readForm(this.ctrls);
+        setSetting(formStateKey, state);
+        this.speech.enable(false);
+    }.bind(this), false);
+        
+    //
+    // Setup THREE.js
+    //
+    this.scene = new THREE.Scene();
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.ctrls.frontBuffer }),
+    this.renderer.setClearColor(this.options.backgroundColor);
+    this.setSize(window.innerWidth, window.innerHeight);
+    this.testPoint = new THREE.Vector3();
+    this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7);
+    this.direction = new THREE.Vector3();
+    this.buttonFactory = new VUI.ButtonFactory(buttonModel, buttonOptions);
+    this.avatar = new ModelLoader(avatarModel, function(){
+        this.addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: this.userName});
+    }.bind(this));    
+    ModelLoader.loadCollada(sceneModel, function(sceneGraph){
+        this.mainScene = sceneGraph;
+        this.scene.add(sceneGraph);
+        var cam = this.mainScene.Camera.children[0];
+        this.camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, this.options.drawDistance);
+    }.bind(this));
+    
+    //
+    // Setup audio
+    //
+    this.audio = new Audio3DOutput();
+    this.audio.loadBuffer(clickSound, null, function(buffer){
+        this.clickSound = buffer;
+    }.bind(this));
+    this.audio.load3DSound(ambientSound, true, 0, 0, 0, null, function(amb){
+        amb.volume.gain.value = 0.07;
+        amb.source.start(0);
+    }.bind(this));
+    
+    //
+    // Setup networking
+    //
+    if(this.ctrls.appCacheReload.style.display === "none" && navigator.onLine){
+        this.ctrls.connectButton.addEventListener("click", this.login.bind(this), false);
+        
+        this.socket = io.connect(document.location.hostname, {
+            "reconnect": true,
+            "reconnection delay": 1000,
+            "max reconnection attempts": 60
+        });
+        this.socket.on("connect", function(){
+            this.socket.emit("handshake", "demo");
+            this.ctrls.connectButton.innerHTML = Application.DISCONNECTED_TEXT;
+            this.ctrls.connectButton.className = "primary button";
+        }.bind(this));
+        this.socket.on("typing", this.showTyping.bind(this, false, false));
+        this.socket.on("chat", this.showChat.bind(this));    
+        this.socket.on("userJoin", this.addUser.bind(this));
+        this.socket.on("userState", this.updateUserState.bind(this, false));
+        this.socket.on("userLeft", function (userName){
+            if(this.users[userName]){
+                this.showMessage("$1 has disconnected", userName);
+                this.scene.remove(this.users[userName]);
+                delete this.users[userName];
+                this.makeChatList();
+            }
+        }.bind(this));
+        this.socket.on("loginFailed", function(){
+            this.ctrls.connectButton.innerHTML = "Login failed. Try again.";
+            this.ctrls.connectButton.className = "primary button";
+            this.showMessage("Incorrect user name or password!");
+        }.bind(this));
+        this.socket.on("userList", function (newUsers){
+            this.ctrls.connectButton.innerHTML = Application.CONNECTED_TEXT;
+            this.ctrls.connectButton.className = "primary button";
+            this.proxy.connect(this.userName);
+            newUsers.sort(function(a){ return (a.userName === this.userName) ? -1 : 1;});
+            for(var i = 0; i < newUsers.length; ++i){
+                this.addUser(newUsers[i], true);
+            }
+            this.makeChatList();
+        }.bind(this));
+        this.socket.on("disconnect", function(reason){
+            this.ctrls.connectButton.className = "secondary button";
+            this.ctrls.connectButton.innerHTML = fmt("Disconnected: $1", reason);
+            this.showMessage(reason);
+        }.bind(this));
+        this.socket.on("handshakeFailed", console.error.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
+        this.socket.on("handshakeComplete", function(controller){
+            if(controller === "demo" && this.ctrls.autoLogin.checked){
+                this.ctrls.connectButton.click();
+            }
+        }.bind(this));
+        this.proxy = new WebRTCSocket(this.socket, this.ctrls.defaultDisplay.checked);
+    }
     
     //
     // speech input
@@ -595,9 +592,7 @@ Application.prototype.login = function(){
     if(this.socket 
         && this.socket.connected
         && this.ctrls.connectButton.classList.contains("primary")){
-        console.log(this.ctrls.connectButton.innerHTML);
         if(this.ctrls.connectButton.innerHTML === Application.DISCONNECTED_TEXT){
-            console.log("connecting");
             this.userName = this.ctrls.userNameField.value;
             var password = this.ctrls.passwordField.value;
             if(this.userName && password){
@@ -617,7 +612,6 @@ Application.prototype.login = function(){
             }
         }
         else if(this.ctrls.connectButton.innerHTML === Application.CONNECTED_TEXT){ 
-           console.log("disconnecting");
            this.socket.emit("logout");
            this.ctrls.connectButton.innerHTML = Application.DISCONNECTED_TEXT;
         }        
