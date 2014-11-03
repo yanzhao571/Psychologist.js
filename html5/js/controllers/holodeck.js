@@ -1,10 +1,12 @@
 function holodeck(){
     var factories = null,
         app = new Application("holodeck", {
+            clickSound: "music/click.mp3",
+            ambientSound: "music/ambient.mp3",
             sceneModel: "models/scene2.dae",
             avatarModel: "models/bear.dae",
-            clickSound: "music/click.mp3",
-            ambientSound: "music/ambient.mp3"
+            avatarHeight: 6.5,
+            walkSpeed: 15
         });
 
     app.addEventListener("ready", function(){

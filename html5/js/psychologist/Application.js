@@ -14,24 +14,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-var BG_COLOR = 0x000000,
-    PLAYER_HEIGHT = 6.5,
-    DRAW_DISTANCE = 500,
-    CHAT_TEXT_SIZE = 0.25,
-    GRAVITY = 9.8, 
-    SPEED = 15,
-    DFRAME = 0.125,
-    DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE",
-    RIGHT = new THREE.Vector3(-1, 0, 0);
         
 function Application(name, options){
+    this.options = options || {};
+    for(var key in Application.DEFAULTS){
+        this.options[key] = this.options[key] || Application.DEFAULTS[key];
+    }
+    var missingOptions = [];
+    for(var i = 0; i < Application.REQUIRED.length; ++i){
+        var key = Application.REQUIRED[i];
+        if(!this.options[key]){
+            missingOptions.push(key);
+        }
+    }
+    if(missingOptions.length > 0){
+        throw new Error("Application options require a field(s): " + missingOptions.join(", "));
+    }
     this.ctrls = findEverything();
     this.users = {};
     this.chatLines = [];
     this.listeners = {
         ready: []
     };
-    this.userName = DEFAULT_USER_NAME;
+    this.userName = Application.DEFAULT_USER_NAME;
     this.focused = true;
     this.wasFocused = false;
     this.lt = 0;
@@ -44,30 +49,29 @@ function Application(name, options){
     //
     this.scene = new THREE.Scene();
     this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.ctrls.frontBuffer }),
-    this.renderer.setClearColor(BG_COLOR);
+    this.renderer.setClearColor(this.options.backgroundColor);
     this.setSize(window.innerWidth, window.innerHeight);
     this.testPoint = new THREE.Vector3();
     this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7);
     this.direction = new THREE.Vector3();
-    this.avatar = new ModelLoader(options.avatarModel, function(){
+    this.avatar = new ModelLoader(this.options.avatarModel, function(){
         this.addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: this.userName});
     }.bind(this));    
-
-    ModelLoader.loadCollada(options.sceneModel, function(sceneGraph){
+    ModelLoader.loadCollada(this.options.sceneModel, function(sceneGraph){
         this.mainScene = sceneGraph;
         this.scene.add(sceneGraph);
         var cam = this.mainScene.Camera.children[0];
-        this.camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, DRAW_DISTANCE);
+        this.camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, this.options.drawDistance);
     }.bind(this));
     
     //
     // Setup audio
     //
     this.audio = new Audio3DOutput();
-    this.audio.loadBuffer(options.clickSound, null, function(buffer){
+    this.audio.loadBuffer(this.options.clickSound, null, function(buffer){
         this.clickSound = buffer;
     }.bind(this));
-    this.audio.load3DSound(options.ambientSound, true, 0, 0, 0, null, function(amb){
+    this.audio.load3DSound(this.options.ambientSound, true, 0, 0, 0, null, function(amb){
         amb.volume.gain.value = 0.07;
         amb.source.start(0);
     }.bind(this));
@@ -238,7 +242,7 @@ function Application(name, options){
     //
     this.keyboard = new KeyboardInput("keyboard", [
         { name: "strafeLeft", buttons: [-KeyboardInput.A, -KeyboardInput.LEFTARROW] },
-        { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHTARROW] },
+        { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHT] },
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
         { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: function (){
@@ -377,6 +381,25 @@ function Application(name, options){
         closers[i].addEventListener("click", this.hideOptions.bind(this), false);
     }
 }
+    
+Application.DEFAULTS = {
+    backgroundColor: 0x000000, // the color that WebGL clears the background with before drawing
+    drawDistance: 500, // the far plane of the camera
+    chatTextSize: 0.25, // the size of a single line of text, in world units
+    gravity: 9.8, // the acceleration applied to falling objects
+    dtNetworkUpdate: 0.125 // the amount of time to allow to elapse between sending state to teh server
+};
+
+Application.DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE";
+Application.RIGHT = new THREE.Vector3(-1, 0, 0);
+Application.REQUIRED = [
+    "sceneModel", // the scene to present to the user, in COLLADA format
+    "avatarModel", // the model to use for players in the game, in COLLADA format
+    "avatarHeight", // the offset from the ground at which to place the camera
+    "walkSpeed", // how quickly the avatar moves across the ground
+    "clickSound", // the sound that plays when the user types
+    "ambientSound" // background hum or music
+];
 
 Application.prototype.addEventListener = function(event, thunk){
     if(this.listeners[event]){
@@ -489,7 +512,7 @@ Application.prototype.render = function(pitch, heading, roll, currentUser){
     //
     this.camera.rotation.set(pitch, heading, roll, "YZX");
     this.camera.position.copy(currentUser.position);
-    this.camera.position.y += PLAYER_HEIGHT;
+    this.camera.position.y += this.options.avatarHeight;
 
     //
     // draw
@@ -580,7 +603,7 @@ Application.prototype.login = function(){
 Application.prototype.addUser = function(userState, skipMakingChatList){
     var user = null;
     if(!this.users[userState.userName]){
-        if(this.userName === DEFAULT_USER_NAME
+        if(this.userName === Application.DEFAULT_USER_NAME
             || userState.userName !== this.userName){
             user = new THREE.Object3D();        
             var model = this.avatar.clone();
@@ -591,13 +614,13 @@ Application.prototype.addUser = function(userState, skipMakingChatList){
             user.nameObj = new VUI.Text(
                 userState.userName, 0.5,
                 "white", "transparent",
-                0, PLAYER_HEIGHT + 2.5, 0, 
+                0, this.options.avatarHeight + 2.5, 0, 
                 "center");
             user.add(user.nameObj);
 
             user.velocity = new THREE.Vector3();
 
-            if(userState.userName === DEFAULT_USER_NAME){
+            if(userState.userName === Application.DEFAULT_USER_NAME){
                 this.currentUser = user;
             }
             else{
@@ -607,7 +630,7 @@ Application.prototype.addUser = function(userState, skipMakingChatList){
             this.scene.add(user);
         }
         else{
-            delete this.users[DEFAULT_USER_NAME];
+            delete this.users[Application.DEFAULT_USER_NAME];
             user = this.currentUser;
         }
     }
@@ -641,10 +664,10 @@ Application.prototype.updateUserState = function(firstTime, userState){
         }
         else{
             user.velocity.set(
-                ((userState.x + userState.dx * DFRAME) - user.position.x) / DFRAME,
-                ((userState.y + userState.dy * DFRAME) - user.position.y) / DFRAME,
-                ((userState.z + userState.dz * DFRAME) - user.position.z) / DFRAME);
-            user.dHeading = ((userState.heading + userState.dHeading * DFRAME) - user.heading) / DFRAME;
+                ((userState.x + userState.dx * this.options.dtNetworkUpdate) - user.position.x) / this.options.dtNetworkUpdate,
+                ((userState.y + userState.dy * this.options.dtNetworkUpdate) - user.position.y) / this.options.dtNetworkUpdate,
+                ((userState.z + userState.dz * this.options.dtNetworkUpdate) - user.position.z) / this.options.dtNetworkUpdate);
+            user.dHeading = ((userState.heading + userState.dHeading * this.options.dtNetworkUpdate) - user.heading) / this.options.dtNetworkUpdate;
         }
     }
 };
@@ -657,7 +680,7 @@ Application.prototype.makeChatList = function(){
     list.sort();
     this.ctrls.userList.innerHTML = "";
     for(var i = 0; i < list.length; ++i){
-        if(list[i] !== DEFAULT_USER_NAME){
+        if(list[i] !== Application.DEFAULT_USER_NAME){
             var entry = document.createElement("div");
             entry.appendChild(document.createTextNode(list[i]));
             this.ctrls.userList.appendChild(entry);
@@ -695,7 +718,7 @@ Application.prototype.showTyping = function(isLocal, isComplete, text){
                 var textObj= new VUI.Text(
                     text, 0.125,
                     "white", "transparent",
-                    0, PLAYER_HEIGHT, -4,
+                    0, this.options.avatarHeight, -4,
                     "right");
                 this.lastText = textObj;
                 this.currentUser.add(textObj);
@@ -709,7 +732,7 @@ Application.prototype.showTyping = function(isLocal, isComplete, text){
 
 Application.prototype.shiftLines = function(){
     for(var i = 0; i < this.chatLines.length; ++i){
-        this.chatLines[i].position.y = PLAYER_HEIGHT + (this.chatLines.length - i) * CHAT_TEXT_SIZE * 1.333 - 1;
+        this.chatLines[i].position.y = this.options.avatarHeight + (this.chatLines.length - i) * this.options.chatTextSize * 1.333 - 1;
     }
 };
 
@@ -720,7 +743,7 @@ Application.prototype.showChat = function(msg){
             this.showTyping(true, false, null);
         }
         var textObj= new VUI.Text(
-            msg, CHAT_TEXT_SIZE,
+            msg, this.options.chatTextSize,
             "white", "transparent",
             -2, 0, -5, "left");
         this.currentUser.add(textObj);
@@ -818,7 +841,7 @@ Application.prototype.animate = function(t){
                     drive = -0.5;
                 }
                 if(strafe || drive){
-                    len = SPEED * Math.min(1, 1 / Math.sqrt(drive * drive + strafe * strafe));
+                    len = this.options.walkSpeed * Math.min(1, 1 / Math.sqrt(drive * drive + strafe * strafe));
                 }
                 else{
                     len = 0;
@@ -833,7 +856,7 @@ Application.prototype.animate = function(t){
                 this.currentUser.velocity.z = this.currentUser.velocity.z * 0.9 + drive * 0.1;
             }
 
-            this.currentUser.velocity.y -= dt * GRAVITY;
+            this.currentUser.velocity.y -= dt * this.options.gravity;
 
             //
             // do collision detection
@@ -842,7 +865,7 @@ Application.prototype.animate = function(t){
             this.direction.copy(this.currentUser.velocity);
             this.direction.normalize();
             this.testPoint.copy(this.currentUser.position);
-            this.testPoint.y += PLAYER_HEIGHT / 2;
+            this.testPoint.y += this.options.avatarHeight / 2;
             this.raycaster.set(this.testPoint, this.direction);
             this.raycaster.far = len;
             var intersections = this.raycaster.intersectObject(this.scene, true);
@@ -885,8 +908,8 @@ Application.prototype.animate = function(t){
             // time since the last update (don'dt want to flood the server).
             //
             this.frame += dt;
-            if(this.frame > DFRAME){
-                this.frame -= DFRAME;
+            if(this.frame > this.options.dtNetworkUpdate){
+                this.frame -= this.options.dtNetworkUpdate;
                 var state = {
                     x: this.currentUser.position.x,
                     y: this.currentUser.position.y,
@@ -895,7 +918,7 @@ Application.prototype.animate = function(t){
                     dy: this.currentUser.velocity.y,
                     dz: this.currentUser.velocity.z,
                     heading: this.currentUser.heading,
-                    dHeading: (this.currentUser.heading - this.currentUser.lastHeading) / DFRAME,
+                    dHeading: (this.currentUser.heading - this.currentUser.lastHeading) / this.options.dtNetworkUpdate,
                     isRunning: this.currentUser.velocity.length() > 0
                 };
                 this.currentUser.lastHeading = this.currentUser.heading;
@@ -939,7 +962,7 @@ Application.prototype.animate = function(t){
                 + this.mouse.getValue("pointerPress");
         pointerDistance /= Math.cos(dp);
         this.direction.set(0, 0, -pointerDistance)
-            .applyAxisAngle(RIGHT, -dp)
+            .applyAxisAngle(Application.RIGHT, -dp)
             .applyAxisAngle(this.camera.up, pointerHeading);
 
         this.hand.position.copy(this.camera.position)
