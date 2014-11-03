@@ -1,13 +1,13 @@
 function holodeck(){
     var factories = null,
-        app = new Application("holodeck", {
-            clickSound: "music/click.mp3",
-            ambientSound: "music/ambient.mp3",
-            sceneModel: "models/scene2.dae",
-            avatarModel: "models/bear.dae",
-            avatarHeight: 6.5,
-            walkSpeed: 15
-        });
+        app = new Application("holodeck", 
+            "models/scene2.dae",
+            "models/bear.dae",
+            6.5, 
+            15,
+            "music/click.mp3",
+            "music/ambient.mp3"
+        );
 
     app.addEventListener("ready", function(){
         var buttonFactory1 = new VUI.ButtonFactory(

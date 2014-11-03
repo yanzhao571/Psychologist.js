@@ -14,21 +14,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-        
-function Application(name, options){
+
+/*
+    Create a new VR Application!
+
+    `name` - name the application, for use with saving settings separately from other applications on the same domain
+    `sceneModel` - the scene to present to the user, in COLLADA format
+    `avatarModel` - the model to use for players in the game, in COLLADA format
+    `avatarHeight` - the offset from the ground at which to place the camera
+    `walkSpeed` - how quickly the avatar moves across the ground
+    `clickSound` - the sound that plays when the user types
+    `ambientSound` - background hum or music
+    `options` - optional values to override defaults
+        `gravity` - the acceleration applied to falling objects (default: 9.8)
+        `backgroundColor` - the color that WebGL clears the background with before drawing (default: 0x000000)
+        `drawDistance` - the far plane of the camera (default: 500)
+        `chatTextSize` - the size of a single line of text, in world units (default: 0.25)
+        `dtNetworkUpdate` - the amount of time to allow to elapse between sending state to teh server (default: 0.125)
+ */
+function Application(name, sceneModel, avatarModel, avatarHeight, walkSpeed, clickSound, ambientSound, options){
     this.options = options || {};
     for(var key in Application.DEFAULTS){
         this.options[key] = this.options[key] || Application.DEFAULTS[key];
-    }
-    var missingOptions = [];
-    for(var i = 0; i < Application.REQUIRED.length; ++i){
-        var key = Application.REQUIRED[i];
-        if(!this.options[key]){
-            missingOptions.push(key);
-        }
-    }
-    if(missingOptions.length > 0){
-        throw new Error("Application options require a field(s): " + missingOptions.join(", "));
     }
     this.ctrls = findEverything();
     this.users = {};
@@ -37,6 +44,8 @@ function Application(name, options){
         ready: []
     };
     this.userName = Application.DEFAULT_USER_NAME;
+    this.avatarHeight = avatarHeight;
+    this.walkSpeed = walkSpeed;
     this.focused = true;
     this.wasFocused = false;
     this.lt = 0;
@@ -54,10 +63,10 @@ function Application(name, options){
     this.testPoint = new THREE.Vector3();
     this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7);
     this.direction = new THREE.Vector3();
-    this.avatar = new ModelLoader(this.options.avatarModel, function(){
+    this.avatar = new ModelLoader(avatarModel, function(){
         this.addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: this.userName});
     }.bind(this));    
-    ModelLoader.loadCollada(this.options.sceneModel, function(sceneGraph){
+    ModelLoader.loadCollada(sceneModel, function(sceneGraph){
         this.mainScene = sceneGraph;
         this.scene.add(sceneGraph);
         var cam = this.mainScene.Camera.children[0];
@@ -68,10 +77,10 @@ function Application(name, options){
     // Setup audio
     //
     this.audio = new Audio3DOutput();
-    this.audio.loadBuffer(this.options.clickSound, null, function(buffer){
+    this.audio.loadBuffer(clickSound, null, function(buffer){
         this.clickSound = buffer;
     }.bind(this));
-    this.audio.load3DSound(this.options.ambientSound, true, 0, 0, 0, null, function(amb){
+    this.audio.load3DSound(ambientSound, true, 0, 0, 0, null, function(amb){
         amb.volume.gain.value = 0.07;
         amb.source.start(0);
     }.bind(this));
@@ -383,23 +392,15 @@ function Application(name, options){
 }
     
 Application.DEFAULTS = {
+    gravity: 9.8, // the acceleration applied to falling objects
     backgroundColor: 0x000000, // the color that WebGL clears the background with before drawing
     drawDistance: 500, // the far plane of the camera
     chatTextSize: 0.25, // the size of a single line of text, in world units
-    gravity: 9.8, // the acceleration applied to falling objects
     dtNetworkUpdate: 0.125 // the amount of time to allow to elapse between sending state to teh server
 };
 
 Application.DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE";
 Application.RIGHT = new THREE.Vector3(-1, 0, 0);
-Application.REQUIRED = [
-    "sceneModel", // the scene to present to the user, in COLLADA format
-    "avatarModel", // the model to use for players in the game, in COLLADA format
-    "avatarHeight", // the offset from the ground at which to place the camera
-    "walkSpeed", // how quickly the avatar moves across the ground
-    "clickSound", // the sound that plays when the user types
-    "ambientSound" // background hum or music
-];
 
 Application.prototype.addEventListener = function(event, thunk){
     if(this.listeners[event]){
@@ -512,7 +513,7 @@ Application.prototype.render = function(pitch, heading, roll, currentUser){
     //
     this.camera.rotation.set(pitch, heading, roll, "YZX");
     this.camera.position.copy(currentUser.position);
-    this.camera.position.y += this.options.avatarHeight;
+    this.camera.position.y += this.avatarHeight;
 
     //
     // draw
@@ -614,7 +615,7 @@ Application.prototype.addUser = function(userState, skipMakingChatList){
             user.nameObj = new VUI.Text(
                 userState.userName, 0.5,
                 "white", "transparent",
-                0, this.options.avatarHeight + 2.5, 0, 
+                0, this.avatarHeight + 2.5, 0, 
                 "center");
             user.add(user.nameObj);
 
@@ -718,7 +719,7 @@ Application.prototype.showTyping = function(isLocal, isComplete, text){
                 var textObj= new VUI.Text(
                     text, 0.125,
                     "white", "transparent",
-                    0, this.options.avatarHeight, -4,
+                    0, this.avatarHeight, -4,
                     "right");
                 this.lastText = textObj;
                 this.currentUser.add(textObj);
@@ -732,7 +733,7 @@ Application.prototype.showTyping = function(isLocal, isComplete, text){
 
 Application.prototype.shiftLines = function(){
     for(var i = 0; i < this.chatLines.length; ++i){
-        this.chatLines[i].position.y = this.options.avatarHeight + (this.chatLines.length - i) * this.options.chatTextSize * 1.333 - 1;
+        this.chatLines[i].position.y = this.avatarHeight + (this.chatLines.length - i) * this.options.chatTextSize * 1.333 - 1;
     }
 };
 
@@ -841,7 +842,7 @@ Application.prototype.animate = function(t){
                     drive = -0.5;
                 }
                 if(strafe || drive){
-                    len = this.options.walkSpeed * Math.min(1, 1 / Math.sqrt(drive * drive + strafe * strafe));
+                    len = this.walkSpeed * Math.min(1, 1 / Math.sqrt(drive * drive + strafe * strafe));
                 }
                 else{
                     len = 0;
@@ -865,7 +866,7 @@ Application.prototype.animate = function(t){
             this.direction.copy(this.currentUser.velocity);
             this.direction.normalize();
             this.testPoint.copy(this.currentUser.position);
-            this.testPoint.y += this.options.avatarHeight / 2;
+            this.testPoint.y += this.avatarHeight / 2;
             this.raycaster.set(this.testPoint, this.direction);
             this.raycaster.far = len;
             var intersections = this.raycaster.intersectObject(this.scene, true);
