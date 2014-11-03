@@ -47,7 +47,8 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.users = {};
     this.chatLines = [];
     this.listeners = {
-        ready: []
+        ready: [],
+        update: []
     };
     this.userName = Application.DEFAULT_USER_NAME;
     this.avatarHeight = avatarHeight;
@@ -423,21 +424,10 @@ Application.prototype.addEventListener = function(event, thunk){
     }
 };
 
-Application.prototype.fireWhenReady = function(){
-    for(var i = 0; i < this.listeners.ready.length; ++i){
-        this.listeners.ready[i]();
+Application.prototype.fire = function(name, arg1, arg2, arg3, arg4){
+    for(var i = 0; i < this.listeners[name].length; ++i){
+        this.listeners[name][i](arg1, arg2, arg3, arg4);
     }
-};
-
-Application.prototype.update = function(dt){
-    THREE.AnimationHandler.update(dt);
-    this.speech.update(dt);
-    this.keyboard.update(dt);
-    this.mouse.update(dt);
-    this.head.update(dt);
-    this.touch.update(dt);
-    this.gamepad.update(dt);
-    this.leap.update(dt);
 };
 
 Application.prototype.setupModuleEvents = function(module, name){
@@ -804,7 +794,7 @@ Application.prototype.start = function(){
     var waitForResources = function(t){
         this.lt = t;
         if(this.camera && this.mainScene && this.currentUser && this.buttonFactory.template){
-            this.fireWhenReady();
+            this.fire("ready");
             this.leap.start();
             this.animate = this.animate.bind(this);
             requestAnimationFrame(this.animate);
@@ -823,7 +813,14 @@ Application.prototype.animate = function(t){
     this.lt = t;
 
     if(this.wasFocused && this.focused){
-        this.update(dt);
+        THREE.AnimationHandler.update(dt);
+        this.speech.update(dt);
+        this.keyboard.update(dt);
+        this.mouse.update(dt);
+        this.head.update(dt);
+        this.touch.update(dt);
+        this.gamepad.update(dt);
+        this.leap.update(dt);
 
         var roll = this.head.getValue("roll");
         var pitch = this.head.getValue("pitch")
@@ -993,6 +990,7 @@ Application.prototype.animate = function(t){
             }
         }
 
+        this.fire("update", dt);        
         this.render(pitch, heading, roll, this.currentUser);
     }
 
