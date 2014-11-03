@@ -984,9 +984,13 @@ Application.prototype.animate = function(t){
             .add(this.direction);
 
         for(var j = 0; j < this.mainScene.buttons.length; ++j){
-            var tag = this.mainScene.buttons[j].test(this.camera.position, this.hand.position);
+            var btn = this.mainScene.buttons[j];
+            var tag = btn.test(this.camera.position, this.hand.position);
             if(tag){
                 this.hand.position.copy(tag);
+            }
+            else{
+                btn.test(this.camera.position, this.currentUser.position);
             }
         }
 
