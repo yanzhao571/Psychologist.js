@@ -61,19 +61,23 @@ function Audio3DOutput(){
 }
 
 Audio3DOutput.prototype.sawtooth = function(i, volume, duration){
-    var osc = this.oscillators[i];
-    if(osc.timeout){
-        clearTimeout(osc.timeout);
-        osc.timeout = null;
+    if(this.isAvailable){
+        var osc = this.oscillators[i];
+        if(osc){
+            if(osc.timeout){
+                clearTimeout(osc.timeout);
+                osc.timeout = null;
+            }
+            osc.gain.value = volume;
+            osc.timeout = setTimeout(function(){
+                osc.gain.value = 0;
+                osc.timeout = null;
+            }, duration * 1000);
+        }
     }
-    osc.gain.value = volume;
-    osc.timeout = setTimeout(function(){
-        osc.gain.value = 0;
-        osc.timeout = null;
-    }, duration * 1000);
 };
 
-Audio3DOutput.prototype.loadBuffer = function(src, progress, success){    
+Audio3DOutput.prototype.loadBuffer = function(src, progress, success){
     if(!success){
         throw new Error("You need to provide a callback function for when the audio finishes loading");
     }

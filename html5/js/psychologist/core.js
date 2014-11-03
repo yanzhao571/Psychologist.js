@@ -485,6 +485,7 @@ window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnecti
 window.RTCIceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate || window.RTCIceCandidate;
 window.RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.RTCSessionDescription;
 
+window.MediaStreamTrack = window.MediaStreamTrack || {};
 MediaStreamTrack.getVideoTracks =
         (window.MediaStream && MediaStream.getVideoTracks && (function (getter, success) {
             success(getter());

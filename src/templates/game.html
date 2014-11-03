@@ -73,7 +73,10 @@
                     ctrls.appCacheStatus.style.display = "none";
                     document.body.innerHTML += content.replace("[ABOUT]", about);
                     document.getElementById("gameTitle").innerHTML = "$2";
-                    var c = get("js/game.libs.json", "json", function(libs){ 
+                    var c = get("js/game.libs.json", "json", function(libs){
+                        if(typeof(libs) === "string"){
+                            libs = JSON.parse(libs);
+                        }
                         libs.push("js/controllers/$1.js");
                         loadLibs(libs, function(){
                             TabSet.makeAll();
