@@ -303,7 +303,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.touch = new TouchInput("touch", null, [
         { name: "heading", axes: [TouchInput.DX0], integrate: true },
         { name: "drive", axes: [-TouchInput.DY0] }
-    ], this.proxy);
+    ], this.proxy, null, this.ctrls.frontBuffer);
     this.setupModuleEvents(this.touch, "touch");
     
     //
