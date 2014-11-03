@@ -20,6 +20,12 @@
 
     `name` - name the application, for use with saving settings separately from other applications on the same domain
     `sceneModel` - the scene to present to the user, in COLLADA format
+    `buttonModel` - the model to use to make buttons, in COLLADA format
+    `buttonOptions` - configuration parameters for buttons
+        `maxThrow` - the distance the button may move
+        `minDeflection` - the angle boundary in which to do hit tests on the button
+        `colorUnpressed` - the color of the button when it is not depressed
+        `colorPressed` - the color of the button when it is depressed
     `avatarModel` - the model to use for players in the game, in COLLADA format
     `avatarHeight` - the offset from the ground at which to place the camera
     `walkSpeed` - how quickly the avatar moves across the ground
@@ -32,7 +38,7 @@
         `chatTextSize` - the size of a single line of text, in world units (default: 0.25)
         `dtNetworkUpdate` - the amount of time to allow to elapse between sending state to teh server (default: 0.125)
  */
-function Application(name, sceneModel, avatarModel, avatarHeight, walkSpeed, clickSound, ambientSound, options){
+function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, avatarHeight, walkSpeed, clickSound, ambientSound, options){
     this.options = options || {};
     for(var key in Application.DEFAULTS){
         this.options[key] = this.options[key] || Application.DEFAULTS[key];
@@ -63,6 +69,7 @@ function Application(name, sceneModel, avatarModel, avatarHeight, walkSpeed, cli
     this.testPoint = new THREE.Vector3();
     this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7);
     this.direction = new THREE.Vector3();
+    this.buttonFactory = new VUI.ButtonFactory(buttonModel, buttonOptions);
     this.avatar = new ModelLoader(avatarModel, function(){
         this.addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: this.userName});
     }.bind(this));    
@@ -401,6 +408,14 @@ Application.DEFAULTS = {
 
 Application.DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE";
 Application.RIGHT = new THREE.Vector3(-1, 0, 0);
+
+Application.prototype.makeButton = function(toggle){
+    var btn = this.buttonFactory.create(toggle);
+    this.mainScene.buttons.push(btn);
+    this.mainScene[btn.name] = btn;
+    this.scene.add(btn.base);
+    return btn;
+};
 
 Application.prototype.addEventListener = function(event, thunk){
     if(this.listeners[event]){
@@ -788,7 +803,7 @@ Application.prototype.makeNotification = function(msg){
 Application.prototype.start = function(){
     var waitForResources = function(t){
         this.lt = t;
-        if(this.camera && this.mainScene && this.currentUser){
+        if(this.camera && this.mainScene && this.currentUser && this.buttonFactory.template){
             this.fireWhenReady();
             this.leap.start();
             this.animate = this.animate.bind(this);

@@ -21,45 +21,29 @@ VUI = window.VUI || {};
 
 VUI.BUTTON_TEST_BOXING = 2;
     
-VUI.ButtonFactory = function(mainScene, templateFile, options, done){
-    this.mainScene = mainScene;
+VUI.ButtonFactory = function(templateFile, options){
     this.options = options;
-    if(templateFile){
-        this.template = new ModelLoader(templateFile, done);
-    }
-};
-
-VUI.ButtonFactory.prototype.clone = function(options){
-    ["maxThrow", "minDeflection", "colorUnpressed", "colorPressed", "toggle"].forEach(function(p){
-        if(options[p] === undefined){
-            options[p] = this.options[p];
-        }
-    }.bind(this));
-    var factory = new VUI.ButtonFactory(this.mainScene, null, options);
-    factory.template = this.template;
-    return factory;
+    this.template = new ModelLoader(templateFile);
 };
 
 VUI.ButtonFactory.count = 0;
 
-VUI.ButtonFactory.prototype.create = function(){
+VUI.ButtonFactory.prototype.create = function(toggle){
     VUI.ButtonFactory.count = (VUI.ButtonFactory.count || 0) + 1;
     var name = "button" + VUI.ButtonFactory.count;
-    var btn = new VUI.Button(this.template, name, this.options);
-    this.mainScene.buttons.push(btn);
-    this.mainScene[btn.name] = btn;
+    var btn = new VUI.Button(this.template.clone(), name, this.options);
+    btn.toggle = toggle;
     return btn;
 };
 
 
-VUI.Button = function(template, name, options){
+VUI.Button = function(model, name, options){
     this.maxThrow = options.maxThrow;
     this.minDeflection = Math.cos(options.minDeflection);
     this.colorUnpressed = new THREE.Color(options.colorUnpressed);
     this.colorPressed = new THREE.Color(options.colorPressed);
-    this.toggle = options.toggle;
     this.listeners = { click: [] };
-    this.base = template.clone();
+    this.base = model;
     this.position = this.base.position;
     this.rotation = this.base.rotation;
     this.name = name;
@@ -67,6 +51,7 @@ VUI.Button = function(template, name, options){
     this.cap.name = name;
     this.rest = this.cap.position.clone();
     this.color = this.cap.children[0].material.materials[0].color;
+    this.toggle = false;
     this.value = false;
     this.pressed = false;
     this.wasPressed = false;
