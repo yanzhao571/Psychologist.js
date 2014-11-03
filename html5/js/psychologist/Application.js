@@ -59,6 +59,18 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.frame = 0;
     this.currentUser = null;
     this.onground = false;
+    
+    //
+    // restoring the options the user selected
+    //
+    var formStateKey = name + " - formState";
+    var formState = getSetting(formStateKey);
+    writeForm(this.ctrls, formState);
+    window.addEventListener("beforeunload", function(){
+        var state = readForm(this.ctrls);
+        setSetting(formStateKey, state);
+        this.speech.enable(false);
+    }.bind(this), false);
         
     //
     // Setup THREE.js
@@ -132,7 +144,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
             }
             this.makeChatList();
         }.bind(this));
-        this.socket.on("disconnect", this.showMessage.bind(window));
+        this.socket.on("disconnect", this.showMessage.bind(this));
         this.socket.on("handshakeFailed", console.error.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
         this.socket.on("handshakeComplete", function(controller){
             if(controller === "demo"
@@ -230,18 +242,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
             defaultDisplay: {checked: true}
         }}
     ]);
-    
-    //
-    // restoring the options the user selected
-    //
-    var formStateKey = name + " - formState";
-    var formState = getSetting(formStateKey);
-    writeForm(this.ctrls, formState);
-    window.addEventListener("beforeunload", function(){
-        var state = readForm(this.ctrls);
-        setSetting(formStateKey, state);
-        this.speech.enable(false);
-    }.bind(this), false);
     
     //
     // speech input

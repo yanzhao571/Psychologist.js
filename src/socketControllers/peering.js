@@ -42,7 +42,10 @@ module.exports = {
             
             ["offer", "answer", "ice"].forEach(function(o){
                 socket.on(o, function(obj){
-                    sockets[obj.toIndex].emit(o, obj);
+                    var skt = sockets[obj.toIndex];
+                    if(skt){
+                        skt.emit(o, obj);
+                    }
                 });
             });
             
