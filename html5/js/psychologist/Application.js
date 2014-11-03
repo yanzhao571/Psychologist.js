@@ -15,15 +15,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 var BG_COLOR = 0x000000,
-    PLAYER_HEIGHT = 6.5;
+    PLAYER_HEIGHT = 6.5,
+    DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE";
         
 function Application(thisName, resetLocation, showTyping, showChat, addUser, updateUserState, userLeft, listUsers, msg){
     this.ctrls = findEverything();
     this.hideControlsTimeout = null;
     this.focused = true;
     this.wasFocused = false;
+    this.msg = msg,
+    this.userName = DEFAULT_USER_NAME;
+    
     if(this.ctrls.appCacheReload.style.display === "none" && navigator.onLine){
         this.ctrls.loginForm.style.display = "";
+        this.ctrls.connectButton.addEventListener("click", this.login.bind(this), false);
         
         this.socket = io.connect(document.location.hostname, {
             "reconnect": true,
@@ -52,8 +57,8 @@ function Application(thisName, resetLocation, showTyping, showChat, addUser, upd
             }
         }.bind(this));
         this.socket.emit("handshake", "demo");
+        this.proxy = new WebRTCSocket(this.socket, this.ctrls.defaultDisplay.checked);
     }
-    this.proxy = new WebRTCSocket(this.socket, this.ctrls.defaultDisplay.checked);
     
     //
     // The various options, and packs of them when selecting from a dropdown
@@ -472,5 +477,30 @@ Application.prototype.setSize = function(w, h){
     this.renderer.setSize(w, h);
     if (this.effect){
         this.effect.setSize(w, h);
+    }
+};
+
+Application.prototype.login = function(){
+    if(this.socket && this.ctrls.connectButton.classList.contains("primary")){
+        this.userName = this.ctrls.userNameField.value;
+        var password = this.ctrls.passwordField.value;
+        if(this.userName && password){
+            this.socket.once("salt", function(salt){
+                var hash = CryptoJS.SHA512(salt + password).toString();
+                this.socket.emit("hash", hash);
+            }.bind(this));
+            this.ctrls.connectButton.innerHTML = "Connecting...";
+            this.ctrls.connectButton.className = "secondary button";
+            this.socket.emit("login", {
+                userName: this.userName,
+                email: this.ctrls.emailField.value
+            });
+        }
+        else{
+            this.msg("Please complete the form.");
+        }
+    }
+    else{
+        this.msg("No socket available.");
     }
 };

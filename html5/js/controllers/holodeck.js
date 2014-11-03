@@ -6,8 +6,6 @@ function holodeck(){
         GRAVITY = 9.8, 
         SPEED = 15,
         DFRAME = 0.125,
-        DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE",
-        userName = DEFAULT_USER_NAME,
         testPoint = new THREE.Vector3(),
         raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7),
         direction = new THREE.Vector3(),
@@ -235,31 +233,6 @@ function holodeck(){
         app.wasFocused = app.focused;
     }
 
-    function login(){
-        if(app.socket && ctrls.connectButton.classList.contains("primary")){
-            userName = ctrls.userNameField.value;
-            var password = ctrls.passwordField.value;
-            if(userName && password){
-                app.socket.once("salt", function(salt){
-                    var hash = CryptoJS.SHA512(salt + password).toString();
-                    app.socket.emit("hash", hash);
-                });
-                ctrls.connectButton.innerHTML = "Connecting...";
-                ctrls.connectButton.className = "secondary button";
-                app.socket.emit("login", {
-                    userName: userName,
-                    email: ctrls.emailField.value
-                });
-            }
-            else{
-                msg("Please complete the form.");
-            }
-        }
-        else{
-            msg("No socket available.");
-        }
-    };
-
     function readChatBox(){
         showTyping(true, true, ctrls.textEntry.value);
         ctrls.textEntry.value = "";
@@ -311,7 +284,7 @@ function holodeck(){
     function showChat(msg){
         msg = typeof(msg) === "string" ? msg : fmt("[$1]: $2", msg.userName, msg.text);
         if(currentUser){
-            if(userName === msg.userName){
+            if(app.userName === msg.userName){
                 showTyping(true, false, null);
             }
             var textObj= new VUI.Text(
@@ -371,7 +344,7 @@ function holodeck(){
                     userState.z);
                 user.lastHeading = user.heading = userState.heading;
                 user.dHeading = 0;
-                if(userState.userName === userName){
+                if(userState.userName === app.userName){
                     startHeading = user.heading;
                 }
             }
@@ -388,8 +361,8 @@ function holodeck(){
     function addUser(userState, skipMakingChatList){
         var user = null;
         if(!users[userState.userName]){
-            if(userName === DEFAULT_USER_NAME
-                || userState.userName !== userName){
+            if(app.userName === DEFAULT_USER_NAME
+                || userState.userName !== app.userName){
                 user = new THREE.Object3D();        
                 var model = bearModel.clone();
                 user.animation = model.animation;
@@ -444,8 +417,8 @@ function holodeck(){
     function listUsers(newUsers){
         ctrls.connectButton.className = "secondary button";
         ctrls.connectButton.innerHTML = "Connected";
-        app.proxy.connect(userName);
-        newUsers.sort(function(a){ return (a.userName === userName) ? -1 : 1;});
+        app.proxy.connect(app.userName);
+        newUsers.sort(function(a){ return (a.userName === app.userName) ? -1 : 1;});
         for(var i = 0; i < newUsers.length; ++i){
             addUser(newUsers[i], true);
         }
@@ -469,7 +442,6 @@ function holodeck(){
     }
 
     ctrls.textEntry.addEventListener("change", readChatBox, false);
-    ctrls.connectButton.addEventListener("click", login, false);
     
     app = new Application("holodeck", resetLocation, showTyping, showChat, addUser, updateUserState, userLeft, listUsers, msg);
 
@@ -534,7 +506,7 @@ function holodeck(){
     }
 
     var bearModel = new ModelLoader("models/bear.dae", function(){
-        addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: userName});
+        addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: app.userName});
     });
 
     app.audio.loadBuffer("music/click.mp3", null, function(buffer){
