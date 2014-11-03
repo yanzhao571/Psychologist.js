@@ -871,7 +871,7 @@ Application.prototype.animate = function(t){
                 this.currentUser.velocity.x = this.currentUser.velocity.x * 0.9 + strafe * 0.1;
                 this.currentUser.velocity.z = this.currentUser.velocity.z * 0.9 + drive * 0.1;
             }
-
+            
             this.currentUser.velocity.y -= dt * this.options.gravity;
 
             //
@@ -893,15 +893,17 @@ Application.prototype.animate = function(t){
                     this.currentUser.velocity.reflect(this.testPoint);
                     var d = this.testPoint.dot(this.camera.up);
                     if(d > 0.75){
-                        this.currentUser.position.y = inter.point.y + 0.0125;
-                        this.currentUser.velocity.y = 0.1;
+                        this.currentUser.position.y = inter.point.y;
+                        this.currentUser.velocity.y = 0;
                         this.onground = true;
                     }
                 }
             }
 
             // ground test
-            this.testPoint.copy(this.currentUser.position);
+            this.testPoint.copy(this.currentUser.velocity)
+                .multiplyScalar(dt)
+                .add(this.currentUser.position);
             var GROUND_TEST_HEIGHT = 3;
             this.testPoint.y += GROUND_TEST_HEIGHT;
             this.direction.set(0, -1, 0);
@@ -910,7 +912,7 @@ Application.prototype.animate = function(t){
             intersections = this.raycaster.intersectObject(this.scene, true);
             for(var i = 0; i < intersections.length; ++i){
                 var inter = intersections[i];
-                if(inter.object.parent.isSolid){
+                if(inter.object.parent.isSolid && inter.distance < GROUND_TEST_HEIGHT){
                     this.testPoint.copy(inter.face.normal);
                     this.testPoint.applyEuler(inter.object.parent.rotation);
                     this.currentUser.position.y = inter.point.y;

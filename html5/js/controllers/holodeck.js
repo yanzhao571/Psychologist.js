@@ -37,6 +37,13 @@ function holodeck(){
 
         obj.position.set(0, 1, 0);
     });
+    
+    app.keyboard.addCommand({ name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: function (){
+        if(this.onground){
+            this.currentUser.velocity.y += 10;
+            this.onground = false;
+        }
+    }.bind(app), dt: 0.5 });
 
     function obj3(){
         var obj = new THREE.Object3D();

@@ -62,18 +62,7 @@ function NetworkedInput(name, commands, socket, oscope){
     }
 
     for(var i = 0; i < commands.length; ++i){
-        var cmd = commands[i];
-        this.commandState[cmd.name] = {
-            value: null,
-            pressed: false,
-            wasPressed: false,
-            fireAgain: false,
-            lt: 0,
-            ct: 0,
-            repeatCount: 0
-        };
-        this.commands[i] = this.cloneCommand(cmd);
-        this.commands[i].repetitions = this.commands[i].repetitions || 1;
+        this.addCommand(commands[i]);
     }
 
     for(var i = 0; i < NetworkedInput.META_KEYS.length; ++i){
@@ -85,6 +74,21 @@ NetworkedInput.META_KEYS = ["ctrl", "shift", "alt", "meta"];
 NetworkedInput.META_KEYS.forEach(function(key, index){
     NetworkedInput[key.toLocaleUpperCase()] = index + 1;
 });
+
+NetworkedInput.prototype.addCommand = function(cmd){
+    cmd = this.cloneCommand(cmd);
+    cmd.repetitions = cmd.repetitions || 1;
+    this.commands.push(cmd);
+    this.commandState[cmd.name] = {
+        value: null,
+        pressed: false,
+        wasPressed: false,
+        fireAgain: false,
+        lt: 0,
+        ct: 0,
+        repeatCount: 0
+    };
+};
 
 NetworkedInput.prototype.cloneCommand = function(cmd){ throw new Error("cloneCommand function must be defined in subclass"); };
 
