@@ -509,35 +509,6 @@ Application.prototype.showOnscreenControls = function(){
     this.hideControlsTimeout = setTimeout(this.hideOnscreenControls.bind(this), 3000);
 };
 
-Application.prototype.render = function(pitch, heading, roll, currentUser){
-    //
-    // update audio
-    //
-    this.testPoint.copy(currentUser.position);
-    this.testPoint.divideScalar(10);
-    this.audio.setPosition(this.testPoint.x, this.testPoint.y, this.testPoint.z);
-    this.audio.setVelocity(currentUser.velocity.x, currentUser.velocity.y, currentUser.velocity.z);
-    this.testPoint.normalize();
-    this.audio.setOrientation(this.testPoint.x, this.testPoint.y, this.testPoint.z, 0, 1, 0);
-    
-    //
-    // update the camera
-    //
-    this.camera.rotation.set(pitch, heading, roll, "YZX");
-    this.camera.position.copy(currentUser.position);
-    this.camera.position.y += this.avatarHeight;
-
-    //
-    // draw
-    //
-    if (this.effect){
-        this.effect.render(this.scene, this.camera);
-    }
-    else {
-        this.renderer.render(this.scene, this.camera);
-    }
-};
-
 Application.prototype.chooseRenderingEffect = function(type){
     switch(type){
         case "anaglyph": this.effect = new THREE.AnaglyphEffect(this.renderer, 5, window.innerWidth, window.innerHeight); break;
@@ -1010,7 +981,32 @@ Application.prototype.animate = function(t){
         }
 
         this.fire("update", dt);        
-        this.render(pitch, heading, roll, this.currentUser);
+        //
+        // update audio
+        //
+        this.testPoint.copy(this.currentUser.position);
+        this.testPoint.divideScalar(10);
+        this.audio.setPosition(this.testPoint.x, this.testPoint.y, this.testPoint.z);
+        this.audio.setVelocity(this.currentUser.velocity.x, this.currentUser.velocity.y, this.currentUser.velocity.z);
+        this.testPoint.normalize();
+        this.audio.setOrientation(this.testPoint.x, this.testPoint.y, this.testPoint.z, 0, 1, 0);
+
+        //
+        // update the camera
+        //
+        this.camera.rotation.set(pitch, heading, roll, "YZX");
+        this.camera.position.copy(this.currentUser.position);
+        this.camera.position.y += this.avatarHeight;
+
+        //
+        // draw
+        //
+        if (this.effect){
+            this.effect.render(this.scene, this.camera);
+        }
+        else {
+            this.renderer.render(this.scene, this.camera);
+        }
     }
 
     this.wasFocused = this.focused;
