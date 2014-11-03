@@ -1,28 +1,16 @@
 function holodeck(){
     var ctrls = findEverything(),
-        app = new Application("holodeck"),
-        BG_COLOR = 0x000000,
         DRAW_DISTANCE = 500,
         CHAT_TEXT_SIZE = 0.25,
-        PLAYER_HEIGHT = 6.5,
         RIGHT = new THREE.Vector3(-1, 0, 0),
         GRAVITY = 9.8, 
         SPEED = 15,
         DFRAME = 0.125,
         DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE",
         userName = DEFAULT_USER_NAME,
-        socket = io.connect(document.location.hostname, {
-            "reconnect": true,
-            "reconnection delay": 1000,
-            "max reconnection attempts": 60
-        }),
         testPoint = new THREE.Vector3(),
         raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7),
         direction = new THREE.Vector3(),
-        orientation = new THREE.Euler(0, 0, 0, "YZX"),
-        scene = new THREE.Scene(),
-        renderer = new THREE.WebGLRenderer({ antialias: true, canvas: ctrls.frontBuffer }),
-        audio = new Audio3DOutput(),  
         focused = true,
         wasFocused = false,
         autoWalking = false,
@@ -39,24 +27,46 @@ function holodeck(){
         drive = 0,
         chatLines = [],
         users = {},
+        socket = null,
         lastText = null,
         lastNote = null,
         lastRenderingType = null,
         currentUser = null,
         clickSound = null,
-        camera = null,
-        effect = null,
-        head = null,
-        keyboard = null,
-        mouse = null,
-        gamepad = null,
-        touch = null,
-        speech = null,
-        leap = null,
-        hand = null,
         proxy = null,
         mainScene = null,
-        factories = null;
+        factories = null,
+        app = null;
+
+    if(ctrls.appCacheReload.style.display === "none" && navigator.onLine){
+        ctrls.loginForm.style.display = "";
+        
+        socket = io.connect(document.location.hostname, {
+            "reconnect": true,
+            "reconnection delay": 1000,
+            "max reconnection attempts": 60
+        });
+        socket.on("typing", showTyping.bind(window, false, false));
+        socket.on("chat", showChat);    
+        socket.on("userJoin", addUser);
+        socket.on("userState", updateUserState.bind(window, false));
+        socket.on("userLeft", userLeft);
+        socket.on("loginFailed", loginFailed);
+        socket.on("userList", listUsers);
+        socket.on("disconnect", msg.bind(window));
+        socket.on("handshakeFailed", console.error.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
+        socket.on("handshakeComplete", function(controller){
+            if(controller === "demo"
+                && ctrls.autoLogin.checked
+                && ctrls.userNameField.value.length > 0
+                && ctrls.passwordField.value.length > 0){
+                ctrls.connectButton.click();
+            }
+        });
+        socket.emit("handshake", "demo");
+
+        proxy = new WebRTCSocket(socket, ctrls.defaultDisplay.checked);
+    }
 
     function loginFailed(){
         ctrls.connectButton.innerHTML = "Login failed. Try again.";
@@ -76,8 +86,8 @@ function holodeck(){
 
     function waitForResources(t){
         lt = t;
-        if(camera && currentUser){
-            leap.start();
+        if(app.camera && currentUser){
+            app.leap.start();
             requestAnimationFrame(animate);
         }
         else{
@@ -91,41 +101,33 @@ function holodeck(){
         lt = t;
 
         if(wasFocused && focused){
-            head.update(dt);
-            keyboard.update(dt);
-            mouse.update(dt);
-            gamepad.update(dt);
-            touch.update(dt);
-            speech.update(dt);
-            leap.update(dt);
+            app.update(dt);
 
-            roll = head.getValue("roll");
-            pitch = head.getValue("pitch")
-                + gamepad.getValue("pitch")
-                + mouse.getValue("pitch");
-            heading = head.getValue("heading") 
-                + gamepad.getValue("heading")
-                + touch.getValue("heading")
-                + mouse.getValue("heading")
+            roll = app.head.getValue("roll");
+            pitch = app.head.getValue("pitch")
+                + app.gamepad.getValue("pitch")
+                + app.mouse.getValue("pitch");
+            heading = app.head.getValue("heading") 
+                + app.gamepad.getValue("heading")
+                + app.touch.getValue("heading")
+                + app.mouse.getValue("heading")
                 + startHeading;
 
-            pointerHeading = heading + mouse.getValue("pointerHeading");
+            pointerHeading = heading + app.mouse.getValue("pointerHeading");
 
             if(ctrls.defaultDisplay.checked){
-                THREE.AnimationHandler.update(dt);
-
                 //
                 // update user position and view
                 //
 
                 currentUser.dHeading = (heading - currentUser.heading) / dt;
-                strafe = keyboard.getValue("strafeRight")
-                    + keyboard.getValue("strafeLeft")
-                    + gamepad.getValue("strafe");
-                drive = keyboard.getValue("driveBack")
-                    + keyboard.getValue("driveForward")
-                    + gamepad.getValue("drive")
-                    + touch.getValue("drive");
+                strafe = app.keyboard.getValue("strafeRight")
+                    + app.keyboard.getValue("strafeLeft")
+                    + app.gamepad.getValue("strafe");
+                drive = app.keyboard.getValue("driveBack")
+                    + app.keyboard.getValue("driveForward")
+                    + app.gamepad.getValue("drive")
+                    + app.touch.getValue("drive");
 
                 if(onground || currentUser.position.y < -0.5){                
                     if(autoWalking){
@@ -160,14 +162,14 @@ function holodeck(){
                 testPoint.y += PLAYER_HEIGHT / 2;
                 raycaster.set(testPoint, direction);
                 raycaster.far = len;
-                intersections = raycaster.intersectObject(scene, true);
+                intersections = raycaster.intersectObject(app.scene, true);
                 for(var i = 0; i < intersections.length; ++i){
                     var inter = intersections[i];
                     if(inter.object.parent.isSolid){
                         testPoint.copy(inter.face.normal);
                         testPoint.applyEuler(inter.object.parent.rotation);
                         currentUser.velocity.reflect(testPoint);
-                        var d = testPoint.dot(camera.up);
+                        var d = testPoint.dot(app.camera.up);
                         if(d > 0.75){
                             currentUser.position.y = inter.point.y + 0.0125;
                             currentUser.velocity.y = 0.1;
@@ -183,7 +185,7 @@ function holodeck(){
                 direction.set(0, -1, 0);
                 raycaster.set(testPoint, direction);
                 raycaster.far = GROUND_TEST_HEIGHT * 2;
-                intersections = raycaster.intersectObject(scene, true);
+                intersections = raycaster.intersectObject(app.scene, true);
                 for(var i = 0; i < intersections.length; ++i){
                     var inter = intersections[i];
                     if(inter.object.parent.isSolid){
@@ -214,7 +216,9 @@ function holodeck(){
                         isRunning: currentUser.velocity.length() > 0
                     };
                     currentUser.lastHeading = currentUser.heading;
-                    socket.emit("userState", state);
+                    if(socket){
+                        socket.emit("userState", state);
+                    }
                 }
             }
 
@@ -244,76 +248,36 @@ function holodeck(){
             //
             // place pointer
             //
-            var pointerDistance = leap.getValue("HAND0Z") 
-                + mouse.getValue("pointerDistance")
+            var pointerDistance = app.leap.getValue("HAND0Z") 
+                + app.mouse.getValue("pointerDistance")
                 + 2;
             var dp = pitch 
-                    + mouse.getValue("pointerPitch") 
-                    + mouse.getValue("pointerPress");
+                    + app.mouse.getValue("pointerPitch") 
+                    + app.mouse.getValue("pointerPress");
             pointerDistance /= Math.cos(dp);
             direction.set(0, 0, -pointerDistance)
                 .applyAxisAngle(RIGHT, -dp)
-                .applyAxisAngle(camera.up, pointerHeading);
+                .applyAxisAngle(app.camera.up, pointerHeading);
 
 
-            hand.position.copy(camera.position)
+            app.hand.position.copy(app.camera.position)
                 .add(direction);
 
             for(var j = 0; j < mainScene.buttons.length; ++j){
-                var tag = mainScene.buttons[j].test(camera.position, hand.position);
+                var tag = mainScene.buttons[j].test(app.camera.position, app.hand.position);
                 if(tag){
-                    hand.position.copy(tag);
+                    app.hand.position.copy(tag);
                 }
             }
 
-            //
-            // update audio
-            //
-            testPoint.copy(currentUser.position);
-            testPoint.divideScalar(10);
-            audio.setPosition(testPoint.x, testPoint.y, testPoint.z);
-            audio.setVelocity(currentUser.velocity.x, currentUser.velocity.y, currentUser.velocity.z);
-            testPoint.normalize();
-            audio.setOrientation(testPoint.x, testPoint.y, testPoint.z, 0, 1, 0);
-
-            //
-            // update the camera
-            //
-            orientation.set(pitch, heading, roll, "YZX");
-            camera.rotation.copy(orientation);
-            camera.position.copy(currentUser.position);
-            camera.position.y += PLAYER_HEIGHT;
-
-            //
-            // draw
-            //
-            if (effect){
-                effect.render(scene, camera);
-            }
-            else {
-                renderer.render(scene, camera);
-            }
+            app.render(pitch, heading, roll, currentUser);
         }
 
         wasFocused = focused;
     }
 
-    function setSize(w, h){
-        if(camera){
-            camera.aspect = w / h;
-            camera.updateProjectionMatrix();
-        }
-
-        chooseRenderingEffect(ctrls.renderingStyle.value);
-
-        renderer.setSize(w, h);
-        if (effect){
-            effect.setSize(w, h);
-        }
-    }
-
     function login(){
-        if(socket){
+        if(socket && ctrls.connectButton.classList.contains("primary")){
             userName = ctrls.userNameField.value;
             var password = ctrls.passwordField.value;
             if(userName && password){
@@ -329,81 +293,17 @@ function holodeck(){
                 });
             }
             else{
-                msg("Please complete the form");
+                msg("Please complete the form.");
             }
         }
         else{
-            msg("No socket available");
+            msg("No socket available.");
         }
     };
-
-    function showOptions(){
-        keyboard.pause(true);
-        ctrls.options.style.display = "";
-        mouse.exitPointerLock();
-    }
-
-    function hideOptions(){        
-        keyboard.pause(false);
-        ctrls.options.style.display = "none";
-        requestFullScreen();
-        mouse.requestPointerLock();
-        app.showOnscreenControls();
-    }
-
-    function toggleOptions(){
-        var show = ctrls.options.style.display !== "";
-        if(show){
-            showOptions();
-        }
-        else{
-            hideOptions();
-        }
-    }
-
-    function chooseRenderingEffect(type){
-        switch(type){
-            case "anaglyph": effect = new THREE.AnaglyphEffect(renderer, 5, window.innerWidth, window.innerHeight); break;
-            case "stereo": effect = new THREE.StereoEffect(renderer); break;
-            case "rift": effect = new THREE.OculusRiftEffect(renderer, {
-                worldFactor: 1,
-                HMD: {
-                    hResolution: screen.availWidth,
-                    vResolution: screen.availHeight,
-                    hScreenSize: 0.126,
-                    vScreenSize: 0.075,
-                    interpupillaryDistance: 0.064,
-                    lensSeparationDistance: 0.064,
-                    eyeToScreenDistance: 0.051,
-                    distortionK: [1, 0.22, 0.06, 0.0],
-                    chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
-                }
-            }); break;
-            default: 
-                effect = null;
-                type = "regular";
-                break;
-        }
-
-        if(ctrls.renderingStyle.value !== type){
-            ctrls.renderingStyle.value = type;
-        }
-
-        if((lastRenderingType === "rift" || lastRenderingType === "stereo")
-            && (type === "anaglyph" || type === "regular")){
-            alert("The page must reload to enable the new settings.");
-            document.location = document.location.href;
-        }
-        lastRenderingType = type;
-    }
 
     function readChatBox(){
         showTyping(true, true, ctrls.textEntry.value);
         ctrls.textEntry.value = "";
-    }
-
-    function shutdown(){
-        speech.enable(false);
     }
 
     function resetLocation(){
@@ -419,10 +319,12 @@ function holodeck(){
             }
 
             if(isComplete){
-                socket.emit("chat", text);
+                if(socket){
+                    socket.emit("chat", text);
+                }
             }
             else{
-                if(isLocal){
+                if(isLocal && socket){
                     socket.emit("typing", text);
                 }
                 if(text !== null && text !== undefined){
@@ -434,15 +336,11 @@ function holodeck(){
                     lastText = textObj;
                     currentUser.add(textObj);
                     if(clickSound){
-                        audio.playBufferImmediate(clickSound, 0.5);
+                        app.audio.playBufferImmediate(clickSound, 0.5);
                     }
                 }
             }
         }
-    }
-
-    function speechChat(){
-        showTyping(true, true, speech.getValue("chat"));
     }
 
     function shiftLines(){
@@ -499,20 +397,10 @@ function holodeck(){
         }
     };
 
-    function reload(){
-        if (isFullScreenMode()){
-            reloadPage();
-        }
-        else {
-            mouse.requestPointerLock();
-            toggleFullScreen();
-        }
-    }
-
     function updateUserState(firstTime, userState){
         var user = user || users[userState.userName];
         if(!user){
-            addUser(userState);
+            setTimeout(addUser.bind(this, userState), 1);
         }
         else{
             if(firstTime){
@@ -565,7 +453,7 @@ function holodeck(){
                     msg("$1 has joined", userState.userName);
                 }
 
-                scene.add(user);
+                app.scene.add(user);
             }
             else{
                 delete users[DEFAULT_USER_NAME];
@@ -587,7 +475,7 @@ function holodeck(){
     function userLeft(userName){
         if(users[userName]){
             msg("$1 has disconnected", userName);
-            scene.remove(users[userName]);
+            app.scene.remove(users[userName]);
             help(ctrls.userList);
             delete users[userName];
             makeChatList();
@@ -621,116 +509,11 @@ function holodeck(){
         }
     }
 
-    var closers = document.getElementsByClassName("closeSectionButton");
-    for(var i = 0; i < closers.length; ++i){
-        closers[i].addEventListener("click", hideOptions, false);
-    }
-
-    //addFullScreenShim([window, document]);
-
-    window.addEventListener("keyup", function(evt){
-        if(evt.keyCode === KeyboardInput.GRAVEACCENT){
-            toggleOptions();
-        }
-    }, false);
-
-    ctrls.menuButton.addEventListener("click", showOptions, false);
-    ctrls.fsButton.addEventListener("click", function(){
-        requestFullScreen();
-        mouse.requestPointerLock();
-    }, false);
     ctrls.textEntry.addEventListener("change", readChatBox, false);
-    ctrls.pointerLockButton.addEventListener("click", hideOptions, false);
-    ctrls.fullScreenButton.addEventListener("click", toggleFullScreen, false);
-    ctrls.renderingStyle.addEventListener("change", function(){
-        chooseRenderingEffect(ctrls.renderingStyle.value);
-    }, false);
     ctrls.connectButton.addEventListener("click", login, false);
-
-    window.addEventListener("beforeunload", shutdown, false);
-
-    proxy = new WebRTCSocket(socket, ctrls.defaultDisplay.checked);
-
-    head = new MotionInput("head", [
-        { name: "heading", axes: [-MotionInput.HEADING] },
-        { name: "pitch", axes: [MotionInput.PITCH] },
-        { name: "roll", axes: [-MotionInput.ROLL] }
-    ], proxy);
-
-    mouse = new MouseInput("mouse", [
-        { name: "dx", axes: [-MouseInput.X], delta: true, scale: 0.5 },
-        { name: "heading", commands: ["dx"], metaKeys: [-NetworkedInput.SHIFT], integrate: true },
-        { name: "pointerHeading", commands: ["dx"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.2, max: Math.PI * 0.2 },
-        { name: "dy", axes: [-MouseInput.Y], delta: true, scale: 0.5 },
-        { name: "pitch", commands: ["dy"], metaKeys: [-NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.5, max: Math.PI * 0.5 },
-        { name: "pointerPitch", commands: ["dy"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.125, max: Math.PI * 0.125 },
-        { name: "dz", axes: [MouseInput.Z], delta: true },
-        { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: 0, max: 10 },
-        { name: "pointerPress", buttons: [1], integrate: true, scale: -10, offset: 5, min: -0.4, max: 0 }
-    ], proxy);
-
-    var leapCommands = [];
-
-    hand = new THREE.Mesh(
-        new THREE.SphereGeometry(0.1 + i * 0.005, 4, 4), 
-        new THREE.MeshPhongMaterial({color: 0xffff00, emissive: 0x7f7f00})
-    );
-    hand.add(new THREE.PointLight(0xffff00, 1, 7));
-    hand.name = "HAND0";
-    scene.add(hand);
-    leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput["HAND0X"]], scale: 0.015 });
-    leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput["HAND0Y"]], scale: 0.015, offset: -4 });
-    leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput["HAND0Z"]], scale: -0.015, offset: 3 });
-
-    leap = new LeapMotionInput("leap", null, leapCommands, proxy);
-
-    touch = new TouchInput("touch", null, [
-        { name: "heading", axes: [TouchInput.DX0], integrate: true },
-        { name: "drive", axes: [-TouchInput.DY0] }
-    ], proxy);
-
-    keyboard = new KeyboardInput("keyboard", [
-        { name: "strafeLeft", buttons: [-KeyboardInput.A, -KeyboardInput.LEFTARROW] },
-        { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHTARROW] },
-        { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
-        { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
-        { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: resetLocation },
-        { name: "reload", buttons: [KeyboardInput.R], commandDown: reload, dt: 1 },
-        { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
-    ], proxy);
-    keyboard.pause(true);
-
-    gamepad = new GamepadInput("gamepad", [
-        { name: "strafe", axes: [GamepadInput.LSX]},
-        { name: "drive", axes: [GamepadInput.LSY]},
-        { name: "heading", axes: [-GamepadInput.RSX], integrate: true},
-        { name: "pitch", axes: [GamepadInput.RSY], integrate: true},
-        { name: "options", buttons: [9], commandUp: toggleOptions }
-    ], proxy);
-
-    speech = new SpeechInput("speech", [
-        { name: "options", keywords: ["options"], commandUp: toggleOptions },
-        { name: "chat", preamble: true, keywords: ["message"], commandUp: speechChat }
-    ], proxy);
-
-    app.setupModuleEvents(head, "head");
-    app.setupModuleEvents(mouse, "mouse");
-    app.setupModuleEvents(leap, "leap");
-    app.setupModuleEvents(touch, "touch");
-    app.setupModuleEvents(keyboard, "keyboard");
-    app.setupModuleEvents(gamepad, "gamepad");
-    app.setupModuleEvents(speech, "speech");
-
-    gamepad.addEventListener("gamepadconnected", function (id){
-        if (!gamepad.isGamepadSet() && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))){
-            gamepad.setGamepad(id);
-        }
-    }, false);
-
-    window.addEventListener("resize", function (){
-        setSize(window.innerWidth, window.innerHeight);
-    }, false);
-
+    
+    app = new Application("holodeck", resetLocation, showTyping, proxy);
+    
     window.addEventListener("focus", function(){
         focused = true;
     }, false);
@@ -747,13 +530,13 @@ function holodeck(){
         focused = false;
     }, false);
 
-    renderer.setClearColor(BG_COLOR);
 
     ModelLoader.loadCollada("models/scene2.dae", function(object){
         mainScene = object;
-        scene.add(object);
+        app.scene.add(object);
+        app.scene.add(app.hand);
         var cam = mainScene.Camera.children[0];
-        camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, DRAW_DISTANCE);
+        app.camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, DRAW_DISTANCE);
         var buttonFactory1 = new VUI.ButtonFactory(
                 mainScene, 
                 "models/button2.dae", {
@@ -776,9 +559,9 @@ function holodeck(){
                 btn.position.set(Math.cos(angle) * r, Math.cos(i * Math.PI) * 0.25, Math.sin(-angle) * r);
                 btn.rotation.set(0, angle - Math.PI, 0, "XYZ");
                 btn.addEventListener("click", function(n){
-                    audio.sawtooth(40 - n * 5, 0.1, 0.25);
+                    app.audio.sawtooth(40 - n * 5, 0.1, 0.25);
                 }.bind(this, i));
-                scene.add(btn.base);
+                app.scene.add(btn.base);
             }
             var obj = obj3(box(5, 0.125, 0.125, 0xff0000),
                 box(0.125, 0.125, 5, 0x00ff00),
@@ -787,7 +570,7 @@ function holodeck(){
 
             obj.position.set(0, 1, 0);
 
-            scene.add(obj);
+            app.scene.add(obj);
         });
     });
 
@@ -811,46 +594,14 @@ function holodeck(){
         addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: userName});
     });
 
-    audio.loadBuffer("music/click.mp3", null, function(buffer){
+    app.audio.loadBuffer("music/click.mp3", null, function(buffer){
         clickSound = buffer;
     });
 
-    audio.load3DSound("music/ambient.mp3", true, 0, 0, 0, null, function(amb){
+    app.audio.load3DSound("music/ambient.mp3", true, 0, 0, 0, null, function(amb){
         amb.volume.gain.value = 0.07;
         amb.source.start(0);
     });
 
-    setSize(window.innerWidth, window.innerHeight);
     requestAnimationFrame(waitForResources);
-
-    if(window.Notification && Notification.permission !== "denied") {
-        Notification.requestPermission(function (permission) {
-            if (!Notification.permission) {
-                Notification.permission = permission;
-            }
-        });
-    }
-
-    socket.on("typing", showTyping.bind(window, false, false));
-    socket.on("chat", showChat);    
-    socket.on("userJoin", addUser);
-    socket.on("userState", updateUserState.bind(window, false));
-    socket.on("userLeft", userLeft);
-    socket.on("loginFailed", loginFailed);
-    socket.on("userList", listUsers);
-    socket.on("disconnect", msg.bind(window));
-    socket.on("handshakeFailed", console.error.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
-    socket.on("handshakeComplete", function(controller){
-        if(controller === "demo"
-            && ctrls.autoLogin.checked
-            && ctrls.userNameField.value.length > 0
-            && ctrls.passwordField.value.length > 0){
-            ctrls.connectButton.click();
-        }
-    });
-
-    if(ctrls.appCacheReload.style.display === "none" && navigator.onLine){
-        ctrls.loginForm.style.display = "";
-        socket.emit("handshake", "demo");
-    }
 }

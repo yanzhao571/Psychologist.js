@@ -1,7 +1,7 @@
 <div id="onScreenControls">
     <a id="github" href="https://github.com/capnmidnight/VR"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png" alt="Fork me on GitHub"></a>
     <a class="primary button" id="menuButton" title="menu"></a>
-    <a class="primary button" id="fsButton" title="fullscreen"></a>
+    <a class="primary button" id="fullScreenButton" title="fullscreen"></a>
 </div>
 <section id="options">
     <a class="primary button closeSectionButton altClose">X</a>
@@ -179,9 +179,19 @@
             </tbody>
         </table>
 
-        <label>Input</label>
+        <label>Options</label>
         <table>
             <thead>
+                <tr>
+                    <td colspan="5">
+                        <select id="renderingStyle" style="width:100%;font-size:200%;">
+                            <option value="regular">Use Regular Rendering</option>
+                            <option value="rift">Use Stereo Rendering with Barrel Distortion</option>
+                            <option value="anaglyph">Use Cyan/Red Anaglyph Rendering</option>
+                            <option value="stereo">Use Basic Stereo Rendering</option>
+                        </select>
+                    </td>
+                </tr> 
                 <tr>
                     <th>Input Type</th>
                     <th>Enable</th>
@@ -240,20 +250,6 @@
                     <td><input type="checkbox" id="headReceive" checked /></td>
                     <td><a class="primary button" id="headZero">Zero</a></td>
                 </tr>
-            </tbody>
-        </table>
-
-        <label>Graphics</label>
-        <table>
-            <tbody>
-                <tr><td><select id="renderingStyle" style="width:100%;font-size:200%;">
-                    <option value="regular">Use Regular Rendering</option>
-                    <option value="rift">Use Stereo Rendering with Barrel Distortion</option>
-                    <option value="anaglyph">Use Cyan/Red Anaglyph Rendering</option>
-                    <option value="stereo">Use Basic Stereo Rendering</option>
-                </select></td></tr>                        
-                <tr><td><a class="primary button" id="fullScreenButton">Toggle Full Screen</a></td></tr>
-                <tr><td><a class="primary button" id="pointerLockButton">Set Pointer Lock (and close options window)</a></td></tr>
             </tbody>
         </table>
     </div>

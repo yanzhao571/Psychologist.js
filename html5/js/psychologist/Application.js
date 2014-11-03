@@ -14,8 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-function Application(appName){
+var BG_COLOR = 0x000000,
+    PLAYER_HEIGHT = 6.5;
+        
+function Application(thisName, resetLocation, showTyping, proxy){
     this.hideControlsTimeout = null;
     this.ctrls = findEverything();
     
@@ -107,14 +109,111 @@ function Application(appName){
     //
     // restoring the options the user selected
     //
-    var formStateKey = appName + " - formState";
+    var formStateKey = thisName + " - formState";
     var formState = getSetting(formStateKey);
+    writeForm(this.ctrls, formState);
     window.addEventListener("beforeunload", function(){
         var state = readForm(this.ctrls);
         setSetting(formStateKey, state);
-    }, false);
-    writeForm(this.ctrls, formState);
+        this.speech.enable(false);
+    }.bind(this), false);
     
+    //
+    // speech input
+    //
+    this.speech = new SpeechInput("speech", [
+        { name: "options", keywords: ["options"], commandUp: this.toggleOptions.bind(this) },
+        { name: "chat", preamble: true, keywords: ["message"], commandUp: function (){ 
+            showTyping(true, true, this.speech.getValue("chat")); 
+        }.bind(this)}
+    ], proxy);    
+    this.setupModuleEvents(this.speech, "speech");
+    
+    //
+    // keyboard input
+    //
+    this.keyboard = new KeyboardInput("keyboard", [
+        { name: "strafeLeft", buttons: [-KeyboardInput.A, -KeyboardInput.LEFTARROW] },
+        { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHTARROW] },
+        { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
+        { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
+        { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: resetLocation },
+        { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: showTyping.bind(window, true)}
+    ], proxy);    
+    this.keyboard.pause(true);
+    this.setupModuleEvents(this.keyboard, "keyboard");
+    
+    //
+    // mouse input
+    //
+    this.mouse = new MouseInput("mouse", [
+        { name: "dx", axes: [-MouseInput.X], delta: true, scale: 0.5 },
+        { name: "heading", commands: ["dx"], metaKeys: [-NetworkedInput.SHIFT], integrate: true },
+        { name: "pointerHeading", commands: ["dx"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.2, max: Math.PI * 0.2 },
+        { name: "dy", axes: [-MouseInput.Y], delta: true, scale: 0.5 },
+        { name: "pitch", commands: ["dy"], metaKeys: [-NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.5, max: Math.PI * 0.5 },
+        { name: "pointerPitch", commands: ["dy"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.125, max: Math.PI * 0.125 },
+        { name: "dz", axes: [MouseInput.Z], delta: true },
+        { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: 0, max: 10 },
+        { name: "pointerPress", buttons: [1], integrate: true, scale: -10, offset: 5, min: -0.4, max: 0 }
+    ], proxy);
+    this.setupModuleEvents(this.mouse, "mouse");
+    
+    //
+    // smartphone orientation sensor-based head tracking
+    //
+    this.head = new MotionInput("head", [
+        { name: "heading", axes: [-MotionInput.HEADING] },
+        { name: "pitch", axes: [MotionInput.PITCH] },
+        { name: "roll", axes: [-MotionInput.ROLL] }
+    ], proxy);
+    this.setupModuleEvents(this.head, "head");
+    
+    //
+    // capacitive touch screen input
+    //
+    this.touch = new TouchInput("touch", null, [
+        { name: "heading", axes: [TouchInput.DX0], integrate: true },
+        { name: "drive", axes: [-TouchInput.DY0] }
+    ], proxy);
+    this.setupModuleEvents(this.touch, "touch");
+    
+    //
+    // gamepad input
+    //
+    this.gamepad = new GamepadInput("gamepad", [
+        { name: "strafe", axes: [GamepadInput.LSX]},
+        { name: "drive", axes: [GamepadInput.LSY]},
+        { name: "heading", axes: [-GamepadInput.RSX], integrate: true},
+        { name: "pitch", axes: [GamepadInput.RSY], integrate: true},
+        { name: "options", buttons: [9], commandUp: this.toggleOptions.bind(this) }
+    ], proxy);
+    this.setupModuleEvents(this.gamepad, "gamepad");
+    this.gamepad.addEventListener("gamepadconnected", function (id){
+        if (!this.gamepad.isGamepadSet() && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))){
+            this.gamepad.setGamepad(id);
+        }
+    }.bind(this), false);
+    
+    //
+    // Leap Motion input
+    //
+    this.hand = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1 + i * 0.005, 4, 4), 
+        new THREE.MeshPhongMaterial({color: 0xffff00, emissive: 0x7f7f00})
+    );
+    this.hand.name = "HAND0";
+    this.hand.add(new THREE.PointLight(0xffff00, 1, 7));
+    var leapCommands = [];
+    leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput["HAND0X"]], scale: 0.015 });
+    leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput["HAND0Y"]], scale: 0.015, offset: -4 });
+    leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput["HAND0Z"]], scale: -0.015, offset: 3 });
+    this.leap = new LeapMotionInput("leap", null, leapCommands, proxy);
+    this.setupModuleEvents(this.leap, "leap");
+    
+    //
+    // setting up all other event listeners
+    //
     window.addEventListener("touchend", this.showOnscreenControls.bind(this), false);
     
     window.addEventListener("mousemove", function(){
@@ -122,22 +221,57 @@ function Application(appName){
             this.showOnscreenControls();
         }
     }.bind(this), false);
-}
+
+    window.addEventListener("keyup", function(evt){
+        if(evt.keyCode === KeyboardInput.GRAVEACCENT){
+            this.toggleOptions();
+        }
+    }.bind(this), false);
     
-//
-// the touch-screen and mouse-controls for accessing the options screen
-//
-Application.prototype.hideOnscreenControls = function(){
-    this.ctrls.onScreenControls.style.display = "none";
-    this.hideControlsTimeout = null;
-};
+    window.addEventListener("resize", function (){
+        this.setSize(window.innerWidth, window.innerHeight);
+    }.bind(this), false);
     
-Application.prototype.showOnscreenControls = function(){
-    this.ctrls.onScreenControls.style.display = "";
-    if(this.hideControlsTimeout !== null){
-        clearTimeout(this.hideControlsTimeout);
+    this.ctrls.fullScreenButton.addEventListener("click", function(){
+        requestFullScreen();
+        this.mouse.requestPointerLock();
+    }.bind(this), false);
+    
+    this.ctrls.menuButton.addEventListener("click", this.showOptions.bind(this), false);
+    
+    this.ctrls.renderingStyle.addEventListener("change", function(){
+        this.chooseRenderingEffect(this.ctrls.renderingStyle.value);
+    }.bind(this), false);
+
+    var closers = document.getElementsByClassName("closeSectionButton");
+    for(var i = 0; i < closers.length; ++i){
+        closers[i].addEventListener("click", this.hideOptions.bind(this), false);
     }
-    this.hideControlsTimeout = setTimeout(this.hideOnscreenControls.bind(this), 3000);
+    
+    //
+    // Audio setup
+    //
+    this.audio = new Audio3DOutput();
+    
+    //
+    // THREE.js setup
+    //
+    this.scene = new THREE.Scene();
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.ctrls.frontBuffer }),
+    this.renderer.setClearColor(BG_COLOR);
+    this.setSize(window.innerWidth, window.innerHeight);
+    this.testPoint = new THREE.Vector3();
+}
+
+Application.prototype.update = function(dt){
+    THREE.AnimationHandler.update(dt);
+    this.speech.update(dt);
+    this.keyboard.update(dt);
+    this.mouse.update(dt);
+    this.head.update(dt);
+    this.touch.update(dt);
+    this.gamepad.update(dt);
+    this.leap.update(dt);
 };
 
 Application.prototype.setupModuleEvents = function(module, name){
@@ -169,5 +303,124 @@ Application.prototype.setupModuleEvents = function(module, name){
     t.disabled = !e.checked;
     if(t.checked && t.disabled){
         t.checked = false;
+    }
+};
+
+Application.prototype.showOptions = function(){
+    this.ctrls.options.style.display = "";
+    this.keyboard.pause(true);
+    this.mouse.exitPointerLock();
+};
+
+Application.prototype.hideOptions = function(){        
+    this.ctrls.options.style.display = "none";
+    requestFullScreen();
+    this.keyboard.pause(false);
+    this.showOnscreenControls();
+    this.mouse.requestPointerLock();
+};
+
+Application.prototype.toggleOptions = function(){
+    var show = this.ctrls.options.style.display !== "";
+    if(show){
+        this.showOptions();
+    }
+    else{
+        this.hideOptions();
+    }
+};
+    
+//
+// the touch-screen and mouse-controls for accessing the options screen
+//
+Application.prototype.hideOnscreenControls = function(){
+    this.ctrls.onScreenControls.style.display = "none";
+    this.hideControlsTimeout = null;
+};
+    
+Application.prototype.showOnscreenControls = function(){
+    this.ctrls.onScreenControls.style.display = "";
+    if(this.hideControlsTimeout !== null){
+        clearTimeout(this.hideControlsTimeout);
+    }
+    this.hideControlsTimeout = setTimeout(this.hideOnscreenControls.bind(this), 3000);
+};
+
+Application.prototype.render = function(pitch, heading, roll, currentUser){
+    //
+    // update audio
+    //
+    this.testPoint.copy(currentUser.position);
+    this.testPoint.divideScalar(10);
+    this.audio.setPosition(this.testPoint.x, this.testPoint.y, this.testPoint.z);
+    this.audio.setVelocity(currentUser.velocity.x, currentUser.velocity.y, currentUser.velocity.z);
+    this.testPoint.normalize();
+    this.audio.setOrientation(this.testPoint.x, this.testPoint.y, this.testPoint.z, 0, 1, 0);
+    
+    //
+    // update the camera
+    //
+    this.camera.rotation.set(pitch, heading, roll, "YZX");
+    this.camera.position.copy(currentUser.position);
+    this.camera.position.y += PLAYER_HEIGHT;
+
+    //
+    // draw
+    //
+    if (this.effect){
+        this.effect.render(this.scene, this.camera);
+    }
+    else {
+        this.renderer.render(this.scene, this.camera);
+    }
+};
+
+Application.prototype.chooseRenderingEffect = function(type){
+    switch(type){
+        case "anaglyph": this.effect = new THREE.AnaglyphEffect(this.renderer, 5, window.innerWidth, window.innerHeight); break;
+        case "stereo": this.effect = new THREE.StereoEffect(this.renderer); break;
+        case "rift": this.effect = new THREE.OculusRiftEffect(this.renderer, {
+            worldFactor: 1,
+            HMD: {
+                hResolution: screen.availWidth,
+                vResolution: screen.availHeight,
+                hScreenSize: 0.126,
+                vScreenSize: 0.075,
+                interpupillaryDistance: 0.064,
+                lensSeparationDistance: 0.064,
+                eyeToScreenDistance: 0.051,
+                distortionK: [1, 0.22, 0.06, 0.0],
+                chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
+            }
+        }); break;
+        default: 
+            this.effect = null;
+            type = "regular";
+            break;
+    }
+
+    if(this.ctrls.renderingStyle.value !== type){
+        this.ctrls.renderingStyle.value = type;
+    }
+
+    if((this.lastRenderingType === "rift" || this.lastRenderingType === "stereo")
+        && (type === "anaglyph" || type === "regular")){
+        alert("The page must reload to enable the new settings.");
+        document.location.reload();
+    }
+    this.lastRenderingType = type;
+};
+
+Application.prototype.setSize = function(w, h){
+    if(this.camera){
+        this.camera.aspect = w / h;
+        this.camera.updateProjectionMatrix();
+    }
+
+    this.chooseRenderingEffect(this.ctrls.renderingStyle.value);
+
+    this.renderer.setSize(w, h);
+    if (this.effect){
+        this.effect.setSize(w, h);
     }
 };

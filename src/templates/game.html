@@ -70,6 +70,7 @@
                 get("templates/$1.about.html", "text", function(about){
                     ctrls.appCacheStatus.style.display = "none";
                     document.body.innerHTML += content.replace("[ABOUT]", about);
+                    document.getElementById("gameTitle").innerHTML = "$2";
                     get("js/game.libs.json", "json", function(libs){                   
                         libs.push("js/controllers/$1.js");
                         loadLibs(libs, function(){

@@ -59,15 +59,5 @@ a.secondary.button{
     background-color: #ddd;
     border-color: #ddd;
     color: #fff;
+    cursor: no-drop;
 }
-    a.secondary.button:hover
-    {
-        background-color: #eee;
-        border-color: #eee;
-    }
-
-    a.secondary.button:active
-    {
-        background-color: #eee;
-        border-color: #eee;
-    }

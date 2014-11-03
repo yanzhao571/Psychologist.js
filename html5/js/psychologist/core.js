@@ -596,3 +596,11 @@ document.exitPointerLock = document.exitPointerLock
     || document.webkitExitPointerLock
     || document.mozExitPointerLock
     || function(){};
+    
+if(window.Notification && Notification.permission !== "denied") {
+    Notification.requestPermission(function (permission) {
+        if (!Notification.permission) {
+            Notification.permission = permission;
+        }
+    });
+}
