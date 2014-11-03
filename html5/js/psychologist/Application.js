@@ -26,15 +26,18 @@ var BG_COLOR = 0x000000,
         
 function Application(name, options){
     this.ctrls = findEverything();
-    this.focused = true;
-    this.wasFocused = false;
-    this.userName = DEFAULT_USER_NAME;
     this.users = {};
     this.chatLines = [];
+    this.listeners = {
+        ready: []
+    };
+    this.userName = DEFAULT_USER_NAME;
+    this.focused = true;
+    this.wasFocused = false;
+    this.lt = 0;
+    this.frame = 0;
     this.currentUser = null;
-    this.avatar = new ModelLoader(options.avatarModel, function(){
-        this.addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: this.userName});
-    }.bind(this));
+    this.onground = false;
         
     //
     // Setup THREE.js
@@ -44,6 +47,18 @@ function Application(name, options){
     this.renderer.setClearColor(BG_COLOR);
     this.setSize(window.innerWidth, window.innerHeight);
     this.testPoint = new THREE.Vector3();
+    this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7);
+    this.direction = new THREE.Vector3();
+    this.avatar = new ModelLoader(options.avatarModel, function(){
+        this.addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: this.userName});
+    }.bind(this));    
+
+    ModelLoader.loadCollada(options.sceneModel, function(sceneGraph){
+        this.mainScene = sceneGraph;
+        this.scene.add(sceneGraph);
+        var cam = this.mainScene.Camera.children[0];
+        this.camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, DRAW_DISTANCE);
+    }.bind(this));
     
     //
     // Setup audio
@@ -362,6 +377,18 @@ function Application(name, options){
         closers[i].addEventListener("click", this.hideOptions.bind(this), false);
     }
 }
+
+Application.prototype.addEventListener = function(event, thunk){
+    if(this.listeners[event]){
+        this.listeners[event].push(thunk);
+    }
+};
+
+Application.prototype.fireWhenReady = function(){
+    for(var i = 0; i < this.listeners.ready.length; ++i){
+        this.listeners.ready[i]();
+    }
+};
 
 Application.prototype.update = function(dt){
     THREE.AnimationHandler.update(dt);
@@ -732,4 +759,201 @@ Application.prototype.makeNotification = function(msg){
         }.bind(this), false);
         return this.lastNote;
     }
+};
+
+Application.prototype.start = function(){
+    var waitForResources = function(t){
+        this.lt = t;
+        if(this.camera && this.mainScene && this.currentUser){
+            this.fireWhenReady();
+            this.leap.start();
+            this.animate = this.animate.bind(this);
+            requestAnimationFrame(this.animate);
+        }
+        else{
+            requestAnimationFrame(waitForResources);
+        }
+    }.bind(this);
+    
+    requestAnimationFrame(waitForResources);
+};
+
+Application.prototype.animate = function(t){
+    requestAnimationFrame(this.animate);
+    var dt = (t - this.lt) * 0.001;
+    this.lt = t;
+
+    if(this.wasFocused && this.focused){
+        this.update(dt);
+
+        var roll = this.head.getValue("roll");
+        var pitch = this.head.getValue("pitch")
+            + this.gamepad.getValue("pitch")
+            + this.mouse.getValue("pitch");
+        var heading = this.head.getValue("heading") 
+            + this.gamepad.getValue("heading")
+            + this.touch.getValue("heading")
+            + this.mouse.getValue("heading");
+        var pointerHeading = heading + this.mouse.getValue("pointerHeading");
+        var strafe = 0;
+        var drive = 0;
+
+        if(this.ctrls.defaultDisplay.checked){
+            //
+            // update user position and view
+            //
+
+            this.currentUser.dHeading = (heading - this.currentUser.heading) / dt;
+            strafe = this.keyboard.getValue("strafeRight")
+                + this.keyboard.getValue("strafeLeft")
+                + this.gamepad.getValue("strafe");
+            drive = this.keyboard.getValue("driveBack")
+                + this.keyboard.getValue("driveForward")
+                + this.gamepad.getValue("drive")
+                + this.touch.getValue("drive");
+
+            if(this.onground || this.currentUser.position.y < -0.5){                
+                if(this.autoWalking){
+                    strafe = 0;
+                    drive = -0.5;
+                }
+                if(strafe || drive){
+                    len = SPEED * Math.min(1, 1 / Math.sqrt(drive * drive + strafe * strafe));
+                }
+                else{
+                    len = 0;
+                }
+
+                strafe *= len;
+                drive *= len;
+                len = strafe * Math.cos(pointerHeading) + drive * Math.sin(pointerHeading);
+                drive = drive * Math.cos(pointerHeading) - strafe * Math.sin(pointerHeading);
+                strafe = len;
+                this.currentUser.velocity.x = this.currentUser.velocity.x * 0.9 + strafe * 0.1;
+                this.currentUser.velocity.z = this.currentUser.velocity.z * 0.9 + drive * 0.1;
+            }
+
+            this.currentUser.velocity.y -= dt * GRAVITY;
+
+            //
+            // do collision detection
+            //
+            var len = this.currentUser.velocity.length() * dt;
+            this.direction.copy(this.currentUser.velocity);
+            this.direction.normalize();
+            this.testPoint.copy(this.currentUser.position);
+            this.testPoint.y += PLAYER_HEIGHT / 2;
+            this.raycaster.set(this.testPoint, this.direction);
+            this.raycaster.far = len;
+            var intersections = this.raycaster.intersectObject(this.scene, true);
+            for(var i = 0; i < intersections.length; ++i){
+                var inter = intersections[i];
+                if(inter.object.parent.isSolid){
+                    this.testPoint.copy(inter.face.normal);
+                    this.testPoint.applyEuler(inter.object.parent.rotation);
+                    this.currentUser.velocity.reflect(this.testPoint);
+                    var d = this.testPoint.dot(this.camera.up);
+                    if(d > 0.75){
+                        this.currentUser.position.y = inter.point.y + 0.0125;
+                        this.currentUser.velocity.y = 0.1;
+                        this.onground = true;
+                    }
+                }
+            }
+
+            // ground test
+            this.testPoint.copy(this.currentUser.position);
+            var GROUND_TEST_HEIGHT = 3;
+            this.testPoint.y += GROUND_TEST_HEIGHT;
+            this.direction.set(0, -1, 0);
+            this.raycaster.set(this.testPoint, this.direction);
+            this.raycaster.far = GROUND_TEST_HEIGHT * 2;
+            intersections = this.raycaster.intersectObject(this.scene, true);
+            for(var i = 0; i < intersections.length; ++i){
+                var inter = intersections[i];
+                if(inter.object.parent.isSolid){
+                    this.testPoint.copy(inter.face.normal);
+                    this.testPoint.applyEuler(inter.object.parent.rotation);
+                    this.currentUser.position.y = inter.point.y;
+                    this.currentUser.velocity.y = 0;
+                    this.onground = true;
+                }
+            }
+
+            //
+            // send a network update of the user's position, if it's been enough 
+            // time since the last update (don'dt want to flood the server).
+            //
+            this.frame += dt;
+            if(this.frame > DFRAME){
+                this.frame -= DFRAME;
+                var state = {
+                    x: this.currentUser.position.x,
+                    y: this.currentUser.position.y,
+                    z: this.currentUser.position.z,
+                    dx: this.currentUser.velocity.x,
+                    dy: this.currentUser.velocity.y,
+                    dz: this.currentUser.velocity.z,
+                    heading: this.currentUser.heading,
+                    dHeading: (this.currentUser.heading - this.currentUser.lastHeading) / DFRAME,
+                    isRunning: this.currentUser.velocity.length() > 0
+                };
+                this.currentUser.lastHeading = this.currentUser.heading;
+                if(this.socket){
+                    this.socket.emit("userState", state);
+                }
+            }
+        }
+
+        //
+        // update avatars
+        //
+        for(var key in this.users){
+            var user = this.users[key];
+            this.testPoint.copy(user.velocity);
+            this.testPoint.multiplyScalar(dt);
+            user.position.add(this.testPoint);
+            user.heading += user.dHeading * dt;
+            user.rotation.set(0, user.heading, 0, "XYZ");
+            if(user !== this.currentUser){ 
+                // we have to offset the rotation of the name so the user
+                // can read it.
+                user.nameObj.rotation.set(0, this.currentUser.heading - user.heading, 0, "XYZ");
+            }
+            if(!user.animation.isPlaying && user.velocity.length() >= 2){
+                user.animation.play();                
+            }
+            else if(user.animation.isPlaying && user.velocity.length() < 2){
+                user.animation.stop();
+            }
+        }
+
+        //
+        // place pointer
+        //
+        var pointerDistance = this.leap.getValue("HAND0Z") 
+            + this.mouse.getValue("pointerDistance")
+            + 2;
+        var dp = pitch 
+                + this.mouse.getValue("pointerPitch") 
+                + this.mouse.getValue("pointerPress");
+        pointerDistance /= Math.cos(dp);
+        this.direction.set(0, 0, -pointerDistance)
+            .applyAxisAngle(RIGHT, -dp)
+            .applyAxisAngle(this.camera.up, pointerHeading);
+
+        this.hand.position.copy(this.camera.position)
+            .add(this.direction);
+
+        for(var j = 0; j < this.mainScene.buttons.length; ++j){
+            var tag = this.mainScene.buttons[j].test(this.camera.position, this.hand.position);
+            if(tag){
+                this.hand.position.copy(tag);
+            }
+        }
+
+        this.render(pitch, heading, roll, this.currentUser);
+    }
+
+    this.wasFocused = this.focused;
 };
