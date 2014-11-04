@@ -135,7 +135,8 @@ VUI.Button.prototype.test = function(cameraPosition, pointer){
             var intersections = this.raycaster.intersectObject(this.cap.children[0]);
             if(intersections.length > 0){
                 var inter = intersections[0];
-                if(inter.face.normal.dot(pointer.velocity) < 0){
+                dot = inter.face.normal.dot(pointer.velocity);
+                if(dot > 0){
                     var y = inter.point.y;
                     var proportion = Math.max(0, Math.min(this.options.maxThrow, y - pointer.position.y) / this.options.maxThrow);
                     this.touched = proportion > 0;
@@ -159,7 +160,6 @@ VUI.Button.prototype.test = function(cameraPosition, pointer){
         }
         else{
             this.value = this.pressed;
-            console.log(this.name);
         }
     }
     else if(!this.toggle && !this.pressed){
