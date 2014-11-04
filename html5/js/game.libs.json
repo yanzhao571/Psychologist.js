@@ -18,6 +18,7 @@
 "js/input/MouseInput.js",
 "js/input/TouchInput.js",
 "js/input/LeapMotionInput.js",
+"js/input/LocationInput.js",
 "js/output/Audio3DOutput.js",
 "js/output/SpeechOutput.js",
 "js/psychologist/Application.js",

@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
+    <title>Motion</title>
+</head>
+<body>
+    <button id="zeroButton" type="primary button" style="position:absolute;right:0;top:0;font-size:14pt;padding:1em;">Zero sensor</button>
+    <ul id="output" style="list-style:none;margin:0;padding:0;"></ul>
+    <script type="text/javascript" src="js/psychologist/core.js"></script>
+    <script type="text/javascript" src="js/input/NetworkedInput.js"></script>
+    <script type="text/javascript" src="js/input/ButtonAndAxisInput.js"></script>
+    <script type="text/javascript" src="js/input/LocationInput.js"></script>
+    <script type="text/javascript">
+        var output = document.getElementById("output"),
+            zeroButton = document.getElementById("zeroButton"),
+            commands = LocationInput.AXES.map(function(name){
+                return {name: name, axes: [LocationInput[name]] };
+            }).concat(LocationInput.AXES.map(function(name){
+                return {name: "D" + name, axes: [LocationInput[name]], delta: true };
+            })),
+            loc = new LocationInput("motion", commands);
+
+        //zeroButton.addEventListener("click", location.zeroAxes.bind(location), false);
+
+        var lt = 0;
+        function loop(t){
+            requestAnimationFrame(loop);
+            loc.update((t - lt) * 0.001);
+            lt = t;
+            output.innerHTML = "";
+
+            for(var i = 0; i < commands.length; ++i){
+                var cmd = commands[i];
+                var li = document.createElement("li");
+                var v = loc.getValue(cmd.name);
+                li.innerHTML = fmt("$1: $2.000", cmd.name, v);
+                output.appendChild(li);
+            }
+        }
+
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

@@ -46,7 +46,6 @@ ModelLoader.setProperties = function(object, src){
                 var materials = obj.material.materials;
                 if(materials){
                     for(var i = 0; i < materials.length; ++i){
-                        console.log(src, object.name || "_", child.name || "_", obj.name || "_", materials[i].name || "_");
                         child.isSolid = child.isSolid || materials[i].name === "solid";
                         child.isButton = child.isButton || materials[i].name === "button";
                     }
@@ -54,11 +53,9 @@ ModelLoader.setProperties = function(object, src){
                     // Nope, I really mean it.
                     if(child.isButton){
                         if(object.children.length === 1){
-                            console.log("OK");
                             object.buttons.push(child);
                         }
                         else{
-                            console.log("MEH");
                             child.buttons = [child];
                             object.buttons.push(new VUI.Button(child, child.name));
                         }

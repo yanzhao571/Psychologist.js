@@ -91,7 +91,10 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
             headEnable: {checked: false},
             headTransmit: {checked: false},
             headReceive: {checked: true},
-            renderingStyle: {value: "regular" },
+            locationEnable: {checked: false},
+            locationTransmit: {checked: false},
+            locationReceive: {checked: true},
+            renderingStyle: {value: "regular"},
             defaultDisplay: {checked: true}
         }},
         { name: "Smartphone HMD", values:{
@@ -116,31 +119,37 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
             headEnable: {checked: true},
             headTransmit: {checked: true},
             headReceive: {checked: false},
+            locationEnable: {checked: true},
+            locationTransmit: {checked: true},
+            locationReceive: {checked: false},
             renderingStyle: {value: "rift" },
             defaultDisplay: {checked: false}
         }},
         { name: NO_HMD_SMARTPHONE, values:{
             speechEnable: {checked: false},
             speechTransmit: {checked: false},
-            speechReceive: {checked: true},
+            speechReceive: {checked: false},
             keyboardEnable: {checked: false},
             keyboardTransmit: {checked: false},
-            keyboardReceive: {checked: true},
+            keyboardReceive: {checked: false},
             mouseEnable: {checked: false},
             mouseTransmit: {checked: false},
-            mouseReceive: {checked: true},
+            mouseReceive: {checked: false},
             gamepadEnable: {checked: false},
             gamepadTransmit: {checked: false},
-            gamepadReceive: {checked: true},
+            gamepadReceive: {checked: false},
             leapEnable: {checked: false},
             leapTransmit: {checked: false},
-            leapReceive: {checked: true},
+            leapReceive: {checked: false},
             touchEnable: {checked: true},
             touchTransmit: {checked: true},
             touchReceive: {checked: false},
             headEnable: {checked: true},
             headTransmit: {checked: true},
             headReceive: {checked: false},
+            locationEnable: {checked: true},
+            locationTransmit: {checked: true},
+            locationReceive: {checked: false},
             renderingStyle: {value: "regular" },
             defaultDisplay: {checked: true}
         }}
@@ -327,6 +336,12 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
             this.gamepad.setGamepad(id);
         }
     }.bind(this), false);
+    
+    //
+    // geolocation input
+    //
+    this.location = new LocationInput("location", [], this.proxy);
+    this.setupModuleEvents(this.location, "location");
     
     //
     // Leap Motion input
