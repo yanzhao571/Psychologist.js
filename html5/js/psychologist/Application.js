@@ -157,6 +157,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     //
     var formStateKey = name + " - formState";
     var formState = getSetting(formStateKey);
+    CameraInput.setup(this.ctrls.cameraListing, formState.cameraListing);
     writeForm(this.ctrls, formState);
     window.addEventListener("beforeunload", function(){
         var state = readForm(this.ctrls);
@@ -346,8 +347,11 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     //
     // passthrough camera
     //
-    this.passthrough = new CameraInput(1, 0, 0, -1);
+    this.passthrough = new CameraInput(formState.cameraListing, 1, 0, 0, -1);
     this.passthrough.mesh.visible = false;
+    this.ctrls.cameraListing.addEventListener("change", function(){
+        this.passthrough.connect(this.ctrls.cameraListing.value);
+    }.bind(this));
     
     //
     // Leap Motion input

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-function CameraInput(size, x, y, z, options){
+function CameraInput(id, size, x, y, z, options){
     this.options = combineDefaults(options, CameraInput);
     this.videoElement = document.createElement("video");
     this.buffer = document.createElement("canvas");
@@ -27,6 +27,11 @@ function CameraInput(size, x, y, z, options){
         color: 0xffffff,
         shading: THREE.FlatShading
     });
+    
+    this.gfx.width = 500;
+    this.gfx.height = 500;
+    this.gfx.fillStyle = "white";
+    this.gfx.fillRect(0, 0, 500, 500);
     
     var geometry = new THREE.PlaneGeometry(size / 0.75, size);
     geometry.computeBoundingBox();
@@ -69,8 +74,18 @@ function CameraInput(size, x, y, z, options){
         }
     }.bind(this);
 
+    this.videoElement.addEventListener("canplay", function (){
+        if (!this.streaming){
+            this.streaming = true;
+        }
+    }.bind(this), false);
 
-    var connect = function(source){
+    this.videoElement.addEventListener("playing", function (){
+        this.videoElement.height = this.buffer.height = this.videoElement.videoHeight;
+        this.videoElement.width = this.buffer.width = this.videoElement.videoWidth;
+    }.bind(this), false);
+
+    this.connect = function(source){
         if (this.streaming){
             try {
                 if (window.stream){
@@ -91,30 +106,30 @@ function CameraInput(size, x, y, z, options){
                 console.error.bind(console, "Final connect attempt"));
         });
     }.bind(this);
-
-    this.videoElement.addEventListener("canplay", function (){
-        if (!this.streaming){
-            this.streaming = true;
-        }
-    }.bind(this), false);
-
-    this.videoElement.addEventListener("playing", function (){
-        this.videoElement.height = this.buffer.height = this.videoElement.videoHeight;
-        this.videoElement.width = this.buffer.width = this.videoElement.videoWidth;
-    }.bind(this), false);
     
-    MediaStreamTrack.getVideoTracks(function (infos){
-        //the last one is most likely to be the back camera of the phone
-        //TODO: setup this up to be configurable.
-        connect(infos && infos.length > 0 && infos[infos.length - 1].id);
-    });
+    if(id){
+        this.connect(id);
+    }
 }
+
+CameraInput.setup = function(elem, id){
+    MediaStreamTrack.getVideoTracks(function (infos){
+        for(var i = 0; i < infos.length; ++i){
+            var option = document.createElement("option");
+            option.value = infos[i].id;
+            option.innerHTML = fmt("[Facing: $1] [ID: $2...]", infos[i].facing || "N/A", infos[i].id.substring(0, 8));
+            option.selected = infos[i].id === id;
+            elem.appendChild(option);
+        }
+    });
+};
 
 CameraInput.DEFAULTS = {
     videoModes: [
         { w: 320, h: 240 },
         { w: 640, h: 480 }, 
-        "default"]
+        "default"
+    ]
 };
 
 CameraInput.prototype.update = function(){
