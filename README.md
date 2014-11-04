@@ -10,7 +10,7 @@ This project is about creating a template of a project and a workflow for rapidl
 
 # Technology
 
-The software in this repository, the APIs it utilizes, the standards they implement, and the tools that the project uses are all open standards and Free, Open Source Software. I'm more interested in adoption and collaboration at this point than turning a buck on it. The project is released under the MIT license, to ensure it fits the most use cases. I intend to use the fruits of this project to develop content-laden, subscription-driven software, similar to the MMORPG model.
+The software in this repository, the APIs it utilizes, the standards they implement, and the tools that the project uses are all open standards and Free, Open Source Software. The project is released under the GPLv3 license while I'm still developing it, and when it's closer to ready, I'll offer a paid license that doesn't not require you to also release your software under the GPLv3.
 
  - Blender: All models used in the demo were created by me in Blender 2.7.
  - Collada: an open standard, developed by the Khronos Group, for representing 3D model and scene data.
@@ -20,132 +20,19 @@ The software in this repository, the APIs it utilizes, the standards they implem
 
 # A Demo
 
-https://www.seanmcbeth.com:8081/demo.html
-
-If you're going to use the input proxying feature, it's best to set this up locally and use it over WiFi. Over the internet, it's quite laggy. So please don't complain to me about it making you sick. I know already. I have a bucket sitting next to my desk. But it's sufficient for making demos and trying things out before you decide to spend more money on an HMD.
+https://www.seanmcbeth.com:8081/holodeck.html
 
 ## A Few Things to Note
 
 1. If you open a browsing session on your PC as well as your smartphone, you can choose your own username and password and enter them in both browsers, at which point any keyboard, mouse, or gamepad input you use on your PC will be proxied to your smartphone.
 2. You can choose stereo rendering with barrel distortion for use with Google Cardboard,
 3. Or choose red/cyan anaglyph rendering for use with glasses on any type of display,
-4. Or just skip it all and run around the really crappy landscape, viewing it with obsolete 2D display technology.
-5. The only speech command is "jump".
+4. Or just skip it all and run around the tiny room, viewing it with obsolete 2D display technology.
+5. Use your Leap Motion or mouse to move the pointer and slap it down on the buttons. Use the mouse wheel to move the pointer further away from you.
+6. Hold shift while moving the mouse to turn your view on the PC. On smartphones, just move the device.
 
 The input proxying is necessary for using a gamepad with the demo on a smartphone because the various browser vendors haven't yet implemented HTML5 Gamepad API. But whatevs. It also makes it much more convenient to use a keyboard and mouse with the game on the smartphone.
 
-I've so far only tested this with Google Chrome on Windows and Android, but there is no particular reason it should not work with Linux, OS X, iOS, Firefox, or Safari. There might be some browser-specific issues that need to be handled, but they should be easy to identify and overcome with testing. Also note that you don't necessarily have to match browsers on the PC with browsers on the smartphone. Mix and match to your heart's content.
+I've so far only tested this with Firefox and Google Chrome on Windows, Linux, and Android, but there is no particular reason it should not work with OS X, iOS, and Safari. It's *mostly* compatible with Internet Explorer, though there are some UI issues that need to be worked out, the basic premise is there.
 
-# User Input
-
-I'm somewhat proud of the user input system. I've built an API that allows one to define groups of commands that can be activated in different ways for different input systems. In other words, it provides options for different types of UI in parallel.
-
-This is still a work in progress. Eventually, I'll have enumerations for each of the button and axis values. But basically, buttons and axes are 1-indexed, and you can reverse their meaning by negating their index (hence why it's 1-indexed, because negative 0 doesn't mean anything in Javascript).
-
-## Example
-
-````javascript
-    // given:
-    //    socket - a WebSocket to the server
-    //    canvas - a DOM element refering to the canvas to which you're rendering
-    //    jump, fire - functions that execute game commands.
-
-    // MouseInput can do buttons and three axes, 1 = mouse pointer x, 2 = mouse pointer
-    // y, 3 = mouse wheel
-    var mouse = new MouseInput("mouse", null, [
-        // the name parameter allows us to look up the command state by name with isDown, 
-        // isUp, and getValue
-        { name: "yaw", axes: [-4] },
-        { name: "pitch", axes: [5] },
-        // callback functions can have a cool-down time set
-        { name: "jump", buttons: [2], commandDown: jump, dt: 0.250 },
-        { name: "fire", buttons: [1], commandDown: fire, dt: 0.125 },
-    ], socket, canvas);
-
-    // TouchInput can track multiple points (you specify how many with the first parameter),
-    // and x/y axes for each of them. First-finger's X is axis 1, first-finger's Y is axis 2,
-    // second finger's X is axis 3, etc.
-    //
-    // Areas of the screen can be defined as "buttons". Tap them or slide in out of them.
-    var touch = new TouchInput("touch", null, [
-        { name: "jumpButton", x: 0, y: 0, w: 50, h: 50},
-        { name: "fireButton", x: 60, y: 0, w: 50, h: 50},
-    ], [
-        { name: "yaw", axes: [-3] },
-        { name: "drive", axes: [4] },
-        { name: "jump", buttons: [1], commandDown: jump, dt: 0.250 },
-        { name: "fire", buttons: [2], commandDown: fire, dt: 0.125 },
-    ], socket, canvas);
-
-    // MotionInput can keep track of absolute heading, pitch, and roll (axes 1, 2, and 3,
-    // and for a smartphone oriented in a head's-up, landscape position, as otherwise the 
-    // phone's gyroscope returns confusing values), device acceleration, including gravity
-    // (with x, y, and z compenents at axes 4, 5, and 6), and deltas of each value in the
-    // next 6 axes thereafter. 
-    var motion = new MotionInput("motion", null, [
-        { name: "yaw", axes: [-7] },
-        { name: "pitch", axes: [8] },
-        { name: "roll", axes: [-9] }
-    ], socket);
-
-
-    // This one should be obvious. But note that these button values are keyCodes directly
-    // and are not 1-based indices.
-    var keyboard = new KeyboardInput("keyboard", [
-        { name: "strafeLeft", buttons: [-65] },
-        { name: "strafeRight", buttons: [68] },
-        { name: "driveForward", buttons: [-87] },
-        { name: "driveBack", buttons: [83] },
-        { name: "rollLeft", buttons: [81] },
-        { name: "rollRight", buttons: [-69] },
-        { name: "jump", buttons: [32], commandDown: jump, dt: 0.250 },
-        { name: "fire", buttons: [17], commandDown: fire, dt: 0.125 },
-        { name: "reload", buttons: [70], commandDown: reload, dt: 0.125 },
-    ], socket);
-
-    // GamepadInput wraps the HTML5 Gampead API and is fairly strait-forward, and if you
-    // are familiar with it, you should understand what the axes and buttons mean. Also,
-    // the axes can have deadzone ranges set, where values at +- the deadzone value are
-    // registered as 0.
-    var gamepad = new GamepadInput("gamepad", null, [
-        { name: "strafe", axes: [1], deadzone: 0.1 },
-        { name: "drive", axes: [2], deadzone: 0.1 },
-        { name: "yaw", axes: [-3], deadzone: 0.1 },
-        { name: "pitch", axes: [4], deadzone: 0.1 },
-        { name: "rollRight", buttons: [5] },
-        { name: "rollLeft", buttons: [-6] },
-        { name: "jump", buttons: [1], commandDown: jump, dt: 0.250 },
-        { name: "fire", buttons: [2], commandDown: fire, dt: 0.125 },
-    ], socket);
-
-    // SpeechInput is much simpler. The keywords array can be a series of words or
-    // sentences that activate the command. Use multiple entries in the array to be able
-    // to have multiple phrases execute the command. Useful when the phrase can be
-    // misheard by the speech recognition engine.
-    var speech = new SpeechInput("speech", [
-        { keywords: ["jump"], commandUp: jump }
-    ], socket);
-
-    function loop(dt){
-        requestAnimationFrame(loop);
-        // call update once a frame to make it read each device state and execute any
-        // event-based commands.
-        motion.update(dt);
-        keyboard.update(dt);
-        mouse.update(dt);
-        gamepad.update(dt);
-        touch.update(dt);
-        
-        // motion is an absolute change, whereas the others have to be scaled to
-        // the frame time. Adding them in this way works because a user would rarely
-        // use them together, and in the cases when they would (such as motion tracking
-        // and gamepad), they will naturally fight in a way that the user can easily
-        // adjust to and use effectively.
-        var heading += (gamepad.getValue("yaw") 
-            + mouse.getValue("yaw")
-            + touch.getValue("yaw")) * dt / 1000
-            + motion.getValue("yaw");
-    }
-    
-    requestAnimationFrame(loop);
-````
+Also note that you don't necessarily have to match browsers on the PC with browsers on the smartphone. Mix and match to your heart's content.
