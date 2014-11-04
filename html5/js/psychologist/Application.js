@@ -181,7 +181,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.avatar = new ModelLoader(avatarModel, function(){
         this.addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: this.userName});
     }.bind(this));    
-    ModelLoader.loadCollada(sceneModel, function(sceneGraph){
+    ModelLoader.loadScene(sceneModel, function(sceneGraph){
         this.mainScene = sceneGraph;
         this.scene.add(sceneGraph);
         var cam = this.mainScene.Camera.children[0];
@@ -352,6 +352,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     );
     this.hand.name = "HAND0";
     this.hand.add(new THREE.PointLight(0xffff00, 1, 7));
+    this.hand.velocity = new THREE.Vector3();
     this.scene.add(this.hand);
     var leapCommands = [];
     leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput["HAND0X"]], scale: 0.015 });
@@ -979,17 +980,18 @@ Application.prototype.animate = function(t){
             .applyAxisAngle(Application.RIGHT, -dPitch)
             .applyAxisAngle(this.camera.up, pointerHeading);
 
-        this.hand.position.copy(this.camera.position)
-            .add(this.direction);
+        this.hand.velocity.copy(this.hand.position);
+        this.hand.position.copy(this.camera.position).add(this.direction);
+        this.hand.velocity.sub(this.hand.position).multiplyScalar(-1);
 
         for(var j = 0; j < this.mainScene.buttons.length; ++j){
             var btn = this.mainScene.buttons[j];
-            var tag = btn.test(this.camera.position, this.hand.position);
+            var tag = btn.test(this.camera.position, this.hand);
             if(tag){
                 this.hand.position.copy(tag);
             }
             else{
-                btn.test(this.camera.position, this.currentUser.position);
+                btn.test(this.camera.position, this.currentUser);
             }
         }
 

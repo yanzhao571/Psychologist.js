@@ -20,45 +20,26 @@ All rights reserved.
 var COLLADA = new THREE.ColladaLoader();
 COLLADA.options.convertUpAxis = true;
 function ModelLoader(src, success){
-    this.buttons = [];
     if(src){
-        ModelLoader.loadCollada(src, function(object){
-            this.template = object;
+        ModelLoader.loadCollada(src, function(scene){
+            this.template = scene;
             if(success){
-                success(object);
+                success(scene);
             }
         }.bind(this));
     }
 }
 
-ModelLoader.setProperties = function(object, src){
-    object.buttons = [];
+ModelLoader.setProperties = function(object){
     object.traverse(function(child){
-        if(child.name){
-            object[child.name] = child;
-        }
-        if(child.material){
-            child.material = child.material.clone();
-        }
         for(var i = 0; i < child.children.length; ++i){
-            var obj = child.children[0];
+            var obj = child.children[i];
             if(obj instanceof THREE.Mesh){
                 var materials = obj.material.materials;
                 if(materials){
-                    for(var i = 0; i < materials.length; ++i){
-                        child.isSolid = child.isSolid || materials[i].name === "solid";
-                        child.isButton = child.isButton || materials[i].name === "button";
-                    }
-                    // This is straight-up garbage, but I'll eventually fix it.
-                    // Nope, I really mean it.
-                    if(child.isButton){
-                        if(object.children.length === 1){
-                            object.buttons.push(child);
-                        }
-                        else{
-                            child.buttons = [child];
-                            object.buttons.push(new VUI.Button(child, child.name));
-                        }
+                    for(var j = 0; j < materials.length; ++j){
+                        child.isSolid = child.isSolid || materials[j].name === "solid";
+                        child.isButton = child.isButton || materials[j].name === "button";
                     }
                 }
             }
@@ -68,9 +49,26 @@ ModelLoader.setProperties = function(object, src){
 
 ModelLoader.loadCollada = function(src, success){
     COLLADA.load(src, function(collada){
-        ModelLoader.setProperties(collada.scene, src);
+        ModelLoader.setProperties(collada.scene);
         if(success){
             success(collada.scene);
+        }
+    });
+};
+
+ModelLoader.loadScene = function(src, success){
+    ModelLoader.loadCollada(src, function(scene){
+        scene.buttons = [];
+        scene.traverse(function(child){
+            if(child.isButton){
+                scene.buttons.push(new VUI.Button(child.parent, child.name));
+            }
+            if(child.name){
+                scene[child.name] = child;
+            }
+        });
+        if(success){
+            success(scene);
         }
     });
 };
