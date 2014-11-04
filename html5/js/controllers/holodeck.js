@@ -5,8 +5,7 @@ function holodeck(){
             maxThrow: 0.1,
             minDeflection: 10,
             colorUnpressed: 0x7f0000,
-            colorPressed: 0x007f00,
-            toggle: true
+            colorPressed: 0x007f00
         },
         "models/bear.dae",
         6.5, 
@@ -29,13 +28,10 @@ function holodeck(){
             app.scene.add(btn.base);
         }
         
-        var obj = obj3(
-            box(5, 0.125, 0.125, 0xff0000),
-            box(0.125, 0.125, 5, 0x00ff00),
-            box(0.125, 5, 0.125, 0x0000ff)
-        );
+        var obj = axis(5, 0.125);
 
         obj.position.set(0, 1, 0);
+        app.scene.add(obj);
     });
     
     app.keyboard.addCommand({ name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: function (){
@@ -44,22 +40,6 @@ function holodeck(){
             this.onground = false;
         }
     }.bind(app), dt: 0.5 });
-
-    function obj3(){
-        var obj = new THREE.Object3D();
-        for(var i = 0; i < arguments.length; ++i){
-            obj.add(arguments[i]);
-        }
-        return obj;
-    }
-
-    function box(x, y, z, c){
-        var geom = new THREE.BoxGeometry(x, y, z);
-        var mat = new THREE.MeshBasicMaterial({ color: c });
-        var mesh = new THREE.Mesh(geom, mat);
-        mesh.position.set(x / 2, y / 2, z / 2);
-        return mesh;
-    }
 
     app.start();
 }

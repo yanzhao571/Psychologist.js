@@ -55,10 +55,11 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.walkSpeed = walkSpeed;
     this.focused = true;
     this.wasFocused = false;
+    this.onground = false;
     this.lt = 0;
     this.frame = 0;
     this.currentUser = null;
-    this.onground = false;
+    this.mainScene = null;
     
     //
     // The various options, and packs of them when selecting from a dropdown
@@ -1010,3 +1011,30 @@ Application.prototype.animate = function(t){
 
     this.wasFocused = this.focused;
 };
+
+
+
+
+    function obj3(){
+        var obj = new THREE.Object3D();
+        for(var i = 0; i < arguments.length; ++i){
+            obj.add(arguments[i]);
+        }
+        return obj;
+    }
+
+    function box(x, y, z, c){
+        var geom = new THREE.BoxGeometry(x, y, z);
+        var mat = new THREE.MeshBasicMaterial({ color: c });
+        var mesh = new THREE.Mesh(geom, mat);
+        mesh.position.set(x / 2, y / 2, z / 2);
+        return mesh;
+    }
+    
+    function axis(length, width){
+        return obj3(
+            box(length, width, width, 0xff0000),
+            box(width, width, length, 0x00ff00),
+            box(width, length, width, 0x0000ff)
+        );
+    }

@@ -31,7 +31,7 @@ function ModelLoader(src, success){
     }
 }
 
-ModelLoader.setProperties = function(object){
+ModelLoader.setProperties = function(object, src){
     object.buttons = [];
     object.traverse(function(child){
         if(child.name){
@@ -46,11 +46,22 @@ ModelLoader.setProperties = function(object){
                 var materials = obj.material.materials;
                 if(materials){
                     for(var i = 0; i < materials.length; ++i){
+                        console.log(src, object.name || "_", child.name || "_", obj.name || "_", materials[i].name || "_");
                         child.isSolid = child.isSolid || materials[i].name === "solid";
                         child.isButton = child.isButton || materials[i].name === "button";
                     }
+                    // This is straight-up garbage, but I'll eventually fix it.
+                    // Nope, I really mean it.
                     if(child.isButton){
-                        object.buttons.push(child);
+                        if(object.children.length === 1){
+                            console.log("OK");
+                            object.buttons.push(child);
+                        }
+                        else{
+                            console.log("MEH");
+                            child.buttons = [child];
+                            object.buttons.push(new VUI.Button(child, child.name));
+                        }
                     }
                 }
             }
@@ -60,7 +71,7 @@ ModelLoader.setProperties = function(object){
 
 ModelLoader.loadCollada = function(src, success){
     COLLADA.load(src, function(collada){
-        ModelLoader.setProperties(collada.scene);
+        ModelLoader.setProperties(collada.scene, src);
         if(success){
             success(collada.scene);
         }

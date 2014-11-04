@@ -71,15 +71,5 @@ a.secondary.button{
     background-color: #d00;
     border-color: #d00;
     color: #fff;
+    cursor: no-drop;
 }
-    a.secondary.button:hover
-    {
-        background-color: #e00;
-        border-color: #e00;
-    }
-
-    a.secondary.button:active
-    {
-        background-color: #e00;
-        border-color: #e00;
-    }

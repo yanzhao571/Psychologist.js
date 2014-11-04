@@ -38,10 +38,14 @@ VUI.ButtonFactory.prototype.create = function(toggle){
 
 
 VUI.Button = function(model, name, options){
-    this.maxThrow = options.maxThrow;
-    this.minDeflection = Math.cos(options.minDeflection);
-    this.colorUnpressed = new THREE.Color(options.colorUnpressed);
-    this.colorPressed = new THREE.Color(options.colorPressed);
+    this.options = options || {};    
+    for(var key in VUI.Button.DEFAULTS){
+        this.options[key] = this.options[key] || VUI.Button.DEFAULTS[key];
+    }
+    this.options.minDeflection = Math.cos(this.options.minDeflection);
+    this.options.colorUnpressed = new THREE.Color(this.options.colorUnpressed);
+    this.options.colorPressed = new THREE.Color(this.options.colorPressed);
+    
     this.listeners = { click: [] };
     this.base = model;
     this.position = this.base.position;
@@ -61,6 +65,14 @@ VUI.Button = function(model, name, options){
     delete this.base.buttons;
 };
 
+VUI.Button.DEFAULTS = {
+    maxThrow: 0.1,
+    minDeflection: 10,
+    colorUnpressed: 0x7f0000,
+    colorPressed: 0x007f00,
+    toggle: true
+};
+
 VUI.Button.prototype.addEventListener = function(event, func){
     if(this.listeners[event]){
         this.listeners[event].push(func);
@@ -69,7 +81,7 @@ VUI.Button.prototype.addEventListener = function(event, func){
 
 VUI.Button.prototype.reset = function(){
     this.pressed = false;
-    this.color.copy(this.colorUnpressed);
+    this.color.copy(this.options.colorUnpressed);
     this.cap.position.y = this.rest.y;  
 };
 
@@ -92,7 +104,7 @@ VUI.Button.prototype.test = function(cameraPosition, pointerPosition){
             .sub(cameraPosition)
             .normalize();
         var dot = this.direction.dot(this.testPoint);
-        if(this.minDeflection < dot){
+        if(this.options.minDeflection < dot){
             this.testPoint.copy(pointerPosition);
             this.testPoint.y += VUI.BUTTON_TEST_BOXING;
             this.direction.set(0, -1, 0);
@@ -102,9 +114,9 @@ VUI.Button.prototype.test = function(cameraPosition, pointerPosition){
             if(intersections.length > 0){
                 var inter = intersections[0];
                 var y = inter.point.y;
-                var proportion = Math.max(0, Math.min(this.maxThrow, y - pointerPosition.y) / this.maxThrow);
+                var proportion = Math.max(0, Math.min(this.options.maxThrow, y - pointerPosition.y) / this.options.maxThrow);
                 this.touched = proportion > 0;
-                this.cap.position.y = this.rest.y - proportion * this.maxThrow;
+                this.cap.position.y = this.rest.y - proportion * this.options.maxThrow;
                 this.pressed = proportion === 1;
                 tag = inter.point;
             }
@@ -128,7 +140,7 @@ VUI.Button.prototype.test = function(cameraPosition, pointerPosition){
         this.value = false;
     }
 
-    this.color.copy(this.value ? this.colorPressed : this.colorUnpressed);
+    this.color.copy(this.value ? this.options.colorPressed : this.options.colorUnpressed);
     
     return tag;
 };
