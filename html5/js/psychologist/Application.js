@@ -297,7 +297,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         { name: "pointerPitch", commands: ["dy"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.125, max: Math.PI * 0.125 },
         { name: "dz", axes: [MouseInput.Z], delta: true },
         { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: 0, max: 10 },
-        { name: "pointerPress", buttons: [1], integrate: true, scale: -10, offset: 5, min: -0.4, max: 0 }
+        { name: "pointerPress", buttons: [1], integrate: true, scale: 100, offset: -50, min: 0, max: 5 }
     ], this.proxy);
     this.setupModuleEvents(this.mouse, "mouse");
     
@@ -971,11 +971,11 @@ Application.prototype.animate = function(t){
         // place pointer
         //
         var pointerDistance = this.leap.getValue("HAND0Z") 
-            + this.mouse.getValue("pointerDistance")
+            + this.mouse.getValue("pointerDistance") 
+            + this.mouse.getValue("pointerPress")
             + 2;
-        var dp = pitch 
-                + this.mouse.getValue("pointerPitch") 
-                + this.mouse.getValue("pointerPress");
+    
+        var dp = pitch + this.mouse.getValue("pointerPitch");
         pointerDistance /= Math.cos(dp);
         this.direction.set(0, 0, -pointerDistance)
             .applyAxisAngle(Application.RIGHT, -dp)
