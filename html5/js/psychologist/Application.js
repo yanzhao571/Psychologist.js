@@ -287,8 +287,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         { name: "pointerPitch", commands: ["dy"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.125, max: Math.PI * 0.125 },
         { name: "dz", axes: [MouseInput.Z], delta: true },
         { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: 0, max: 10 },
-        { name: "pointerPress", buttons: [1], integrate: true, scale: -10, offset: 5, min: -0.4, max: 0 },
-        { name: "click1", buttons: [1], commandUp: this.showMessage.bind(this, "cmdUp") }
+        { name: "pointerPress", buttons: [1], integrate: true, scale: -10, offset: 5, min: -0.4, max: 0 }
     ], this.proxy);
     this.setupModuleEvents(this.mouse, "mouse");
     
