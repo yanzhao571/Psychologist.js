@@ -39,10 +39,7 @@
         `dtNetworkUpdate` - the amount of time to allow to elapse between sending state to teh server (default: 0.125)
  */
 function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, avatarHeight, walkSpeed, clickSound, ambientSound, options){
-    this.options = options || {};
-    for(var key in Application.DEFAULTS){
-        this.options[key] = this.options[key] || Application.DEFAULTS[key];
-    }
+    this.options = combineDefaults(options, Application);
     this.ctrls = findEverything();
     this.users = {};
     this.chatLines = [];
@@ -186,6 +183,8 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         this.scene.add(sceneGraph);
         var cam = this.mainScene.Camera.children[0];
         this.camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, this.options.drawDistance);
+        this.scene.remove(cam);
+        this.scene.add(this.camera);
     }.bind(this));
     
     //
@@ -276,6 +275,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHT] },
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
+        { name: "camera", buttons: [KeyboardInput.C] },
         { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: function (){
             this.currentUser.position.set(0, 2, 0);
             this.currentUser.velocity.set(0, 0, 0);
@@ -342,6 +342,12 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     //
     this.location = new LocationInput("location", [], this.proxy);
     this.setupModuleEvents(this.location, "location");
+    
+    //
+    // passthrough camera
+    //
+    this.passthrough = new CameraInput(1, 0, 0, -1);
+    this.passthrough.mesh.visible = false;
     
     //
     // Leap Motion input
@@ -796,9 +802,10 @@ Application.prototype.start = function(){
     var waitForResources = function(t){
         this.lt = t;
         if(this.camera && this.mainScene && this.currentUser && this.buttonFactory.template){
-            this.fire("ready");
+            this.camera.add(this.passthrough.mesh);
             this.leap.start();
             this.animate = this.animate.bind(this);
+            this.fire("ready");
             requestAnimationFrame(this.animate);
         }
         else{
@@ -823,6 +830,11 @@ Application.prototype.animate = function(t){
         this.touch.update(dt);
         this.gamepad.update(dt);
         this.leap.update(dt);
+        
+        this.passthrough.mesh.visible = this.keyboard.isDown("camera");
+        if(this.passthrough.mesh.visible){
+            this.passthrough.update();
+        }
 
         var roll = this.head.getValue("roll");
         var pitch = this.head.getValue("pitch")

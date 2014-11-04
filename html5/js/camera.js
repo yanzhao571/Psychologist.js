@@ -22,8 +22,8 @@ function setupVideo(modes, vid, onPlay){
     vid.autoplay = 1;
     function getUserMediaFallthrough(vidOpt, success, err){
         navigator.getUserMedia({video: vidOpt}, function (stream){
-            var stream = window.URL.createObjectURL(stream);
-            vid.src = stream;
+            var streamURL = window.URL.createObjectURL(stream);
+            vid.src = streamURL;
             success();
         }, err);
     };
@@ -88,7 +88,6 @@ function setupVideo(modes, vid, onPlay){
     }
     
     MediaStreamTrack.getVideoTracks(function (infos){
-
         //the last one is most likely to be the back camera of the phone
         //TODO: setup this up to be configurable.
         connect(infos && infos.length > 0 && infos[infos.length - 1].id);

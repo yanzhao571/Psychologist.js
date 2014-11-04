@@ -1,9 +1,5 @@
 function LocationInput(name, commands, socket, options, oscope){
-    this.options = options || {};
-    for(var key in LocationInput.DEFAULTS){
-        this.options[key] = this.options[key] || LocationInput.DEFAULTS[key];
-    }
-    this.isStreaming = false;
+    this.options = combineDefaults(options, LocationInput);
     ButtonAndAxisInput.call(this, name, commands, socket, oscope, 1, LocationInput.AXES);
     this.available = !!navigator.geolocation;
     if(this.available){

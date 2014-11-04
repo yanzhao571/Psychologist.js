@@ -22,14 +22,14 @@ function bears(){
         a.position.set(0, 1, 0);
         app.scene.add(a);
         var v = 0.55 * app.options.drawDistance;
-        app.mainScene.Skybox.scale.set(v, v, v);  
+        app.mainScene.Skybox.scale.set(v, v, v);
     });
     
     var skyboxRotation = new THREE.Euler(0, 0, 0, "XYZ");
     app.addEventListener("update", function(){
         skyboxRotation.set(app.lt*0.00001, 0, 0, "XYZ");
         app.mainScene.Skybox.position.copy(app.currentUser.position);
-        app.mainScene.Skybox.setRotationFromEuler(skyboxRotation);        
+        app.mainScene.Skybox.setRotationFromEuler(skyboxRotation);  
     });
     
     app.keyboard.addCommand({ name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: function (){

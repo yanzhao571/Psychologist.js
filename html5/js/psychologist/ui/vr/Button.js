@@ -38,10 +38,7 @@ VUI.ButtonFactory.prototype.create = function(toggle){
 };
 
 VUI.Button = function(model, name, options){
-    this.options = options || {};    
-    for(var key in VUI.Button.DEFAULTS){
-        this.options[key] = this.options[key] || VUI.Button.DEFAULTS[key];
-    }
+    this.options = combineDefaults(options, VUI.Button);
     this.options.minDeflection = Math.cos(this.options.minDeflection);
     this.options.colorUnpressed = new THREE.Color(this.options.colorUnpressed);
     this.options.colorPressed = new THREE.Color(this.options.colorPressed);

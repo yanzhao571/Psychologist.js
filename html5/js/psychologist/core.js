@@ -605,3 +605,11 @@ if(window.Notification && Notification.permission !== "denied") {
         }
     });
 }
+
+function combineDefaults(options, classFunc){
+    var combined = options || {};
+    for(var key in classFunc.DEFAULTS){
+        combined[key] = combined[key] || classFunc.DEFAULTS[key];
+    }
+    return combined;
+}
