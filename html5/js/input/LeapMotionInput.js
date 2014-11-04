@@ -1,12 +1,5 @@
-function LeapMotionInput(name, buttonBounds, commands, socket, oscope){
-    this.buttonBounds = buttonBounds || [];
+function LeapMotionInput(name, commands, socket, oscope){
     this.isStreaming = false;
-    for(var i = this.buttonBounds.length - 1; i >= 0; --i){
-        var b = this.buttonBounds[i];
-        b.x2 = b.x + b.w;
-        b.y2 = b.y + b.h;
-        b.z2 = b.z + b.d;
-    }
     ButtonAndAxisInput.call(this, name, commands, socket, oscope, 1, LeapMotionInput.AXES);
     
     this.controller = new Leap.Controller({ enableGestures: true });
@@ -80,6 +73,7 @@ LeapMotionInput.prototype.setState = function(gameUpdateLoop, frame){
             this.enable(this.commands[i].name, frame.hands.length > 0);
         }
     }
+    
     for(var i = 0; i < frame.hands.length; ++i){
         var hand = frame.hands[i].palmPosition;
         var handName = "HAND" + i;
@@ -96,22 +90,6 @@ LeapMotionInput.prototype.setState = function(gameUpdateLoop, frame){
             var jointName = fingerName + LeapMotionInput.FINGER_PARTS[j].toUpperCase();
             for(var k = 0; k < LeapMotionInput.COMPONENTS.length; ++k){
                 this.setAxis(jointName + LeapMotionInput.COMPONENTS[k], joint[k]);
-            }
-        }
-    }
-    
-    for(var i = 0; i < this.buttonBounds.length; ++i){
-        var b = this.buttonBounds[i];
-        this.setButton(i, false);
-        for(var j = 0; j < frame.gestures.length; ++j){
-            var gesture = frame.gestures[j];
-            if(gesture.type === "keyTap"){
-                var p = gesture.position;
-                if(b.x <= p[0] && p[0] < b.x2
-                    && b.y <= p[1] && p[1] < b.y2
-                    && b.z <= p[2] && p[2] < b.z2){
-                    this.setButton(i, true);
-                }
             }
         }
     }

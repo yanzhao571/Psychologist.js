@@ -341,7 +341,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput["HAND0X"]], scale: 0.015 });
     leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput["HAND0Y"]], scale: 0.015, offset: -4 });
     leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput["HAND0Z"]], scale: -0.015, offset: 3 });
-    this.leap = new LeapMotionInput("leap", null, leapCommands, this.proxy);
+    this.leap = new LeapMotionInput("leap", leapCommands, this.proxy);
     this.setupModuleEvents(this.leap, "leap");
     
     //
