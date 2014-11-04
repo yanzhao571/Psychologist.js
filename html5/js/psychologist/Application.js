@@ -827,11 +827,16 @@ Application.prototype.animate = function(t){
         var pitch = this.head.getValue("pitch")
             + this.gamepad.getValue("pitch")
             + this.mouse.getValue("pitch");
+        var dPitch = pitch + this.mouse.getValue("pointerPitch");
         var heading = this.head.getValue("heading") 
             + this.gamepad.getValue("heading")
             + this.touch.getValue("heading")
             + this.mouse.getValue("heading");
         var pointerHeading = heading + this.mouse.getValue("pointerHeading");
+        var pointerDistance = (this.leap.getValue("HAND0Z") 
+            + this.mouse.getValue("pointerDistance") 
+            + this.mouse.getValue("pointerPress")
+            + 2) / Math.cos(dPitch);
         var strafe = 0;
         var drive = 0;
 
@@ -970,15 +975,8 @@ Application.prototype.animate = function(t){
         //
         // place pointer
         //
-        var pointerDistance = this.leap.getValue("HAND0Z") 
-            + this.mouse.getValue("pointerDistance") 
-            + this.mouse.getValue("pointerPress")
-            + 2;
-    
-        var dp = pitch + this.mouse.getValue("pointerPitch");
-        pointerDistance /= Math.cos(dp);
         this.direction.set(0, 0, -pointerDistance)
-            .applyAxisAngle(Application.RIGHT, -dp)
+            .applyAxisAngle(Application.RIGHT, -dPitch)
             .applyAxisAngle(this.camera.up, pointerHeading);
 
         this.hand.position.copy(this.camera.position)
