@@ -18,8 +18,6 @@ All rights reserved.
 */
 
 VUI = window.VUI || {};
-
-VUI.BUTTON_TEST_BOXING = 2;
     
 VUI.ButtonFactory = function(templateFile, options){
     this.options = options;
@@ -38,7 +36,6 @@ VUI.ButtonFactory.prototype.create = function(toggle){
     btn.toggle = toggle;
     return btn;
 };
-
 
 VUI.Button = function(model, name, options){
     this.options = options || {};    
@@ -96,7 +93,8 @@ VUI.Button.DEFAULTS = {
     minDeflection: 10,
     colorUnpressed: 0x7f0000,
     colorPressed: 0x007f00,
-    toggle: true
+    toggle: true,
+    minDistance: 2
 };
 
 VUI.Button.prototype.addEventListener = function(event, func){
@@ -115,7 +113,7 @@ VUI.Button.prototype.test = function(cameraPosition, pointer){
         .add(this.position)
         .sub(pointer.position)
         .length();
-    if(len <= VUI.BUTTON_TEST_BOXING){
+    if(len <= this.options.minDistance){
         this.testPoint.copy(pointer.position)
             .sub(cameraPosition)
             .normalize();
@@ -127,10 +125,10 @@ VUI.Button.prototype.test = function(cameraPosition, pointer){
         var dot = this.direction.dot(this.testPoint);
         if(this.options.minDeflection < dot){
             this.testPoint.copy(pointer.position);
-            this.testPoint.y += VUI.BUTTON_TEST_BOXING;
+            this.testPoint.y += this.options.minDistance;
             this.direction.set(0, -1, 0);
             this.raycaster.set(this.testPoint, this.direction);
-            this.raycaster.far = VUI.BUTTON_TEST_BOXING * 2;
+            this.raycaster.far = this.options.minDistance * 2;
             var intersections = this.raycaster.intersectObject(this.cap.children[0]);
             if(intersections.length > 0){
                 var inter = intersections[0];
