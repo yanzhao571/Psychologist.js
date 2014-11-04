@@ -33,7 +33,8 @@ VUI.ButtonFactory.count = 0;
 VUI.ButtonFactory.prototype.create = function(toggle){
     VUI.ButtonFactory.count = (VUI.ButtonFactory.count || 0) + 1;
     var name = "button" + VUI.ButtonFactory.count;
-    var btn = new VUI.Button(this.template.clone(), name, this.options);
+    var obj = this.template.clone();
+    var btn = new VUI.Button(obj, name, this.options);
     btn.toggle = toggle;
     return btn;
 };
@@ -75,15 +76,17 @@ VUI.Button = function(model, name, options){
                             this.rest = this.cap.position.clone();
                         }
                     }
-                    if(this.cap){
-                        subObj.material.materials[0] = subObj.material.materials[0].clone();
-                        this.color = subObj.material.materials[0].color;
-                    }
                 }
             }
         }
     }
-    if(!this.cap){
+    if(this.cap){
+        var capMesh = this.cap.children[0];
+        var m = capMesh.material.clone();
+        capMesh.material = m;
+        this.color = m.materials[0].color;
+    }
+    else{
         throw new Error(fmt("Couldn't find a cap for the button [$1: $2].", this.base.name, name));
     }
 };
@@ -102,15 +105,11 @@ VUI.Button.prototype.addEventListener = function(event, func){
     }
 };
 
-VUI.Button.prototype.reset = function(){
-    this.pressed = false;
-    this.cap.position.y = this.rest.y;  
-};
-
 VUI.Button.prototype.test = function(cameraPosition, pointer){
     var tag = null;
     this.wasPressed = this.pressed;
-    this.reset();
+    this.pressed = false;
+    this.cap.position.y = this.rest.y;
     
     var len = this.direction.copy(this.cap.position)
         .add(this.position)

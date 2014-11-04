@@ -980,9 +980,9 @@ Application.prototype.animate = function(t){
             .applyAxisAngle(Application.RIGHT, -dPitch)
             .applyAxisAngle(this.camera.up, pointerHeading);
 
-        this.hand.velocity.copy(this.hand.position);
+        this.testPoint.copy(this.hand.position);
         this.hand.position.copy(this.camera.position).add(this.direction);
-        this.hand.velocity.sub(this.hand.position).multiplyScalar(-1);
+        this.hand.velocity.copy(this.hand.position).sub(this.testPoint);
 
         for(var j = 0; j < this.mainScene.buttons.length; ++j){
             var btn = this.mainScene.buttons[j];
