@@ -7,7 +7,34 @@
 </head>
 <body>
     <div id="output"></div>
-    <script type="text/javascript" src="js/psychologist.js"></script>
-    <script type="text/javascript" src="js/controllers/leap2.js"></script>
+    <script type="text/javascript" src="js/psychologist/core.js"></script>
+    <script type="text/javascript" src="lib/leap-0.6.3.min.js"></script>
+    <script type="text/javascript" src="js/input/NetworkedInput.js"></script>
+    <script type="text/javascript" src="js/input/ButtonAndAxisInput.js"></script>
+    <script type="text/javascript" src="js/input/LeapMotionInput.js"></script>
+    <script type="text/javascript">
+        var c = findEverything(),
+            commands = [
+                { name: "x", axes: [LeapMotionInput.FINGER0TIPX] },
+                { name: "y", axes: [LeapMotionInput.FINGER0TIPY] },
+                { name: "z", axes: [LeapMotionInput.FINGER0TIPZ] }
+            ],
+            leap = new LeapMotionInput("hand", commands),
+            lt;
+
+        leap.start(function(t){
+            leap.update((t - lt) * 0.001);
+            lt = t;
+            c.output.innerHTML = "";
+            commands.forEach(function(cmd){
+                var d = document.createElement("div");
+                d.appendChild(document.createTextNode(fmt(
+                    "$1 = $2",
+                    cmd.name,
+                    leap.getValue(cmd.name))));
+                c.output.appendChild(d);
+            });
+        });
+    </script>
 </body>
 </html>

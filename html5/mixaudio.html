@@ -13,7 +13,7 @@
     G - play an oscillator sound
     
     <script type="text/javascript" src="js/output/Audio3DOutput.js"></script>
-    <script type="text/javascript" src="js/psychologist.js"></script>
+    <script type="text/javascript" src="js/psychologist/core.js"></script>
     <script type="text/javascript">
         var audio = new Audio3DOutput();
         var data = [];
@@ -25,11 +25,11 @@
         
         window.addEventListener("keydown", function(evt){
             switch(evt.keyCode){
-                case 65: audio.piano(40, 1, 0.25); break; //A
-                case 83: audio.piano(47, 1, 0.25); break; //S
-                case 68: audio.piano(54, 1, 0.25); break; //D
-                case 70: audio.piano(61, 1, 0.25); break; //F
-                case 71: audio.piano(68, 1, 0.25); break; //G
+                case 65: audio.sawtooth(40, 1, 0.25); break; //A
+                case 83: audio.sawtooth(47, 1, 0.25); break; //S
+                case 68: audio.sawtooth(54, 1, 0.25); break; //D
+                case 70: audio.sawtooth(61, 1, 0.25); break; //F
+                case 71: audio.sawtooth(68, 1, 0.25); break; //G
             }
         });
     </script>

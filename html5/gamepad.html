@@ -7,7 +7,47 @@
 </head>
 <body>
     <div id="output"></div>
-    <script type="text/javascript" src="js/psychologist.js"></script>
-    <script type="text/javascript" src="js/controllers/gamepad.js"></script>
+    <script type="text/javascript" src="js/psychologist/core.js"></script>
+    <script type="text/javascript" src="js/input/NetworkedInput.js"></script>
+    <script type="text/javascript" src="js/input/ButtonAndAxisInput.js"></script>
+    <script type="text/javascript" src="js/input/GamepadInput.js"></script>
+    <script type="text/javascript">
+        var output = document.getElementById("output"),
+            commands = [
+                { name: "lhoriz", axes: [GamepadInput.LSX] },
+                { name: "lvert", axes: [GamepadInput.LSY] },
+                { name: "ilhoriz", axes: [GamepadInput.ILSX] },
+                { name: "ilvert", axes: [GamepadInput.ILSY] },
+            ],
+            gamepad = new GamepadInput("gamepad", commands);
+
+        gamepad.addEventListener("gamepadconnected", function (id){
+            gamepad.setGamepad(id);
+            console.log("connected", id);
+        });
+
+        window.onunload = function(){
+            gamepad.enable(false);
+        };
+
+        gamepad.addEventListener("gamepaddisconnected", console.log.bind(console, "disconnected"));
+        var lt = 0;
+        function loop(t){
+            requestAnimationFrame(loop);
+            gamepad.update((t - lt) * 0.001);
+            lt = t;
+            if(gamepad.isGamepadSet()){
+                output.innerHTML = "<ul>"
+                + commands.map(function (c){ 
+                    return "<li>" + c.name 
+                        + ": " + gamepad.isDown(c.name) 
+                        + ", " + gamepad.getValue(c.name) + "</li>"; 
+                }).join("")
+                + "</ul>";
+            }
+        }
+
+        requestAnimationFrame(loop);
+    </script>
 </body>
 </html>

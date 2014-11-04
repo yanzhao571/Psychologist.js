@@ -8,7 +8,43 @@
     <body>
         <input type="text" id="input" placeholder="<enter text>" disabled>
         <div id="output"></div>
-        <script type="text/javascript" src="js/psychologist.js"></script>
-        <script type="text/javascript" src="js/controllers/webrtc.js"></script>
+        <script type="text/javascript" src="js/psychologist/core.js"></script>
+        <script type="text/javascript" src="lib/socket.io.js"></script>
+        <script type="text/javascript" src="js/WebRTCSocket.js"></script>
+        <script type="text/javascript" src="js/input/NetworkedInput.js"></script>
+        <script type="text/javascript" src="js/input/ButtonAndAxisInput.js"></script>
+        <script type="text/javascript" src="js/input/KeyboardInput.js"></script>
+        <script type="text/javascript">
+            var ctrls = findEverything(),
+                sock = new WebRTCSocket(document.location.hostname, 
+                    confirm("mesh?")
+                        ? undefined
+                        : confirm("hub?"));
+
+            function showMessage(msg) {
+                var div = document.createElement("div");
+                div.appendChild(document.createTextNode(msg));
+                ctrls.output.appendChild(div);
+                return div;
+            }
+
+            ctrls.input.addEventListener("change", function () {
+                sock.emit("chat", ctrls.input.value);
+                showMessage(fmt(">: $1", ctrls.input.value));
+                ctrls.input.value = "";
+            }, false);
+
+            sock.on("open", function(){
+                ctrls.input.disabled = false;
+            });
+
+            sock.on("closed", function(){
+               ctrls.input.disabled = true; 
+            });
+
+            sock.on("chat", showMessage);
+
+            sock.connect("webrtc-demo");
+        </script>
     </body>
 </html>
