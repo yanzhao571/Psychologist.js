@@ -15,31 +15,26 @@ function holodeck(){
     );
     
     app.addEventListener("ready", function(){
+        // add a bunch of buttons to the scene that we can play with
         var COUNT = 5;
         for(var i = -COUNT; i <= COUNT; ++i){
-            var btn = app.makeButton((i+COUNT)%2);
+            // I want some to be momentary and some to be toggle.
+            var btn = this.makeButton((i+COUNT)%2);
+            this.scene.add(btn.base);
+            
+            // Let's place the buttons in an arc, with a stagger of height
+            // to make a sort of keyboard
             var angle = Math.PI * i * 10 / 180;
             var r = 10;
             btn.position.set(Math.cos(angle) * r, Math.cos(i * Math.PI) * 0.25, Math.sin(-angle) * r);
             btn.rotation.set(0, angle - Math.PI, 0, "XYZ");
+            
+            // And let's play notes in a pentatonic scale!
             btn.addEventListener("click", function(n){
-                app.audio.sawtooth(40 - n * 5, 0.1, 0.25);
+                this.audio.sawtooth(40 - n * 5, 0.1, 0.25);
             }.bind(this, i));
-            app.scene.add(btn.base);
         }
-        
-        var obj = axis(5, 0.125);
-
-        obj.position.set(0, 1, 0);
-        app.scene.add(obj);
-    });
-    
-    app.keyboard.addCommand({ name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: function (){
-        if(this.onground){
-            this.currentUser.velocity.y += 10;
-            this.onground = false;
-        }
-    }.bind(app), dt: 0.5 });
+    }.bind(app));
 
     app.start();
 }
