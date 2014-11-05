@@ -80,6 +80,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
         { name: "camera", buttons: [KeyboardInput.C] },
+        { name: "debug", buttons: [KeyboardInput.X] },
         { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: function (){
             this.currentUser.position.set(0, 2, 0);
             this.currentUser.velocity.set(0, 0, 0);
@@ -121,7 +122,10 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.vr = new VRInput("hmd", [
         { name: "pitch", axes: [VRInput.RX] },
         { name: "heading", axes: [VRInput.RY] },
-        { name: "roll", axes: [VRInput.RZ] }
+        { name: "roll", axes: [VRInput.RZ] },
+        { name: "dx", axes: [VRInput.X], scale: 25, offset: -2 },
+        { name: "dy", axes: [VRInput.Y], scale: 25, offset: -1.25 },
+        { name: "dz", axes: [VRInput.Z], scale: 25, offset: 0.75 }
     ], this.ctrls.hmdListing, formState && formState.hmdListing || "");
     this.ctrls.hmdListing.addEventListener("change", function(){
         this.vr.connect(this.ctrls.hmdListing.value);
@@ -779,7 +783,7 @@ Application.prototype.showMessage = function(){
 Application.prototype.showTyping = function(isLocal, isComplete, text){
     if(this.currentUser){
         if(this.lastText){
-            this.currentUser.remove(this.lastText);
+            this.camera.remove(this.lastText);
             this.lastText = null;
         }
 
@@ -793,13 +797,8 @@ Application.prototype.showTyping = function(isLocal, isComplete, text){
                 this.socket.emit("typing", text);
             }
             if(text){
-                var textObj= new VUI.Text(
-                    text, 0.125,
-                    "white", "transparent",
-                    0, this.avatarHeight, -4,
-                    "right");
+                var textObj = this.putUserText(text, 0.125, 0, 0, -4, "right");
                 this.lastText = textObj;
-                this.currentUser.add(textObj);
                 if(this.clickSound){
                     this.audio.playBufferImmediate(this.clickSound, 0.5);
                 }
@@ -810,8 +809,17 @@ Application.prototype.showTyping = function(isLocal, isComplete, text){
 
 Application.prototype.shiftLines = function(){
     for(var i = 0; i < this.chatLines.length; ++i){
-        this.chatLines[i].position.y = this.avatarHeight + (this.chatLines.length - i) * this.options.chatTextSize * 1.333 - 1;
+        this.chatLines[i].position.y = (this.chatLines.length - i) * this.options.chatTextSize * 1.333 - 1;
     }
+};
+
+Application.prototype.putUserText = function(msg, size, x, y, z, align){
+    var textObj = new VUI.Text(
+        msg, size,
+        "white", "transparent",
+        x, y, z, align);
+    this.camera.add(textObj);
+    return textObj;
 };
 
 Application.prototype.showChat = function(msg){
@@ -820,15 +828,11 @@ Application.prototype.showChat = function(msg){
         if(this.userName === msg.userName){
             this.showTyping(true, false, null);
         }
-        var textObj= new VUI.Text(
-            msg, this.options.chatTextSize,
-            "white", "transparent",
-            -2, 0, -5, "left");
-        this.currentUser.add(textObj);
+        var textObj = this.putUserText(msg, this.options.chatTextSize, 0, 0, -5, "left");
         this.chatLines.push(textObj);
         this.shiftLines();
         setTimeout(function(){
-            this.currentUser.remove(textObj);
+            this.camera.remove(textObj);
             this.chatLines.shift();
             this.shiftLines();
         }.bind(this), 3000);
@@ -881,6 +885,8 @@ Application.prototype.start = function(){
     requestAnimationFrame(waitForResources);
 };
 
+var lastDebug = null;
+
 Application.prototype.animate = function(t){
     requestAnimationFrame(this.animate);
     var dt = (t - this.lt) * 0.001;
@@ -896,11 +902,6 @@ Application.prototype.animate = function(t){
         this.touch.update(dt);
         this.gamepad.update(dt);
         this.leap.update(dt);
-        
-        this.passthrough.mesh.visible = this.keyboard.isDown("camera");
-        if(this.passthrough.mesh.visible){
-            this.passthrough.update();
-        }
 
         var roll = this.head.getValue("roll")
             + this.vr.getValue("roll");
@@ -923,8 +924,24 @@ Application.prototype.animate = function(t){
             + this.mouse.getValue("pointerDistance") 
             + this.mouse.getValue("pointerPress")
             + 2) / Math.cos(pointerPitch);
+        var dPositionX = this.vr.getValue("dx");
+        var dPositionY = this.vr.getValue("dy");
+        var dPositionZ = this.vr.getValue("dz");
         var strafe = 0;
         var drive = 0;
+        
+        this.passthrough.mesh.visible = this.keyboard.isDown("camera");
+        if(this.passthrough.mesh.visible){
+            this.passthrough.update();
+        }
+        
+        if(this.keyboard.isDown("debug")){
+            if(lastDebug){
+                this.camera.remove(lastDebug);
+            }
+            lastDebug = this.putUserText(fmt("[X $1.00000]\n[Y $2.00000]\n[Z $3.00000]", dPositionX, dPositionY, dPositionZ), 
+                this.options.chatTextSize, 0, 0, pointerDistance, "left");
+        }
 
         if(this.ctrls.defaultDisplay.checked){
             //
@@ -1045,7 +1062,11 @@ Application.prototype.animate = function(t){
             user.position.add(this.testPoint);
             user.heading += user.dHeading * dt;
             user.rotation.set(0, user.heading, 0, "XYZ");
-            if(user !== this.currentUser){ 
+            if(user === this.currentUser){ 
+                this.testPoint.set(dPositionX, dPositionY, dPositionZ);
+                user.position.add(this.testPoint);
+            }
+            else{
                 // we have to offset the rotation of the name so the user
                 // can read it.
                 user.nameObj.rotation.set(0, this.currentUser.heading - user.heading, 0, "XYZ");
@@ -1094,7 +1115,7 @@ Application.prototype.animate = function(t){
         //
         // update the camera
         //
-        this.camera.rotation.set(pitch, heading, roll, "YZX");
+        this.camera.rotation.set(pitch, heading, roll, "XYZ");
         this.camera.position.copy(this.currentUser.position);
         this.camera.position.y += this.avatarHeight;
 
@@ -1107,6 +1128,9 @@ Application.prototype.animate = function(t){
         else {
             this.renderer.render(this.scene, this.camera);
         }
+        
+        this.testPoint.set(dPositionX, dPositionY, dPositionZ);
+        user.position.sub(this.testPoint);
     }
 
     this.wasFocused = this.focused;

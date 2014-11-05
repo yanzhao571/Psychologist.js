@@ -20,24 +20,30 @@ All rights reserved.
 VUI = window.VUI || {};
 
 VUI.Text = function(text, size, fgcolor, bgcolor, x, y, z, hAlign){
+    text = text.replace(/\r\n/g, "\n");
+    var lines = text.split("\n");
     hAlign = hAlign || "center";
-    var height = (size * 1000);
+    var lineHeight = (size * 1000);
+    var boxHeight = lineHeight * lines.length;
 
     var textCanvas = document.createElement("canvas");
     var textContext = textCanvas.getContext("2d");
-    textContext.font = height + "px Arial";
+    textContext.font = lineHeight + "px Arial";
     var width = textContext.measureText(text).width;
 
     textCanvas.width = width;
-    textCanvas.height = height;
-    textContext.font = height * 0.8 + "px Arial";
+    textCanvas.height = boxHeight;
+    textContext.font = lineHeight * 0.8 + "px Arial";
     if(bgcolor !== "transparent"){
         textContext.fillStyle = bgcolor;
         textContext.fillRect(0, 0, textCanvas.width, textCanvas.height);
     }
     textContext.fillStyle = fgcolor;
     textContext.textBaseline = "top";
-    textContext.fillText(text, 0, 0);
+    
+    for(var i = 0; i < lines.length; ++i){
+        textContext.fillText(lines[i], 0, i * lineHeight);
+    }
 
     var texture = new THREE.Texture(textCanvas);
     texture.needsUpdate = true;
@@ -50,7 +56,7 @@ VUI.Text = function(text, size, fgcolor, bgcolor, x, y, z, hAlign){
         shading: THREE.FlatShading
     });
 
-    var textGeometry = new THREE.PlaneGeometry(size * width / height, size);
+    var textGeometry = new THREE.PlaneGeometry(size * width / lineHeight, size * lines.length);
     textGeometry.computeBoundingBox();
     textGeometry.computeVertexNormals();
 
