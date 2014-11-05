@@ -365,7 +365,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.hand.velocity = new THREE.Vector3();
     this.scene.add(this.hand);
     var leapCommands = [];
-    leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput["HAND0X"]], scale: 0.015 });
+    leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput["HAND0X"]], scale: -0.015 });
     leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput["HAND0Y"]], scale: 0.015, offset: -4 });
     leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput["HAND0Z"]], scale: -0.015, offset: 3 });
     this.leap = new LeapMotionInput("leap", leapCommands, this.proxy);
@@ -844,16 +844,20 @@ Application.prototype.animate = function(t){
         var pitch = this.head.getValue("pitch")
             + this.gamepad.getValue("pitch")
             + this.mouse.getValue("pitch");
-        var dPitch = pitch + this.mouse.getValue("pointerPitch");
         var heading = this.head.getValue("heading") 
             + this.gamepad.getValue("heading")
             + this.touch.getValue("heading")
             + this.mouse.getValue("heading");
-        var pointerHeading = heading + this.mouse.getValue("pointerHeading");
+        var pointerPitch = pitch 
+            + this.leap.getValue("HAND0Y")
+            + this.mouse.getValue("pointerPitch");
+        var pointerHeading = heading 
+            + this.leap.getValue("HAND0X")
+            + this.mouse.getValue("pointerHeading");
         var pointerDistance = (this.leap.getValue("HAND0Z") 
             + this.mouse.getValue("pointerDistance") 
             + this.mouse.getValue("pointerPress")
-            + 2) / Math.cos(dPitch);
+            + 2) / Math.cos(pointerPitch);
         var strafe = 0;
         var drive = 0;
 
@@ -993,7 +997,7 @@ Application.prototype.animate = function(t){
         // place pointer
         //
         this.direction.set(0, 0, -pointerDistance)
-            .applyAxisAngle(Application.RIGHT, -dPitch)
+            .applyAxisAngle(Application.RIGHT, -pointerPitch)
             .applyAxisAngle(this.camera.up, pointerHeading);
 
         this.testPoint.copy(this.hand.position);
