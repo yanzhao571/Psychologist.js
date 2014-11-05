@@ -157,7 +157,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     //
     var formStateKey = name + " - formState";
     var formState = getSetting(formStateKey);
-    CameraInput.setup(this.ctrls.cameraListing, formState.cameraListing);
     writeForm(this.ctrls, formState);
     window.addEventListener("beforeunload", function(){
         var state = readForm(this.ctrls);
@@ -306,11 +305,26 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     // smartphone orientation sensor-based head tracking
     //
     this.head = new MotionInput("head", [
-        { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "pitch", axes: [MotionInput.PITCH] },
+        { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "roll", axes: [-MotionInput.ROLL] }
     ], this.proxy);
     this.setupModuleEvents(this.head, "head");
+    
+    //
+    // VR HEAD MOUNTED DISPLAY OOOOOH YEAH!
+    //
+    this.vr = new VRInput("hmd", [
+        { name: "pitch", axes: [VRInput.RX] },
+        { name: "heading", axes: [VRInput.RY] },
+        { name: "roll", axes: [VRInput.RZ] }
+    ], this.ctrls.hmdListing, formState && formState.hmdListing || "");
+    this.ctrls.hmdListing.addEventListener("change", function(){
+        this.vr.connect(this.ctrls.hmdListing.value);
+        if(this.ctrls.hmdListing.value){
+            this.chooseRenderingEffect("rift");
+        }
+    }.bind(this));
     
     //
     // capacitive touch screen input
@@ -347,7 +361,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     //
     // passthrough camera
     //
-    this.passthrough = new CameraInput(formState.cameraListing, 1, 0, 0, -1);
+    this.passthrough = new CameraInput(this.ctrls.cameraListing, formState && formState.cameraListing || "", 1, 0, 0, -1);
     this.passthrough.mesh.visible = false;
     this.ctrls.cameraListing.addEventListener("change", function(){
         this.passthrough.connect(this.ctrls.cameraListing.value);
@@ -365,9 +379,9 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.hand.velocity = new THREE.Vector3();
     this.scene.add(this.hand);
     var leapCommands = [];
-    leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput["HAND0X"]], scale: -0.015 });
-    leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput["HAND0Y"]], scale: 0.015, offset: -4 });
-    leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput["HAND0Z"]], scale: -0.015, offset: 3 });
+    leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput.HAND0X], scale: -0.015 });
+    leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput.HAND0Y], scale: 0.015, offset: -4 });
+    leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput.HAND0Z], scale: -0.015, offset: 3 });
     this.leap = new LeapMotionInput("leap", leapCommands, this.proxy);
     this.setupModuleEvents(this.leap, "leap");
     
@@ -536,39 +550,41 @@ Application.prototype.showOnscreenControls = function(){
 };
 
 Application.prototype.chooseRenderingEffect = function(type){
-    switch(type){
-        case "anaglyph": this.effect = new THREE.AnaglyphEffect(this.renderer, 5, window.innerWidth, window.innerHeight); break;
-        case "stereo": this.effect = new THREE.StereoEffect(this.renderer); break;
-        case "rift": this.effect = new THREE.OculusRiftEffect(this.renderer, {
-            worldFactor: 1,
-            HMD: {
-                hResolution: screen.availWidth,
-                vResolution: screen.availHeight,
-                hScreenSize: 0.126,
-                vScreenSize: 0.075,
-                interpupillaryDistance: 0.064,
-                lensSeparationDistance: 0.064,
-                eyeToScreenDistance: 0.051,
-                distortionK: [1, 0.22, 0.06, 0.0],
-                chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
-            }
-        }); break;
-        default: 
-            this.effect = null;
-            type = "regular";
-            break;
-    }
+    if(this.lastRenderingType !== type){
+        switch(type){
+            case "anaglyph": this.effect = new THREE.AnaglyphEffect(this.renderer, 5, window.innerWidth, window.innerHeight); break;
+            case "stereo": this.effect = new THREE.StereoEffect(this.renderer); break;
+            case "rift": this.effect = new THREE.OculusRiftEffect(this.renderer, {
+                worldFactor: 1,
+                HMD: {
+                    hResolution: screen.availWidth,
+                    vResolution: screen.availHeight,
+                    hScreenSize: 0.126,
+                    vScreenSize: 0.075,
+                    interpupillaryDistance: 0.064,
+                    lensSeparationDistance: 0.064,
+                    eyeToScreenDistance: 0.051,
+                    distortionK: [1, 0.22, 0.06, 0.0],
+                    chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
+                }
+            }); break;
+            default: 
+                this.effect = null;
+                type = "regular";
+                break;
+        }
 
-    if(this.ctrls.renderingStyle.value !== type){
-        this.ctrls.renderingStyle.value = type;
-    }
+        if(this.ctrls.renderingStyle.value !== type){
+            this.ctrls.renderingStyle.value = type;
+        }
 
-    if((this.lastRenderingType === "rift" || this.lastRenderingType === "stereo")
-        && (type === "anaglyph" || type === "regular")){
-        alert("The page must reload to enable the new settings.");
-        document.location.reload();
+        if((this.lastRenderingType === "rift" || this.lastRenderingType === "stereo")
+            && (type === "anaglyph" || type === "regular")){
+            alert("The page must reload to enable the new settings.");
+            document.location.reload();
+        }
+        this.lastRenderingType = type;
     }
-    this.lastRenderingType = type;
 };
 
 Application.prototype.setSize = function(w, h){
@@ -831,6 +847,7 @@ Application.prototype.animate = function(t){
         this.keyboard.update(dt);
         this.mouse.update(dt);
         this.head.update(dt);
+        this.vr.update(dt);
         this.touch.update(dt);
         this.gamepad.update(dt);
         this.leap.update(dt);
@@ -840,14 +857,17 @@ Application.prototype.animate = function(t){
             this.passthrough.update();
         }
 
-        var roll = this.head.getValue("roll");
+        var roll = this.head.getValue("roll")
+            + this.vr.getValue("roll");
         var pitch = this.head.getValue("pitch")
             + this.gamepad.getValue("pitch")
-            + this.mouse.getValue("pitch");
+            + this.mouse.getValue("pitch")
+            + this.vr.getValue("pitch");
         var heading = this.head.getValue("heading") 
             + this.gamepad.getValue("heading")
             + this.touch.getValue("heading")
-            + this.mouse.getValue("heading");
+            + this.mouse.getValue("heading")
+            + this.vr.getValue("heading");
         var pointerPitch = pitch 
             + this.leap.getValue("HAND0Y")
             + this.mouse.getValue("pointerPitch");

@@ -15,7 +15,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-function CameraInput(id, size, x, y, z, options){
+function CameraInput(elem, id, size, x, y, z, options){
+    MediaStreamTrack.getVideoTracks(function (infos){
+        for(var i = 0; i < infos.length; ++i){
+            var option = document.createElement("option");
+            option.value = infos[i].id;
+            option.innerHTML = fmt("[Facing: $1] [ID: $2...]", infos[i].facing || "N/A", infos[i].id.substring(0, 8));
+            option.selected = infos[i].id === id;
+            elem.appendChild(option);
+        }
+    });
+    
     this.options = combineDefaults(options, CameraInput);
     this.videoElement = document.createElement("video");
     this.buffer = document.createElement("canvas");
@@ -111,18 +121,6 @@ function CameraInput(id, size, x, y, z, options){
         this.connect(id);
     }
 }
-
-CameraInput.setup = function(elem, id){
-    MediaStreamTrack.getVideoTracks(function (infos){
-        for(var i = 0; i < infos.length; ++i){
-            var option = document.createElement("option");
-            option.value = infos[i].id;
-            option.innerHTML = fmt("[Facing: $1] [ID: $2...]", infos[i].facing || "N/A", infos[i].id.substring(0, 8));
-            option.selected = infos[i].id === id;
-            elem.appendChild(option);
-        }
-    });
-};
 
 CameraInput.DEFAULTS = {
     videoModes: [

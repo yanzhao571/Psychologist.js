@@ -20,6 +20,7 @@
 "js/input/LeapMotionInput.js",
 "js/input/LocationInput.js",
 "js/input/CameraInput.js",
+"js/input/VRInput.js",
 "js/output/Audio3DOutput.js",
 "js/output/SpeechOutput.js",
 "js/psychologist/Application.js",
