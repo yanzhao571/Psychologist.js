@@ -55,6 +55,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.focused = true;
     this.wasFocused = false;
     this.onground = false;
+    this.rotateOrder = "ZYX";
     this.lt = 0;
     this.frame = 0;
     this.currentUser = null;
@@ -559,10 +560,17 @@ Application.prototype.showOnscreenControls = function(){
 
 Application.prototype.getHMDSettings = function(){
     var defaultHMD = null;
-    var displayName = this.vr && this.vr.display && this.vr.display.deviceName;
-
+    var displayName = this.vr && this.vr.display && this.vr.display.deviceName || "";
+    var fov = 0;
+    if(displayName.indexOf("Rift") > -1){
+        fov = this.vr.display.getRecommendedEyeFieldOfView("left");
+        this.rotateOrder = "XYZ";        
+    }
+    else{
+        this.rotateOrder = "YZX";
+    }
+    
     if(displayName === "Oculus Rift DK2"){
-        var fov = this.vr.display.getRecommendedEyeFieldOfView("left");
         defaultHMD = {
             hResolution: 1920,
             vResolution: 1080,
@@ -573,7 +581,7 @@ Application.prototype.getHMDSettings = function(){
             eyeToScreenDistance: 0.041,
             distortionK : [1.0, 0.22, 0.24, 0.0],
             chromaAbParameter: [ 0.996, -0.004, 1.014, 0.0],
-            fov: fov.downDegrees
+            fov: fov
         };
     }
     else if(displayName === "Oculus Rift DK1"){
@@ -586,7 +594,8 @@ Application.prototype.getHMDSettings = function(){
             lensSeparationDistance: 0.064,
             eyeToScreenDistance: 0.041,
             distortionK : [1.0, 0.22, 0.24, 0.0],
-            chromaAbParameter: [ 0.996, -0.004, 1.014, 0.0]
+            chromaAbParameter: [ 0.996, -0.004, 1.014, 0.0],
+            fov: fov
         };
     }
     else {
@@ -1115,7 +1124,7 @@ Application.prototype.animate = function(t){
         //
         // update the camera
         //
-        this.camera.rotation.set(pitch, heading, roll, "XYZ");
+        this.camera.rotation.set(pitch, heading, roll, this.rotateOrder);
         this.camera.position.copy(this.currentUser.position);
         this.camera.position.y += this.avatarHeight;
 
