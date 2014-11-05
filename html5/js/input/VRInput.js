@@ -19,6 +19,7 @@ function VRInput(name, commands, elem, selectedID){
     ButtonAndAxisInput.call(this, name, commands, null, null, 1, VRInput.AXES);
     this.devices = {};
     this.sensor = null;
+    this.display = null;
     if (navigator.getVRDevices) {
         navigator.getVRDevices().then(this.enumerateVRDevices.bind(this, elem, selectedID));
     } else if (navigator.mozGetVRDevices) {
@@ -95,5 +96,6 @@ VRInput.prototype.connect = function(selectedID){
     var device = this.devices[selectedID];
     if(device){
         this.sensor = device.sensor;
+        this.display = device.display;
     }
 };

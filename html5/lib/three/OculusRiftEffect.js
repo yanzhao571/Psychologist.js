@@ -46,9 +46,17 @@ THREE.OculusRiftEffect = function (renderer, options) {
 	renderer.autoClear = false;
 
 	// Render target
-	var RTParams = { minFilter: THREE.LinearFilter, magFilter: THREE.NearestFilter, format: THREE.RGBAFormat };
+	var RTParams = { 
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.NearestFilter, 
+        format: THREE.RGBAFormat,
+        antialias: true
+    };
     var distScale = 1.0;
-	var renderTarget = new THREE.WebGLRenderTarget((HMD.hResolution * distScale / 2) * renderer.devicePixelRatio, (HMD.vResolution * distScale) * renderer.devicePixelRatio, RTParams);
+	var renderTarget = new THREE.WebGLRenderTarget(
+        (HMD.hResolution * distScale / 2) * renderer.devicePixelRatio, 
+        (HMD.vResolution * distScale) * renderer.devicePixelRatio,
+        RTParams);
 	var RTMaterial = new THREE.ShaderMaterial({
 		uniforms: {
 			texid: { type: "t", value: renderTarget },
@@ -111,9 +119,17 @@ THREE.OculusRiftEffect = function (renderer, options) {
 		// Fov is normally computed with:
 		//   THREE.Math.radToDeg(2*Math.atan2(HMD.vScreenSize,2*HMD.eyeToScreenDistance));
 		// But with lens distortion it is increased (see Oculus SDK Documentation)
-		var r = -1.0 - (4 * (HMD.hScreenSize/4 - HMD.lensSeparationDistance/2) / HMD.hScreenSize);
-		distScale = (HMD.distortionK[0] + HMD.distortionK[1] * Math.pow(r,2) + HMD.distortionK[2] * Math.pow(r,4) + HMD.distortionK[3] * Math.pow(r,6));
-		var fov = THREE.Math.radToDeg(2.25*Math.atan2(HMD.vScreenSize*distScale, 2*HMD.eyeToScreenDistance));
+        
+        var r = -1.0 - (4 * (HMD.hScreenSize/4 - HMD.lensSeparationDistance/2) / HMD.hScreenSize);
+        var fov = 0;
+        if(HMD.fov){
+            fov = HMD.fov;
+            distScale = Math.tan(THREE.Math.degToRad(fov)/2) * 2 * HMD.eyeToScreenDistance / HMD.vScreenSize;
+        }
+        else{
+            distScale = (HMD.distortionK[0] + HMD.distortionK[1] * Math.pow(r,2) + HMD.distortionK[2] * Math.pow(r,4) + HMD.distortionK[3] * Math.pow(r,6));
+            fov = THREE.Math.radToDeg(2*Math.atan2(HMD.vScreenSize*distScale, 2*HMD.eyeToScreenDistance));
+        }
 
 		// Compute camera projection matrices
 		var proj = (new THREE.Matrix4()).makePerspective(fov, aspect, 0.3, 10000);
@@ -144,7 +160,8 @@ THREE.OculusRiftEffect = function (renderer, options) {
 		renderTarget = new THREE.WebGLRenderTarget((HMD.hResolution * distScale / 2) * renderer.devicePixelRatio, (HMD.vResolution * distScale) * renderer.devicePixelRatio, RTParams);
 		RTMaterial.uniforms.texid.value = renderTarget;
 
-	}	
+	};
+    
 	this.getHMD = function() {return HMD; };
 
 	this.setHMD(HMD);	

@@ -39,6 +39,8 @@
         `dtNetworkUpdate` - the amount of time to allow to elapse between sending state to teh server (default: 0.125)
  */
 function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, avatarHeight, walkSpeed, clickSound, ambientSound, options){
+    var formStateKey = name + " - formState";
+    var formState = getSetting(formStateKey);
     this.options = combineDefaults(options, Application);
     this.ctrls = findEverything();
     this.users = {};
@@ -57,6 +59,132 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.frame = 0;
     this.currentUser = null;
     this.mainScene = null;
+    
+    //
+    // speech input
+    //
+    this.speech = new SpeechInput("speech", [
+        { name: "options", keywords: ["options"], commandUp: this.toggleOptions.bind(this) },
+        { name: "chat", preamble: true, keywords: ["message"], commandUp: function (){ 
+            this.showTyping(true, true, this.speech.getValue("chat")); 
+        }.bind(this)}
+    ], this.proxy);    
+    this.setupModuleEvents(this.speech, "speech");
+    
+    //
+    // keyboard input
+    //
+    this.keyboard = new KeyboardInput("keyboard", [
+        { name: "strafeLeft", buttons: [-KeyboardInput.A, -KeyboardInput.LEFTARROW] },
+        { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHT] },
+        { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
+        { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
+        { name: "camera", buttons: [KeyboardInput.C] },
+        { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: function (){
+            this.currentUser.position.set(0, 2, 0);
+            this.currentUser.velocity.set(0, 0, 0);
+        }.bind(this) },
+        { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: this.showTyping.bind(this, true)}
+    ], this.proxy);    
+    this.keyboard.pause(true);
+    this.setupModuleEvents(this.keyboard, "keyboard");
+    
+    //
+    // mouse input
+    //
+    this.mouse = new MouseInput("mouse", [
+        { name: "dx", axes: [-MouseInput.X], delta: true, scale: 0.5 },
+        { name: "heading", commands: ["dx"], metaKeys: [-NetworkedInput.SHIFT], integrate: true },
+        { name: "pointerHeading", commands: ["dx"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.2, max: Math.PI * 0.2 },
+        { name: "dy", axes: [-MouseInput.Y], delta: true, scale: 0.5 },
+        { name: "pitch", commands: ["dy"], metaKeys: [-NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.5, max: Math.PI * 0.5 },
+        { name: "pointerPitch", commands: ["dy"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.125, max: Math.PI * 0.125 },
+        { name: "dz", axes: [MouseInput.Z], delta: true },
+        { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: 0, max: 10 },
+        { name: "pointerPress", buttons: [1], integrate: true, scale: 100, offset: -50, min: 0, max: 5 }
+    ], this.proxy);
+    this.setupModuleEvents(this.mouse, "mouse");
+    
+    //
+    // smartphone orientation sensor-based head tracking
+    //
+    this.head = new MotionInput("head", [
+        { name: "pitch", axes: [MotionInput.PITCH] },
+        { name: "heading", axes: [-MotionInput.HEADING] },
+        { name: "roll", axes: [-MotionInput.ROLL] }
+    ], this.proxy);
+    this.setupModuleEvents(this.head, "head");
+    
+    //
+    // VR HEAD MOUNTED DISPLAY OOOOOH YEAH!
+    //
+    this.vr = new VRInput("hmd", [
+        { name: "pitch", axes: [VRInput.RX] },
+        { name: "heading", axes: [VRInput.RY] },
+        { name: "roll", axes: [VRInput.RZ] }
+    ], this.ctrls.hmdListing, formState && formState.hmdListing || "");
+    this.ctrls.hmdListing.addEventListener("change", function(){
+        this.vr.connect(this.ctrls.hmdListing.value);
+        if(this.ctrls.hmdListing.value){
+            if(this.ctrls.renderingStyle.value !== "rift"){
+                this.chooseRenderingEffect("rift");
+            }
+            else{
+                this.effect.setHMD(this.getHMDSettings());
+            }
+        }
+    }.bind(this));
+    
+    //
+    // capacitive touch screen input
+    //
+    this.touch = new TouchInput("touch", null, [
+        { name: "heading", axes: [TouchInput.DX0], integrate: true },
+        { name: "drive", axes: [-TouchInput.DY0] }
+    ], this.proxy, null, this.ctrls.frontBuffer);
+    this.setupModuleEvents(this.touch, "touch");
+    
+    //
+    // gamepad input
+    //
+    this.gamepad = new GamepadInput("gamepad", [
+        { name: "strafe", axes: [GamepadInput.LSX]},
+        { name: "drive", axes: [GamepadInput.LSY]},
+        { name: "heading", axes: [-GamepadInput.RSX], integrate: true},
+        { name: "pitch", axes: [GamepadInput.RSY], integrate: true},
+        { name: "options", buttons: [9], commandUp: this.toggleOptions.bind(this) }
+    ], this.proxy);
+    this.setupModuleEvents(this.gamepad, "gamepad");
+    this.gamepad.addEventListener("gamepadconnected", function (id){
+        if (!this.gamepad.isGamepadSet() && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))){
+            this.gamepad.setGamepad(id);
+        }
+    }.bind(this), false);
+    
+    //
+    // geolocation input
+    //
+    this.location = new LocationInput("location", [], this.proxy);
+    this.setupModuleEvents(this.location, "location");
+    
+    //
+    // passthrough camera
+    //
+    this.passthrough = new CameraInput(this.ctrls.cameraListing, formState && formState.cameraListing || "", 1, 0, 0, -1);
+    this.passthrough.mesh.visible = false;
+    this.ctrls.cameraListing.addEventListener("change", function(){
+        this.passthrough.connect(this.ctrls.cameraListing.value);
+    }.bind(this));
+    
+    //
+    // Leap Motion input
+    //
+    var leapCommands = [];
+    leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput.HAND0X], scale: -0.015 });
+    leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput.HAND0Y], scale: 0.015, offset: -4 });
+    leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput.HAND0Z], scale: -0.015, offset: 3 });
+    this.leap = new LeapMotionInput("leap", leapCommands, this.proxy);
+    this.setupModuleEvents(this.leap, "leap");
     
     //
     // The various options, and packs of them when selecting from a dropdown
@@ -155,8 +283,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     //
     // restoring the options the user selected
     //
-    var formStateKey = name + " - formState";
-    var formState = getSetting(formStateKey);
     writeForm(this.ctrls, formState);
     window.addEventListener("beforeunload", function(){
         var state = readForm(this.ctrls);
@@ -170,14 +296,21 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.scene = new THREE.Scene();
     this.renderer = new THREE.WebGLRenderer({ antialias: true, canvas: this.ctrls.frontBuffer }),
     this.renderer.setClearColor(this.options.backgroundColor);
-    this.setSize(window.innerWidth, window.innerHeight);
     this.testPoint = new THREE.Vector3();
     this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 7);
     this.direction = new THREE.Vector3();
     this.buttonFactory = new VUI.ButtonFactory(buttonModel, buttonOptions);
     this.avatar = new ModelLoader(avatarModel, function(){
         this.addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: this.userName});
-    }.bind(this));    
+    }.bind(this));
+    this.hand = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 4, 4), 
+        new THREE.MeshPhongMaterial({color: 0xffff00, emissive: 0x7f7f00})
+    );
+    this.hand.name = "HAND0";
+    this.hand.add(new THREE.PointLight(0xffff00, 1, 7));
+    this.hand.velocity = new THREE.Vector3();
+    this.scene.add(this.hand);
     ModelLoader.loadScene(sceneModel, function(sceneGraph){
         this.mainScene = sceneGraph;
         this.scene.add(sceneGraph);
@@ -255,135 +388,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         }.bind(this));
         this.proxy = new WebRTCSocket(this.socket, this.ctrls.defaultDisplay.checked);
     }
-    
-    //
-    // speech input
-    //
-    this.speech = new SpeechInput("speech", [
-        { name: "options", keywords: ["options"], commandUp: this.toggleOptions.bind(this) },
-        { name: "chat", preamble: true, keywords: ["message"], commandUp: function (){ 
-            this.showTyping(true, true, this.speech.getValue("chat")); 
-        }.bind(this)}
-    ], this.proxy);    
-    this.setupModuleEvents(this.speech, "speech");
-    
-    //
-    // keyboard input
-    //
-    this.keyboard = new KeyboardInput("keyboard", [
-        { name: "strafeLeft", buttons: [-KeyboardInput.A, -KeyboardInput.LEFTARROW] },
-        { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHT] },
-        { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
-        { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
-        { name: "camera", buttons: [KeyboardInput.C] },
-        { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: function (){
-            this.currentUser.position.set(0, 2, 0);
-            this.currentUser.velocity.set(0, 0, 0);
-        }.bind(this) },
-        { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: this.showTyping.bind(this, true)}
-    ], this.proxy);    
-    this.keyboard.pause(true);
-    this.setupModuleEvents(this.keyboard, "keyboard");
-    
-    //
-    // mouse input
-    //
-    this.mouse = new MouseInput("mouse", [
-        { name: "dx", axes: [-MouseInput.X], delta: true, scale: 0.5 },
-        { name: "heading", commands: ["dx"], metaKeys: [-NetworkedInput.SHIFT], integrate: true },
-        { name: "pointerHeading", commands: ["dx"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.2, max: Math.PI * 0.2 },
-        { name: "dy", axes: [-MouseInput.Y], delta: true, scale: 0.5 },
-        { name: "pitch", commands: ["dy"], metaKeys: [-NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.5, max: Math.PI * 0.5 },
-        { name: "pointerPitch", commands: ["dy"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.125, max: Math.PI * 0.125 },
-        { name: "dz", axes: [MouseInput.Z], delta: true },
-        { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: 0, max: 10 },
-        { name: "pointerPress", buttons: [1], integrate: true, scale: 100, offset: -50, min: 0, max: 5 }
-    ], this.proxy);
-    this.setupModuleEvents(this.mouse, "mouse");
-    
-    //
-    // smartphone orientation sensor-based head tracking
-    //
-    this.head = new MotionInput("head", [
-        { name: "pitch", axes: [MotionInput.PITCH] },
-        { name: "heading", axes: [-MotionInput.HEADING] },
-        { name: "roll", axes: [-MotionInput.ROLL] }
-    ], this.proxy);
-    this.setupModuleEvents(this.head, "head");
-    
-    //
-    // VR HEAD MOUNTED DISPLAY OOOOOH YEAH!
-    //
-    this.vr = new VRInput("hmd", [
-        { name: "pitch", axes: [VRInput.RX] },
-        { name: "heading", axes: [VRInput.RY] },
-        { name: "roll", axes: [VRInput.RZ] }
-    ], this.ctrls.hmdListing, formState && formState.hmdListing || "");
-    this.ctrls.hmdListing.addEventListener("change", function(){
-        this.vr.connect(this.ctrls.hmdListing.value);
-        if(this.ctrls.hmdListing.value){
-            this.chooseRenderingEffect("rift");
-        }
-    }.bind(this));
-    
-    //
-    // capacitive touch screen input
-    //
-    this.touch = new TouchInput("touch", null, [
-        { name: "heading", axes: [TouchInput.DX0], integrate: true },
-        { name: "drive", axes: [-TouchInput.DY0] }
-    ], this.proxy, null, this.ctrls.frontBuffer);
-    this.setupModuleEvents(this.touch, "touch");
-    
-    //
-    // gamepad input
-    //
-    this.gamepad = new GamepadInput("gamepad", [
-        { name: "strafe", axes: [GamepadInput.LSX]},
-        { name: "drive", axes: [GamepadInput.LSY]},
-        { name: "heading", axes: [-GamepadInput.RSX], integrate: true},
-        { name: "pitch", axes: [GamepadInput.RSY], integrate: true},
-        { name: "options", buttons: [9], commandUp: this.toggleOptions.bind(this) }
-    ], this.proxy);
-    this.setupModuleEvents(this.gamepad, "gamepad");
-    this.gamepad.addEventListener("gamepadconnected", function (id){
-        if (!this.gamepad.isGamepadSet() && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))){
-            this.gamepad.setGamepad(id);
-        }
-    }.bind(this), false);
-    
-    //
-    // geolocation input
-    //
-    this.location = new LocationInput("location", [], this.proxy);
-    this.setupModuleEvents(this.location, "location");
-    
-    //
-    // passthrough camera
-    //
-    this.passthrough = new CameraInput(this.ctrls.cameraListing, formState && formState.cameraListing || "", 1, 0, 0, -1);
-    this.passthrough.mesh.visible = false;
-    this.ctrls.cameraListing.addEventListener("change", function(){
-        this.passthrough.connect(this.ctrls.cameraListing.value);
-    }.bind(this));
-    
-    //
-    // Leap Motion input
-    //
-    this.hand = new THREE.Mesh(
-        new THREE.SphereGeometry(0.1, 4, 4), 
-        new THREE.MeshPhongMaterial({color: 0xffff00, emissive: 0x7f7f00})
-    );
-    this.hand.name = "HAND0";
-    this.hand.add(new THREE.PointLight(0xffff00, 1, 7));
-    this.hand.velocity = new THREE.Vector3();
-    this.scene.add(this.hand);
-    var leapCommands = [];
-    leapCommands.push({ name: "HAND0X", axes: [LeapMotionInput.HAND0X], scale: -0.015 });
-    leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput.HAND0Y], scale: 0.015, offset: -4 });
-    leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput.HAND0Z], scale: -0.015, offset: 3 });
-    this.leap = new LeapMotionInput("leap", leapCommands, this.proxy);
-    this.setupModuleEvents(this.leap, "leap");
     
     //
     // setting up all other event listeners
@@ -549,24 +553,64 @@ Application.prototype.showOnscreenControls = function(){
     this.hideControlsTimeout = setTimeout(this.hideOnscreenControls.bind(this), 3000);
 };
 
+Application.prototype.getHMDSettings = function(){
+    var defaultHMD = null;
+    var displayName = this.vr && this.vr.display && this.vr.display.deviceName;
+
+    if(displayName === "Oculus Rift DK2"){
+        var fov = this.vr.display.getRecommendedEyeFieldOfView("left");
+        defaultHMD = {
+            hResolution: 1920,
+            vResolution: 1080,
+            hScreenSize: 0.12576,
+            vScreenSize: 0.07074,
+            interpupillaryDistance: 0.0635,
+            lensSeparationDistance: 0.0635,
+            eyeToScreenDistance: 0.041,
+            distortionK : [1.0, 0.22, 0.24, 0.0],
+            chromaAbParameter: [ 0.996, -0.004, 1.014, 0.0],
+            fov: fov.downDegrees
+        };
+    }
+    else if(displayName === "Oculus Rift DK1"){
+        defaultHMD = {
+            hResolution: 1280,
+            vResolution: 800,
+            hScreenSize: 0.14976,
+            vScreenSize: 0.0936,
+            interpupillaryDistance: 0.064,
+            lensSeparationDistance: 0.064,
+            eyeToScreenDistance: 0.041,
+            distortionK : [1.0, 0.22, 0.24, 0.0],
+            chromaAbParameter: [ 0.996, -0.004, 1.014, 0.0]
+        };
+    }
+    else {
+        // assume Google Cardboard-style HMDs
+        defaultHMD = {
+            hResolution: screen.availWidth,
+            vResolution: screen.availHeight,
+            hScreenSize: 0.126,
+            vScreenSize: 0.075,
+            interpupillaryDistance: 0.064,
+            lensSeparationDistance: 0.064,
+            eyeToScreenDistance: 0.051,
+            distortionK: [1, 0.22, 0.06, 0.0],
+            chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
+        };
+    }
+    return defaultHMD;
+};
+
 Application.prototype.chooseRenderingEffect = function(type){
     if(this.lastRenderingType !== type){
         switch(type){
             case "anaglyph": this.effect = new THREE.AnaglyphEffect(this.renderer, 5, window.innerWidth, window.innerHeight); break;
             case "stereo": this.effect = new THREE.StereoEffect(this.renderer); break;
-            case "rift": this.effect = new THREE.OculusRiftEffect(this.renderer, {
+            case "rift": 
+                this.effect = new THREE.OculusRiftEffect(this.renderer, {
                 worldFactor: 1,
-                HMD: {
-                    hResolution: screen.availWidth,
-                    vResolution: screen.availHeight,
-                    hScreenSize: 0.126,
-                    vScreenSize: 0.075,
-                    interpupillaryDistance: 0.064,
-                    lensSeparationDistance: 0.064,
-                    eyeToScreenDistance: 0.051,
-                    distortionK: [1, 0.22, 0.06, 0.0],
-                    chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
-                }
+                HMD: this.getHMDSettings()
             }); break;
             default: 
                 this.effect = null;
@@ -822,6 +866,7 @@ Application.prototype.start = function(){
     var waitForResources = function(t){
         this.lt = t;
         if(this.camera && this.mainScene && this.currentUser && this.buttonFactory.template){
+            this.setSize(window.innerWidth, window.innerHeight);
             this.camera.add(this.passthrough.mesh);
             this.leap.start();
             this.animate = this.animate.bind(this);
