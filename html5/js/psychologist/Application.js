@@ -69,8 +69,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         { name: "chat", preamble: true, keywords: ["message"], commandUp: function (){ 
             this.showTyping(true, true, this.speech.getValue("chat")); 
         }.bind(this)}
-    ], this.proxy);    
-    this.setupModuleEvents(this.speech, "speech");
+    ], this.proxy);
     
     //
     // keyboard input
@@ -80,6 +79,12 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHT] },
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
+        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: function (){
+            if(this.onground){
+                this.currentUser.velocity.y += 10;
+                this.onground = false;
+            }
+        }.bind(this), dt: 0.5 },
         { name: "camera", buttons: [KeyboardInput.C] },
         { name: "debug", buttons: [KeyboardInput.X] },
         { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: function (){
@@ -89,7 +94,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: this.showTyping.bind(this, true)}
     ], this.proxy);    
     this.keyboard.pause(true);
-    this.setupModuleEvents(this.keyboard, "keyboard");
     
     //
     // mouse input
@@ -105,7 +109,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: 0, max: 10 },
         { name: "pointerPress", buttons: [1], integrate: true, scale: 100, offset: -50, min: 0, max: 5 }
     ], this.proxy);
-    this.setupModuleEvents(this.mouse, "mouse");
     
     //
     // smartphone orientation sensor-based head tracking
@@ -115,7 +118,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "roll", axes: [-MotionInput.ROLL] }
     ], this.proxy);
-    this.setupModuleEvents(this.head, "head");
     
     //
     // VR HEAD MOUNTED DISPLAY OOOOOH YEAH!
@@ -147,7 +149,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         { name: "heading", axes: [TouchInput.DX0], integrate: true },
         { name: "drive", axes: [-TouchInput.DY0] }
     ], this.proxy, null, this.ctrls.frontBuffer);
-    this.setupModuleEvents(this.touch, "touch");
     
     //
     // gamepad input
@@ -159,7 +160,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         { name: "pitch", axes: [GamepadInput.RSY], integrate: true},
         { name: "options", buttons: [9], commandUp: this.toggleOptions.bind(this) }
     ], this.proxy);
-    this.setupModuleEvents(this.gamepad, "gamepad");
     this.gamepad.addEventListener("gamepadconnected", function (id){
         if (!this.gamepad.isGamepadSet() && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))){
             this.gamepad.setGamepad(id);
@@ -170,7 +170,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     // geolocation input
     //
     this.location = new LocationInput("location", [], this.proxy);
-    this.setupModuleEvents(this.location, "location");
     
     //
     // passthrough camera
@@ -189,7 +188,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput.HAND0Y], scale: 0.015, offset: -4 });
     leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput.HAND0Z], scale: -0.015, offset: 3 });
     this.leap = new LeapMotionInput("leap", leapCommands, this.proxy);
-    this.setupModuleEvents(this.leap, "leap");
     
     //
     // The various options, and packs of them when selecting from a dropdown
@@ -397,6 +395,14 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     //
     // setting up all other event listeners
     //
+    this.setupModuleEvents(this.leap, "leap");
+    this.setupModuleEvents(this.gamepad, "gamepad");
+    this.setupModuleEvents(this.touch, "touch");
+    this.setupModuleEvents(this.head, "head");
+    this.setupModuleEvents(this.speech, "speech");
+    this.setupModuleEvents(this.keyboard, "keyboard");
+    this.setupModuleEvents(this.mouse, "mouse");
+    
     window.addEventListener("touchend", this.showOnscreenControls.bind(this), false);
     
     window.addEventListener("mousemove", function(){
@@ -933,6 +939,11 @@ Application.prototype.animate = function(t){
             + this.mouse.getValue("pointerDistance") 
             + this.mouse.getValue("pointerPress")
             + 2) / Math.cos(pointerPitch);
+    
+        // this should probably be done with the linearVelocity parameters
+        // instead, so that the correction at the end of this function does
+        // not have to be made, and the offset to the absolute value doesn't
+        // have to be applied. 
         var dPositionX = this.vr.getValue("dx");
         var dPositionY = this.vr.getValue("dy");
         var dPositionZ = this.vr.getValue("dz");
@@ -948,7 +959,8 @@ Application.prototype.animate = function(t){
             if(lastDebug){
                 this.camera.remove(lastDebug);
             }
-            lastDebug = this.putUserText(fmt("[X $1.00000]\n[Y $2.00000]\n[Z $3.00000]", dPositionX, dPositionY, dPositionZ), 
+            lastDebug = this.putUserText(
+                fmt("[X $1.00000]\n[Y $2.00000]\n[Z $3.00000]", dPositionX, dPositionY, dPositionZ), 
                 this.options.chatTextSize, 0, 0, pointerDistance, "left");
         }
 
