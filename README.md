@@ -9,6 +9,8 @@ This project provides an application abstraction for 3D world-oriented VR experi
  - Focus the workflow on content creation with free (as in freedom *and* beer), open source software,
  - And provides built-in support for multi-user, collaborative experiences.
 
+With the goal that having as much of the piping of VR software hidden away can enable designers and developers to rapidly prototype VR experiences and start to come to a concensus on UI metaphors that work for real people in real scenarios.
+
 # A Demo
 
 https://www.seanmcbeth.com:8081/holodeck.html
