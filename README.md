@@ -1,22 +1,13 @@
 # Rapid Prototyping of VR Experiences
 
-Everyone and their brother has a Kickstarter project to build "the first" 3D printed, or injection molded, or ivory-carved headset for mounting a cellphone and wearing it as a virtual reality head-mounted display. Google even got in on the deal at their most recent IO conference (2014), announcing a cardboard template and a set of APIs for making VR Android Apps.
+Everyone is excited about Virtual Reality. But do we know how to make good VR software? Looking past the low-hanging fruit of FPS games, there is currently no consensus on best-practices for VR design. We still need to develop a lot of UI metaphors for handling the mundane aspects of managing applications: window managers,  application launchers, file browsers, menu systems, input textboxes and buttons and scroll lists. Hell, we're even still having trouble making it easy to select things! VR essentially throws away the last 50 years of well-worn human-computer interaction knowledge.
 
-Yet the design of good VR experiences escapes us. Take 15 minutes to an hour some day and peruse the offerings in the Google Play store for VR applications. They are universally bad. We tolerate them only insomuch as they are novel. As of this writing, I'm aware of only one actual game that is more than just a tech demo, and without VR it makes for an extremely dry experience. There is nothing in the running that stands on its own without the novelty of VR.
-
-Looking past the low-hanging fruit of FPS games, there are currently no UI metaphors for handling the mundane aspects of managing applications: no window managers, no application launchers, no file browsers, no menu systems, no input textboxes and buttons and scroll lists. In short, VR throws away the last 50 years of well-worn human-computer interaction knowledge.
-
-This project is about creating a template of a project and a workflow for rapidly prototyping VR experiences, accessible to both programmers with little 3D experience and 3D modellers with little programming experience. The goal is to be able to provide the tools necessary to experiment with and determine what those UI metaphors should be.
-
-# Technology
-
-The software in this repository, the APIs it utilizes, the standards they implement, and the tools that the project uses are all open standards and Free, Open Source Software. The project is released under the GPLv3 license while I'm still developing it, and when it's closer to ready, I'll offer a paid license that doesn't not require you to also release your software under the GPLv3.
-
- - Blender: All models used in the demo were created by me in Blender 2.7.
- - Collada: an open standard, developed by the Khronos Group, for representing 3D model and scene data.
- - WebGL: Another open standard from the Kronos Group. The client-side graphics are rendered with WebGL, a version of OpenGL for use in Web browsers.
- - Three.js: The Three.js library provides a massive helping with its pre-built Collada importer.
- - Node.js: the server is built with Node.js. I've found Node to be very easy to setup on the three major operating systems (Windows, Linux, OS X).
+This project provides an application abstraction for 3D world-oriented VR experiences that
+ - Degrades gracefully to a variety of user experiences, for both stereo displays with Oculus Rift and Google Cardboard, and flat displays for smartphones, tablets, and PCs,
+ - Provides a variety of user input systems at your fingertips--literally, in the case of devices like the Leap Motion,
+ - Simplifies the many issues of cross-browser compatibility,
+ - Focus the workflow on content creation with free (as in freedom *and* beer), open source software,
+ - And provides built-in support for multi-user, collaborative experiences.
 
 # A Demo
 
@@ -36,3 +27,13 @@ The input proxying is necessary for using a gamepad with the demo on a smartphon
 I've so far only tested this with Firefox and Google Chrome on Windows, Linux, and Android, but there is no particular reason it should not work with OS X, iOS, and Safari. It's *mostly* compatible with Internet Explorer, though there are some UI issues that need to be worked out, the basic premise is there.
 
 Also note that you don't necessarily have to match browsers on the PC with browsers on the smartphone. Mix and match to your heart's content.
+
+# Technology
+
+The software in this repository, the APIs it utilizes, the standards they implement, and the tools that the project uses are all open standards and Free, Open Source Software. The project is released under the GPLv3 license while I'm still developing it, and when it's closer to ready, I'll offer a paid license option that doesn't not require you to also release your software under the GPLv3.
+
+ - Blender: All models used in the demo were created by me in Blender 2.7.
+ - Collada: an open standard, developed by the Khronos Group, for representing 3D model and scene data.
+ - WebGL: Another open standard from the Kronos Group. The client-side graphics are rendered with WebGL, a version of OpenGL for use in Web browsers.
+ - Three.js: The Three.js library provides a massive helping with its pre-built Collada importer.
+ - Node.js: the server is built with Node.js. I've found Node to be very easy to setup on the three major operating systems (Windows, Linux, OS X).
