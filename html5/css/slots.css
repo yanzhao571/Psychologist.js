@@ -1,0 +1,75 @@
+section
+{
+    color: #2e2e2e;
+    border-radius: 10px;
+}
+
+th.tab, table > tfoot
+{
+    background-color: #eee;
+}
+
+th.tab
+{
+	border: solid 1px #ccc;
+}
+
+th.selectedTab{
+	border-bottom: none;
+}
+
+section, th.selectedTab, table > tbody
+{
+    background-color: #fff;
+}
+
+table > tbody > tr.alternateRow
+{
+    background-color:#f7f7f7;
+}
+
+table{
+    border-color: #aaa;
+}
+
+    table, table > thead
+    {
+        background-color: #ccc;
+    }
+
+
+a.button
+{
+    border-radius: 7px;
+}
+
+table.tabSet, th
+{
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+a.primary.button{
+    background-color: #123197;
+    border-color: #123197;
+    color: #fff;
+}
+
+    a.primary.button:hover
+    {
+        background-color: #3555bd;
+        border-color: #3555bd;
+    }
+
+    a.primary.button:active
+    {
+        background-color: #1b2c63;
+        border-color: #1b2c63;
+    }
+
+a.secondary.button{
+    background-color: #d00;
+    border-color: #d00;
+    color: #fff;
+    cursor: no-drop;
+}
