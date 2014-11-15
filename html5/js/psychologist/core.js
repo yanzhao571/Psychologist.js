@@ -564,7 +564,8 @@ function toggleFullScreen() {
     }
 }
 
-function addFullScreenShim(elems){
+function addFullScreenShim(){
+    var elems = arr(arguments);
     elems = elems.map(function(e){
         return {
             elem: e,
@@ -575,7 +576,7 @@ function addFullScreenShim(elems){
     function removeFullScreenShim(){
         elems.forEach(function(elem){
             elem.events.forEach(function(e){            
-                elem.removeEventListener(e, fullScreenShim);
+                elem.elem.removeEventListener(e, fullScreenShim);
             });
         });
     }
@@ -587,7 +588,7 @@ function addFullScreenShim(elems){
     elems.forEach(function(elem){
         elem.events.forEach(function(e){
             if(e.indexOf("fullscreenerror") < 0){
-                elem.addEventListener(e, fullScreenShim, false);
+                elem.elem.addEventListener(e, fullScreenShim, false);
             }
         });
     });

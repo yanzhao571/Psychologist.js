@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
+    <title>Angles</title>
+</head>
+<body>
+    <canvas id="graph" width="800" height="600">
+    <script id="setup">
+function Vector (x,y){
+    this.x = x;
+    this.y = y;
+    this.length = Math.sqrt(x*x + y*y);
+    this.angle = Math.atan2(y, x);
+}
+
+Vector.prototype.toString = function(){
+    return "[x: " + this.x + ", y: " + this.y + ", len: " + this.length + ", ang: " + (this.angle * 180 / Math.PI) + "]";
+};
+
+Vector.prototype.normalize = function(){
+    return new Vector(this.x / this.length, this.y / this.length);
+};
+
+Vector.prototype.add = function(p2){
+    return new Vector(this.x + p2.x, this.y + p2.y);
+};
+
+Vector.prototype.subtract = function(p2){
+    return new Vector(this.x - p2.x, this.y - p2.y);
+};
+
+Vector.prototype.multiply = function(c){
+    return new Vector(this.x * c, this.y * c);
+};
+
+Vector.prototype.rotate = function(a){
+    return new Vector(this.x * Math.cos(a) + this.y * Math.sin(a), this.y * Math.cos(a) - this.x * Math.sin(a));
+};
+
+Vector.prototype.dot = function(v2){
+    return this.x * v2.x + this.y * v2.y;
+};
+
+Vector.prototype.reflect = function(n){
+    var d = this.dot(n);
+    return new Vector(this.x - d * n.x, this.y - d * n.y);
+}
+
+
+var canv = document.getElementById("graph");
+var eye = new Vector(0, canv.height / 2);
+var end = new Vector(eye.x + canv.width, eye.y);
+var deltaSplitX = 50;
+var mirror1Length = 50;
+var mirror1Angle = 45 * Math.PI / 180;
+var t1 = 1, t2 = 0, p = null, variable = 0, clicked = false;
+canv.addEventListener("mousemove", function(evt){ p = new Vector(evt.clientX-canv.offsetLeft, evt.clientY-canv.offsetTop); }, false);
+canv.addEventListener("mouseup", function(evt){ clicked = true; }, false);
+
+
+function line(gfx, p1, p2, c){
+    gfx.beginPath();
+    gfx.moveTo(p1.x, p1.y);
+    gfx.strokeStyle = c;
+    gfx.lineTo(p2.x, p2.y);
+    gfx.stroke();
+}
+
+var gfx = canv.getContext("2d");
+function draw(){
+    requestAnimationFrame(draw);
+
+    var mirrorStart = new Vector(eye.x + deltaSplitX, eye.y);
+    var mirror1_1End = new Vector(
+        mirrorStart.x + mirror1Length * Math.cos(mirror1Angle),
+        mirrorStart.y - mirror1Length * Math.sin(mirror1Angle));
+    var mirror1_1Normal = mirror1_1End.subtract(mirrorStart).rotate(-Math.PI/2).normalize();
+    var mirror1_2End = new Vector(
+        mirrorStart.x + mirror1Length * Math.cos(mirror1Angle),
+        mirrorStart.y + mirror1Length * Math.sin(mirror1Angle));
+    var mirror1_2Normal = mirror1_2End.subtract(mirrorStart).rotate(Math.PI/2).normalize();
+    var beam1_1Dir = mirrorStart
+        .subtract(eye)
+        .normalize()
+        .reflect(mirror1_1Normal)
+        .multiply(1000);
+    var beam1_1 = beam1_1Dir.add(mirrorStart);
+    var beam1_3Dir = mirror1_1End
+        .subtract(eye)
+        .normalize()
+        .reflect(mirror1_1Normal)
+        .multiply(1000);
+    var beam1_3 = beam1_3Dir.add(mirror1_1End);
+
+    var mirror2_1Start = beam1_1Dir.multiply(t1).add(mirrorStart);
+    var mirror2_2Start = new Vector(mirror2_1Start.x, canv.height - mirror2_1Start.y);
+
+    var mirror2_1End =  beam1_3Dir.multiply(t2).add(mirror1_1End);
+    var mirror2_2End = new Vector(mirror2_1End.x, canv.height - mirror2_1End.y);
+
+    var mirror2_1Normal = mirror2_1End.subtract(mirror2_1Start).rotate(Math.PI/2).normalize();
+    var beam1_5Dir = beam1_3Dir.normalize()
+        .reflect(mirror2_1Normal)
+        .multiply(1000);
+    var beam1_5 = beam1_5Dir.add(mirror2_1Start);
+
+    var beam1_2 = mirrorStart
+        .subtract(eye)
+        .normalize()
+        .reflect(mirror1_2Normal)
+        .multiply(1000)
+        .add(mirrorStart);
+    var beam1_4 = mirror1_2End
+        .subtract(eye)
+        .normalize()
+        .reflect(mirror1_2Normal)
+        .multiply(1000)
+        .add(mirror1_2End);
+
+
+    var handlers = [
+        function(p){
+            console.log(p.toString());
+        },
+        function(p){deltaSplitX = p.x;},
+        function(p){
+            var v = p.subtract(mirrorStart);
+            mirror1Length = v.length;
+            mirror1Angle = v.angle;
+        },
+        function(p){
+            t1 = p.x / canv.width;
+            console.log(mirror2_1Start.toString());
+        },
+        function(p){
+            t2 = p.x / canv.width;
+        }];
+    if(clicked){
+        variable = (variable + 1) % handlers.length;
+        clicked = false;
+    }
+    handlers[variable](p);
+
+    gfx.clearRect(0, 0, canv.width, canv.height);
+    gfx.fillStyle = "#000";
+    gfx.fillRect(0, 0, canv.width, canv.height);
+    gfx.lineWidth = 2;
+
+    line(gfx, eye, end, "#333");
+
+    line(gfx, eye, mirrorStart, "#0ff");
+    line(gfx, mirrorStart, beam1_1, "#0ff");
+    line(gfx, mirrorStart, beam1_2, "#0ff");
+    line(gfx, mirrorStart, beam1_2, "#0ff");
+    line(gfx, mirror2_1Start, beam1_5, "#0ff");
+
+    line(gfx, eye, mirror1_1End, "#0f0");
+    line(gfx, mirror1_1End, beam1_3, "#0f0");
+    line(gfx, eye, mirror1_2End, "#0f0");
+
+    line(gfx, mirrorStart, mirror1_1End, "#f00");
+    line(gfx, mirrorStart, mirror1_2End, "#f00");
+    line(gfx, mirror2_1Start, mirror2_1End, "#f00");
+    line(gfx, mirror2_2Start, mirror2_2End, "#f00");
+}
+draw();
+    </script>
+</body>
+</html>

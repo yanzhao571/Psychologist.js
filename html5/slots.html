@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0">
+    <title>Drinkadink!</title>
+    <link rel="author" href="https://plus.google.com/+SeanMcBeth/posts">
+    <meta property="og:locale" content="en_US">
+    <link type="text/css" rel="stylesheet" href="css/style.css">
+    <link type="text/css" rel="stylesheet" href="css/bears.css">
+    <style type="text/css">
+        *{
+            box-sizing: border-box;
+        }
+        .button{
+            width:100%;
+        }
+        #display{
+            position:absolute;
+            top:0;
+            bottom:0;
+            left:0;
+            right:0;
+        }
+        #controls{
+            position:absolute;
+            bottom:0;
+            left:1em;
+            right:1em;
+        }
+    </style>
+</head>
+<body>
+    <section id="display">
+        <p>
+        </p>
+        <ul id="output"></ul>
+        <p id="controls">
+            <a class="primary button" id="cocktail">Cocktail</a><br>
+            <a class="primary button" id="mocktail">Mocktail</a>
+        </p>
+    </section>
+    <script type="text/javascript" src="js/psychologist/core.js"></script>
+    <script type="text/javascript">
+        var ctrls = findEverything();
+        addFullScreenShim(ctrls.display);
+        function spin(){
+            ctrls.output.innerHTML = "";
+            getObject("drinks/" + this.id, function(drink){
+                drink.forEach(function(d){
+                    var li = document.createElement("li");
+                    li.appendChild(document.createTextNode(d));
+                    ctrls.output.appendChild(li);
+                });
+            });
+        }
+        ctrls.cocktail.onclick = spin;
+        ctrls.mocktail.onclick = spin;
+    </script>
+</body>
+</html>

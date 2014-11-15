@@ -1,5 +1,5 @@
 function bears(){
-    var app = new Application("bears", 
+    var app = new Application("slots", 
         "models/slots.dae",
         "models/button2.dae", {
             maxThrow: 0.1,
@@ -16,6 +16,8 @@ function bears(){
             backgroundColor: 0xafbfff
         }
     );
+    
+    
 
     app.addEventListener("ready", function(){        
     });

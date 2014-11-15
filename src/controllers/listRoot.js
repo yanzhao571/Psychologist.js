@@ -32,7 +32,7 @@ module.exports = {
                 master.build(sendData, serverError, 
                     "src/templates/master.html", 
                     "Root file list", 
-                    fmt("<section><h1>JSVR</h1><p>Virtual reality-related HTML5 and JavaScript demos</p><p>$1</p></div>", paths));
+                    fmt("<section><h1>JSVR</h1><p>Virtual reality-related HTML5 and JavaScript demos</p><p>$1</p></section>", paths));
             }
         });
     }
