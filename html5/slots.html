@@ -41,17 +41,17 @@
         </p>
     </section>
     <script type="text/javascript" src="js/psychologist/core.js"></script>
+    <script type="text/javascript" src="js/controllers/slots.js"></script>
     <script type="text/javascript">
         var ctrls = findEverything();
         addFullScreenShim(ctrls.display);
         function spin(){
             ctrls.output.innerHTML = "";
-            getObject("drinks/" + this.id, function(drink){
-                drink.forEach(function(d){
-                    var li = document.createElement("li");
-                    li.appendChild(document.createTextNode(d));
-                    ctrls.output.appendChild(li);
-                });
+            var drink = drinks[this.id]();
+            drink.forEach(function(d){
+                var li = document.createElement("li");
+                li.appendChild(document.createTextNode(d));
+                ctrls.output.appendChild(li);
             });
         }
         ctrls.cocktail.onclick = spin;
