@@ -58,7 +58,7 @@ var mixers = chooser([0.25, 0.5, 0.25], baseMixers.concat(
     "sweet vermouth",
     "dry vermouth",
     "baileys",
-    "kaluha",
+    "kahlua",
     "cointreau",
     "apple pie moonshine",
     "whipped cream vodka"
@@ -93,7 +93,7 @@ var tinctures = chooser([0.5, 0.5], [
     "honey"
 ]);
 
-var accouterment = chooser([0.5, 0.5], [
+var accoutrement = chooser([0.5, 0.5], [
     "olives",
     "cherries",
     "pearl onions",
@@ -128,10 +128,10 @@ function makeDrink(){
 
 var drinks = {
     cocktail: function(){
-        return makeDrink(liquors, mixers, bitters, tinctures, accouterment);
+        return makeDrink(liquors, mixers, bitters, tinctures, accoutrement);
     },
     mocktail: function (){
-        return makeDrink(virginMixers, bitters, tinctures, accouterment);
+        return makeDrink(virginMixers, bitters, tinctures, accoutrement);
     }
 };
 
@@ -139,7 +139,13 @@ module.exports = {
     path: "drinks",
     pattern: /^\/drinks\/((?:m|c)ocktail)$/,
     GET: function(params, sendData, sendStaticFile, serverError){
-        var data = JSON.stringify(drinks[params[0]]());
+        var drink = drinks[params[0]]();
+        var data = JSON.stringify(drink);
+        var file = drink.map(function(d, i){
+            return fmt("\t$1) $2", i + 1, d);
+        }).join("\n\n");
+        file += "\n\n\n\n\n\n\n";
+    //    fs.writeFileSync("/dev/usb/lp0", file, "ascii");
         sendData("text/json", data, data.length);
     }
 };

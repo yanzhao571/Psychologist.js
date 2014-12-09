@@ -50,21 +50,21 @@ table.tabSet, th
 }
 
 a.primary.button{
-    background-color: #123197;
-    border-color: #123197;
+    background-color: #129731;
+    border-color: #129731;
     color: #fff;
 }
 
     a.primary.button:hover
     {
-        background-color: #3555bd;
-        border-color: #3555bd;
+        background-color: #35bd55;
+        border-color: #35bd55;
     }
 
     a.primary.button:active
     {
-        background-color: #1b2c63;
-        border-color: #1b2c63;
+        background-color: #1b632c;
+        border-color: #1b632c;
     }
 
 a.secondary.button{
