@@ -125,10 +125,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.vr = new VRInput("hmd", [
         { name: "pitch", axes: [VRInput.RX] },
         { name: "heading", axes: [VRInput.RY] },
-        { name: "roll", axes: [VRInput.RZ] },
-        { name: "dx", axes: [VRInput.X], scale: 25, offset: -2 },
-        { name: "dy", axes: [VRInput.Y], scale: 25, offset: -1.25 },
-        { name: "dz", axes: [VRInput.Z], scale: 25, offset: 0.75 }
+        { name: "roll", axes: [VRInput.RZ] }
     ], this.ctrls.hmdListing, formState && formState.hmdListing || "");
     this.ctrls.hmdListing.addEventListener("change", function(){
         this.vr.connect(this.ctrls.hmdListing.value);
@@ -940,13 +937,6 @@ Application.prototype.animate = function(t){
             + this.mouse.getValue("pointerPress")
             + 2) / Math.cos(pointerPitch);
     
-        // this should probably be done with the linearVelocity parameters
-        // instead, so that the correction at the end of this function does
-        // not have to be made, and the offset to the absolute value doesn't
-        // have to be applied. 
-        var dPositionX = this.vr.getValue("dx");
-        var dPositionY = this.vr.getValue("dy");
-        var dPositionZ = this.vr.getValue("dz");
         var strafe = 0;
         var drive = 0;
         
@@ -960,7 +950,7 @@ Application.prototype.animate = function(t){
                 this.camera.remove(lastDebug);
             }
             lastDebug = this.putUserText(
-                fmt("[X $1.00000]\n[Y $2.00000]\n[Z $3.00000]", dPositionX, dPositionY, dPositionZ), 
+                fmt("nothing"),
                 this.options.chatTextSize, 0, 0, pointerDistance, "left");
         }
 
@@ -1083,11 +1073,7 @@ Application.prototype.animate = function(t){
             user.position.add(this.testPoint);
             user.heading += user.dHeading * dt;
             user.rotation.set(0, user.heading, 0, "XYZ");
-            if(user === this.currentUser){ 
-                this.testPoint.set(dPositionX, dPositionY, dPositionZ);
-                user.position.add(this.testPoint);
-            }
-            else{
+            if(user !== this.currentUser){
                 // we have to offset the rotation of the name so the user
                 // can read it.
                 user.nameObj.rotation.set(0, this.currentUser.heading - user.heading, 0, "XYZ");
@@ -1149,9 +1135,6 @@ Application.prototype.animate = function(t){
         else {
             this.renderer.render(this.scene, this.camera);
         }
-        
-        this.testPoint.set(dPositionX, dPositionY, dPositionZ);
-        user.position.sub(this.testPoint);
     }
 
     this.wasFocused = this.focused;
