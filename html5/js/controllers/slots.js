@@ -73,7 +73,7 @@ var mixers = chooser([0.25, 0.5, 0.25], baseMixers.concat(
     "sweet vermouth",
     "dry vermouth",
     "baileys",
-    "kaluha",
+    "kahlua",
     "cointreau",
     "apple pie moonshine",
     "whipped cream vodka"
@@ -108,7 +108,7 @@ var tinctures = chooser([0.5, 0.5], [
     "honey"
 ]);
 
-var accouterment = chooser([0.5, 0.5], [
+var accoutrement = chooser([0.5, 0.5], [
     "olives",
     "cherries",
     "pearl onions",
@@ -143,9 +143,9 @@ function makeDrink(){
 
 var drinks = {
     cocktail: function(){
-        return makeDrink(liquors, mixers, bitters, tinctures, accouterment);
+        return makeDrink(liquors, mixers, bitters, tinctures, accoutrement);
     },
     mocktail: function (){
-        return makeDrink(virginMixers, bitters, tinctures, accouterment);
+        return makeDrink(virginMixers, bitters, tinctures, accoutrement);
     }
 };

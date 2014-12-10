@@ -119,12 +119,11 @@
                 }
                 else{
                     currentFrame = 0;
-                    getObject("drinks/" + this.id, function(drink){
-                        drink.forEach(function(d){
-                            var li = document.createElement("li");
-                            li.appendChild(document.createTextNode(d));
-                            ctrls.output.appendChild(li);
-                        });
+                    var drink = drinks[this.id]();
+                    drink.forEach(function(d){
+                        var li = document.createElement("li");
+                        li.appendChild(document.createTextNode(d));
+                        ctrls.output.appendChild(li);
                     });
                 }
             }
