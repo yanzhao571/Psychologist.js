@@ -55,10 +55,11 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.focused = true;
     this.wasFocused = false;
     this.onground = false;
-    this.rotateOrder = "ZYX";
     this.lt = 0;
     this.frame = 0;
+    this.enableMousePitch = true;
     this.currentUser = null;
+    this.cameraMount = null;
     this.mainScene = null;
     
     //
@@ -125,16 +126,17 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.vr = new VRInput("hmd", [
         { name: "pitch", axes: [VRInput.RX] },
         { name: "heading", axes: [VRInput.RY] },
-        { name: "roll", axes: [VRInput.RZ] }
+        { name: "roll", axes: [VRInput.RZ] },
+        { name: "homogeneous", axes: [VRInput.RW] }
     ], this.ctrls.hmdListing, formState && formState.hmdListing || "");
     this.ctrls.hmdListing.addEventListener("change", function(){
         this.vr.connect(this.ctrls.hmdListing.value);
         if(this.ctrls.hmdListing.value){
-            if(this.ctrls.renderingStyle.value !== "rift"){
-                this.chooseRenderingEffect("rift");
+            if(this.ctrls.renderingStyle.value !== "vr"){
+                this.chooseRenderingEffect("vr");
             }
             else{
-                this.effect.setHMD(this.getHMDSettings());
+                this.effect.setHMD(this.vr.display);
             }
         }
     }.bind(this));
@@ -247,7 +249,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
             locationEnable: {checked: true},
             locationTransmit: {checked: true},
             locationReceive: {checked: false},
-            renderingStyle: {value: "rift" },
+            renderingStyle: {value: "cardboard" },
             defaultDisplay: {checked: false}
         }},
         { name: NO_HMD_SMARTPHONE, values:{
@@ -315,9 +317,8 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         this.mainScene = sceneGraph;
         this.scene.add(sceneGraph);
         var cam = this.mainScene.Camera.children[0];
-        this.camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, this.options.drawDistance);
         this.scene.remove(cam);
-        this.scene.add(this.camera);
+        this.camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, this.options.drawDistance);
     }.bind(this));
     
     //
@@ -434,8 +435,19 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         this.focused = false;
     }.bind(this), false);
     
+    this.fullScreen = function(){ 
+        help(this.renderer.domElement);
+        var c = this.renderer.domElement;
+        if(c.webkitRequestFullscreen){
+            c.webkitRequestFullscreen({vrDisplay: this.vr.display});
+        }
+        else if(c.mozRequestFullScreen){
+            c.mozRequestFullScreen({vrDisplay: this.vr.display});        
+        }
+    };
+    
     this.ctrls.fullScreenButton.addEventListener("click", function(){
-        requestFullScreen();
+        this.fullScreen();
         this.mouse.requestPointerLock();
     }.bind(this), false);
     
@@ -529,7 +541,7 @@ Application.prototype.showOptions = function(){
 
 Application.prototype.hideOptions = function(){        
     this.ctrls.options.style.display = "none";
-    requestFullScreen();
+    this.fullScreen();
     this.keyboard.pause(false);
     this.showOnscreenControls();
     this.mouse.requestPointerLock();
@@ -561,84 +573,46 @@ Application.prototype.showOnscreenControls = function(){
     this.hideControlsTimeout = setTimeout(this.hideOnscreenControls.bind(this), 3000);
 };
 
-Application.prototype.getHMDSettings = function(){
-    var defaultHMD = null;
-    var displayName = this.vr && this.vr.display && this.vr.display.deviceName || "";
-    var fov = 0;
-    if(displayName.indexOf("Rift") > -1){
-        fov = this.vr.display.getRecommendedEyeFieldOfView("left");
-        this.rotateOrder = "XYZ";        
-    }
-    else{
-        this.rotateOrder = "YZX";
-    }
-    
-    if(displayName === "Oculus Rift DK2"){
-        defaultHMD = {
-            hResolution: 1920,
-            vResolution: 1080,
-            hScreenSize: 0.12576,
-            vScreenSize: 0.07074,
-            interpupillaryDistance: 0.0635,
-            lensSeparationDistance: 0.0635,
-            eyeToScreenDistance: 0.041,
-            distortionK : [1.0, 0.22, 0.24, 0.0],
-            chromaAbParameter: [ 0.996, -0.004, 1.014, 0.0],
-            fov: fov
-        };
-    }
-    else if(displayName === "Oculus Rift DK1"){
-        defaultHMD = {
-            hResolution: 1280,
-            vResolution: 800,
-            hScreenSize: 0.14976,
-            vScreenSize: 0.0936,
-            interpupillaryDistance: 0.064,
-            lensSeparationDistance: 0.064,
-            eyeToScreenDistance: 0.041,
-            distortionK : [1.0, 0.22, 0.24, 0.0],
-            chromaAbParameter: [ 0.996, -0.004, 1.014, 0.0],
-            fov: fov
-        };
-    }
-    else {
-        // assume Google Cardboard-style HMDs
-        defaultHMD = {
-            hResolution: screen.availWidth,
-            vResolution: screen.availHeight,
-            hScreenSize: 0.126,
-            vScreenSize: 0.075,
-            interpupillaryDistance: 0.064,
-            lensSeparationDistance: 0.064,
-            eyeToScreenDistance: 0.051,
-            distortionK: [1, 0.22, 0.06, 0.0],
-            chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
-        };
-    }
-    return defaultHMD;
-};
-
 Application.prototype.chooseRenderingEffect = function(type){
     if(this.lastRenderingType !== type){
         switch(type){
-            case "anaglyph": this.effect = new THREE.AnaglyphEffect(this.renderer, 5, window.innerWidth, window.innerHeight); break;
-            case "stereo": this.effect = new THREE.StereoEffect(this.renderer); break;
-            case "rift": 
+            case "anaglyph": 
+                this.effect = new THREE.AnaglyphEffect(this.renderer, 5, window.innerWidth, window.innerHeight);
+                this.enableMousePitch = true;
+            break;
+            case "cardboard": 
                 this.effect = new THREE.OculusRiftEffect(this.renderer, {
-                worldFactor: 1,
-                HMD: this.getHMDSettings()
-            }); break;
+                    worldFactor: 1,
+                    HMD: {
+                        hResolution: screen.availWidth,
+                        vResolution: screen.availHeight,
+                        hScreenSize: 0.126,
+                        vScreenSize: 0.075,
+                        interpupillaryDistance: 0.064,
+                        lensSeparationDistance: 0.064,
+                        eyeToScreenDistance: 0.051,
+                        distortionK: [1, 0.22, 0.06, 0.0],
+                        chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
+                    }
+                }); 
+                this.enableMousePitch = false;
+            break;
+            case "vr":
+                this.effect = new THREE.VREffect(this.renderer, this.vr.display);
+                this.enableMousePitch = false;
+            break;
             default: 
                 this.effect = null;
                 type = "regular";
-                break;
+                this.enableMousePitch = true;
+            break;
         }
 
         if(this.ctrls.renderingStyle.value !== type){
             this.ctrls.renderingStyle.value = type;
         }
 
-        if((this.lastRenderingType === "rift" || this.lastRenderingType === "stereo")
+        if((this.lastRenderingType === "cardboard" || this.lastRenderingType === "vr")
             && (type === "anaglyph" || type === "regular")){
             alert("The page must reload to enable the new settings.");
             document.location.reload();
@@ -883,7 +857,18 @@ Application.prototype.start = function(){
         this.lt = t;
         if(this.camera && this.mainScene && this.currentUser && this.buttonFactory.template){
             this.setSize(window.innerWidth, window.innerHeight);
+            
+            this.cameraMount = new THREE.Object3D();
+            this.cameraMount.position.y = this.avatarHeight;
+            
+            var corrector = new THREE.Object3D();
+            corrector.rotation.set(0, -Math.PI / 3, 0, "XYZ");
+            
+            this.currentUser.add(this.cameraMount);
+            this.cameraMount.add(corrector);
+            corrector.add(this.camera);
             this.camera.add(this.passthrough.mesh);
+            
             this.leap.start();
             this.animate = this.animate.bind(this);
             this.fire("ready");
@@ -915,17 +900,16 @@ Application.prototype.animate = function(t){
         this.gamepad.update(dt);
         this.leap.update(dt);
 
-        var roll = this.head.getValue("roll")
-            + this.vr.getValue("roll");
-        var pitch = this.head.getValue("pitch")
-            + this.gamepad.getValue("pitch")
-            + this.mouse.getValue("pitch")
-            + this.vr.getValue("pitch");
+        var roll = this.head.getValue("roll");
+        var pitch = this.head.getValue("pitch");
+        if(this.enableMousePitch){
+            pitch += this.gamepad.getValue("pitch")
+                + this.mouse.getValue("pitch");
+        }
         var heading = this.head.getValue("heading") 
             + this.gamepad.getValue("heading")
             + this.touch.getValue("heading")
-            + this.mouse.getValue("heading")
-            + this.vr.getValue("heading");
+            + this.mouse.getValue("heading");
         var pointerPitch = pitch 
             + this.leap.getValue("HAND0Y")
             + this.mouse.getValue("pointerPitch");
@@ -945,12 +929,13 @@ Application.prototype.animate = function(t){
             this.passthrough.update();
         }
         
+        if(lastDebug){
+            this.camera.remove(lastDebug);
+            lastDebug = null;
+        }
         if(this.keyboard.isDown("debug")){
-            if(lastDebug){
-                this.camera.remove(lastDebug);
-            }
             lastDebug = this.putUserText(
-                fmt("nothing"),
+                fmt("[nothing]"),
                 this.options.chatTextSize, 0, 0, pointerDistance, "left");
         }
 
@@ -958,7 +943,6 @@ Application.prototype.animate = function(t){
             //
             // update user position and view
             //
-
             this.currentUser.dHeading = (heading - this.currentUser.heading) / dt;
             strafe = this.keyboard.getValue("strafeRight")
                 + this.keyboard.getValue("strafeLeft")
@@ -1094,17 +1078,17 @@ Application.prototype.animate = function(t){
             .applyAxisAngle(this.camera.up, pointerHeading);
 
         this.testPoint.copy(this.hand.position);
-        this.hand.position.copy(this.camera.position).add(this.direction);
+        this.hand.position.copy(this.cameraMount.position).add(this.direction);
         this.hand.velocity.copy(this.hand.position).sub(this.testPoint);
 
         for(var j = 0; j < this.mainScene.buttons.length; ++j){
             var btn = this.mainScene.buttons[j];
-            var tag = btn.test(this.camera.position, this.hand);
+            var tag = btn.test(this.cameraMount.position, this.hand);
             if(tag){
                 this.hand.position.copy(tag);
             }
             else{
-                btn.test(this.camera.position, this.currentUser);
+                btn.test(this.cameraMount.position, this.currentUser);
             }
         }
 
@@ -1112,7 +1096,7 @@ Application.prototype.animate = function(t){
         //
         // update audio
         //
-        this.testPoint.copy(this.currentUser.position);
+        this.testPoint.copy(this.cameraMount.position);
         this.testPoint.divideScalar(10);
         this.audio.setPosition(this.testPoint.x, this.testPoint.y, this.testPoint.z);
         this.audio.setVelocity(this.currentUser.velocity.x, this.currentUser.velocity.y, this.currentUser.velocity.z);
@@ -1122,9 +1106,12 @@ Application.prototype.animate = function(t){
         //
         // update the camera
         //
-        this.camera.rotation.set(pitch, heading, roll, this.rotateOrder);
-        this.camera.position.copy(this.currentUser.position);
-        this.camera.position.y += this.avatarHeight;
+        this.cameraMount.rotation.set(pitch, 0, roll, "YZX");
+        this.camera.quaternion.set(
+            this.vr.getValue("pitch"), 
+            this.vr.getValue("heading"), 
+            this.vr.getValue("roll"), 
+            this.vr.getValue("homogeneous"));
 
         //
         // draw

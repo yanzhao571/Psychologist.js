@@ -1,5 +1,5 @@
 ["lib/three/three.js",
-"lib/three/StereoEffect.js",
+"lib/three/VREffect.js",
 "lib/three/OculusRiftEffect.js",
 "lib/three/AnaglyphEffect.js",
 "lib/three/ColladaLoader.js",
