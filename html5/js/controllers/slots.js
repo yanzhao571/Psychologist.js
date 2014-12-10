@@ -15,6 +15,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var audio = new Audio3DOutput();
+var ROWS = 4;
+var COLS = 4;
+var FRAMES_PER_SECOND = 16;
+var DT = 1000 / FRAMES_PER_SECOND;
+var TILES = ROWS * COLS;
+var SLOTS = 8;
+var SECONDS_PER_SLOT = 0.25;
+var SECONDS = SLOTS * SECONDS_PER_SLOT;
+var FRAMES = SECONDS * FRAMES_PER_SECOND;
+var FRAMES_PER_SLOT = FRAMES_PER_SECOND * SECONDS_PER_SLOT;
+var START_NOTE = 50;
+var ctrls = findEverything();
+var img = new Image();
 
 function chooser(dist, arr){
     return function(){
@@ -149,3 +163,60 @@ var drinks = {
         return makeDrink(virginMixers, bitters, tinctures, accoutrement);
     }
 };
+
+function start(){
+    var tileWidth = img.width / COLS;
+    var tileHeight = img.height / ROWS;
+    function i2xy(i){
+        var x = i % COLS;
+        var y = Math.floor(i / COLS);
+        return fmt("$1px $2px", x * tileWidth, y * tileHeight);
+    }
+    var slots = [];
+    for(var i = 0; i < SLOTS; ++i){
+        var slot = document.createElement("div");
+        slot.id = "slot" + i;
+        ctrls[slot.id] = slot;
+        slot.style.display = "inline-block";
+        slot.style.backgroundImage = fmt("url($1)", img.src);
+        slot.style.backgroundPosition = i2xy(i);
+        slot.style.width = px(tileWidth);
+        slot.style.height = px(tileHeight);
+        slot.style.margin = "1em";
+        ctrls.slots.appendChild(slot);
+        slots.push(slot);
+    }
+    addFullScreenShim(ctrls.display);
+    var currentFrame = 0;
+    function spin(){                
+        if(currentFrame < FRAMES){
+            if(currentFrame === 0){
+                ctrls.output.innerHTML = "";
+            }
+            setTimeout(spin.bind(this), DT);
+            ++currentFrame;
+            var n = currentFrame % FRAMES_PER_SLOT;
+            var s = Math.floor(currentFrame / FRAMES_PER_SLOT);
+            audio.sawtooth(START_NOTE - n + s + 2 * (s % 2) - 1, 1, DT / 1000);
+            for(var i = s; i < SLOTS; ++i){
+                var t = Math.floor(Math.random() * TILES);
+                slots[i].style.backgroundPosition = i2xy(t);
+            }
+        }
+        else{
+            currentFrame = 0;
+            var drink = drinks[this.id]();
+            drink.forEach(function(d){
+                var li = document.createElement("li");
+                li.appendChild(document.createTextNode(d));
+                ctrls.output.appendChild(li);
+            });
+        }
+    }
+    ctrls.cocktail.onclick = spin;
+    ctrls.mocktail.onclick = spin;
+}
+
+addFullScreenShim(ctrls.display);
+img.onload = start;
+img.src = "img/slots.jpg";
