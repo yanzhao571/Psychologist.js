@@ -60,6 +60,7 @@
     </section>
     <script type="text/javascript" src="js/psychologist/core.js"></script>
     <script type="text/javascript" src="js/output/Audio3DOutput.js"></script>
+    <script type="text/javascript" src="js/controllers/slots.js"></script>
     <script type="text/javascript">
         var audio = new Audio3DOutput();
         var ROWS = 4;
@@ -118,7 +119,6 @@
                 }
                 else{
                     currentFrame = 0;
-                    //* 
                     getObject("drinks/" + this.id, function(drink){
                         drink.forEach(function(d){
                             var li = document.createElement("li");
@@ -126,12 +126,12 @@
                             ctrls.output.appendChild(li);
                         });
                     });
-                    //*/
                 }
             }
             ctrls.cocktail.onclick = spin;
             ctrls.mocktail.onclick = spin;
         }
+        addFullScreenShim(ctrls.display);
     </script>
 </body>
 </html>
