@@ -52,6 +52,8 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.userName = Application.DEFAULT_USER_NAME;
     this.avatarHeight = avatarHeight;
     this.walkSpeed = walkSpeed;
+    this.cameraMount = new THREE.Object3D();            
+    this.oculusCorrector = new THREE.Object3D();
     this.focused = true;
     this.wasFocused = false;
     this.onground = false;
@@ -59,7 +61,6 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     this.frame = 0;
     this.enableMousePitch = true;
     this.currentUser = null;
-    this.cameraMount = null;
     this.mainScene = null;
     
     //
@@ -574,6 +575,7 @@ Application.prototype.showOnscreenControls = function(){
 };
 
 Application.prototype.chooseRenderingEffect = function(type){
+    this.oculusCorrector.rotation.set(0, 0, 0, "XYZ");
     if(this.lastRenderingType !== type){
         switch(type){
             case "anaglyph": 
@@ -600,6 +602,7 @@ Application.prototype.chooseRenderingEffect = function(type){
             case "vr":
                 this.effect = new THREE.VREffect(this.renderer, this.vr.display);
                 this.enableMousePitch = false;
+                this.oculusCorrector.rotation.set(0, -Math.PI / 3, 0, "XYZ");
             break;
             default: 
                 this.effect = null;
@@ -858,15 +861,11 @@ Application.prototype.start = function(){
         if(this.camera && this.mainScene && this.currentUser && this.buttonFactory.template){
             this.setSize(window.innerWidth, window.innerHeight);
             
-            this.cameraMount = new THREE.Object3D();
             this.cameraMount.position.y = this.avatarHeight;
             
-            var corrector = new THREE.Object3D();
-            corrector.rotation.set(0, -Math.PI / 3, 0, "XYZ");
-            
             this.currentUser.add(this.cameraMount);
-            this.cameraMount.add(corrector);
-            corrector.add(this.camera);
+            this.cameraMount.add(this.oculusCorrector);
+            this.oculusCorrector.add(this.camera);
             this.camera.add(this.passthrough.mesh);
             
             this.leap.start();
