@@ -43,10 +43,10 @@ function CameraInput(elem, id, size, x, y, z, options){
     this.gfx.fillStyle = "white";
     this.gfx.fillRect(0, 0, 500, 500);
     
-    var geometry = new THREE.PlaneGeometry(size / 0.75, size);
+    var geometry = new THREE.PlaneGeometry(size, size);
     geometry.computeBoundingBox();
     geometry.computeVertexNormals();
-    
+
     this.mesh = new THREE.Mesh(geometry, material);
     this.mesh.position.set(x, y, z);
     
@@ -93,6 +93,8 @@ function CameraInput(elem, id, size, x, y, z, options){
     this.videoElement.addEventListener("playing", function (){
         this.videoElement.height = this.buffer.height = this.videoElement.videoHeight;
         this.videoElement.width = this.buffer.width = this.videoElement.videoWidth;
+        var aspectRatio = this.videoElement.videoWidth / this.videoElement.videoHeight;
+        this.mesh.scale.set(aspectRatio, 1, 1);
     }.bind(this), false);
 
     this.connect = function(source){

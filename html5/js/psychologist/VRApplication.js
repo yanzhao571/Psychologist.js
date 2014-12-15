@@ -44,7 +44,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     var formState = getSetting(formStateKey);
     this.options = combineDefaults(options, VRApplication);
     this.ctrls = findEverything();
-    this.fullscreenElement = this.ctrls.frontBuffer;
+    this.fullscreenElement = document.documentElement;
     this.users = {};
     this.chatLines = [];
     this.listeners = {
@@ -177,7 +177,6 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     // passthrough camera
     //
     this.passthrough = new CameraInput(this.ctrls.cameraListing, formState && formState.cameraListing || "", 1, 0, 0, -1);
-    this.passthrough.mesh.visible = false;
     this.ctrls.cameraListing.addEventListener("change", function(){
         this.passthrough.connect(this.ctrls.cameraListing.value);
     }.bind(this));
@@ -924,7 +923,7 @@ VRApplication.prototype.animate = function(t){
     
         var strafe = 0;
         var drive = 0;
-        
+
         this.passthrough.mesh.visible = this.keyboard.isDown("camera");
         if(this.passthrough.mesh.visible){
             this.passthrough.update();
@@ -967,8 +966,8 @@ VRApplication.prototype.animate = function(t){
 
                 strafe *= len;
                 drive *= len;
-                len = strafe * Math.cos(pointerHeading) + drive * Math.sin(pointerHeading);
-                drive = drive * Math.cos(pointerHeading) - strafe * Math.sin(pointerHeading);
+                len = strafe * Math.cos(heading) + drive * Math.sin(heading);
+                drive = drive * Math.cos(heading) - strafe * Math.sin(heading);
                 strafe = len;
                 this.currentUser.velocity.x = this.currentUser.velocity.x * 0.9 + strafe * 0.1;
                 this.currentUser.velocity.z = this.currentUser.velocity.z * 0.9 + drive * 0.1;
@@ -1079,17 +1078,17 @@ VRApplication.prototype.animate = function(t){
             .applyAxisAngle(this.camera.up, pointerHeading);
 
         this.testPoint.copy(this.hand.position);
-        this.hand.position.copy(this.cameraMount.position).add(this.direction);
+        this.hand.position.copy(this.currentUser.position).add(this.direction);
         this.hand.velocity.copy(this.hand.position).sub(this.testPoint);
 
         for(var j = 0; j < this.mainScene.buttons.length; ++j){
             var btn = this.mainScene.buttons[j];
-            var tag = btn.test(this.cameraMount.position, this.hand);
+            var tag = btn.test(this.currentUser.position, this.hand);
             if(tag){
                 this.hand.position.copy(tag);
             }
             else{
-                btn.test(this.cameraMount.position, this.currentUser);
+                btn.test(this.currentUser.position, this.currentUser);
             }
         }
 
@@ -1097,7 +1096,7 @@ VRApplication.prototype.animate = function(t){
         //
         // update audio
         //
-        this.testPoint.copy(this.cameraMount.position);
+        this.testPoint.copy(this.currentUser.position);
         this.testPoint.divideScalar(10);
         this.audio.setPosition(this.testPoint.x, this.testPoint.y, this.testPoint.z);
         this.audio.setVelocity(this.currentUser.velocity.x, this.currentUser.velocity.y, this.currentUser.velocity.z);
