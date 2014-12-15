@@ -1,4 +1,5 @@
 function KeyboardInput(name, DOMElement, commands, socket, oscope){
+    DOMElement = DOMElement || window;
 
     for(var i = 0; i < commands.length; ++i){
         var cmd = commands[i];
@@ -79,7 +80,6 @@ function KeyboardInput(name, DOMElement, commands, socket, oscope){
         }
     }
 
-    DOMElement = DOMElement || window;
     DOMElement.addEventListener("keydown", execute.bind(this, true), false);
     DOMElement.addEventListener("keyup", execute.bind(this, false), false);
 }

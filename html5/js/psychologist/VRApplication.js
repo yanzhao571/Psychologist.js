@@ -78,7 +78,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     //
     // keyboard input
     //
-    this.keyboard = new KeyboardInput("keyboard", this.fullscreenElement, [
+    this.keyboard = new KeyboardInput("keyboard", window, [
         { name: "strafeLeft", buttons: [-KeyboardInput.A, -KeyboardInput.LEFTARROW] },
         { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHT] },
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
