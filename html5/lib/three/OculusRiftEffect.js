@@ -174,10 +174,12 @@ THREE.OculusRiftEffect = function (renderer, options) {
 	};
 
 	this.render = function (scene, camera) {
-		// camera parameters
+        camera.add(pCamera);
+        // camera parameters
 		if (camera.matrixAutoUpdate){
             camera.updateMatrix();
         }
+
 
         //
         // left
@@ -205,6 +207,7 @@ THREE.OculusRiftEffect = function (renderer, options) {
 		renderer.render(scene, pCamera, renderTarget, true);
 		renderer.render(finalScene, oCamera);
 
+        camera.remove(pCamera);
 	};
 
 	this.dispose = function() {
