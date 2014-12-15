@@ -1,5 +1,5 @@
 function holodeck(){
-    window.app = new Application("holodeck", 
+    window.app = new VRApplication("holodeck", 
         "models/scene2.dae",
         "models/button2.dae", {
             maxThrow: 0.1,

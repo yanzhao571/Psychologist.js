@@ -38,10 +38,10 @@
         `chatTextSize` - the size of a single line of text, in world units (default: 0.25)
         `dtNetworkUpdate` - the amount of time to allow to elapse between sending state to teh server (default: 0.125)
  */
-function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, avatarHeight, walkSpeed, clickSound, ambientSound, options){
+function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel, avatarHeight, walkSpeed, clickSound, ambientSound, options){
     var formStateKey = name + " - formState";
     var formState = getSetting(formStateKey);
-    this.options = combineDefaults(options, Application);
+    this.options = combineDefaults(options, VRApplication);
     this.ctrls = findEverything();
     this.users = {};
     this.chatLines = [];
@@ -49,7 +49,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         ready: [],
         update: []
     };
-    this.userName = Application.DEFAULT_USER_NAME;
+    this.userName = VRApplication.DEFAULT_USER_NAME;
     this.avatarHeight = avatarHeight;
     this.walkSpeed = walkSpeed;
     this.cameraMount = new THREE.Object3D();            
@@ -347,7 +347,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
         });
         this.socket.on("connect", function(){
             this.socket.emit("handshake", "demo");
-            this.ctrls.connectButton.innerHTML = Application.DISCONNECTED_TEXT;
+            this.ctrls.connectButton.innerHTML = VRApplication.DISCONNECTED_TEXT;
             this.ctrls.connectButton.className = "primary button";
         }.bind(this));
         this.socket.on("typing", this.showTyping.bind(this, false, false));
@@ -368,7 +368,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
             this.showMessage("Incorrect user name or password!");
         }.bind(this));
         this.socket.on("userList", function (newUsers){
-            this.ctrls.connectButton.innerHTML = Application.CONNECTED_TEXT;
+            this.ctrls.connectButton.innerHTML = VRApplication.CONNECTED_TEXT;
             this.ctrls.connectButton.className = "primary button";
             this.proxy.connect(this.userName);
             newUsers.sort(function(a){ return (a.userName === this.userName) ? -1 : 1;});
@@ -469,7 +469,7 @@ function Application(name, sceneModel, buttonModel, buttonOptions, avatarModel, 
     }
 }
     
-Application.DEFAULTS = {
+VRApplication.DEFAULTS = {
     gravity: 9.8, // the acceleration applied to falling objects
     backgroundColor: 0x000000, // the color that WebGL clears the background with before drawing
     drawDistance: 500, // the far plane of the camera
@@ -477,12 +477,12 @@ Application.DEFAULTS = {
     dtNetworkUpdate: 0.125 // the amount of time to allow to elapse between sending state to teh server
 };
 
-Application.CONNECTED_TEXT = "Disconnect";
-Application.DISCONNECTED_TEXT = "Connect";
-Application.DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE";
-Application.RIGHT = new THREE.Vector3(-1, 0, 0);
+VRApplication.CONNECTED_TEXT = "Disconnect";
+VRApplication.DISCONNECTED_TEXT = "Connect";
+VRApplication.DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE";
+VRApplication.RIGHT = new THREE.Vector3(-1, 0, 0);
 
-Application.prototype.makeButton = function(toggle){
+VRApplication.prototype.makeButton = function(toggle){
     var btn = this.buttonFactory.create(toggle);
     this.mainScene.buttons.push(btn);
     this.mainScene[btn.name] = btn;
@@ -490,19 +490,19 @@ Application.prototype.makeButton = function(toggle){
     return btn;
 };
 
-Application.prototype.addEventListener = function(event, thunk){
+VRApplication.prototype.addEventListener = function(event, thunk){
     if(this.listeners[event]){
         this.listeners[event].push(thunk);
     }
 };
 
-Application.prototype.fire = function(name, arg1, arg2, arg3, arg4){
+VRApplication.prototype.fire = function(name, arg1, arg2, arg3, arg4){
     for(var i = 0; i < this.listeners[name].length; ++i){
         this.listeners[name][i](arg1, arg2, arg3, arg4);
     }
 };
 
-Application.prototype.setupModuleEvents = function(module, name){
+VRApplication.prototype.setupModuleEvents = function(module, name){
     var e = this.ctrls[name + "Enable"],
         t = this.ctrls[name + "Transmit"],
         r = this.ctrls[name + "Receive"];
@@ -534,13 +534,13 @@ Application.prototype.setupModuleEvents = function(module, name){
     }
 };
 
-Application.prototype.showOptions = function(){
+VRApplication.prototype.showOptions = function(){
     this.ctrls.options.style.display = "";
     this.keyboard.pause(true);
     this.mouse.exitPointerLock();
 };
 
-Application.prototype.hideOptions = function(){        
+VRApplication.prototype.hideOptions = function(){        
     this.ctrls.options.style.display = "none";
     this.fullScreen();
     this.keyboard.pause(false);
@@ -548,7 +548,7 @@ Application.prototype.hideOptions = function(){
     this.mouse.requestPointerLock();
 };
 
-Application.prototype.toggleOptions = function(){
+VRApplication.prototype.toggleOptions = function(){
     var show = this.ctrls.options.style.display !== "";
     if(show){
         this.showOptions();
@@ -561,12 +561,12 @@ Application.prototype.toggleOptions = function(){
 //
 // the touch-screen and mouse-controls for accessing the options screen
 //
-Application.prototype.hideOnscreenControls = function(){
+VRApplication.prototype.hideOnscreenControls = function(){
     this.ctrls.onScreenControls.style.display = "none";
     this.hideControlsTimeout = null;
 };
     
-Application.prototype.showOnscreenControls = function(){
+VRApplication.prototype.showOnscreenControls = function(){
     this.ctrls.onScreenControls.style.display = "";
     if(this.hideControlsTimeout){
         clearTimeout(this.hideControlsTimeout);
@@ -574,7 +574,7 @@ Application.prototype.showOnscreenControls = function(){
     this.hideControlsTimeout = setTimeout(this.hideOnscreenControls.bind(this), 3000);
 };
 
-Application.prototype.chooseRenderingEffect = function(type){
+VRApplication.prototype.chooseRenderingEffect = function(type){
     this.oculusCorrector.rotation.set(0, 0, 0, "XYZ");
     if(this.lastRenderingType !== type){
         switch(type){
@@ -624,7 +624,7 @@ Application.prototype.chooseRenderingEffect = function(type){
     }
 };
 
-Application.prototype.setSize = function(w, h){
+VRApplication.prototype.setSize = function(w, h){
     if(this.camera){
         this.camera.aspect = w / h;
         this.camera.updateProjectionMatrix();
@@ -638,11 +638,11 @@ Application.prototype.setSize = function(w, h){
     }
 };
 
-Application.prototype.login = function(){
+VRApplication.prototype.login = function(){
     if(this.socket 
         && this.socket.connected
         && this.ctrls.connectButton.classList.contains("primary")){
-        if(this.ctrls.connectButton.innerHTML === Application.DISCONNECTED_TEXT){
+        if(this.ctrls.connectButton.innerHTML === VRApplication.DISCONNECTED_TEXT){
             this.userName = this.ctrls.userNameField.value;
             var password = this.ctrls.passwordField.value;
             if(this.userName && password){
@@ -661,9 +661,9 @@ Application.prototype.login = function(){
                 this.showMessage("Please complete the form.");
             }
         }
-        else if(this.ctrls.connectButton.innerHTML === Application.CONNECTED_TEXT){ 
+        else if(this.ctrls.connectButton.innerHTML === VRApplication.CONNECTED_TEXT){ 
            this.socket.emit("logout");
-           this.ctrls.connectButton.innerHTML = Application.DISCONNECTED_TEXT;
+           this.ctrls.connectButton.innerHTML = VRApplication.DISCONNECTED_TEXT;
         }        
     }
     else{
@@ -671,10 +671,10 @@ Application.prototype.login = function(){
     }
 };
 
-Application.prototype.addUser = function(userState, skipMakingChatList){
+VRApplication.prototype.addUser = function(userState, skipMakingChatList){
     var user = null;
     if(!this.users[userState.userName]){
-        if(this.userName === Application.DEFAULT_USER_NAME
+        if(this.userName === VRApplication.DEFAULT_USER_NAME
             || userState.userName !== this.userName){
             user = new THREE.Object3D();        
             var model = this.avatar.clone();
@@ -691,7 +691,7 @@ Application.prototype.addUser = function(userState, skipMakingChatList){
 
             user.velocity = new THREE.Vector3();
 
-            if(userState.userName === Application.DEFAULT_USER_NAME){
+            if(userState.userName === VRApplication.DEFAULT_USER_NAME){
                 this.currentUser = user;
             }
             else{
@@ -701,7 +701,7 @@ Application.prototype.addUser = function(userState, skipMakingChatList){
             this.scene.add(user);
         }
         else{
-            delete this.users[Application.DEFAULT_USER_NAME];
+            delete this.users[VRApplication.DEFAULT_USER_NAME];
             user = this.currentUser;
         }
     }
@@ -717,7 +717,7 @@ Application.prototype.addUser = function(userState, skipMakingChatList){
     }
 };
 
-Application.prototype.updateUserState = function(firstTime, userState){
+VRApplication.prototype.updateUserState = function(firstTime, userState){
     var user = user || this.users[userState.userName];
     if(!user){
         setTimeout(this.addUser.bind(this, userState), 1);
@@ -743,7 +743,7 @@ Application.prototype.updateUserState = function(firstTime, userState){
     }
 };
 
-Application.prototype.makeChatList = function(){
+VRApplication.prototype.makeChatList = function(){
     var list = [];
     for(var k in this.users){
         list.push(k);
@@ -751,7 +751,7 @@ Application.prototype.makeChatList = function(){
     list.sort();
     this.ctrls.userList.innerHTML = "";
     for(var i = 0; i < list.length; ++i){
-        if(list[i] !== Application.DEFAULT_USER_NAME){
+        if(list[i] !== VRApplication.DEFAULT_USER_NAME){
             var entry = document.createElement("div");
             entry.appendChild(document.createTextNode(list[i]));
             this.ctrls.userList.appendChild(entry);
@@ -759,7 +759,7 @@ Application.prototype.makeChatList = function(){
     }
 };
 
-Application.prototype.showMessage = function(){
+VRApplication.prototype.showMessage = function(){
     var msg = fmt.apply(window, map(arguments, function(v){ return v ? v.toString() : ""; }));
     if(this.currentUser){
         this.showChat(msg);
@@ -769,7 +769,7 @@ Application.prototype.showMessage = function(){
     }
 };
 
-Application.prototype.showTyping = function(isLocal, isComplete, text){
+VRApplication.prototype.showTyping = function(isLocal, isComplete, text){
     if(this.currentUser){
         if(this.lastText){
             this.camera.remove(this.lastText);
@@ -796,13 +796,13 @@ Application.prototype.showTyping = function(isLocal, isComplete, text){
     }
 };
 
-Application.prototype.shiftLines = function(){
+VRApplication.prototype.shiftLines = function(){
     for(var i = 0; i < this.chatLines.length; ++i){
         this.chatLines[i].position.y = (this.chatLines.length - i) * this.options.chatTextSize * 1.333 - 1;
     }
 };
 
-Application.prototype.putUserText = function(msg, size, x, y, z, align){
+VRApplication.prototype.putUserText = function(msg, size, x, y, z, align){
     var textObj = new VUI.Text(
         msg, size,
         "white", "transparent",
@@ -811,7 +811,7 @@ Application.prototype.putUserText = function(msg, size, x, y, z, align){
     return textObj;
 };
 
-Application.prototype.showChat = function(msg){
+VRApplication.prototype.showChat = function(msg){
     msg = typeof(msg) === "string" ? msg : fmt("[$1]: $2", msg.userName, msg.text);
     if(this.currentUser){
         if(this.userName === msg.userName){
@@ -837,7 +837,7 @@ Application.prototype.showChat = function(msg){
     }
 };
 
-Application.prototype.makeNotification = function(msg){
+VRApplication.prototype.makeNotification = function(msg){
     if (Notification.permission === "granted") {
         if(this.lastNote){
             msg = this.lastNote.body + "\n" + msg;
@@ -855,7 +855,7 @@ Application.prototype.makeNotification = function(msg){
     }
 };
 
-Application.prototype.start = function(){
+VRApplication.prototype.start = function(){
     var waitForResources = function(t){
         this.lt = t;
         if(this.camera && this.mainScene && this.currentUser && this.buttonFactory.template){
@@ -883,7 +883,7 @@ Application.prototype.start = function(){
 
 var lastDebug = null;
 
-Application.prototype.animate = function(t){
+VRApplication.prototype.animate = function(t){
     requestAnimationFrame(this.animate);
     var dt = (t - this.lt) * 0.001;
     this.lt = t;
@@ -1073,7 +1073,7 @@ Application.prototype.animate = function(t){
         // place pointer
         //
         this.direction.set(0, 0, -pointerDistance)
-            .applyAxisAngle(Application.RIGHT, -pointerPitch)
+            .applyAxisAngle(VRApplication.RIGHT, -pointerPitch)
             .applyAxisAngle(this.camera.up, pointerHeading);
 
         this.testPoint.copy(this.hand.position);
@@ -1129,26 +1129,26 @@ Application.prototype.animate = function(t){
 
 
 
-    function obj3(){
-        var obj = new THREE.Object3D();
-        for(var i = 0; i < arguments.length; ++i){
-            obj.add(arguments[i]);
-        }
-        return obj;
+function obj3(){
+    var obj = new THREE.Object3D();
+    for(var i = 0; i < arguments.length; ++i){
+        obj.add(arguments[i]);
     }
+    return obj;
+}
 
-    function box(x, y, z, c){
-        var geom = new THREE.BoxGeometry(x, y, z);
-        var mat = new THREE.MeshBasicMaterial({ color: c });
-        var mesh = new THREE.Mesh(geom, mat);
-        mesh.position.set(x / 2, y / 2, z / 2);
-        return mesh;
-    }
-    
-    function axis(length, width){
-        return obj3(
-            box(length, width, width, 0xff0000),
-            box(width, width, length, 0x00ff00),
-            box(width, length, width, 0x0000ff)
-        );
-    }
+function box(x, y, z, c){
+    var geom = new THREE.BoxGeometry(x, y, z);
+    var mat = new THREE.MeshBasicMaterial({ color: c });
+    var mesh = new THREE.Mesh(geom, mat);
+    mesh.position.set(x / 2, y / 2, z / 2);
+    return mesh;
+}
+
+function axis(length, width){
+    return obj3(
+        box(length, width, width, 0xff0000),
+        box(width, width, length, 0x00ff00),
+        box(width, length, width, 0x0000ff)
+    );
+}

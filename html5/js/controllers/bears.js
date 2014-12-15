@@ -1,5 +1,5 @@
 function bears(){
-    var app = new Application("bears", 
+    var app = new VRApplication("bears", 
         "models/scene.dae",
         "models/button.dae", {
             maxThrow: 0.1,
