@@ -180,7 +180,6 @@ THREE.OculusRiftEffect = function (renderer, options) {
             camera.updateMatrix();
         }
 
-
         //
         // left
         //
