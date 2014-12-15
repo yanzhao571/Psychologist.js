@@ -40,24 +40,15 @@
  */
 function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel, avatarHeight, walkSpeed, clickSound, ambientSound, options){
     Application.call(this, name);
-    var formStateKey = name + " - formState";
-    var formState = getSetting(formStateKey);
-    this.options = combineDefaults(options, VRApplication);
-    this.ctrls = findEverything();
-    this.fullscreenElement = document.documentElement;
-    this.users = {};
-    this.chatLines = [];
+    this.options = combineDefaults(this.options, VRApplication);
     this.listeners = {
         ready: [],
         update: []
     };
-    this.userName = VRApplication.DEFAULT_USER_NAME;
     this.avatarHeight = avatarHeight;
     this.walkSpeed = walkSpeed;
     this.cameraMount = new THREE.Object3D();            
     this.oculusCorrector = new THREE.Object3D();
-    this.focused = true;
-    this.wasFocused = false;
     this.onground = false;
     this.lt = 0;
     this.frame = 0;
@@ -139,7 +130,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         { name: "heading", axes: [VRInput.RY] },
         { name: "roll", axes: [VRInput.RZ] },
         { name: "homogeneous", axes: [VRInput.RW] }
-    ], this.ctrls.hmdListing, formState && formState.hmdListing || "");
+    ], this.ctrls.hmdListing, this.formState && this.formState.hmdListing || "");
     this.ctrls.hmdListing.addEventListener("change", function(){
         this.vr.connect(this.ctrls.hmdListing.value);
         if(this.ctrls.hmdListing.value){
@@ -176,7 +167,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     //
     // passthrough camera
     //
-    this.passthrough = new CameraInput(this.ctrls.cameraListing, formState && formState.cameraListing || "", 1, 0, 0, -1);
+    this.passthrough = new CameraInput(this.ctrls.cameraListing, this.formState && this.formState.cameraListing || "", 1, 0, 0, -1);
     this.ctrls.cameraListing.addEventListener("change", function(){
         this.passthrough.connect(this.ctrls.cameraListing.value);
     }.bind(this));
@@ -287,10 +278,10 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     //
     // restoring the options the user selected
     //
-    writeForm(this.ctrls, formState);
+    writeForm(this.ctrls, this.formState);
     window.addEventListener("beforeunload", function(){
         var state = readForm(this.ctrls);
-        setSetting(formStateKey, state);
+        setSetting(this.formStateKey, state);
         this.speech.enable(false);
     }.bind(this), false);
         
@@ -480,7 +471,6 @@ VRApplication.DEFAULTS = {
 
 VRApplication.CONNECTED_TEXT = "Disconnect";
 VRApplication.DISCONNECTED_TEXT = "Connect";
-VRApplication.DEFAULT_USER_NAME = "CURRENT_USER_OFFLINE";
 VRApplication.RIGHT = new THREE.Vector3(-1, 0, 0);
 
 VRApplication.prototype.makeButton = function(toggle){
@@ -675,7 +665,7 @@ VRApplication.prototype.login = function(){
 VRApplication.prototype.addUser = function(userState, skipMakingChatList){
     var user = null;
     if(!this.users[userState.userName]){
-        if(this.userName === VRApplication.DEFAULT_USER_NAME
+        if(this.userName === Application.DEFAULT_USER_NAME
             || userState.userName !== this.userName){
             user = new THREE.Object3D();        
             var model = this.avatar.clone();
@@ -692,7 +682,7 @@ VRApplication.prototype.addUser = function(userState, skipMakingChatList){
 
             user.velocity = new THREE.Vector3();
 
-            if(userState.userName === VRApplication.DEFAULT_USER_NAME){
+            if(userState.userName === Application.DEFAULT_USER_NAME){
                 this.currentUser = user;
             }
             else{
@@ -702,7 +692,7 @@ VRApplication.prototype.addUser = function(userState, skipMakingChatList){
             this.scene.add(user);
         }
         else{
-            delete this.users[VRApplication.DEFAULT_USER_NAME];
+            delete this.users[Application.DEFAULT_USER_NAME];
             user = this.currentUser;
         }
     }
@@ -752,7 +742,7 @@ VRApplication.prototype.makeChatList = function(){
     list.sort();
     this.ctrls.userList.innerHTML = "";
     for(var i = 0; i < list.length; ++i){
-        if(list[i] !== VRApplication.DEFAULT_USER_NAME){
+        if(list[i] !== Application.DEFAULT_USER_NAME){
             var entry = document.createElement("div");
             entry.appendChild(document.createTextNode(list[i]));
             this.ctrls.userList.appendChild(entry);
