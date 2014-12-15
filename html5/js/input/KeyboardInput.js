@@ -1,4 +1,4 @@
-function KeyboardInput(name, commands, socket, oscope, DOMElement){
+function KeyboardInput(name, DOMElement, commands, socket, oscope){
 
     for(var i = 0; i < commands.length; ++i){
         var cmd = commands[i];

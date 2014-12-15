@@ -44,6 +44,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     var formState = getSetting(formStateKey);
     this.options = combineDefaults(options, VRApplication);
     this.ctrls = findEverything();
+    this.fullscreenElement = this.ctrls.frontBuffer;
     this.users = {};
     this.chatLines = [];
     this.listeners = {
@@ -77,7 +78,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     //
     // keyboard input
     //
-    this.keyboard = new KeyboardInput("keyboard", [
+    this.keyboard = new KeyboardInput("keyboard", this.fullscreenElement, [
         { name: "strafeLeft", buttons: [-KeyboardInput.A, -KeyboardInput.LEFTARROW] },
         { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHT] },
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
@@ -101,7 +102,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     //
     // mouse input
     //
-    this.mouse = new MouseInput("mouse", [
+    this.mouse = new MouseInput("mouse", this.fullscreenElement, [
         { name: "dx", axes: [-MouseInput.X], delta: true, scale: 0.5 },
         { name: "heading", commands: ["dx"], metaKeys: [-NetworkedInput.SHIFT], integrate: true },
         { name: "pointerHeading", commands: ["dx"], metaKeys: [NetworkedInput.SHIFT], integrate: true, min: -Math.PI * 0.2, max: Math.PI * 0.2 },
@@ -111,6 +112,14 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         { name: "dz", axes: [MouseInput.Z], delta: true },
         { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: 0, max: 10 },
         { name: "pointerPress", buttons: [1], integrate: true, scale: 100, offset: -50, min: 0, max: 5 }
+    ], this.proxy);
+    
+    //
+    // capacitive touch screen input
+    //
+    this.touch = new TouchInput("touch", this.fullscreenElement, null, [
+        { name: "heading", axes: [TouchInput.DX0], integrate: true },
+        { name: "drive", axes: [-TouchInput.DY0] }
     ], this.proxy);
     
     //
@@ -142,14 +151,6 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
             }
         }
     }.bind(this));
-    
-    //
-    // capacitive touch screen input
-    //
-    this.touch = new TouchInput("touch", null, [
-        { name: "heading", axes: [TouchInput.DX0], integrate: true },
-        { name: "drive", axes: [-TouchInput.DY0] }
-    ], this.proxy, null, this.ctrls.frontBuffer);
     
     //
     // gamepad input
@@ -437,14 +438,12 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         this.focused = false;
     }.bind(this), false);
     
-    this.fullScreen = function(){ 
-        help(this.renderer.domElement);
-        var c = this.renderer.domElement;
-        if(c.webkitRequestFullscreen){
-            c.webkitRequestFullscreen({vrDisplay: this.vr.display});
+    this.fullScreen = function(){
+        if(this.fullscreenElement.webkitRequestFullscreen){
+            this.fullscreenElement.webkitRequestFullscreen({vrDisplay: this.vr.display});
         }
-        else if(c.mozRequestFullScreen){
-            c.mozRequestFullScreen({vrDisplay: this.vr.display});        
+        else if(this.fullscreenElement.mozRequestFullScreen){
+            this.fullscreenElement.mozRequestFullScreen({vrDisplay: this.vr.display});        
         }
     };
     

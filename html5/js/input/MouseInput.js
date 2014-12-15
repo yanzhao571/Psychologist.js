@@ -1,5 +1,5 @@
-function MouseInput(name, commands, socket, oscope, DOMElement){
-    DOMElement = DOMElement || document.documentElement;
+function MouseInput(name, DOMElement, commands, socket, oscope){
+    DOMElement = DOMElement || window;
     ButtonAndAxisInput.call(this, name, commands, socket, oscope, 1, MouseInput.AXES);
 
     this.setLocation = function(x, y){
