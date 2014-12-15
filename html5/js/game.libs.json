@@ -23,6 +23,7 @@
 "js/input/VRInput.js",
 "js/output/Audio3DOutput.js",
 "js/output/SpeechOutput.js",
+"js/psychologist/Application.js",
 "js/psychologist/VRApplication.js",
 "js/psychologist/ui/html/StateList.js",
 "js/psychologist/ui/html/TabSet.js",

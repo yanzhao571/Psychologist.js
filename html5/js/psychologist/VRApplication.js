@@ -39,6 +39,7 @@
         `dtNetworkUpdate` - the amount of time to allow to elapse between sending state to teh server (default: 0.125)
  */
 function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel, avatarHeight, walkSpeed, clickSound, ambientSound, options){
+    Application.call(this, name);
     var formStateKey = name + " - formState";
     var formState = getSetting(formStateKey);
     this.options = combineDefaults(options, VRApplication);
@@ -468,7 +469,9 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         closers[i].addEventListener("click", this.hideOptions.bind(this), false);
     }
 }
-    
+
+inherit(VRApplication, Application);
+
 VRApplication.DEFAULTS = {
     gravity: 9.8, // the acceleration applied to falling objects
     backgroundColor: 0x000000, // the color that WebGL clears the background with before drawing
