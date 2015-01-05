@@ -40,11 +40,8 @@
  */
 function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel, avatarHeight, walkSpeed, clickSound, ambientSound, options){
     Application.call(this, name);
-    this.options = combineDefaults(this.options, VRApplication);
-    this.listeners = {
-        ready: [],
-        update: []
-    };
+    this.options = combineDefaults(options, VRApplication);
+    this.listeners = { ready: [], update: [] };
     this.avatarHeight = avatarHeight;
     this.walkSpeed = walkSpeed;
     this.cameraMount = new THREE.Object3D();            
@@ -74,18 +71,10 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         { name: "strafeRight", buttons: [KeyboardInput.D, KeyboardInput.RIGHT] },
         { name: "driveForward", buttons: [-KeyboardInput.W, -KeyboardInput.UPARROW] },
         { name: "driveBack", buttons: [KeyboardInput.S, KeyboardInput.DOWNARROW] },
-        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: function (){
-            if(this.onground){
-                this.currentUser.velocity.y += 10;
-                this.onground = false;
-            }
-        }.bind(this), dt: 0.5 },
+        { name: "jump", buttons: [KeyboardInput.SPACEBAR], commandDown: this.jump.bind(this), dt: 0.5 },
         { name: "camera", buttons: [KeyboardInput.C] },
         { name: "debug", buttons: [KeyboardInput.X] },
-        { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: function (){
-            this.currentUser.position.set(0, 2, 0);
-            this.currentUser.velocity.set(0, 0, 0);
-        }.bind(this) },
+        { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: this.resetPosition.bind(this) },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: this.showTyping.bind(this, true)}
     ], this.proxy);    
     this.keyboard.pause(true);
@@ -131,17 +120,8 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         { name: "roll", axes: [VRInput.RZ] },
         { name: "homogeneous", axes: [VRInput.RW] }
     ], this.ctrls.hmdListing, this.formState && this.formState.hmdListing || "");
-    this.ctrls.hmdListing.addEventListener("change", function(){
-        this.vr.connect(this.ctrls.hmdListing.value);
-        if(this.ctrls.hmdListing.value){
-            if(this.ctrls.renderingStyle.value !== "vr"){
-                this.chooseRenderingEffect("vr");
-            }
-            else{
-                this.effect.setHMD(this.vr.display);
-            }
-        }
-    }.bind(this));
+    
+    this.ctrls.hmdListing.addEventListener("change", this.changeHMD.bind(this));
     
     //
     // gamepad input
@@ -153,11 +133,8 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         { name: "pitch", axes: [GamepadInput.RSY], integrate: true},
         { name: "options", buttons: [9], commandUp: this.toggleOptions.bind(this) }
     ], this.proxy);
-    this.gamepad.addEventListener("gamepadconnected", function (id){
-        if (!this.gamepad.isGamepadSet() && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))){
-            this.gamepad.setGamepad(id);
-        }
-    }.bind(this), false);
+    
+    this.gamepad.addEventListener("gamepadconnected", this.connectGamepad.bind(this), false);
     
     //
     // geolocation input
@@ -337,49 +314,17 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
             "reconnection delay": 1000,
             "max reconnection attempts": 60
         });
-        this.socket.on("connect", function(){
-            this.socket.emit("handshake", "demo");
-            this.ctrls.connectButton.innerHTML = VRApplication.DISCONNECTED_TEXT;
-            this.ctrls.connectButton.className = "primary button";
-        }.bind(this));
+        this.socket.on("connect", this.connectToServer.bind(this));
         this.socket.on("typing", this.showTyping.bind(this, false, false));
         this.socket.on("chat", this.showChat.bind(this));    
         this.socket.on("userJoin", this.addUser.bind(this));
         this.socket.on("userState", this.updateUserState.bind(this, false));
-        this.socket.on("userLeft", function (userName){
-            if(this.users[userName]){
-                this.showMessage("$1 has disconnected", userName);
-                this.scene.remove(this.users[userName]);
-                delete this.users[userName];
-                this.makeChatList();
-            }
-        }.bind(this));
-        this.socket.on("loginFailed", function(){
-            this.ctrls.connectButton.innerHTML = "Login failed. Try again.";
-            this.ctrls.connectButton.className = "primary button";
-            this.showMessage("Incorrect user name or password!");
-        }.bind(this));
-        this.socket.on("userList", function (newUsers){
-            this.ctrls.connectButton.innerHTML = VRApplication.CONNECTED_TEXT;
-            this.ctrls.connectButton.className = "primary button";
-            this.proxy.connect(this.userName);
-            newUsers.sort(function(a){ return (a.userName === this.userName) ? -1 : 1;});
-            for(var i = 0; i < newUsers.length; ++i){
-                this.addUser(newUsers[i], true);
-            }
-            this.makeChatList();
-        }.bind(this));
-        this.socket.on("disconnect", function(reason){
-            this.ctrls.connectButton.className = "secondary button";
-            this.ctrls.connectButton.innerHTML = fmt("Disconnected: $1", reason);
-            this.showMessage(reason);
-        }.bind(this));
+        this.socket.on("userLeft", this.loseUser.bind(this));
+        this.socket.on("loginFailed", this.announceFailure.bind(this));
+        this.socket.on("userList", this.listUsers.bind(this));
+        this.socket.on("disconnect", this.disconnectFromServer.bind(this));
         this.socket.on("handshakeFailed", console.error.bind(console, "Failed to connect to websocket server. Available socket controllers are:"));
-        this.socket.on("handshakeComplete", function(controller){
-            if(controller === "demo" && this.ctrls.autoLogin.checked){
-                this.ctrls.connectButton.click();
-            }
-        }.bind(this));
+        this.socket.on("handshakeComplete", this.completeHandshake.bind(this));
         this.proxy = new WebRTCSocket(this.socket, this.ctrls.defaultDisplay.checked);
     }
     
@@ -708,6 +653,50 @@ VRApplication.prototype.addUser = function(userState, skipMakingChatList){
     }
 };
 
+VRApplication.prototype.connectToServer = function(){
+    this.socket.emit("handshake", "demo");
+    this.ctrls.connectButton.innerHTML = VRApplication.DISCONNECTED_TEXT;
+    this.ctrls.connectButton.className = "primary button";
+};
+
+VRApplication.prototype.disconnectFromServer = function(reason){
+    this.ctrls.connectButton.className = "secondary button";
+    this.ctrls.connectButton.innerHTML = fmt("Disconnected: $1", reason);
+    this.showMessage(reason);
+};
+
+VRApplication.prototype.completeHandshake = function(controller){
+    if(controller === "demo" && this.ctrls.autoLogin.checked){
+        this.ctrls.connectButton.click();
+    }
+};
+
+VRApplication.prototype.announceFailure = function(){
+    this.ctrls.connectButton.innerHTML = "Login failed. Try again.";
+    this.ctrls.connectButton.className = "primary button";
+    this.showMessage("Incorrect user name or password!");
+};
+
+VRApplication.prototype.listUsers = function (newUsers){
+    this.ctrls.connectButton.innerHTML = VRApplication.CONNECTED_TEXT;
+    this.ctrls.connectButton.className = "primary button";
+    this.proxy.connect(this.userName);
+    newUsers.sort(function(a){ return (a.userName === this.userName) ? -1 : 1;});
+    for(var i = 0; i < newUsers.length; ++i){
+        this.addUser(newUsers[i], true);
+    }
+    this.makeChatList();
+};
+
+VRApplication.prototype.loseUser = function (userName){
+    if(this.users[userName]){
+        this.showMessage("$1 has disconnected", userName);
+        this.scene.remove(this.users[userName]);
+        delete this.users[userName];
+        this.makeChatList();
+    }
+};
+
 VRApplication.prototype.updateUserState = function(firstTime, userState){
     var user = user || this.users[userState.userName];
     if(!user){
@@ -747,6 +736,36 @@ VRApplication.prototype.makeChatList = function(){
             entry.appendChild(document.createTextNode(list[i]));
             this.ctrls.userList.appendChild(entry);
         }
+    }
+};
+
+VRApplication.prototype.connectGamepad = function (id){
+    if (!this.gamepad.isGamepadSet() && confirm(fmt("Would you like to use this gamepad? \"$1\"", id))){
+        this.gamepad.setGamepad(id);
+    }
+};
+
+VRApplication.prototype.changeHMD = function(){
+    this.vr.connect(this.ctrls.hmdListing.value);
+    if(this.ctrls.hmdListing.value){
+        if(this.ctrls.renderingStyle.value !== "vr"){
+            this.chooseRenderingEffect("vr");
+        }
+        else{
+            this.effect.setHMD(this.vr.display);
+        }
+    }
+};
+
+VRApplication.prototype.resetPosition = function (){
+    this.currentUser.position.set(0, 2, 0);
+    this.currentUser.velocity.set(0, 0, 0);
+};
+
+VRApplication.prototype.jump = function (){
+    if(this.onground){
+        this.currentUser.velocity.y += 10;
+        this.onground = false;
     }
 };
 
