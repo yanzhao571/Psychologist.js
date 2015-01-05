@@ -35,10 +35,6 @@ function KeyboardInput(name, DOMElement, commands, socket, oscope){
             }
             else{
                 var key = event.keyCode;
-                if(KeyboardInput.NUMPAD0 <= key && key <= KeyboardInput.NUMPAD9){
-                    key += KeyboardInput.NUMBER0 - KeyboardInput.NUMPAD0;
-                }
-
                 if(key === KeyboardInput.BACKSPACE){
                     text = text.substring(0, insertionPoint - 1) + text.substring(insertionPoint);
                     --insertionPoint;
