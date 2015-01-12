@@ -28,5 +28,13 @@
   "scripts": {
     "desktop": "node server -v:true -h:localhost",
     "start": "node server -v:false -h:seanmcbeth.com"
+  },
+  "jspm": {
+    "directories": {
+      "lib": "src"
+    },
+    "dependencies": {
+      "Primrose": "github:capnmidnight/Primrose@master"
+    }
   }
 }
