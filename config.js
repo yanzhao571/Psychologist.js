@@ -1,8 +1,8 @@
 System.config({
   "paths": {
     "*": "*.js",
-    "Psychologist/*": "src/*.js",
-    "github:*": "jspm_packages/github/*.js"
+    "Psychologist/*": "html5/*.js",
+    "github:*": "html5\\jspm_packages/github/*.js"
   }
 });
 

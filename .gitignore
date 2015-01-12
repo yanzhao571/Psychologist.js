@@ -6,7 +6,6 @@ users.json
 *.gz
 *.blend1
 node_modules/
-jspm_packages
 obj/
 bin/
 cur/
