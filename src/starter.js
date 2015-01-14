@@ -7,7 +7,7 @@ var os = require("os"),
     }[os.platform()];
 
 module.exports = function(secure, port, startPage){
-    port = port || 90;
+    port = port || 80;
     startPage = startPage || "";
     if(startProc){
         var startUrl = "http";

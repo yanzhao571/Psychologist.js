@@ -1,12 +1,42 @@
 {
-  "jspm": {
     "name": "Psychologist",
-    "directories": {
-      "lib": "html5",
-      "packages": "html5/jspm_packages"
-    },
+    "version": "0.2.0",
+    "license": "GPL V3",
+    "readme": "./README.txt",
     "dependencies": {
-      "Primrose": "github:capnmidnight/Primrose@master"
+        "mime": "latest",
+        "socket.io": "latest",
+        "express": "~4.10.4"
+    },
+    "description": "HTML 5 VR system for phones and cardboard viewers.",
+    "keywords": [
+        "virtual reality",
+        "vr",
+        "oculus rift",
+        "google cardboard",
+        "hmd",
+        "video games"
+    ],
+    "homepage": "https://www.seanmcbeth.com:8081/VR",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/capnmidnight/VR"
+    },
+    "bugs": "https://github.com/capnmidnight/VR/issues",
+    "author": "Sean T. McBeth <sean@seanmcbeth.com> (http://www.seanmcbeth.com)",
+    "main": "./server.js",
+    "scripts": {
+        "desktop": "node server -v:true -h:localhost",
+        "start": "node server -v:false -h:seanmcbeth.com"
+    },
+    "jspm": {
+        "name": "Psychologist",
+        "directories": {
+            "lib": "html5",
+            "packages": "html5/jspm_packages"
+        },
+        "dependencies": {
+            "Primrose": "github:capnmidnight/Primrose@master"
+        }
     }
-  }
 }
