@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014 Sean McBeth
  *
  * This program is free software: you can redistribute it and/or modify
@@ -42,9 +42,10 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     Application.call(this, name);
     this.options = combineDefaults(options, VRApplication);
     this.listeners = { ready: [], update: [] };
+    this.glove = new HapticGloveOutput();
     this.avatarHeight = avatarHeight;
     this.walkSpeed = walkSpeed;
-    this.cameraMount = new THREE.Object3D();            
+    this.cameraMount = new THREE.Object3D();
     this.oculusCorrector = new THREE.Object3D();
     this.onground = false;
     this.lt = 0;
@@ -52,17 +53,17 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     this.enableMousePitch = true;
     this.currentUser = null;
     this.mainScene = null;
-    
+
     //
     // speech input
     //
     this.speech = new SpeechInput("speech", [
         { name: "options", keywords: ["options"], commandUp: this.toggleOptions.bind(this) },
-        { name: "chat", preamble: true, keywords: ["message"], commandUp: function (){ 
-            this.showTyping(true, true, this.speech.getValue("chat")); 
+        { name: "chat", preamble: true, keywords: ["message"], commandUp: function (){
+            this.showTyping(true, true, this.speech.getValue("chat"));
         }.bind(this)}
     ], this.proxy);
-    
+
     //
     // keyboard input
     //
@@ -76,9 +77,9 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         { name: "debug", buttons: [KeyboardInput.X] },
         { name: "resetPosition", buttons: [KeyboardInput.P], commandUp: this.resetPosition.bind(this) },
         { name: "chat", preamble: true, buttons: [KeyboardInput.T], commandUp: this.showTyping.bind(this, true)}
-    ], this.proxy);    
+    ], this.proxy);
     this.keyboard.pause(true);
-    
+
     //
     // mouse input
     //
@@ -93,7 +94,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         { name: "pointerDistance", commands: ["dz"], integrate: true, scale: 0.1, min: 0, max: 10 },
         { name: "pointerPress", buttons: [1], integrate: true, scale: 100, offset: -50, min: 0, max: 5 }
     ], this.proxy);
-    
+
     //
     // capacitive touch screen input
     //
@@ -101,7 +102,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         { name: "heading", axes: [TouchInput.DX0], integrate: true },
         { name: "drive", axes: [-TouchInput.DY0] }
     ], this.proxy);
-    
+
     //
     // smartphone orientation sensor-based head tracking
     //
@@ -110,7 +111,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         { name: "heading", axes: [-MotionInput.HEADING] },
         { name: "roll", axes: [-MotionInput.ROLL] }
     ], this.proxy);
-    
+
     //
     // VR HEAD MOUNTED DISPLAY OOOOOH YEAH!
     //
@@ -120,9 +121,9 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         { name: "roll", axes: [VRInput.RZ] },
         { name: "homogeneous", axes: [VRInput.RW] }
     ], this.ctrls.hmdListing, this.formState && this.formState.hmdListing || "");
-    
+
     this.ctrls.hmdListing.addEventListener("change", this.changeHMD.bind(this));
-    
+
     //
     // gamepad input
     //
@@ -133,14 +134,14 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         { name: "pitch", axes: [GamepadInput.RSY], integrate: true},
         { name: "options", buttons: [9], commandUp: this.toggleOptions.bind(this) }
     ], this.proxy);
-    
+
     this.gamepad.addEventListener("gamepadconnected", this.connectGamepad.bind(this), false);
-    
+
     //
     // geolocation input
     //
     this.location = new LocationInput("location", [], this.proxy);
-    
+
     //
     // passthrough camera
     //
@@ -148,7 +149,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     this.ctrls.cameraListing.addEventListener("change", function(){
         this.passthrough.connect(this.ctrls.cameraListing.value);
     }.bind(this));
-    
+
     //
     // Leap Motion input
     //
@@ -157,7 +158,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     leapCommands.push({ name: "HAND0Y", axes: [LeapMotionInput.HAND0Y], scale: 0.015, offset: -4 });
     leapCommands.push({ name: "HAND0Z", axes: [LeapMotionInput.HAND0Z], scale: -0.015, offset: 3 });
     this.leap = new LeapMotionInput("leap", leapCommands, this.proxy);
-    
+
     //
     // The various options, and packs of them when selecting from a dropdown
     // list. This makes it easy to preconfigure the program to certain specs
@@ -251,7 +252,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
             defaultDisplay: {checked: true}
         }}
     ]);
-    
+
     //
     // restoring the options the user selected
     //
@@ -261,7 +262,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         setSetting(this.formStateKey, state);
         this.speech.enable(false);
     }.bind(this), false);
-        
+
     //
     // Setup THREE.js
     //
@@ -276,7 +277,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         this.addUser({x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, heading: 0, dHeading: 0, userName: this.userName});
     }.bind(this));
     this.hand = new THREE.Mesh(
-        new THREE.SphereGeometry(0.1, 4, 4), 
+        new THREE.SphereGeometry(0.1, 4, 4),
         new THREE.MeshPhongMaterial({color: 0xffff00, emissive: 0x7f7f00})
     );
     this.hand.name = "HAND0";
@@ -290,7 +291,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         this.scene.remove(cam);
         this.camera = new THREE.PerspectiveCamera(cam.fov, cam.aspect, cam.near, this.options.drawDistance);
     }.bind(this));
-    
+
     //
     // Setup audio
     //
@@ -302,13 +303,13 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         amb.volume.gain.value = 0.07;
         amb.source.start(0);
     }.bind(this));
-    
+
     //
     // Setup networking
     //
     if(this.ctrls.appCacheReload.style.display === "none" && navigator.onLine){
         this.ctrls.connectButton.addEventListener("click", this.login.bind(this), false);
-        
+
         this.socket = io.connect(document.location.hostname, {
             "reconnect": true,
             "reconnection delay": 1000,
@@ -316,7 +317,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         });
         this.socket.on("connect", this.connectToServer.bind(this));
         this.socket.on("typing", this.showTyping.bind(this, false, false));
-        this.socket.on("chat", this.showChat.bind(this));    
+        this.socket.on("chat", this.showChat.bind(this));
         this.socket.on("userJoin", this.addUser.bind(this));
         this.socket.on("userState", this.updateUserState.bind(this, false));
         this.socket.on("userLeft", this.loseUser.bind(this));
@@ -327,7 +328,7 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
         this.socket.on("handshakeComplete", this.completeHandshake.bind(this));
         this.proxy = new WebRTCSocket(this.socket, this.ctrls.defaultDisplay.checked);
     }
-    
+
     //
     // setting up all other event listeners
     //
@@ -338,9 +339,9 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     this.setupModuleEvents(this.speech, "speech");
     this.setupModuleEvents(this.keyboard, "keyboard");
     this.setupModuleEvents(this.mouse, "mouse");
-    
+
     window.addEventListener("touchend", this.showOnscreenControls.bind(this), false);
-    
+
     window.addEventListener("mousemove", function(){
         if(!MouseInput.isPointerLocked()){
             this.showOnscreenControls();
@@ -352,11 +353,11 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
             this.toggleOptions();
         }
     }.bind(this), false);
-    
+
     window.addEventListener("resize", function (){
         this.setSize(window.innerWidth, window.innerHeight);
     }.bind(this), false);
-    
+
     window.addEventListener("focus", function(){
         this.focused = true;
     }.bind(this), false);
@@ -372,27 +373,27 @@ function VRApplication(name, sceneModel, buttonModel, buttonOptions, avatarModel
     document.addEventListener("blur", function(){
         this.focused = false;
     }.bind(this), false);
-    
+
     this.fullScreen = function(){
         if(this.fullscreenElement.webkitRequestFullscreen){
             this.fullscreenElement.webkitRequestFullscreen({vrDisplay: this.vr.display});
         }
         else if(this.fullscreenElement.mozRequestFullScreen){
-            this.fullscreenElement.mozRequestFullScreen({vrDisplay: this.vr.display});        
+            this.fullscreenElement.mozRequestFullScreen({vrDisplay: this.vr.display});
         }
     };
-    
+
     this.ctrls.fullScreenButton.addEventListener("click", function(){
         this.fullScreen();
         this.mouse.requestPointerLock();
     }.bind(this), false);
-    
+
     this.ctrls.menuButton.addEventListener("click", this.showOptions.bind(this), false);
-    
+
     this.ctrls.renderingStyle.addEventListener("change", function(){
         this.chooseRenderingEffect(this.ctrls.renderingStyle.value);
     }.bind(this), false);
-    
+
     this.ctrls.textEntry.addEventListener("change", function (){
         this.showTyping(true, true, this.ctrls.textEntry.value);
         this.ctrls.textEntry.value = "";
@@ -476,7 +477,7 @@ VRApplication.prototype.showOptions = function(){
     this.mouse.exitPointerLock();
 };
 
-VRApplication.prototype.hideOptions = function(){        
+VRApplication.prototype.hideOptions = function(){
     this.ctrls.options.style.display = "none";
     this.fullScreen();
     this.keyboard.pause(false);
@@ -493,7 +494,7 @@ VRApplication.prototype.toggleOptions = function(){
         this.hideOptions();
     }
 };
-    
+
 //
 // the touch-screen and mouse-controls for accessing the options screen
 //
@@ -501,7 +502,7 @@ VRApplication.prototype.hideOnscreenControls = function(){
     this.ctrls.onScreenControls.style.display = "none";
     this.hideControlsTimeout = null;
 };
-    
+
 VRApplication.prototype.showOnscreenControls = function(){
     this.ctrls.onScreenControls.style.display = "";
     if(this.hideControlsTimeout){
@@ -514,11 +515,11 @@ VRApplication.prototype.chooseRenderingEffect = function(type){
     this.oculusCorrector.rotation.set(0, 0, 0, "XYZ");
     if(this.lastRenderingType !== type){
         switch(type){
-            case "anaglyph": 
+            case "anaglyph":
                 this.effect = new THREE.AnaglyphEffect(this.renderer, 5, window.innerWidth, window.innerHeight);
                 this.enableMousePitch = true;
             break;
-            case "cardboard": 
+            case "cardboard":
                 this.effect = new THREE.OculusRiftEffect(this.renderer, {
                     worldFactor: 1,
                     HMD: {
@@ -532,7 +533,7 @@ VRApplication.prototype.chooseRenderingEffect = function(type){
                         distortionK: [1, 0.22, 0.06, 0.0],
                         chromaAbParameter: [0.996, -0.004, 1.014, 0.0]
                     }
-                }); 
+                });
                 this.enableMousePitch = false;
             break;
             case "vr":
@@ -540,7 +541,7 @@ VRApplication.prototype.chooseRenderingEffect = function(type){
                 this.enableMousePitch = false;
                 this.oculusCorrector.rotation.set(0, -Math.PI / 3, 0, "XYZ");
             break;
-            default: 
+            default:
                 this.effect = null;
                 type = "regular";
                 this.enableMousePitch = true;
@@ -575,7 +576,7 @@ VRApplication.prototype.setSize = function(w, h){
 };
 
 VRApplication.prototype.login = function(){
-    if(this.socket 
+    if(this.socket
         && this.socket.connected
         && this.ctrls.connectButton.classList.contains("primary")){
         if(this.ctrls.connectButton.innerHTML === VRApplication.DISCONNECTED_TEXT){
@@ -597,10 +598,10 @@ VRApplication.prototype.login = function(){
                 this.showMessage("Please complete the form.");
             }
         }
-        else if(this.ctrls.connectButton.innerHTML === VRApplication.CONNECTED_TEXT){ 
+        else if(this.ctrls.connectButton.innerHTML === VRApplication.CONNECTED_TEXT){
            this.socket.emit("logout");
            this.ctrls.connectButton.innerHTML = VRApplication.DISCONNECTED_TEXT;
-        }        
+        }
     }
     else{
         this.showMessage("No socket available.");
@@ -612,7 +613,7 @@ VRApplication.prototype.addUser = function(userState, skipMakingChatList){
     if(!this.users[userState.userName]){
         if(this.userName === Application.DEFAULT_USER_NAME
             || userState.userName !== this.userName){
-            user = new THREE.Object3D();        
+            user = new THREE.Object3D();
             var model = this.avatar.clone();
             user.animation = model.animation;
             model.position.z = 1.33;
@@ -621,7 +622,7 @@ VRApplication.prototype.addUser = function(userState, skipMakingChatList){
             user.nameObj = new VUI.Text(
                 userState.userName, 0.5,
                 "white", "transparent",
-                0, this.avatarHeight + 2.5, 0, 
+                0, this.avatarHeight + 2.5, 0,
                 "center");
             user.add(user.nameObj);
 
@@ -705,10 +706,10 @@ VRApplication.prototype.updateUserState = function(firstTime, userState){
     else{
         if(firstTime){
             user.position.set(
-                userState.x, 
-                // just in case the user falls through the world, 
+                userState.x,
+                // just in case the user falls through the world,
                 // reloading will get them back to level.
-                Math.max(0, userState.y), 
+                Math.max(0, userState.y),
                 userState.z);
             user.lastHeading = user.heading = userState.heading;
             user.dHeading = 0;
@@ -870,14 +871,14 @@ VRApplication.prototype.start = function(){
         this.lt = t;
         if(this.camera && this.mainScene && this.currentUser && this.buttonFactory.template){
             this.setSize(window.innerWidth, window.innerHeight);
-            
+
             this.cameraMount.position.y = this.avatarHeight;
-            
+
             this.currentUser.add(this.cameraMount);
             this.cameraMount.add(this.oculusCorrector);
             this.oculusCorrector.add(this.camera);
             this.camera.add(this.passthrough.mesh);
-            
+
             this.leap.start();
             this.animate = this.animate.bind(this);
             this.fire("ready");
@@ -887,7 +888,7 @@ VRApplication.prototype.start = function(){
             requestAnimationFrame(waitForResources);
         }
     }.bind(this);
-    
+
     requestAnimationFrame(waitForResources);
 };
 
@@ -915,21 +916,21 @@ VRApplication.prototype.animate = function(t){
             pitch += this.gamepad.getValue("pitch")
                 + this.mouse.getValue("pitch");
         }
-        var heading = this.head.getValue("heading") 
+        var heading = this.head.getValue("heading")
             + this.gamepad.getValue("heading")
             + this.touch.getValue("heading")
             + this.mouse.getValue("heading");
-        var pointerPitch = pitch 
+        var pointerPitch = pitch
             + this.leap.getValue("HAND0Y")
             + this.mouse.getValue("pointerPitch");
-        var pointerHeading = heading 
+        var pointerHeading = heading
             + this.leap.getValue("HAND0X")
             + this.mouse.getValue("pointerHeading");
-        var pointerDistance = (this.leap.getValue("HAND0Z") 
-            + this.mouse.getValue("pointerDistance") 
+        var pointerDistance = (this.leap.getValue("HAND0Z")
+            + this.mouse.getValue("pointerDistance")
             + this.mouse.getValue("pointerPress")
             + 2) / Math.cos(pointerPitch);
-    
+
         var strafe = 0;
         var drive = 0;
 
@@ -937,7 +938,7 @@ VRApplication.prototype.animate = function(t){
         if(this.passthrough.mesh.visible){
             this.passthrough.update();
         }
-        
+
         if(lastDebug){
             this.camera.remove(lastDebug);
             lastDebug = null;
@@ -961,7 +962,7 @@ VRApplication.prototype.animate = function(t){
                 + this.gamepad.getValue("drive")
                 + this.touch.getValue("drive");
 
-            if(this.onground || this.currentUser.position.y < -0.5){                
+            if(this.onground || this.currentUser.position.y < -0.5){
                 if(this.autoWalking){
                     strafe = 0;
                     drive = -0.5;
@@ -981,7 +982,7 @@ VRApplication.prototype.animate = function(t){
                 this.currentUser.velocity.x = this.currentUser.velocity.x * 0.9 + strafe * 0.1;
                 this.currentUser.velocity.z = this.currentUser.velocity.z * 0.9 + drive * 0.1;
             }
-            
+
             this.currentUser.velocity.y -= dt * this.options.gravity;
 
             //
@@ -992,7 +993,8 @@ VRApplication.prototype.animate = function(t){
             this.direction.normalize();
             this.testPoint.copy(this.currentUser.position);
             this.testPoint.y += this.avatarHeight / 2;
-            this.raycaster.set(this.testPoint, this.direction);
+            this.raycaster.ray.origin.copy(this.testPoint);
+            this.raycaster.ray.direction.copy(this.direction);
             this.raycaster.far = len;
             var intersections = this.raycaster.intersectObject(this.scene, true);
             for(var i = 0; i < intersections.length; ++i){
@@ -1017,7 +1019,8 @@ VRApplication.prototype.animate = function(t){
             var GROUND_TEST_HEIGHT = 3;
             this.testPoint.y += GROUND_TEST_HEIGHT;
             this.direction.set(0, -1, 0);
-            this.raycaster.set(this.testPoint, this.direction);
+            this.raycaster.ray.origin.copy(this.testPoint);
+            this.raycaster.ray.direction.copy(this.direction);
             this.raycaster.far = GROUND_TEST_HEIGHT * 2;
             intersections = this.raycaster.intersectObject(this.scene, true);
             for(var i = 0; i < intersections.length; ++i){
@@ -1032,7 +1035,7 @@ VRApplication.prototype.animate = function(t){
             }
 
             //
-            // send a network update of the user's position, if it's been enough 
+            // send a network update of the user's position, if it's been enough
             // time since the last update (don'dt want to flood the server).
             //
             this.frame += dt;
@@ -1072,7 +1075,7 @@ VRApplication.prototype.animate = function(t){
                 user.nameObj.rotation.set(0, this.currentUser.heading - user.heading, 0, "XYZ");
             }
             if(!user.animation.isPlaying && user.velocity.length() >= 2){
-                user.animation.play();                
+                user.animation.play();
             }
             else if(user.animation.isPlaying && user.velocity.length() < 2){
                 user.animation.stop();
@@ -1101,7 +1104,7 @@ VRApplication.prototype.animate = function(t){
             }
         }
 
-        this.fire("update", dt);        
+        this.fire("update", dt);
         //
         // update audio
         //
@@ -1117,9 +1120,9 @@ VRApplication.prototype.animate = function(t){
         //
         this.cameraMount.rotation.set(pitch, 0, roll, "YZX");
         this.camera.quaternion.set(
-            this.vr.getValue("pitch"), 
-            this.vr.getValue("heading"), 
-            this.vr.getValue("roll"), 
+            this.vr.getValue("pitch"),
+            this.vr.getValue("heading"),
+            this.vr.getValue("roll"),
             this.vr.getValue("homogeneous"));
 
         //

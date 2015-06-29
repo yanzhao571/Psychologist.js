@@ -84,10 +84,10 @@ function start(key, cert, ca){
         log("secure");
         app = https.createServer(
             {
-                key: key, 
-                cert: cert, 
+                key: key,
+                cert: cert,
                 ca: ca
-            }, 
+            },
             webServer(options.h, srcDir, zipDir)
         );
         redir = http.createServer(webServer(options.h, port + 1));
@@ -101,9 +101,10 @@ function start(key, cert, ca){
     }
     io = socketio.listen(app);
     io.sockets.on("connection", webSocketServer);
-    
+    console.log("options.v " + options.v);
     if(options.v !== "false"){
         try{
+            console.log("Starting browser");
             starter(useSecure, port + (useSecure ? 1 : 0), startPage);
         }
         catch(exp){
@@ -117,19 +118,19 @@ function start(key, cert, ca){
  * parameters:
  *  `filePaths`: array of strings, representing file paths
  *  `callback`: callback function - `function(err, fileContents)`
- *      `err`: the Error object--if any--that caused the reading 
+ *      `err`: the Error object--if any--that caused the reading
  *             process to abort.
  *      `fileContents`: an array of strings
- *          
+ *
  * Reads all files specified in the filePaths array as UTF-8 encoded text files
  * and executes the provided callback function when done.
- * 
- * If any one of the files is missing or causes an error, the entire process 
- * aborts and the callback is called with the error object as the first 
+ *
+ * If any one of the files is missing or causes an error, the entire process
+ * aborts and the callback is called with the error object as the first
  * parameter. The second `fileContents` parameter will be null.
- * 
+ *
  * If all of the files load successfully, the callback is called with null
- * as the first parameter and the full string contents of each of the files in 
+ * as the first parameter and the full string contents of each of the files in
  * an array as the second parameter.
  */
 function readFiles(filePaths, callback){

@@ -13,6 +13,7 @@ fs.readFile("users.json", "utf8", function(err, file){
         var userList = null;
         try{
             userList = JSON.parse(file);
+            log("Users found");
         }
         catch(exp){
             log("User file corrupted");
@@ -29,7 +30,7 @@ fs.readFile("users.json", "utf8", function(err, file){
         }
     }
 });
-        
+
 function writeUserList(){
     var userList = [];
     for(var key in users){
@@ -44,14 +45,14 @@ function writeUserList(){
 
     // synchronous so two new users at the same time can't get into
     // a race condition, right?
-    fs.writeFileSync("users.json", JSON.stringify(userList));            
+    fs.writeFileSync("users.json", JSON.stringify(userList));
 }
 
 module.exports = {
     handshake: "demo",
     bindSocket: function(socket){
-        log("starting demo for new user.");        
-        
+        log("starting demo for new user.");
+
         function receiveHash(identity, key, salt, hash){
             if(!users[key]){
                 log("[$1, $2] > new user", key, identity.userName);
@@ -60,7 +61,7 @@ module.exports = {
                 users[key] = new User(identity);
                 writeUserList();
             }
-            
+
             if(hash === users[key].hash){
                 if(!users[key].isConnected()){
                     log("[$1] > user login", key);
@@ -73,10 +74,10 @@ module.exports = {
                 socket.emit("loginFailed");
             }
         }
-        
+
         function login(identity){
-            var key = identity 
-                && identity.userName 
+            var key = identity
+                && identity.userName
                 && identity.userName.toLocaleUpperCase().trim();
             log("Trying to authenticate $1", key);
             if(!key){

@@ -124,7 +124,8 @@ VUI.Button.prototype.test = function(cameraPosition, pointer){
             this.testPoint.copy(pointer.position);
             this.testPoint.y += this.options.minDistance;
             this.direction.set(0, -1, 0);
-            this.raycaster.set(this.testPoint, this.direction);
+            this.raycaster.ray.origin.copy(this.testPoint);
+            this.raycaster.ray.direction.copy(this.direction);
             this.raycaster.far = this.options.minDistance * 2;
             var intersections = this.raycaster.intersectObject(this.cap.children[0]);
             if(intersections.length > 0){

@@ -46,7 +46,7 @@ Vector.prototype.dot = function(v2){
 Vector.prototype.reflect = function(n){
     var d = this.dot(n);
     return new Vector(this.x - d * n.x, this.y - d * n.y);
-}
+};
 
 
 var canv = document.getElementById("graph");
